@@ -1,0 +1,97 @@
+// Estado sincronizado com os clientes. defineTypes em vez de decorators para
+// não depender de configuração de decorators no tsx/esbuild.
+import { Schema, MapSchema, defineTypes } from "@colyseus/schema";
+import { INV_SIZE, DEPOT_SIZE, type Slot, type EquipSlot } from "../../shared/src";
+
+export class Player extends Schema {
+  id = "";
+  name = "";
+  charId = "ichigo";
+  form = 0; // índice em CHARS[charId].forms
+  x = 0;
+  y = 0;
+  dir = 0;
+  stepMs = 260;
+  hp = 1;
+  maxHp = 1;
+  rei = 1;
+  maxRei = 1;
+  level = 1;
+  exp = 0;
+  targetId = "";
+  online = true;
+  autoTarget = false;
+  autoHunt = false;
+  autoHeal = 0; // % de HP para tomar poção; 0 = desligado
+  look = ""; // visual do equipamento (lookOf); todos veem
+  partyId = ""; // party atual ("" = sem party); membros se veem em verde
+  partyLead = false;
+  pvpUntil = 0; // ms epoch: até quando está bloqueado depois de atacar um jogador
+
+  // só no servidor (não sincronizado)
+  path: { x: number; y: number }[] = [];
+  follow = false;
+  nextStepAt = 0;
+  nextAttackAt = 0;
+  skillReadyAt = 0;
+  potionReadyAt = 0;
+  lastCombatAt = 0;
+  offlineSince = 0;
+  expAtLeave = 0;
+  goldAtLeave = 0;
+  // inventário, equipamento e depot ficam fora do estado sincronizado: só o dono
+  // precisa vê-los, então vão por mensagem "inv" (ver WorldRoom.sendInv)
+  gold = 0;
+  inv: (Slot | null)[] = Array(INV_SIZE).fill(null);
+  depot: (Slot | null)[] = Array(DEPOT_SIZE).fill(null);
+  equip: Partial<Record<EquipSlot, string>> = {};
+  pendingInteract: "" | Interact = "";
+  lastAttackerId = ""; // último jogador que atacou (para o Auto Helper revidar)
+  lastAttackedAt = 0;
+  recallReadyAt = 0;
+  pzWarnAt = 0;
+  reiPotionReadyAt = 0;
+  /** mortes enquanto caçava offline, para o relatório da volta */
+  offlineDeaths: DeathReport[] = [];
+}
+
+export type Interact = "depot" | "shop" | "travel";
+
+export interface DeathReport { by: string; exp: number; gold: number; items: string[]; protected: boolean; at: number }
+defineTypes(Player, {
+  id: "string", name: "string", charId: "string", form: "uint8",
+  x: "int16", y: "int16", dir: "uint8", stepMs: "uint16",
+  hp: "int32", maxHp: "int32", rei: "number", maxRei: "int32",
+  level: "uint16", exp: "number", targetId: "string",
+  online: "boolean", autoTarget: "boolean", autoHunt: "boolean", autoHeal: "uint8", look: "string",
+  partyId: "string", partyLead: "boolean", pvpUntil: "number",
+});
+
+export class Monster extends Schema {
+  id = "";
+  kind = "";
+  x = 0;
+  y = 0;
+  dir = 0;
+  stepMs = 400;
+  hp = 1;
+  maxHp = 1;
+  targetId = "";
+
+  spawnIndex = 0;
+  path: { x: number; y: number }[] = [];
+  nextStepAt = 0;
+  nextAttackAt = 0;
+  nextWanderAt = 0;
+  lastHitBy = "";
+}
+defineTypes(Monster, {
+  id: "string", kind: "string", x: "int16", y: "int16", dir: "uint8", stepMs: "uint16",
+  hp: "int32", maxHp: "int32", targetId: "string",
+});
+
+export class WorldState extends Schema {
+  players = new MapSchema<Player>();
+  monsters = new MapSchema<Monster>();
+}
+defineTypes(WorldState, { players: { map: Player }, monsters: { map: Monster } });

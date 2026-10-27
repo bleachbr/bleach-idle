@@ -1,0 +1,17 @@
+{
+  "name": "client",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "colyseus.js": "0.15.28",
+    "phaser": "3.90.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7"
+  }
+}

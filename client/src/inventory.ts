@@ -1,0 +1,190 @@
+// Painel de equipamento e inventário (barra lateral) e as janelas de depot e loja.
+// Tudo aqui só mostra o que o servidor manda na mensagem "inv" e pede ações;
+// quem valida distância, dinheiro e espaço é o servidor.
+import type { Room } from "colyseus.js";
+import {
+  ITEMS, SHOP, EQUIP_SLOTS, SLOT_LABEL, GOLD_ICON, CURRENCY, DEPOT, SHOP_NPC, SENKAIMON, TRAVEL, INTERACT_RANGE, chebyshev,
+  type ItemDef, type Slot, type EquipSlot,
+} from "../../shared/src";
+
+interface InvMsg {
+  gold: number;
+  inv: (Slot | null)[];
+  depot: (Slot | null)[];
+  equip: Partial<Record<EquipSlot, string>>;
+  atk: number;
+  def: number;
+}
+
+const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
+
+export function iconHtml(icon: number, qty?: number) {
+  const pos = `-${(icon % 4) * 32}px -${Math.floor(icon / 4) * 32}px`;
+  return `<span class="icon" style="background-position:${pos}"></span>${qty && qty > 1 ? `<b class="qty">${qty}</b>` : ""}`;
+}
+
+function tooltip(d: ItemDef) {
+  const parts = [d.name];
+  if (d.slot) parts.push(SLOT_LABEL[d.slot]);
+  if (d.atk) parts.push(`Ataque +${d.atk}`);
+  if (d.def) parts.push(`Defesa +${d.def}`);
+  if (d.hp) parts.push(`HP +${d.hp}`);
+  if (d.rei) parts.push(`Reiatsu +${d.rei}`);
+  if (d.minLevel) parts.push(`Nível ${d.minLevel}+`);
+  if (d.desc) parts.push(d.desc);
+  return parts.join(" · ");
+}
+
+export function initInventory(room: Room<any>, onPanel: (open: boolean) => void) {
+  let state: InvMsg | null = null;
+  let open: "" | "depot" | "shop" | "travel" = "";
+
+  const close = () => {
+    open = "";
+    $("#modal").hidden = true;
+    onPanel(false);
+  };
+  $("#modal-close").onclick = close;
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "Escape" && open) close();
+  });
+
+  room.onMessage("inv", (m: InvMsg) => {
+    state = m;
+    render();
+  });
+  room.onMessage("open", (m: { kind: "depot" | "shop" | "travel" }) => {
+    open = m.kind;
+    $("#modal").hidden = false;
+    onPanel(true);
+    render();
+  });
+
+  function slotButton(s: Slot | null, onClick: (() => void) | null, extraTitle = "") {
+    const b = document.createElement("button");
+    b.className = "slot";
+    b.type = "button";
+    if (s) {
+      const d = ITEMS[s.id];
+      b.innerHTML = iconHtml(d.icon, s.qty);
+      b.title = tooltip(d) + extraTitle;
+    }
+    if (onClick && s) b.onclick = onClick;
+    else b.disabled = !s;
+    return b;
+  }
+
+  function render() {
+    if (!state) return;
+    const st = state;
+    $("#gold").innerHTML = `${iconHtml(GOLD_ICON)} ${st.gold} ${CURRENCY}`;
+    $("#atkdef").textContent = `Ataque ${st.atk} · Defesa ${st.def}`;
+    const count = (id: string) => st.inv.reduce((n, s) => n + (s?.id === id ? s.qty : 0), 0);
+    $("#potions").textContent = String(count("pocao_vida"));
+    $("#rei-potions").textContent = String(count("pocao_rei"));
+
+    // equipamento: clicar desequipa
+    const eq = $("#equip");
+    eq.replaceChildren(...EQUIP_SLOTS.map((slot) => {
+      const id = st.equip[slot];
+      const b = slotButton(id ? { id, qty: 1 } : null, () => room.send("unequip", { slot }));
+      b.dataset.label = SLOT_LABEL[slot];
+      b.classList.add("equip-slot");
+      if (!id) b.title = SLOT_LABEL[slot];
+      return b;
+    }));
+
+    // inventário: com o depot aberto, clicar guarda; senão equipa ou usa
+    const hint = open === "depot" ? " · clique para guardar no depot" : "";
+    $("#inv").replaceChildren(...st.inv.map((s, index) => slotButton(s, () => {
+      const d = ITEMS[s!.id];
+      if (open === "depot") room.send("depot", { op: "put", index });
+      else if (d.slot) room.send("equip", { index });
+      else if (d.heal || d.restoreRei) room.send("useItem", { index });
+    }, hint)));
+
+    if (!open) return;
+    $("#modal-title").textContent = open === "depot" ? "Depot" : open === "shop" ? "Loja do Kisuke" : "Senkaimon";
+    const body = $("#modal-body");
+    if (open === "travel") {
+      const list = document.createElement("div");
+      list.className = "shop-list";
+      for (const d of TRAVEL) {
+        const row = document.createElement("div");
+        row.className = "shop-row";
+        row.innerHTML = `<span class="name">${d.name}<small>nível ${d.minLevel}+</small></span><span class="price">${d.cost} ${CURRENCY}</span>`;
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = "Viajar";
+        b.disabled = st.gold < d.cost;
+        b.onclick = () => { room.send("travel", { dest: d.id }); close(); };
+        row.append(b);
+        list.append(row);
+      }
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "Para voltar, use \"Voltar à cidade\" (tecla R). Depois de atacar um jogador, viajar fica bloqueado por 3 minutos.";
+      body.replaceChildren(list, p);
+    } else if (open === "depot") {
+      const grid = document.createElement("div");
+      grid.className = "grid depot";
+      grid.append(...st.depot.map((s, index) => slotButton(s, () => room.send("depot", { op: "take", index }), " · clique para pegar")));
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "Clique num item do depot para pegar; clique num item do inventário (à esquerda) para guardar. O que está no depot nunca se perde.";
+      body.replaceChildren(p, grid);
+    } else {
+      const buy = document.createElement("div");
+      buy.className = "shop-list";
+      for (const id of SHOP) {
+        const d = ITEMS[id];
+        const row = document.createElement("div");
+        row.className = "shop-row";
+        row.title = tooltip(d);
+        row.innerHTML = `<span class="slot static">${iconHtml(d.icon)}</span><span class="name">${d.name}<small>${tooltip(d).split(" · ").slice(1).join(" · ")}</small></span><span class="price">${d.buy} ${CURRENCY}</span>`;
+        for (const qty of d.stack ? [1, 10] : [1]) {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.textContent = qty === 1 ? "Comprar" : "x10";
+          b.disabled = st.gold < d.buy! * qty;
+          b.onclick = () => room.send("buy", { id, qty });
+          row.append(b);
+        }
+        buy.append(row);
+      }
+      const sell = document.createElement("div");
+      sell.className = "shop-list";
+      st.inv.forEach((s, index) => {
+        if (!s) return;
+        const d = ITEMS[s.id];
+        const row = document.createElement("div");
+        row.className = "shop-row";
+        row.innerHTML = `<span class="slot static">${iconHtml(d.icon, s.qty)}</span><span class="name">${d.name}</span><span class="price">${d.sell * s.qty} ${CURRENCY}</span>`;
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = "Vender";
+        b.onclick = () => room.send("sell", { index });
+        row.append(b);
+        sell.append(row);
+      });
+      const sellLoot = document.createElement("button");
+      sellLoot.type = "button";
+      sellLoot.className = "primary";
+      sellLoot.textContent = "Vender todo o loot";
+      sellLoot.onclick = () => room.send("sellLoot");
+      const h1 = document.createElement("h2");
+      h1.textContent = "Comprar";
+      const h2 = document.createElement("h2");
+      h2.textContent = "Vender";
+      body.replaceChildren(h1, buy, h2, sellLoot, sell);
+    }
+  }
+
+  return {
+    /** fecha a janela se o jogador se afastar do depot ou da loja */
+    onMove(x: number, y: number) {
+      const at = open === "depot" ? DEPOT : open === "shop" ? SHOP_NPC : open === "travel" ? SENKAIMON : null;
+      if (at && chebyshev(x, y, at.x, at.y) > INTERACT_RANGE) close();
+    },
+  };
+}

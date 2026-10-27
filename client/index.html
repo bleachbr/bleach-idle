@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bleach Idle</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="login" class="screen" hidden>
+      <form id="auth-form" class="card">
+        <h1>Bleach Idle <small>protótipo</small></h1>
+        <label>Login <input id="login-name" maxlength="20" autocomplete="username" required /></label>
+        <label>Senha <input id="login-pass" type="password" minlength="6" maxlength="72" autocomplete="current-password" required /></label>
+        <label class="check"><input type="checkbox" id="remember" checked /> Lembrar neste navegador</label>
+        <div class="row">
+          <button type="submit" value="login" class="primary">Entrar</button>
+          <button type="submit" value="register">Criar conta</button>
+        </div>
+        <p class="error" id="auth-error"></p>
+      </form>
+    </div>
+
+    <div id="lobby" class="screen" hidden>
+      <div class="card">
+        <h1>Personagens <small id="acc-login"></small></h1>
+        <div id="char-list"></div>
+        <h2>Novo personagem</h2>
+        <form id="create-form">
+          <label>Nome <input id="new-name" maxlength="16" autocomplete="off" required /></label>
+          <div id="chars"></div>
+          <button type="submit" class="primary">Criar personagem</button>
+        </form>
+        <p class="error" id="lobby-error"></p>
+        <button type="button" id="logout-btn" class="link">Sair da conta</button>
+      </div>
+    </div>
+
+    <div id="app" hidden>
+      <aside id="side">
+        <section id="stats">
+          <div class="who"><b id="pname"></b> <span id="plevel"></span><button type="button" id="exit-btn" class="link" title="Voltar à lista de personagens">trocar</button></div>
+          <div class="bar hp"><i></i><span></span></div>
+          <div class="bar rei"><i></i><span></span></div>
+          <div class="bar exp"><i></i><span></span></div>
+          <div id="pform"></div>
+          <div id="pvp-lock" hidden></div>
+        </section>
+        <section id="skills">
+          <h2>Atalhos</h2>
+          <div><kbd>1</kbd> <span id="skill-name"></span></div>
+          <div><kbd>2</kbd> Poção de Cura (<span id="potions">0</span>)</div>
+          <div><kbd>3</kbd> Poção de Reiatsu (<span id="rei-potions">0</span>)</div>
+          <div><kbd>T</kbd> Shikai ↔ Bankai</div>
+          <div><kbd>R</kbd> Voltar à cidade</div>
+          <div><kbd>Tab</kbd> próximo alvo · <kbd>Esc</kbd> soltar alvo</div>
+          <div><kbd>WASD</kbd> ou clique no chão para andar</div>
+        </section>
+        <section id="gear">
+          <h2>Equipamento</h2>
+          <div id="atkdef"></div>
+          <div id="equip" class="grid"></div>
+          <h2>Inventário <span id="gold"></span></h2>
+          <div id="inv" class="grid"></div>
+          <p class="hint">Clique para equipar ou usar. Baú (depot) e loja ficam na praça.</p>
+        </section>
+        <section id="party">
+          <h2>Party</h2>
+          <div id="invite" hidden><span id="invite-text"></span> <button type="button" id="invite-yes">Aceitar</button> <button type="button" id="invite-no" class="link">recusar</button></div>
+          <div id="party-list"></div>
+          <button type="button" id="party-leave" class="link" hidden>Sair da party</button>
+        </section>
+        <section id="auto">
+          <h2>Auto Helper</h2>
+          <label><input type="checkbox" id="auto-target" /> Auto Target</label>
+          <label><input type="checkbox" id="auto-hunt" /> Auto Hunt (continua offline)</label>
+          <label><input type="checkbox" id="auto-heal-on" /> Auto Heal abaixo de <input type="number" id="auto-heal" min="10" max="90" step="5" value="50" />%</label>
+        </section>
+      </aside>
+      <main>
+        <div id="game"></div>
+        <div id="ctx" hidden></div>
+        <div id="death" hidden>
+          <h2>Você morreu</h2>
+          <div id="death-body"></div>
+          <button type="button" id="death-ok">Voltar a jogar</button>
+        </div>
+        <div id="modal" hidden>
+          <header><b id="modal-title"></b><button type="button" id="modal-close" aria-label="Fechar">✕</button></header>
+          <div id="modal-body"></div>
+        </div>
+        <div id="chat">
+          <div id="chatlog"></div>
+          <input id="chatin" maxlength="200" placeholder="Enter para conversar" autocomplete="off" />
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
