@@ -28,6 +28,11 @@ export const SPRITES: Record<string, SpriteDef> = {
   hollow_menor: { frame: 96 },
   hollow_rastejante: { frame: 96 },
   hollow_acido: { frame: 96 },
+  hollow_sombrio: { frame: 96 },
+  hollow_uivante: { frame: 96 },
+  hollow_faminto: { frame: 96 },
+  hollow_encouracado: { frame: 96 },
+  hollow_devorador: { frame: 96 },
   grand_fisher: { frame: 96 },
 };
 
@@ -130,18 +135,18 @@ export interface MonsterDef {
 const m = (id: string, name: string, hp: number, atk: number, def: number, exp: number, scale: number, tint: number, stepMs = 420, respawnMs = 20000, sprite = "hollow"): MonsterDef =>
   ({ id, name, hp, atk, def, exp, scale, tint, stepMs, attackMs: 1400, respawnMs, sprite });
 
-// Hollows comuns de Karakura: um sprite variando tamanho e cor. Fishbone D, Grand Fisher,
-// os de Hueco Mundo e o boneco de treino têm sprites próprios.
+// Todos os monstros têm sprite próprio (gerados pelo Codex; veja art/raw/prompts.md).
+// O sprite genérico "hollow" fica disponível para monstros novos ainda sem arte.
 // Onde cada um nasce fica no mapa (objetos "spawn" na camada "logica" do Tiled).
 export const MONSTERS: Record<string, MonsterDef> = Object.fromEntries([
   m("hollow_menor", "Hollow Menor", 45, 7, 0, 60, 1, 0xffffff, 450, 20000, "hollow_menor"),
   m("hollow_rastejante", "Hollow Rastejante", 80, 10, 1, 110, 1, 0xffffff, 420, 20000, "hollow_rastejante"),
-  m("hollow_sombrio", "Hollow Sombrio", 120, 13, 2, 170, 0.68, 0x8a8aa0),
-  m("hollow_uivante", "Hollow Uivante", 160, 16, 2, 240, 0.74, 0xffd6a0, 360),
-  m("hollow_faminto", "Hollow Faminto", 220, 19, 3, 330, 0.8, 0xffb0b0),
+  m("hollow_sombrio", "Hollow Sombrio", 120, 13, 2, 170, 1, 0xffffff, 420, 20000, "hollow_sombrio"),
+  m("hollow_uivante", "Hollow Uivante", 160, 16, 2, 240, 1, 0xffffff, 360, 20000, "hollow_uivante"),
+  m("hollow_faminto", "Hollow Faminto", 220, 19, 3, 330, 1, 0xffffff, 420, 20000, "hollow_faminto"),
   m("hollow_acido", "Hollow Ácido", 280, 22, 4, 420, 1, 0xffffff, 420, 20000, "hollow_acido"),
-  m("hollow_encouracado", "Hollow Encouraçado", 380, 24, 8, 560, 0.9, 0xa8c4ff, 520),
-  m("hollow_devorador", "Hollow Devorador", 480, 30, 6, 720, 0.97, 0xffffff),
+  m("hollow_encouracado", "Hollow Encouraçado", 380, 24, 8, 560, 1, 0xffffff, 520, 20000, "hollow_encouracado"),
+  m("hollow_devorador", "Hollow Devorador", 480, 30, 6, 720, 1, 0xffffff, 420, 20000, "hollow_devorador"),
   m("fishbone", "Fishbone D", 700, 36, 8, 1100, 1, 0xffffff, 420, 20000, "fishbone"),
   m("grand_fisher", "Grand Fisher", 2600, 48, 12, 6000, 1, 0xffffff, 380, 180000, "grand_fisher"),
   m("adjuchas", "Adjuchas", 950, 42, 10, 1500, 1, 0xffffff, 330, 25000, "adjuchas"),

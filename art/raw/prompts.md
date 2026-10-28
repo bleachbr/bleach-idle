@@ -224,3 +224,71 @@ A monster: a huge, hunched, gorilla-like spirit beast with black fur and a white
 ```text
 A monster: a tall, thin fish-like humanoid spirit with dark blue-grey skin, a white bone mask shaped like a fish skeleton head with a long jaw full of needle teeth, fin-like spikes along its back and forearms, long webbed claws, and a round hole through the chest. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT (left side view), row 3 walking RIGHT (right side view), row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
 ```
+
+# Rodada 8: Bankai da Rukia e do Renji e três Hollows de Karakura
+
+Script `work/gen_round8.sh`. Os Bankais são edições das folhas base (08 e 11); os Hollows usam a folha 09 como referência. Os cinco na 1ª tentativa.
+
+## p_32_rukia_bankai_walk
+
+```text
+This is an EDIT of the attached sprite sheet: keep EXACTLY the same 4x4 layout, the same 16 cells, the same poses, the same body positions, the same scale, the same feet baseline, the same art style, the same outline (#1a1822) and the same solid magenta #FF00FF background. Row 1 walking down (front), row 2 walking left, row 3 walking right, row 4 walking up (back). Change ONLY what is described below, consistently in all 16 cells. Nothing may cross a cell edge. No text, no labels, no grid lines, no border. Her ice power-up form: her hair becomes pure white, her skin pale with a faint frosty blue tint, and her black kimono is replaced by a flowing pure white kimono with icy pale-blue edges and small ice crystals at the shoulders and hem; her katana is now pure white. Same face, same height and proportions.
+```
+
+## p_33_renji_bankai_walk
+
+```text
+This is an EDIT of the attached sprite sheet: keep EXACTLY the same 4x4 layout, the same 16 cells, the same poses, the same body positions, the same scale, the same feet baseline, the same art style, the same outline (#1a1822) and the same solid magenta #FF00FF background. Row 1 walking down (front), row 2 walking left, row 3 walking right, row 4 walking up (back). Change ONLY what is described below, consistently in all 16 cells. Nothing may cross a cell edge. No text, no labels, no grid lines, no border. His power-up form: a thick shaggy dark-red baboon fur mantle draped over his shoulders and back (with a white skull-like ornament at the collar), the black kimono underneath; his sword is replaced by a long segmented bone-white whip-sword held in his right hand and trailing behind him, kept close to the body so it does not cross the cell edges. Same red hair in a ponytail, bandana, tattoos and proportions.
+```
+
+## p_34_hollow_menor_walk
+
+```text
+A monster: a small, scrawny goblin-like spirit (about half the size of the reference monster) with grey-black skin, thin limbs, big claws, a cracked white bone mask with round eye holes and a toothy grin, and a small hole through its chest. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_35_hollow_rastejante_walk
+
+```text
+A monster: a long centipede-like spirit crawler with a segmented black body with dark-green shading, many thin legs, low to the ground, a white bone mask shaped like an insect skull with mandibles, and a hole through its front segment. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_36_hollow_acido_walk
+
+```text
+A monster: a bloated, toad-like spirit with dark olive-green warty skin, glowing yellow-green acid sacs on its back, a wide white bone mask with a huge frog mouth dripping green acid, short thick legs, and a hole through its belly. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+# Rodada 9: os outros cinco Hollows de Karakura
+
+Script `work/gen_round9.sh` (referência 09). Os cinco na 1ª tentativa.
+
+## p_37_hollow_sombrio_walk
+
+```text
+A monster: a ghostly, shadowy humanoid spirit made of tattered dark smoke-like rags with a grey-violet tint, a long thin white bone mask with narrow slit eyes, long thin arms ending in claws, floating legs that fade into wisps, and a hole through the chest. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_38_hollow_uivante_walk
+
+```text
+A monster: a hyena-like four-legged spirit with ragged orange-brown fur and dark stripes, a white bone mask shaped like a howling canine skull with an open mouth, a bushy tail, and a hole through its side. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_39_hollow_faminto_walk
+
+```text
+A monster: a gaunt, starving humanoid spirit with grey skin stretched over visible ribs, a huge drooling mouth on a white bone mask with many teeth, long clawed arms, a red-tinted glow inside the hole in its chest. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_40_hollow_encouracado_walk
+
+```text
+A monster: a heavy armored spirit like a giant armadillo-beetle standing on two thick legs, covered in steel-blue bone armor plates, a white bone helmet-like mask with small eye holes, huge armored fists, and a hole through the center of its chest plate. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_41_hollow_devorador_walk
+
+```text
+A monster: a hulking, obese spirit with dark crimson-black skin, a gigantic mouth across its belly lined with teeth, a small white bone mask on its head with three eye holes, stubby legs and long arms, and a hole through its upper chest. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```

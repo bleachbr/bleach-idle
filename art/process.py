@@ -58,6 +58,11 @@ GAME_SPRITES = {
     "hollow_menor": ("34_hollow_menor_walk.png", 4, 4, 0.8, 2),
     "hollow_rastejante": ("35_hollow_rastejante_walk.png", 4, 4, 0.85, 2),
     "hollow_acido": ("36_hollow_acido_walk.png", 4, 4, 1.15, 2),
+    "hollow_sombrio": ("37_hollow_sombrio_walk.png", 4, 4, 1.0, 2),
+    "hollow_uivante": ("38_hollow_uivante_walk.png", 4, 4, 0.95, 2),
+    "hollow_faminto": ("39_hollow_faminto_walk.png", 4, 4, 1.15, 2),
+    "hollow_encouracado": ("40_hollow_encouracado_walk.png", 4, 4, 1.25, 2),
+    "hollow_devorador": ("41_hollow_devorador_walk.png", 4, 4, 1.35, 2),
 }
 
 

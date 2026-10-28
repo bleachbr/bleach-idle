@@ -104,7 +104,7 @@ Tiles de Karakura e Hueco Mundo: [Roguelike Modern City](https://kenney.nl/asset
 - **Contas:** sem e-mail nem recuperação ou troca de senha. Sem moderação de chat.
 - **Servidor:** ingressos e limite de tentativas ficam na memória do processo (um servidor só). Numa queda brusca se perdem até ~10 s de progresso.
 - **Arte:** Karakura e Hueco Mundo usam tiles da Kenney, mais simples que os personagens; a Soul Society já tem arte própria. Não há interiores de prédios nem andares.
-- **Sprites:** alguns Hollows de Karakura (Sombrio, Uivante, Faminto, Encouraçado, Devorador) ainda são um sprite recolorido. Só haori e máscara mudam o visual.
+- **Sprites:** só haori e máscara mudam o visual do personagem.
 - **Corpos e sacolas** ficam só na memória: somem se o servidor reiniciar.
 - **Mercado:** anúncios não expiram, e não há troca direta entre jogadores.
 - **Servidor:** limite de 40 mensagens/s por cliente e de 4 KB por mensagem; mensagens acima disso derrubam só a conexão de quem mandou.
