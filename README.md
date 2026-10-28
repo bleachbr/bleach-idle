@@ -26,7 +26,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 
 ## O que o jogo tem
 **Contas e personagens**
-- **Login e senha:** hash scrypt; bloqueio de 1 min depois de 5 senhas erradas (30 por IP); "Lembrar neste navegador" com token de 30 dias.
+- **Login e senha:** hash scrypt; bloqueio de 1 min depois de 5 senhas erradas (30 por IP); "Lembrar neste navegador" com token de 30 dias. Troca de senha na tela de personagens (derruba os outros aparelhos lembrados).
 - **Personagens:** até 5 por conta, com nome único: Ichigo, Rukia ou Renji.
 - **Entrada no mundo:** por ingresso de uso único. Se o mesmo personagem abre em outra janela, a nova assume.
 
@@ -42,7 +42,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Níveis:** fórmula do Tibia, começando no nível 8. Shikai/Bankai na tecla T (nível 10+), com mais dano e velocidade, mas gastando reiatsu.
 - **Monstros:** 18 tipos, mais o boneco de treino, todos com sprite próprio. Chefes: Grand Fisher (Karakura), Metastacia (sul do Rukongai), Gillian (Hueco Mundo) e Privaron Espada (Las Noches).
 - **Treino:** **Zanjutsu** sobe com golpes e aumenta o dano corpo a corpo (+2%/nível). **Reiryoku** sobe com o reiatsu gasto e aumenta o dano das habilidades (+3%/nível). O **Auto Treino** queima o reiatsu parado, e os **bonecos de treino** da Soul Society não morrem. Os dois continuam offline.
-- **Morte (estilo Tibia):** perde 8% de XP, 10% do dinheiro carregado e cada item tem 10% de chance de cair. O que cai fica num **corpo no chão** por 5 minutos; em PvP, quem matou (e a party dele) tem prioridade por 1 minuto. O **Amuleto da Alma** protege tudo, e o depot nunca perde nada.
+- **Morte (estilo Tibia):** perde 8% de XP, 10% do dinheiro carregado e cada item tem 10% de chance de cair. O que cai fica num **corpo no chão** por 5 minutos (sobrevive a um reinício do servidor); em PvP, quem matou (e a party dele) tem prioridade por 1 minuto. O **Amuleto da Alma** protege tudo, e o depot nunca perde nada.
 - **Missões do Kisuke:** 15, de caçar ou entregar itens, com XP, kan e itens de recompensa. O progresso de caça conta para a party, e o Auto Hunt prioriza os monstros das missões.
 
 **Progresso de longo prazo** (botão "livro" ao lado do nome)
@@ -66,7 +66,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **PvP em mundo aberto:** a partir do nível 10, fora da zona segura, com dano pela metade. Quem ataca fica **marcado** por 3 min, sem viajar nem entrar na zona segura. O Auto Helper revida.
 - **Caveira (☠):** matar quem não atacou ninguém vira **assassino** por 15 min (somando até 2 h). O assassino não pode viajar, e qualquer um pode atacá-lo sem ser marcado. Se morrer, perde 50% de chance por item e 30% do dinheiro, e o Amuleto da Alma não protege. Atacar ou matar quem está marcado ou é assassino é defesa e não pune.
 - **Guildas:** `/guilda criar Nome` (500 kan, nível 10+), convites, banco, líder e tag no nome.
-- **Chat:** `/pm Nome, msg`, `/p` (party), `/g` (guilda) e `/ajuda`.
+- **Chat:** `/pm Nome, msg`, `/p` (party), `/g` (guilda), `/ignorar Nome` (para de receber as mensagens dessa pessoa) e `/ajuda`.
 - **Ranking:** nível, abates em PvP, guildas, conquistas e bestiário.
 
 **Automação (Auto Helper)**
@@ -128,10 +128,9 @@ Avulsos (com o servidor rodando): `partner.ts` (um bot que aceita convites de pa
 Toda a arte do jogo foi gerada pelo Codex para este projeto. Os pacotes CC0 da Kenney ([Roguelike Modern City](https://kenney.nl/assets/roguelike-modern-city) e [Roguelike RPG Pack](https://kenney.nl/assets/roguelike-rpg-pack); licenças em `art/maps/kenney/`) seguem no repositório porque o `build_maps.py` volta a usá-los se a arte própria faltar.
 
 ## Limitações conhecidas
-- **Contas:** sem e-mail nem recuperação ou troca de senha. Sem moderação de chat.
+- **Contas:** sem e-mail, então não há recuperação de senha esquecida. A moderação de chat se resume ao `/ignorar`.
 - **Servidor:** ingressos e limite de tentativas ficam na memória do processo (um servidor só). Numa queda brusca se perdem até ~10 s de progresso.
 - **Arte:** não há interiores de prédios nem andares.
 - **Sprites:** só haori e máscara mudam o visual do personagem.
-- **Corpos e sacolas** ficam só na memória: somem se o servidor reiniciar.
 - **Mercado:** não há troca direta entre jogadores.
 - **Servidor:** limite de 40 mensagens/s por cliente e de 4 KB por mensagem; mensagens acima disso derrubam só a conexão de quem mandou.

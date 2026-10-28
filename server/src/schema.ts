@@ -77,6 +77,8 @@ export class Player extends Schema {
   offlineDeaths: DeathReport[] = [];
   /** abates e loot da caçada offline, para o relatório da volta */
   offKills = 0;
+  /** ids dos jogadores cujas mensagens não chegam a este (/ignorar) */
+  ignore: string[] = [];
   offItems: Record<string, number> = {};
 }
 

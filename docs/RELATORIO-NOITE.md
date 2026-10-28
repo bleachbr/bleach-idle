@@ -61,7 +61,6 @@ Resultado da última bateria completa: veja o fim deste arquivo.
 ## O que ficou pendente ou não verificado
 - **Online:** nada foi contratado. O `Dockerfile` não foi construído (o Docker não está instalado aqui). O modo de produção sem Docker foi testado. O passo a passo está em `DEPLOY.md`.
 - **Navegador:** os testes visuais foram limitados, porque o painel do navegador estava escondido e o jogo não desenha quadros nesse estado. A lógica foi coberta pelos testes automáticos, mas vale você abrir e olhar o minimapa, o mercado, a caveira e os corpos no chão.
-- **Memória:** corpos e sacolas no chão somem se o servidor reiniciar.
 
 ## Sugestões de próximos passos
 1. **Pôr no ar** (Oracle grátis + DuckDNS, veja `DEPLOY.md`) e chamar amigos para testar: o jogo já tem conteúdo e sistemas suficientes.
@@ -148,3 +147,9 @@ O simulador mostrou que o conteúdo acabava no Arrancar. Para isso fiz o **quart
 - **Teste:** cenário novo `lasnoches`, que confere a viagem e os monstros.
 
 Resultado: `npm test` 76 de 76 e `npm run test:scripts` 192 de 192.
+
+## Antes de ir ao ar: conta e chat
+- **Troca de senha** na tela de personagens. Ela pede a senha atual, conta tentativas erradas para o bloqueio e derruba os outros aparelhos lembrados.
+- **`/ignorar Nome`** no chat: as mensagens dessa pessoa param de chegar, no público, na PM, na party e na guilda. A lista é salva com o personagem.
+- **Corpos e sacolas sobrevivem a um reinício do servidor:** são salvos junto com o resto a cada 10 s e voltam com o mesmo prazo.
+- **Testes:** cenário novo `account2`, e o `restart` agora confere o corpo depois da queda.

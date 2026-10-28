@@ -23,6 +23,7 @@ export interface SaveData {
   skullUntil?: number;
   autoTrain?: boolean;
   autoSell?: boolean;
+  ignore?: string[];
   zanjutsu?: number;
   zanTries?: number;
   reiryoku?: number;
@@ -106,6 +107,12 @@ export function sessionAccount(token: string): { accountId: number; login: strin
   ).get(sha(token)) as { id: number; login: string; exp: number } | undefined;
   if (!row || row.exp < Date.now()) return undefined;
   return { accountId: row.id, login: row.login };
+}
+
+/** Troca a senha e derruba as sessões lembradas (menos a atual, se houver). */
+export function setPassword(accountId: number, passHash: string, keepToken?: string) {
+  db.prepare("UPDATE accounts SET pass = ? WHERE id = ?").run(passHash, accountId);
+  db.prepare("DELETE FROM sessions WHERE account_id = ? AND token_hash != ?").run(accountId, keepToken ? sha(keepToken) : "");
 }
 
 export function deleteSession(token: string) {

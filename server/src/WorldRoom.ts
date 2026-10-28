@@ -34,6 +34,7 @@ const HELP = [
   `/guilda criar Nome (${GUILD_COST} kan, nível ${GUILD_MIN_LEVEL}+) · /guilda convidar Nome · /guilda aceitar · /guilda recusar`,
   "/guilda sair · /guilda expulsar Nome · /guilda lider Nome · /guilda depositar N · /guilda sacar N (líder) · /guilda info",
   "/ranking — abre o ranking",
+  "/ignorar Nome — liga ou desliga as mensagens dessa pessoa · /ignorar — mostra a lista",
 ];
 
 const OFFLINE_MAX_MS = 12 * 3600_000;
@@ -50,6 +51,9 @@ const sameMap = (a: { map: string }, b: { map: string }) => a.map === b.map;
 const isPlayer = (e: Player | Monster): e is Player => e instanceof Player;
 
 interface Party { id: string; leader: string; members: string[]; warnedAt: number }
+
+/** corpo ou sacola no chão, como fica salvo no banco */
+type SavedBag = Pick<Bag, "id" | "map" | "x" | "y" | "kind" | "label" | "owners" | "ownerUntil" | "expires" | "gold" | "items">;
 
 // taxa de XP dos monstros, como nos servidores de Tibia (1 = o valor da tabela). Veja scripts/balance.ts.
 const EXP_RATE = Number(process.env.EXP_RATE) || 1;
@@ -169,7 +173,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const text = String(m?.text ?? "").trim().slice(0, 200);
       if (!p || !text) return;
       if (text.startsWith("/")) return this.command(p, text);
-      this.broadcast("chat", { from: this.display(p), text });
+      for (const x of this.state.players.values()) if (!x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: this.display(p), text });
     });
     this.handle("ranking", (c) => c.send("ranking", this.ranking()));
     if (process.env.BI_DEBUG) {
@@ -275,6 +279,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.skullUntil = saved.skullUntil ?? 0;
     p.autoTrain = !!saved.autoTrain;
     p.autoSell = !!saved.autoSell;
+    p.ignore = (saved.ignore ?? []).slice(0, 100);
     p.zanjutsu = saved.zanjutsu ?? 0;
     p.zanTries = saved.zanTries ?? 0;
     p.reiryoku = saved.reiryoku ?? 0;
@@ -333,6 +338,14 @@ export class WorldRoom extends GameRoom<WorldState> {
         p.partyLead = id === leader;
       }
       this.partySeq = Math.max(this.partySeq, Number(party.id.replace(/\D/g, "")) || 0);
+    }
+    // corpos e sacolas: voltam com o mesmo prazo (o tempo fora do ar também conta)
+    const now = Date.now();
+    for (const sb of db.getMeta<SavedBag[]>("bags") ?? []) {
+      if (sb.expires <= now || !MAPS[sb.map]) continue;
+      const b = Object.assign(new Bag(), sb);
+      this.state.bags.set(b.id, b);
+      this.bagSeq = Math.max(this.bagSeq, Number(b.id.replace(/\D/g, "")) || 0);
     }
   }
 
@@ -1157,6 +1170,19 @@ export class WorldRoom extends GameRoom<WorldState> {
       case "ajuda":
       case "help":
         return HELP.forEach((l) => this.sendTo(p, "chat", { from: "", text: l, ch: "sys" }));
+      case "ignorar": {
+        if (!rest) return this.log(p, p.ignore.length ? `Ignorando: ${p.ignore.join(", ")}.` : "Você não ignora ninguém.");
+        const id = rest.toLowerCase().trim();
+        if (id === p.id) return this.log(p, "Não dá para ignorar você mesmo.");
+        if (p.ignore.includes(id)) {
+          p.ignore = p.ignore.filter((x) => x !== id);
+          return this.log(p, `Você voltou a ver as mensagens de ${rest}.`);
+        }
+        if (!db.load(id)) return this.log(p, `Ninguém se chama ${rest}.`);
+        if (p.ignore.length >= 100) return this.log(p, "Lista de ignorados cheia (100).");
+        p.ignore.push(id);
+        return this.log(p, `Ignorando ${rest}: as mensagens dele não chegam mais a você.`);
+      }
       case "pm": {
         // "Nome, mensagem" (nomes podem ter espaço); sem vírgula, a 1ª palavra é o nome
         const i = rest.indexOf(",");
@@ -1164,7 +1190,7 @@ export class WorldRoom extends GameRoom<WorldState> {
         const v = this.findPlayer(to);
         if (!v || !v.online) return this.log(p, `${to || "?"} não está online.`);
         if (!msg) return this.log(p, "Uso: /pm Nome, mensagem");
-        this.sendTo(v, "chat", { from: p.name, text: msg, ch: "pm" });
+        if (!v.ignore.includes(p.id)) this.sendTo(v, "chat", { from: p.name, text: msg, ch: "pm" });
         return this.sendTo(p, "chat", { from: `para ${v.name}`, text: msg, ch: "pm" });
       }
       case "p": {
@@ -1172,13 +1198,13 @@ export class WorldRoom extends GameRoom<WorldState> {
         if (!party) return this.log(p, "Você não está numa party.");
         for (const id of party.members) {
           const x = this.state.players.get(id);
-          if (x) this.sendTo(x, "chat", { from: p.name, text: rest, ch: "party" });
+          if (x && !x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: p.name, text: rest, ch: "party" });
         }
         return;
       }
       case "g": {
         if (!p.guildId) return this.log(p, "Você não está numa guilda.");
-        return this.guildSay(p.guildId, { from: p.name, text: rest, ch: "guild" });
+        return this.guildSay(p.guildId, { from: p.name, text: rest, ch: "guild" }, p.id);
       }
       case "guilda":
       case "guild":
@@ -1297,8 +1323,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.sendTo(p, "guild", null);
   }
 
-  private guildSay(guildId: number, msg: { from: string; text: string; ch: string }) {
-    for (const x of this.state.players.values()) if (x.guildId === guildId) this.sendTo(x, "chat", msg);
+  private guildSay(guildId: number, msg: { from: string; text: string; ch: string }, fromId = "") {
+    for (const x of this.state.players.values()) if (x.guildId === guildId && !x.ignore.includes(fromId)) this.sendTo(x, "chat", msg);
   }
 
   /** Painel da guilda (nome, tag, banco, membros) para quem está online nela. */
@@ -1855,7 +1881,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       name: p.name, charId: p.charId, level: p.level, exp: p.exp, hp: p.hp, rei: Math.round(p.rei), map: p.map, x: p.x, y: p.y,
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
       autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil, prog: p.prog, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
-      autoTrain: p.autoTrain, autoSell: p.autoSell, zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
+      autoTrain: p.autoTrain, autoSell: p.autoSell, ignore: p.ignore, zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
       offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, zanAtLeave: p.zanAtLeave, reiAtLeave: p.reiAtLeave, deaths: p.offlineDeaths, kills: p.offKills, items: p.offItems },
     };
   }
@@ -1863,5 +1889,8 @@ export class WorldRoom extends GameRoom<WorldState> {
   private saveAll() {
     db.saveMany([...this.state.players.values()].map((p) => ({ id: p.id, data: this.toSave(p), inWorld: true })));
     db.setMeta("parties", [...this.parties.values()]);
+    db.setMeta("bags", [...this.state.bags.values()].map((b): SavedBag => ({
+      id: b.id, map: b.map, x: b.x, y: b.y, kind: b.kind, label: b.label, owners: b.owners, ownerUntil: b.ownerUntil, expires: b.expires, gold: b.gold, items: b.items,
+    })));
   }
 }

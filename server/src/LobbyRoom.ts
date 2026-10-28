@@ -89,6 +89,20 @@ export class LobbyRoom extends GameRoom {
       if (!row || row.accountId !== accountId) return c.send("error", { text: "Personagem não encontrado." });
       c.send("ticket", { ticket: issueTicket({ accountId, charId: row.id }) });
     });
+    this.handle("password", async (c, m: { old: string; new: string }) => {
+      const { accountId, login, token } = c.userData as Auth;
+      const oldPw = String(m?.old ?? ""), newPw = String(m?.new ?? "");
+      if (blocked(login)) return c.send("error", { text: "Muitas tentativas. Espere um minuto." });
+      if (newPw.length < 6 || newPw.length > 72) return c.send("error", { text: "Nova senha: de 6 a 72 caracteres." });
+      const acc = db.getAccount(login);
+      if (!acc || acc.id !== accountId || !(await verifyPassword(oldPw, acc.pass))) {
+        fail(login);
+        return c.send("error", { text: "Senha atual incorreta." });
+      }
+      clearFails(login);
+      db.setPassword(accountId, await hashPassword(newPw), token);
+      c.send("passwordOk", {});
+    });
     this.handle("logout", (c) => {
       const { token } = c.userData as Auth;
       if (token) db.deleteSession(token);

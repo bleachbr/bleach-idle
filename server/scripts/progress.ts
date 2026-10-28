@@ -50,7 +50,9 @@ ok("perder um dia zera a sequência", c.book().daily.streak === 1);
 b.room.send("travel", { dest: "leste" });
 await sleep(400);
 b.room.send("auto", { autoHunt: true, autoHeal: 40 });
-for (let i = 0; i < 120 && !b.logs.some((l) => l.includes("Conquista: Purificador")); i++) await sleep(500);
+// espera as duas coisas: o 1º abate pode ser de outro Hollow da floresta
+const both = () => b.logs.some((l) => l.includes("Conquista: Purificador")) && b.logs.some((l) => l.includes("Bestiário: Hollow Menor no estágio 1"));
+for (let i = 0; i < 180 && !both(); i++) await sleep(500);
 b.room.send("auto", { autoHunt: false });
 b.room.send("book");
 await sleep(300);

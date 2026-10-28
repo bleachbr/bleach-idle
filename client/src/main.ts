@@ -50,6 +50,10 @@ async function enterLobby(opts: Record<string, unknown>) {
   });
   room.onMessage("chars", renderChars);
   room.onMessage("error", (m: { text: string }) => ($("#lobby-error").textContent = m.text));
+  room.onMessage("passwordOk", () => {
+    $("#pw-msg").textContent = "Senha trocada. Os outros aparelhos lembrados precisam entrar de novo.";
+    $<HTMLFormElement>("#pw-form").reset();
+  });
   room.onMessage("ticket", async (m: { ticket: string }) => {
     lobby = null;
     await room.leave();
@@ -134,6 +138,13 @@ $("#create-form").addEventListener("submit", (e) => {
   $("#lobby-error").textContent = "";
   lobby?.send("create", { name: $<HTMLInputElement>("#new-name").value.trim(), charId });
   $<HTMLInputElement>("#new-name").value = "";
+});
+
+$("#pw-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  $("#lobby-error").textContent = "";
+  $("#pw-msg").textContent = "";
+  lobby?.send("password", { old: $<HTMLInputElement>("#pw-old").value, new: $<HTMLInputElement>("#pw-new").value });
 });
 
 $("#logout-btn").onclick = () => {
