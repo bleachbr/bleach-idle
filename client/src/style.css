@@ -173,3 +173,16 @@ body.touch #touch { bottom: 120px; }
   #skills { display: block; }
   main { height: 100%; }
 }
+
+/* ---------- minimapa ---------- */
+#minimap { position: absolute; top: 8px; right: 8px; width: 128px; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 4px; background: #000; z-index: 9; cursor: crosshair; opacity: .9; }
+@media (max-width: 720px) { #minimap { width: 96px; top: 56px; } }
+
+/* ---------- mercado ---------- */
+.market-form { display: flex; gap: 6px; margin: 6px 0; }
+.market-form select, .market-form input { min-width: 0; flex: 1; padding: 4px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 4px; }
+.market-form input { max-width: 80px; }
+
+.shop-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+.shop-tabs button { flex: 1; padding: 5px 8px !important; background: var(--bg) !important; color: var(--muted) !important; border: 1px solid var(--line) !important; border-radius: 4px; cursor: pointer; }
+.shop-tabs button[aria-pressed="true"] { color: var(--text) !important; border-color: var(--accent) !important; }

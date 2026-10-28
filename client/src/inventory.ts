@@ -38,6 +38,9 @@ function tooltip(d: ItemDef) {
 
 export function initInventory(room: Room<any>, onPanel: (open: boolean) => void, myLevel: () => number) {
   let quests: QuestState = { active: {}, done: [] };
+  let shopTab: "missoes" | "loja" | "mercado" = "loja";
+  let marketData: { listings: { id: number; seller: string; sellerName: string; item: string; qty: number; price: number }[]; me: string; fee: number } | null = null;
+  room.onMessage("market", (m: typeof marketData) => { marketData = m; render(); });
   let state: InvMsg | null = null;
   let open: "" | "depot" | "shop" | "travel" | "bag" = "";
   let bag: { id: string; label: string; gold: number; items: Slot[]; locked: boolean; until: number } | null = null;
@@ -72,6 +75,7 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
   });
   room.state.bags.onRemove((_b: any, id: string) => { if (open === "bag" && bag?.id === id) close(); });
   room.onMessage("open", (m: { kind: "depot" | "shop" | "travel" }) => {
+    if (m.kind === "shop") room.send("marketList");
     open = m.kind;
     openedAt = { ...lastPos };
     $("#modal").hidden = false;
@@ -234,10 +238,78 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
       h1.textContent = "Comprar";
       const h2 = document.createElement("h2");
       h2.textContent = "Vender";
-      const h0 = document.createElement("h2");
-      h0.textContent = "Missões";
-      body.replaceChildren(h0, questList(count), h1, buy, h2, sellLoot, sell);
+      // abas: com tudo empilhado, o mercado ficava escondido no fim da janela
+      const tabs = document.createElement("div");
+      tabs.className = "tabs shop-tabs";
+      for (const [id, label] of [["missoes", "Missões"], ["loja", "Loja"], ["mercado", "Mercado"]] as const) {
+        const t = document.createElement("button");
+        t.type = "button";
+        t.textContent = label;
+        t.setAttribute("aria-pressed", String(shopTab === id));
+        t.onclick = () => { shopTab = id; render(); };
+        tabs.append(t);
+      }
+      const content = shopTab === "missoes" ? [questList(count)]
+        : shopTab === "loja" ? [h1, buy, h2, sellLoot, sell]
+        : [marketSection(st)];
+      body.replaceChildren(tabs, ...content);
     }
+  }
+
+  function marketSection(st: InvMsg) {
+    const box = document.createElement("div");
+    const list = document.createElement("div");
+    list.className = "shop-list";
+    const listings = marketData?.listings ?? [];
+    if (!listings.length) list.innerHTML = `<p class="hint">Nenhum anúncio ainda.</p>`;
+    for (const l of listings) {
+      const d = ITEMS[l.item];
+      const row = document.createElement("div");
+      row.className = "shop-row";
+      row.innerHTML = `<span class="slot static">${iconHtml(d.icon, l.qty)}</span><span class="name"></span><span class="price">${l.price * l.qty} ${CURRENCY}</span>`;
+      const name = row.querySelector(".name")!;
+      name.textContent = `${l.qty}x ${d.name}`;
+      const by = document.createElement("small");
+      by.textContent = `${l.price} kan cada · de ${l.sellerName}`;
+      name.append(by);
+      const b = document.createElement("button");
+      b.type = "button";
+      if (l.seller === marketData?.me) {
+        b.textContent = "Cancelar";
+        b.onclick = () => room.send("marketCancel", { id: l.id });
+      } else {
+        b.textContent = "Comprar";
+        b.disabled = st.gold < l.price * l.qty;
+        b.onclick = () => room.send("marketBuy", { id: l.id });
+      }
+      row.append(b);
+      list.append(row);
+    }
+    // anunciar: item do inventário, quantidade e preço por unidade
+    const form = document.createElement("form");
+    form.className = "market-form";
+    const sel = document.createElement("select");
+    st.inv.forEach((s, i) => {
+      if (!s) return;
+      const o = document.createElement("option");
+      o.value = String(i);
+      o.textContent = `${ITEMS[s.id].name} (${s.qty})`;
+      sel.append(o);
+    });
+    const qty = Object.assign(document.createElement("input"), { type: "number", min: "1", value: "1", title: "Quantidade" });
+    const price = Object.assign(document.createElement("input"), { type: "number", min: "1", placeholder: "kan cada", title: "Preço por unidade" });
+    const go = Object.assign(document.createElement("button"), { type: "submit", textContent: "Anunciar" });
+    go.disabled = !sel.options.length;
+    form.append(sel, qty, price, go);
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      room.send("marketSell", { index: Number(sel.value), qty: Math.floor(Number(qty.value)), price: Math.floor(Number(price.value)) });
+    };
+    const hint = document.createElement("p");
+    hint.className = "hint";
+    hint.textContent = `O item fica guardado no mercado até alguém comprar (ou você cancelar). Taxa de ${Math.round((marketData?.fee ?? 0.05) * 100)}% sobre a venda; você recebe mesmo offline.`;
+    box.append(list, form, hint);
+    return box;
   }
 
   /** progresso de uma missão: abates contados no servidor; entregas = o que está no inventário */

@@ -39,14 +39,15 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Níveis:** fórmula do Tibia, começando no nível 8. Shikai/Bankai na tecla T (nível 10+), com mais dano e velocidade, mas gastando reiatsu.
 - **Monstros:** 13 tipos, mais o boneco de treino; os chefes são o Grand Fisher e o Gillian. Grand Fisher, Fishbone D e os de Hueco Mundo têm sprites próprios.
 - **Treino:** **Zanjutsu** sobe com golpes e aumenta o dano corpo a corpo (+2%/nível). **Reiryoku** sobe com o reiatsu gasto e aumenta o dano das habilidades (+3%/nível). O **Auto Treino** queima o reiatsu parado, e os **bonecos de treino** da Soul Society não morrem. Os dois continuam offline.
-- **Morte (estilo Tibia):** perde 8% de XP, 10% do dinheiro carregado e cada item tem 10% de chance de sumir. O **Amuleto da Alma** protege tudo, e o depot nunca perde nada.
+- **Morte (estilo Tibia):** perde 8% de XP, 10% do dinheiro carregado e cada item tem 10% de chance de cair. O que cai fica num **corpo no chão** por 5 minutos; em PvP, quem matou (e a party dele) tem prioridade por 1 minuto. O **Amuleto da Alma** protege tudo, e o depot nunca perde nada.
 - **Missões do Kisuke:** 9, de caçar ou entregar itens, com XP, kan e itens de recompensa. O progresso de caça conta para a party, e o Auto Hunt prioriza os monstros das missões.
 
 **Itens**
 - **Itens:** 15, mais o kan. 7 espaços de equipamento e 20 de inventário.
-- **Loot:** vai direto para o inventário, o que funciona também offline.
+- **Loot:** vai direto para o inventário, o que funciona também offline. O que não couber vira uma **sacola no chão**, reservada a quem matou por 1 minuto.
 - **Praça:** depot de 60 espaços e loja com "Vender todo o loot".
-- **Visual:** Haori de Capitão e Máscara de Osso mudam o sprite, e todos veem.
+- **Visual:** Haori de Capitão e Máscara de Osso mudam o sprite, e todos veem. Rukia e Renji têm sprite próprio no Bankai.
+- **Mercado entre jogadores** (aba no Kisuke): anuncie itens do inventário com preço por unidade; o item fica guardado até alguém comprar ou você cancelar. Taxa de 5% na venda, e o vendedor recebe mesmo fora do jogo.
 
 **Social**
 - **Party:** até 4, com XP dividida (+10% por membro, regra de 2/3 do nível). Sobrevive a um reinício do servidor.
@@ -59,6 +60,9 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - Auto Target, Auto Hunt, Auto Heal (%) e Auto Treino.
 - Com Auto Hunt ou Auto Treino, fechar o jogo não tira o personagem do mundo (até 12 h). Na volta chega um relatório de tempo, XP, kan, habilidades e mortes.
 - Isso sobrevive a reinício e queda do servidor.
+
+**Interface**
+- Minimapa no canto (você, party, outros jogadores e monstros); clique nele para andar até lá.
 
 **Celular**
 - Joystick e botões de ação em telas de toque, menu lateral recolhível e app instalável (PWA).
@@ -85,7 +89,8 @@ Cenários em `server/scripts/`:
 - **Mapas:** `mapcheck`.
 - **Contas:** `accounts`.
 - **Combate e personagem:** `bankai`, `outfit`, `death`, `training`, `spawncount`.
-- **Itens e missões:** `items`, `quests`.
+- **Itens, missões e economia:** `items`, `quests`, `bags` (corpos e sacolas), `market` (mercado).
+- **Robustez:** `robust` (lixo em todas as mensagens, rajada de 500, mensagem acima de 4 KB). O runner também conta como falha qualquer exceção registrada pelo servidor.
 - **Social:** `social` (party, PvP, viagem) e `social2` (chat, guildas, ranking).
 - **Offline e queda:** `bot` (hunt offline) e `restart` (queda do servidor com hunts e party).
 
@@ -98,7 +103,8 @@ Tiles de Karakura e Hueco Mundo: [Roguelike Modern City](https://kenney.nl/asset
 - **Contas:** sem e-mail nem recuperação ou troca de senha. Sem moderação de chat.
 - **Servidor:** ingressos e limite de tentativas ficam na memória do processo (um servidor só). Numa queda brusca se perdem até ~10 s de progresso.
 - **Arte:** Karakura e Hueco Mundo usam tiles da Kenney, mais simples que os personagens; a Soul Society já tem arte própria. Não há interiores de prédios nem andares.
-- **Sprites:** Rukia e Renji usam o mesmo sprite no Bankai, só com tint, e os Hollows comuns de Karakura ainda são um sprite recolorido. Só haori e máscara mudam o visual.
-- **Morte:** itens perdidos somem; não há corpo com loot no chão.
+- **Sprites:** alguns Hollows de Karakura (Sombrio, Uivante, Faminto, Encouraçado, Devorador) ainda são um sprite recolorido. Só haori e máscara mudam o visual.
+- **Corpos e sacolas** ficam só na memória: somem se o servidor reiniciar.
 - **PvP:** não há "caveira" (punição por matar sem motivo).
-- **Mercado:** não há mercado nem troca entre jogadores.
+- **Mercado:** anúncios não expiram, e não há troca direta entre jogadores.
+- **Servidor:** limite de 40 mensagens/s por cliente e de 4 KB por mensagem; mensagens acima disso derrubam só a conexão de quem mandou.

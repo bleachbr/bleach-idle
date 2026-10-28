@@ -21,6 +21,7 @@ import * as db from "./db";
 import { consumeTicket, type Ticket } from "./auth";
 import { MAPS, HOME, TEMPLE, SPAWNS, tileKey } from "./maps";
 import * as guilds from "./guilds";
+import * as market from "./market";
 
 const GUILD_COST = 500;
 const GUILD_MIN_LEVEL = 10;
@@ -129,6 +130,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.registerSocialMessages();
     this.registerQuestMessages();
     this.registerBagMessages();
+    this.registerMarketMessages();
     // relógio: o cliente pergunta a hora do servidor para contar o bloqueio de PvP certo
     this.handle("time", (c) => c.send("time", { now: Date.now() }));
     this.handle("transform", (c) => {
@@ -1400,6 +1402,76 @@ export class WorldRoom extends GameRoom<WorldState> {
       const now = Date.now();
       for (const b of [...this.state.bags.values()]) if (now >= b.expires) this.state.bags.delete(b.id);
     }, 5000);
+  }
+
+  // ---------- mercado entre jogadores (no Kisuke) ----------
+
+  private registerMarketMessages() {
+    const show = (p: Player) => this.sendTo(p, "market", { listings: market.list(), me: p.id, fee: market.MARKET_FEE });
+    this.handle("marketList", (c) => { const p = this.me(c); if (p) show(p); });
+    this.handle("marketSell", (c, m: { index: number; qty: number; price: number }) => {
+      const p = this.me(c);
+      if (!p) return;
+      if (!this.near(p, "shop")) return this.log(p, "O mercado fica no Kisuke.");
+      const i = m?.index;
+      const sl = Number.isInteger(i) && i >= 0 && i < INV_SIZE ? p.inv[i] : null;
+      const qty = m?.qty, price = m?.price;
+      if (!sl) return;
+      if (!Number.isInteger(qty) || qty < 1 || qty > sl.qty) return this.log(p, "Quantidade inválida.");
+      if (!Number.isInteger(price) || price < 1 || price > market.MAX_PRICE) return this.log(p, `Preço por unidade: de 1 a ${market.MAX_PRICE} kan.`);
+      if (market.countBy(p.id) >= market.MAX_LISTINGS) return this.log(p, `No máximo ${market.MAX_LISTINGS} anúncios ao mesmo tempo.`);
+      sl.qty -= qty;
+      if (sl.qty <= 0) p.inv[i] = null;
+      market.add(p.id, p.name, sl.id, qty, price);
+      this.log(p, `Anunciou ${qty}x ${ITEMS[sl.id].name} por ${price} kan cada.`);
+      this.sendInv(p);
+      show(p);
+    });
+    this.handle("marketBuy", (c, m: { id: number }) => {
+      const p = this.me(c);
+      const l = p && Number.isInteger(m?.id) ? market.get(m.id) : undefined;
+      if (!p || !l) return;
+      if (!this.near(p, "shop")) return this.log(p, "O mercado fica no Kisuke.");
+      if (l.seller === p.id) return this.log(p, "Esse anúncio é seu (use cancelar).");
+      const total = l.price * l.qty;
+      if (p.gold < total) return this.log(p, `Faltam ${total - p.gold} kan.`);
+      if (spaceFor(p.inv, l.item) < l.qty) return this.log(p, "Inventário sem espaço.");
+      if (!market.remove(l.id)) return show(p); // alguém comprou antes
+      p.gold -= total;
+      addItem(p.inv, l.item, l.qty);
+      const income = total - Math.floor(total * market.MARKET_FEE);
+      this.creditSeller(l.seller, income, `Mercado: ${p.name} comprou ${l.qty}x ${ITEMS[l.item].name}. Você recebeu ${income} kan (taxa de ${market.MARKET_FEE * 100}%).`);
+      this.log(p, `Comprou ${l.qty}x ${ITEMS[l.item].name} de ${l.sellerName} por ${total} kan.`);
+      this.sendInv(p);
+      show(p);
+    });
+    this.handle("marketCancel", (c, m: { id: number }) => {
+      const p = this.me(c);
+      const l = p && Number.isInteger(m?.id) ? market.get(m.id) : undefined;
+      if (!p || !l || l.seller !== p.id) return;
+      if (!this.near(p, "shop")) return this.log(p, "O mercado fica no Kisuke.");
+      if (spaceFor(p.inv, l.item) < l.qty) return this.log(p, "Inventário sem espaço para receber de volta.");
+      if (!market.remove(l.id)) return show(p);
+      addItem(p.inv, l.item, l.qty);
+      this.log(p, `Anúncio cancelado: ${l.qty}x ${ITEMS[l.item].name} voltou ao inventário.`);
+      this.sendInv(p);
+      show(p);
+    });
+  }
+
+  /** Entrega o dinheiro da venda: na hora se o vendedor está no mundo, senão no save dele. */
+  private creditSeller(id: string, amount: number, text: string) {
+    const x = this.state.players.get(id);
+    if (x) {
+      x.gold += amount;
+      this.sendInv(x);
+      this.log(x, text);
+      return;
+    }
+    const row = db.load(id);
+    if (!row) return;
+    row.data.gold = (row.data.gold ?? 0) + amount;
+    db.save(id, row.data, row.inWorld);
   }
 
   // ---------- utilidades ----------

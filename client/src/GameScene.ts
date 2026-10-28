@@ -273,6 +273,7 @@ export class GameScene extends Phaser.Scene {
     this.mapObjects.push(tm as unknown as Phaser.GameObjects.GameObject);
     this.cameras.main.setBounds(0, 0, tm.widthInPixels, tm.heightInPixels);
     this.cameras.main.setBackgroundColor(id === "hueco" ? "#0b0b12" : "#000000");
+    this.buildMinimap(id);
     const shop = this.maps[id].shop;
     if (shop) {
       const x = px(shop.x), y = py(shop.y);
@@ -357,7 +358,73 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  // ---------- minimapa ----------
+
+  private minimap = document.querySelector<HTMLCanvasElement>("#minimap");
+  private minimapBase: ImageData | null = null;
+  private nextMinimapAt = 0;
+
+  /** Fundo do minimapa: 1 pixel por tile, na cor média do tile mais alto (sem a camada "acima"). */
+  private buildMinimap(id: string) {
+    const c = this.minimap;
+    if (!c) return;
+    const data = this.cache.tilemap.get(`map_${id}`).data;
+    const img = this.textures.get(`tiles_${id}`).getSourceImage() as HTMLImageElement;
+    const src = document.createElement("canvas");
+    src.width = img.width;
+    src.height = img.height;
+    const sctx = src.getContext("2d", { willReadFrequently: true })!;
+    sctx.drawImage(img, 0, 0);
+    const cols = img.width / TILE;
+    const avg = new Map<number, [number, number, number]>();
+    const colorOf = (gid: number) => {
+      if (!avg.has(gid)) {
+        const t = gid - 1;
+        const px = sctx.getImageData((t % cols) * TILE, Math.floor(t / cols) * TILE, TILE, TILE).data;
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 128) { r += px[i]; g += px[i + 1]; b += px[i + 2]; n++; }
+        avg.set(gid, n ? [r / n, g / n, b / n] : [0, 0, 0]);
+      }
+      return avg.get(gid)!;
+    };
+    c.width = data.width;
+    c.height = data.height;
+    const out = new ImageData(data.width, data.height);
+    const layers = (data.layers as any[]).filter((l) => l.type === "tilelayer" && l.name !== "acima");
+    for (let i = 0; i < data.width * data.height; i++) {
+      let gid = 0;
+      for (const l of layers) if (l.data[i]) gid = l.data[i] & 0x1fffffff;
+      const [r, g, b] = gid ? colorOf(gid) : [0, 0, 0];
+      out.data.set([r, g, b, 255], i * 4);
+    }
+    this.minimapBase = out;
+    c.onclick = (e) => {
+      const rect = c.getBoundingClientRect();
+      const x = Math.floor(((e.clientX - rect.left) / rect.width) * c.width);
+      const y = Math.floor(((e.clientY - rect.top) / rect.height) * c.height);
+      this.room.send("move", { x, y });
+    };
+  }
+
+  private drawMinimap(me: any) {
+    const c = this.minimap;
+    if (!c || !this.minimapBase || !me) return;
+    const ctx = c.getContext("2d")!;
+    ctx.putImageData(this.minimapBase, 0, 0);
+    const dot = (x: number, y: number, color: string, size = 1) => { ctx.fillStyle = color; ctx.fillRect(x - (size >> 1), y - (size >> 1), size, size); };
+    for (const m of this.room.state.monsters.values()) if (m.map === this.mapId) dot(m.x, m.y, "#ff4a3a");
+    for (const p of this.room.state.players.values()) {
+      if (p.map !== this.mapId || p.id === this.myId) continue;
+      dot(p.x, p.y, me.partyId && p.partyId === me.partyId ? "#7dff8a" : "#6cc0ff", 2);
+    }
+    dot(me.x, me.y, "#ffffff", 3);
+  }
+
   update(time: number) {
+    if (time >= this.nextMinimapAt) {
+      this.nextMinimapAt = time + 250;
+      this.drawMinimap(this.room.state.players.get(this.myId));
+    }
     this.tryStep(time);
     const me = this.room.state.players.get(this.myId);
     if (me && me.map !== this.mapId) this.showMap(me.map);
