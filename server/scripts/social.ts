@@ -1,11 +1,10 @@
 // Teste de party, PvP e viagem.
 import { expForLevel, nearestWalkable } from "../../shared/src";
 import { HOME, MAPS, TEMPLE } from "../src/maps";
-import { play, patchSave, sleep, once } from "./lib";
+import { play, patchSave, sleep, once, ok, done } from "./lib";
 
 const map = HOME;
 const GATE = HOME.gate!;
-const ok = (label: string, cond: boolean) => console.log(`${cond ? "OK    " : "FALHOU"} ${label}`);
 const at = (x: number, y: number) => nearestWalkable(map, x, y);
 const lvl = (level: number) => ({ level, exp: expForLevel(level), hp: 9999, rei: 9999, gold: 500, inv: [] });
 
@@ -109,4 +108,4 @@ await sleep(400);
 ok("a Garganta traz de volta à praça de Karakura", k.me().map === "karakura" && k.me().x === HOME.arrivals.karakura.x);
 
 for (const x of [a, b, c, d, e, f, g, h, k]) await x.room.leave();
-process.exit(0);
+done();

@@ -1,10 +1,14 @@
 {
   "name": "bleach-idle",
   "private": true,
-  "workspaces": ["server", "client"],
+  "workspaces": [
+    "server",
+    "client"
+  ],
   "scripts": {
     "dev": "concurrently -n server,client -c magenta,cyan \"npm -w server run dev\" \"npm -w client run dev\"",
-    "typecheck": "npm -w server run typecheck && npm -w client run typecheck"
+    "typecheck": "npm -w server run typecheck && npm -w client run typecheck",
+    "test": "npm -w server run test --"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

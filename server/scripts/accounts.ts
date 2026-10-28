@@ -1,9 +1,8 @@
 // Teste de contas: cadastro, login errado, limite de tentativas, sessão lembrada,
 // nome duplicado, ingresso inválido e o mesmo personagem entrando duas vezes.
 import { Client } from "colyseus.js";
-import { URL, openLobby, once, play, sleep } from "./lib";
+import { URL, openLobby, once, play, sleep, ok, done } from "./lib";
 
-const ok = (label: string, cond: boolean) => console.log(`${cond ? "OK  " : "FALHOU"} ${label}`);
 const err = async (p: Promise<unknown>) => { try { await p; return ""; } catch (e: any) { return e.message as string; } };
 const login = `t_${Date.now().toString(36)}`;
 const c = new Client(URL);
@@ -42,4 +41,4 @@ const second = await play("Duas Janelas");
 await sleep(500);
 ok("segunda janela assume e a primeira cai (código 4001)", firstLeft === 4001 && second.state.players.get("duas janelas")?.online === true);
 await second.leave();
-process.exit(0);
+done();

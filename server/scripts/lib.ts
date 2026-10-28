@@ -3,9 +3,22 @@
 import { DatabaseSync } from "node:sqlite";
 import { Client, type Room } from "colyseus.js";
 
-export const URL = "ws://localhost:2567";
+// o runner (scripts/test.ts) aponta para um servidor e um banco de teste por estas variáveis
+export const URL = process.env.BI_URL ?? "ws://localhost:2567";
+export const DB_FILE = process.env.DB_FILE ?? "bleach-idle.sqlite";
 export const PASSWORD = "senha-de-teste";
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+let failures = 0;
+/** Uma verificação: imprime OK ou FALHOU (o runner conta as linhas FALHOU). */
+export function ok(label: string, cond: boolean) {
+  if (!cond) failures++;
+  console.log(`${cond ? "OK    " : "FALHOU"} ${label}`);
+}
+/** Encerra o script com código de saída 1 se alguma verificação falhou. */
+export function done(): never {
+  process.exit(failures ? 1 : 0);
+}
 
 export function once<T = any>(room: Room, type: string, ms = 5000): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -48,7 +61,7 @@ export async function play(name: string, charId = "ichigo", before?: (id: string
 
 /** Altera campos do save direto no banco (só para montar cenários de teste). */
 export function patchSave(id: string, fields: Record<string, unknown>) {
-  const db = new DatabaseSync("bleach-idle.sqlite");
+  const db = new DatabaseSync(DB_FILE);
   const row = db.prepare("SELECT data FROM players WHERE id = ?").get(id) as { data: string };
   db.prepare("UPDATE players SET data = ? WHERE id = ?").run(JSON.stringify({ ...JSON.parse(row.data), ...fields }), id);
   db.close();

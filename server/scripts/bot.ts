@@ -1,22 +1,26 @@
-// Teste sem interface: entra, liga Auto Hunt, desconecta (hunt offline) e volta.
-import { play, sleep } from "./lib";
+// Teste: entra, liga Auto Hunt, desconecta (hunt offline) e volta com relatório.
+import { expForLevel, nearestWalkable } from "../../shared/src";
+import { HOME } from "../src/maps";
+import { play, patchSave, sleep, ok, done } from "./lib";
 
 const name = process.argv[2] ?? "Bot Teste";
-let room = await play(name);
-room.onMessage("log", (m) => console.log("  log:", m.text));
+const id = name.toLowerCase();
+const spot = nearestWalkable(HOME, 38, 7);
+let room = await play(name, "ichigo", (i) => patchSave(i, { level: 12, exp: expForLevel(12), hp: 9999, map: "karakura", ...spot }));
 await sleep(500);
-const me = () => room.state.players.get(name.toLowerCase());
-console.log("entrou:", me()?.level, me()?.exp, "monstros:", room.state.monsters.size);
+const me = () => room.state.players.get(id);
+const exp0 = me().exp;
 room.send("auto", { autoHunt: true, autoHeal: 50 });
-await sleep(15000);
-console.log("após 15s online:", { lvl: me()?.level, exp: me()?.exp, hp: me()?.hp, pos: [me()?.x, me()?.y] });
+await sleep(12000);
+ok(`caça online (+${me().exp - exp0} XP em 12 s)`, me().exp > exp0);
 await room.leave();
-console.log("desconectou; hunt offline por 15s...");
-await sleep(15000);
-room = await play(name);
-room.onMessage("offline", (m) => console.log("relatório offline:", m));
 await sleep(1000);
-console.log("voltou:", { lvl: me()?.level, exp: me()?.exp, online: me()?.online });
+const exp1 = (await play("Olheiro")).state.players.get(id)?.exp; // outro jogador vê o personagem ainda no mundo
+ok("depois de sair, segue no mundo", exp1 !== undefined);
+await sleep(10000);
+room = await play(name);
+const rep: any = await new Promise((r) => room.onMessage("offline", r));
+ok(`relatório da hunt offline (+${rep.exp} XP, +${rep.gold} kan)`, rep.exp > 0);
 room.send("auto", { autoHunt: false });
 await room.leave();
-process.exit(0);
+done();

@@ -39,7 +39,7 @@
     <div id="app" hidden>
       <aside id="side">
         <section id="stats">
-          <div class="who"><b id="pname"></b> <span id="plevel"></span><button type="button" id="exit-btn" class="link" title="Voltar à lista de personagens">trocar</button></div>
+          <div class="who"><b id="pname"></b> <span id="plevel"></span><button type="button" id="exit-btn" class="link" title="Voltar à lista de personagens">trocar</button><button type="button" id="ranking-btn" class="link">ranking</button></div>
           <div class="bar hp"><i></i><span></span></div>
           <div class="bar rei"><i></i><span></span></div>
           <div class="bar exp"><i></i><span></span></div>
@@ -64,6 +64,14 @@
           <div id="inv" class="grid"></div>
           <p class="hint">Clique para equipar ou usar. Baú (depot) e loja ficam na praça.</p>
         </section>
+        <section id="quests">
+          <h2>Missões</h2>
+          <div id="quest-track"><p class="hint">Nenhuma missão. Fale com o Kisuke na praça.</p></div>
+        </section>
+        <section id="guild">
+          <h2>Guilda</h2>
+          <div id="guild-body"><p class="hint">Sem guilda. <code>/guilda criar Nome</code> (500 kan, nível 10+) ou aceite um convite.</p></div>
+        </section>
         <section id="party">
           <h2>Party</h2>
           <div id="invite" hidden><span id="invite-text"></span> <button type="button" id="invite-yes">Aceitar</button> <button type="button" id="invite-no" class="link">recusar</button></div>
@@ -80,6 +88,12 @@
       <main>
         <div id="game"></div>
         <div id="ctx" hidden></div>
+        <div id="ranking" hidden>
+          <header><b>Ranking</b>
+            <span class="tabs"><button type="button" data-tab="nivel" aria-pressed="true">Nível</button><button type="button" data-tab="abates">Abates (PvP)</button><button type="button" data-tab="guildas">Guildas</button></span>
+            <button type="button" id="ranking-close" aria-label="Fechar">✕</button></header>
+          <div id="ranking-body"></div>
+        </div>
         <div id="death" hidden>
           <h2>Você morreu</h2>
           <div id="death-body"></div>
@@ -91,7 +105,7 @@
         </div>
         <div id="chat">
           <div id="chatlog"></div>
-          <input id="chatin" maxlength="200" placeholder="Enter para conversar" autocomplete="off" />
+          <input id="chatin" maxlength="200" placeholder="Enter para conversar · /ajuda para comandos" autocomplete="off" />
         </div>
       </main>
     </div>

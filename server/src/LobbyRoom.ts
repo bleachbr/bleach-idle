@@ -7,6 +7,7 @@ import {
 } from "../../shared/src";
 import * as db from "./db";
 import { HOME, TEMPLE } from "./maps";
+import * as guilds from "./guilds";
 import { hashPassword, verifyPassword, issueTicket, blocked, fail, clearFails } from "./auth";
 
 const MAX_CHARS = 5;
@@ -78,6 +79,7 @@ export class LobbyRoom extends Room {
       const { accountId } = c.userData as Auth;
       if (!db.deleteChar(accountId, String(m?.id ?? "")))
         return c.send("error", { text: "Não foi possível excluir. Se ele estiver caçando offline, entre e desligue o Auto Hunt antes." });
+      guilds.leave(String(m.id)); // sai da guilda (passa a liderança ou desfaz a guilda)
       this.sendChars(c);
     });
     this.onMessage("play", (c, m: { id: string }) => {

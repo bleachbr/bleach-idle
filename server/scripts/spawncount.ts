@@ -2,7 +2,7 @@
 // com dois bots caçando (Auto Hunt usa habilidade + corpo a corpo no mesmo alvo).
 import { expForLevel, nearestWalkable } from "../../shared/src";
 import { HOME, SPAWNS } from "../src/maps";
-import { play, patchSave, sleep } from "./lib";
+import { play, patchSave, sleep, ok, done } from "./lib";
 
 const expected: Record<string, number> = {};
 for (const s of SPAWNS) expected[s.map] = (expected[s.map] ?? 0) + s.count;
@@ -21,6 +21,6 @@ for (let i = 0; i < 40; i++) {
   for (const k in c) max[k] = Math.max(max[k] ?? 0, c[k]);
 }
 console.log("esperado:", expected, "| máximo visto em 40 s:", max);
-console.log(Object.keys(expected).every((k) => (max[k] ?? 0) <= expected[k]) ? "OK     nunca passou do total dos spawns" : "FALHOU passou do total");
+ok("total de monstros nunca passa o dos spawns", Object.keys(expected).every((k) => (max[k] ?? 0) <= expected[k]));
 for (const r of bots) { r.send("auto", { autoHunt: false }); await r.leave(); }
-process.exit(0);
+done();

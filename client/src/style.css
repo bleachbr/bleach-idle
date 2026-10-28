@@ -128,3 +128,28 @@ main { position: relative; }
 #ctx button:hover { background: var(--line); }
 #ctx button.danger { color: #ff8a80; }
 #ctx small { display: block; padding: 2px 8px 6px; color: var(--muted); font-size: 11px; }
+
+/* ---------- chat por canal, guilda e ranking ---------- */
+#chatlog .pm { color: #d9a8ff; }
+#chatlog .party { color: #7dff8a; }
+#chatlog .guild { color: #7fd6ff; }
+code { background: var(--line); border-radius: 3px; padding: 0 4px; font-size: 12px; }
+.tag { color: #7fd6ff; }
+.member.off { opacity: .5; }
+.who button.link + button.link { margin-right: 8px; }
+#ranking { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: min(520px, calc(100% - 24px)); max-height: calc(100% - 180px); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 30px #0008; z-index: 15; }
+#ranking header { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+#ranking header > button { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; }
+#ranking .tabs { display: flex; gap: 4px; }
+#ranking .tabs button { padding: 3px 8px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; font-size: 12px; }
+#ranking .tabs button[aria-pressed="true"] { color: var(--text); border-color: var(--accent); }
+#ranking-body { overflow-y: auto; padding: 8px 12px; }
+#ranking table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#ranking td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+#ranking td:first-child { color: var(--muted); width: 2em; }
+
+/* ---------- missões ---------- */
+.quest { margin-bottom: 6px; display: flex; flex-direction: column; font-size: 13px; }
+.quest small { color: var(--muted); }
+.quest.ready small { color: #9fd18b; }
+.quest-row .name small + small { color: var(--exp); }

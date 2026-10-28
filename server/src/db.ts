@@ -2,7 +2,7 @@
 // No beta, trocar por Postgres mantendo esta mesma interface.
 import { DatabaseSync } from "node:sqlite";
 import { createHash, randomBytes } from "node:crypto";
-import type { Slot, EquipSlot } from "../../shared/src";
+import type { Slot, EquipSlot, QuestState } from "../../shared/src";
 
 export interface SaveData {
   name: string;
@@ -19,6 +19,8 @@ export interface SaveData {
   inv?: (Slot | null)[];
   depot?: (Slot | null)[];
   equip?: Partial<Record<EquipSlot, string>>;
+  frags?: number;
+  quests?: QuestState;
   autoTarget?: boolean;
   autoHunt?: boolean;
   autoHeal?: number;
@@ -54,6 +56,7 @@ db.exec(`
     expires_at INTEGER NOT NULL
   );
   CREATE TABLE IF NOT EXISTS players (id TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at INTEGER NOT NULL);
+  CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `);
 // migração da tabela do protótipo anterior (personagens sem conta ficam órfãos)
 const cols = (db.prepare("PRAGMA table_info(players)").all() as { name: string }[]).map((c) => c.name);
@@ -145,6 +148,21 @@ export function saveMany(list: { id: string; data: SaveData; inWorld: boolean }[
     db.exec("ROLLBACK");
     throw e;
   }
+}
+
+/** Estado avulso do mundo (ex.: parties), em JSON. */
+export function getMeta<T>(key: string): T | undefined {
+  const r = db.prepare("SELECT value FROM meta WHERE key = ?").get(key) as { value: string } | undefined;
+  return r ? JSON.parse(r.value) : undefined;
+}
+
+export function setMeta(key: string, value: unknown) {
+  db.prepare("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key, JSON.stringify(value));
+}
+
+/** Todos os personagens (para o ranking). */
+export function allChars(): CharRow[] {
+  return (db.prepare("SELECT * FROM players WHERE account_id IS NOT NULL").all() as any[]).map(rowOf);
 }
 
 export function loadInWorld(): CharRow[] {

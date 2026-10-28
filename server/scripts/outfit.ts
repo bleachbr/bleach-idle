@@ -1,22 +1,20 @@
-// Bots parados na praça com cada visual (para conferir no navegador) e checagem do campo look.
-import { play, patchSave, sleep } from "./lib";
+// Visual por equipamento: o campo "look" acompanha haori e máscara (todos veem).
+// Com um número de ms como argumento, os bots ficam na praça esse tempo para ver no navegador.
+import { play, patchSave, sleep, ok, done } from "./lib";
 
-const looks: [string, string, Record<string, string>][] = [
-  ["Visual Haori", "ichigo", { armor: "haori" }],
-  ["Visual Mascara", "rukia", { head: "mascara" }],
-  ["Visual Ambos", "renji", { armor: "haori", head: "mascara" }],
+const looks: [string, string, Record<string, string>, string][] = [
+  ["Visual Haori", "ichigo", { armor: "haori" }, "haori"],
+  ["Visual Mascara", "rukia", { head: "mascara" }, "mask"],
+  ["Visual Ambos", "renji", { armor: "haori", head: "mascara" }, "haori_mask"],
 ];
 const rooms = [];
-for (const [i, [name, charId, equip]] of looks.entries()) {
-  const room = await play(name, charId, (id) => patchSave(id, { x: 15 + i, y: 16, equip: { ...equip, legs: "hakama" } }));
-  rooms.push(room);
-}
+for (const [i, [name, charId, equip]] of looks.entries())
+  rooms.push(await play(name, charId, (id) => patchSave(id, { map: "karakura", x: 15 + i, y: 16, inv: [], equip: { ...equip, legs: "hakama" } })));
 await sleep(500);
-for (const [name] of looks) console.log(name, "look =", JSON.stringify(rooms[0].state.players.get(name.toLowerCase())?.look));
-// desequipa a máscara do terceiro e confere que o look volta para "haori"
+for (const [name, , , want] of looks) ok(`${name}: look = "${want}"`, rooms[0].state.players.get(name.toLowerCase())?.look === want);
 rooms[2].send("unequip", { slot: "head" });
 await sleep(400);
-console.log("Visual Ambos sem máscara: look =", JSON.stringify(rooms[0].state.players.get("visual ambos")?.look));
-await sleep(Number(process.argv[2] ?? 1000));
+ok('tirar a máscara volta o look para "haori"', rooms[0].state.players.get("visual ambos")?.look === "haori");
+await sleep(Number(process.argv[2] ?? 0));
 for (const r of rooms) await r.leave();
-process.exit(0);
+done();

@@ -11,13 +11,26 @@ import {
   CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir,
   expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot,
-  DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf,
+  DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
   rollLoot, addItem, removeItem, spaceFor, countItem, equipBonus,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
 import { consumeTicket, type Ticket } from "./auth";
 import { MAPS, HOME, TEMPLE, SPAWNS, tileKey } from "./maps";
+import * as guilds from "./guilds";
+
+const GUILD_COST = 500;
+const GUILD_MIN_LEVEL = 10;
+const GUILD_NAME_RE = /^[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ]{2,19}$/;
+const HELP = [
+  "Comandos:",
+  "/pm Nome, mensagem — mensagem privada",
+  "/p mensagem — chat da party · /g mensagem — chat da guilda",
+  `/guilda criar Nome (${GUILD_COST} kan, nível ${GUILD_MIN_LEVEL}+) · /guilda convidar Nome · /guilda aceitar · /guilda recusar`,
+  "/guilda sair · /guilda expulsar Nome · /guilda lider Nome · /guilda depositar N · /guilda sacar N (líder) · /guilda info",
+  "/ranking — abre o ranking",
+];
 
 const OFFLINE_MAX_MS = 12 * 3600_000;
 const AGGRO = 5;
@@ -107,6 +120,9 @@ export class WorldRoom extends Room<WorldState> {
     });
     this.registerItemMessages();
     this.registerSocialMessages();
+    this.registerQuestMessages();
+    // relógio: o cliente pergunta a hora do servidor para contar o bloqueio de PvP certo
+    this.onMessage("time", (c) => c.send("time", { now: Date.now() }));
     this.onMessage("transform", (c) => {
       const p = this.me(c);
       if (!p) return;
@@ -126,8 +142,11 @@ export class WorldRoom extends Room<WorldState> {
     this.onMessage("chat", (c, m: { text: string }) => {
       const p = this.me(c);
       const text = String(m?.text ?? "").trim().slice(0, 200);
-      if (p && text) this.broadcast("chat", { from: p.name, text });
+      if (!p || !text) return;
+      if (text.startsWith("/")) return this.command(p, text);
+      this.broadcast("chat", { from: this.display(p), text });
     });
+    this.onMessage("ranking", (c) => c.send("ranking", this.ranking()));
   }
 
   /** Só entra quem traz um ingresso emitido pelo lobby (conta logada + personagem dela). */
@@ -172,6 +191,8 @@ export class WorldRoom extends Room<WorldState> {
     db.save(p.id, this.toSave(p), true);
     client.send("welcome", { id });
     this.sendInv(p);
+    this.sendGuild(p);
+    this.sendQuests(p);
     this.broadcast("chat", { from: "", text: `${p.name} entrou no mundo.` });
   }
 
@@ -214,6 +235,11 @@ export class WorldRoom extends Room<WorldState> {
     p.autoTarget = !!saved.autoTarget;
     p.autoHunt = !!saved.autoHunt;
     p.autoHeal = saved.autoHeal ?? 0;
+    p.frags = saved.frags ?? 0;
+    p.quests = saved.quests ?? { active: {}, done: [] };
+    const g = guilds.guildOf(id);
+    p.guildId = g?.id ?? 0;
+    p.guildTag = g?.tag ?? "";
     this.recompute(p);
     p.hp = Math.max(1, Math.min(saved.hp ?? p.maxHp, p.maxHp));
     p.rei = Math.min(saved.rei ?? p.maxRei, p.maxRei);
@@ -243,6 +269,19 @@ export class WorldRoom extends Room<WorldState> {
       n++;
     }
     if (n) console.log(`Retomadas ${n} hunt(s) offline.`);
+    // parties salvas: voltam só com os membros que estão de novo no mundo
+    for (const party of db.getMeta<Party[]>("parties") ?? []) {
+      const members = party.members.filter((id) => this.state.players.has(id));
+      if (members.length < 2) continue;
+      const leader = members.includes(party.leader) ? party.leader : members[0];
+      this.parties.set(party.id, { ...party, members, leader });
+      for (const id of members) {
+        const p = this.state.players.get(id)!;
+        p.partyId = party.id;
+        p.partyLead = id === leader;
+      }
+      this.partySeq = Math.max(this.partySeq, Number(party.id.replace(/\D/g, "")) || 0);
+    }
   }
 
   onDispose() {
@@ -301,7 +340,9 @@ export class WorldRoom extends Room<WorldState> {
     }
     // Auto Helper: Auto Target pega o mais próximo à vista; Auto Hunt procura longe e vai até ele
     if (!t && (p.autoTarget || p.autoHunt)) {
-      t = this.nearestMonster(p, p.autoHunt ? HUNT_RADIUS : VIEW);
+      // Auto Hunt prefere os monstros das missões de caça ativas, se houver algum no raio
+      const kinds = p.autoHunt ? this.questKinds(p) : undefined;
+      t = (kinds && this.nearestMonster(p, HUNT_RADIUS, kinds)) || this.nearestMonster(p, p.autoHunt ? HUNT_RADIUS : VIEW);
       if (t) { p.targetId = t.id; p.follow = true; }
     }
     if (t && p.autoHunt) this.trySkill(p, t, now, true);
@@ -569,11 +610,21 @@ export class WorldRoom extends Room<WorldState> {
     p.look = lookOf(p.equip);
   }
 
-  private nearestMonster(p: Player, range: number): Monster | undefined {
+  /** tipos de monstro que ainda faltam nas missões de caça ativas */
+  private questKinds(p: Player): Set<string> | undefined {
+    const kinds = new Set<string>();
+    for (const [id, prog] of Object.entries(p.quests.active)) {
+      const g = QUEST_BY_ID[id]?.goal;
+      if (g?.type === "kill" && prog < g.count) for (const k of g.monsters) kinds.add(k);
+    }
+    return kinds.size ? kinds : undefined;
+  }
+
+  private nearestMonster(p: Player, range: number, only?: Set<string>): Monster | undefined {
     let best: Monster | undefined;
     let bd = range + 1;
     for (const m of this.state.monsters.values()) {
-      if (!sameMap(p, m)) continue;
+      if (!sameMap(p, m) || (only && !only.has(m.kind))) continue;
       const d = chebyshev(p.x, p.y, m.x, m.y);
       if (d < bd) { best = m; bd = d; }
     }
@@ -878,6 +929,7 @@ export class WorldRoom extends Room<WorldState> {
     if (v.hp <= 0) {
       p.targetId = "";
       this.broadcast("chat", { from: "", text: `${v.name} foi derrotado por ${p.name}.` });
+      p.frags++;
       this.killPlayer(v, `${p.name} (jogador)`);
     }
   }
@@ -897,10 +949,14 @@ export class WorldRoom extends Room<WorldState> {
         party.warnedAt = Date.now();
         this.partyLog(party, "XP não dividida: o menor nível precisa ser pelo menos 2/3 do maior.");
       }
+      this.questKill(killer, m.kind);
       return this.gainExp(killer, exp, from);
     }
     const each = Math.round((exp * (1 + PARTY_SHARE_BONUS * (near.length - 1))) / near.length);
-    for (const x of near) this.gainExp(x, each, `${from} (party, ${near.length})`);
+    for (const x of near) {
+      this.questKill(x, m.kind);
+      this.gainExp(x, each, `${from} (party, ${near.length})`);
+    }
   }
 
   private leaveParty(p: Player) {
@@ -932,6 +988,275 @@ export class WorldRoom extends Room<WorldState> {
     }
   }
 
+  // ---------- chat, guildas e ranking ----------
+
+  private guildInvites = new Map<string, { guildId: number; from: string; at: number }>();
+
+  /** Nome com a tag da guilda, como aparece no chat. */
+  private display(p: Player) {
+    return p.guildTag ? `${p.name} [${p.guildTag}]` : p.name;
+  }
+
+  private findPlayer(name: string) {
+    return this.state.players.get(name.trim().toLowerCase());
+  }
+
+  private command(p: Player, text: string) {
+    const [cmd, ...restParts] = text.slice(1).split(" ");
+    const rest = restParts.join(" ").trim();
+    switch (cmd.toLowerCase()) {
+      case "ajuda":
+      case "help":
+        return HELP.forEach((l) => this.sendTo(p, "chat", { from: "", text: l, ch: "sys" }));
+      case "pm": {
+        // "Nome, mensagem" (nomes podem ter espaço); sem vírgula, a 1ª palavra é o nome
+        const i = rest.indexOf(",");
+        const [to, msg] = i >= 0 ? [rest.slice(0, i), rest.slice(i + 1).trim()] : [rest.split(" ")[0], rest.split(" ").slice(1).join(" ")];
+        const v = this.findPlayer(to);
+        if (!v || !v.online) return this.log(p, `${to || "?"} não está online.`);
+        if (!msg) return this.log(p, "Uso: /pm Nome, mensagem");
+        this.sendTo(v, "chat", { from: p.name, text: msg, ch: "pm" });
+        return this.sendTo(p, "chat", { from: `para ${v.name}`, text: msg, ch: "pm" });
+      }
+      case "p": {
+        const party = this.parties.get(p.partyId);
+        if (!party) return this.log(p, "Você não está numa party.");
+        for (const id of party.members) {
+          const x = this.state.players.get(id);
+          if (x) this.sendTo(x, "chat", { from: p.name, text: rest, ch: "party" });
+        }
+        return;
+      }
+      case "g": {
+        if (!p.guildId) return this.log(p, "Você não está numa guilda.");
+        return this.guildSay(p.guildId, { from: p.name, text: rest, ch: "guild" });
+      }
+      case "guilda":
+      case "guild":
+        return this.guildCommand(p, rest);
+      case "ranking":
+        return this.sendTo(p, "ranking", this.ranking());
+      default:
+        return this.log(p, `Comando desconhecido: /${cmd}. Digite /ajuda.`);
+    }
+  }
+
+  private guildCommand(p: Player, rest: string) {
+    const [sub, ...args] = rest.split(" ");
+    const arg = args.join(" ").trim();
+    const g = p.guildId ? guilds.get(p.guildId) : undefined;
+    const leader = !!g && g.leader === p.id;
+    switch ((sub ?? "").toLowerCase()) {
+      case "criar": {
+        if (g) return this.log(p, "Saia da sua guilda antes de criar outra.");
+        if (!GUILD_NAME_RE.test(arg)) return this.log(p, "Nome de guilda: de 3 a 20 letras, números ou espaços.");
+        if (p.level < GUILD_MIN_LEVEL) return this.log(p, `Criar guilda exige nível ${GUILD_MIN_LEVEL}.`);
+        if (p.gold < GUILD_COST) return this.log(p, `Criar guilda custa ${GUILD_COST} kan.`);
+        const ng = guilds.createGuild(arg, p.id);
+        if (!ng) return this.log(p, "Já existe uma guilda com esse nome.");
+        p.gold -= GUILD_COST;
+        this.sendInv(p);
+        this.joinedGuild(p, ng);
+        return this.broadcast("chat", { from: "", text: `${p.name} fundou a guilda ${ng.name} [${ng.tag}].`, ch: "sys" });
+      }
+      case "convidar": {
+        if (!leader) return this.log(p, "Só o líder da guilda convida.");
+        const v = this.findPlayer(arg);
+        if (!v || !v.online) return this.log(p, `${arg || "?"} não está online.`);
+        if (v.guildId) return this.log(p, `${v.name} já tem guilda.`);
+        this.guildInvites.set(v.id, { guildId: g!.id, from: p.id, at: Date.now() });
+        this.sendTo(v, "chat", { from: "", text: `${p.name} convidou você para a guilda ${g!.name}. Digite /guilda aceitar ou /guilda recusar.`, ch: "guild" });
+        return this.log(p, `Convite enviado para ${v.name}.`);
+      }
+      case "aceitar":
+      case "recusar": {
+        const inv = this.guildInvites.get(p.id);
+        this.guildInvites.delete(p.id);
+        if (!inv || Date.now() - inv.at > 120_000) return this.log(p, "Nenhum convite de guilda pendente.");
+        if (sub.toLowerCase() === "recusar") return;
+        if (p.guildId) return this.log(p, "Você já tem guilda.");
+        const target = guilds.get(inv.guildId);
+        if (!target) return this.log(p, "A guilda não existe mais.");
+        guilds.addMember(target.id, p.id);
+        this.joinedGuild(p, target);
+        return this.guildSay(target.id, { from: "", text: `${p.name} entrou na guilda.`, ch: "guild" });
+      }
+      case "sair": {
+        if (!g) return this.log(p, "Você não está numa guilda.");
+        const r = guilds.leave(p.id);
+        this.leftGuild(p);
+        if (r.refund) { p.gold += r.refund; this.sendInv(p); }
+        this.log(p, r.disbanded ? `A guilda ${g.name} acabou.${r.refund ? ` O banco (${r.refund} kan) voltou para você.` : ""}` : `Você saiu da guilda ${g.name}.`);
+        if (!r.disbanded) this.guildSay(g.id, { from: "", text: `${p.name} saiu da guilda.${r.newLeader ? ` Novo líder: ${r.newLeader}.` : ""}`, ch: "guild" });
+        return this.refreshGuild(g.id);
+      }
+      case "expulsar": {
+        if (!leader) return this.log(p, "Só o líder expulsa.");
+        const id = arg.toLowerCase();
+        if (id === p.id || !guilds.members(g!.id).some((m) => m.charId === id)) return this.log(p, `${arg} não é membro da guilda.`);
+        guilds.removeMember(id);
+        const v = this.state.players.get(id);
+        if (v) { this.leftGuild(v); this.log(v, `Você foi expulso da guilda ${g!.name}.`); }
+        this.guildSay(g!.id, { from: "", text: `${arg} foi expulso da guilda.`, ch: "guild" });
+        return this.refreshGuild(g!.id);
+      }
+      case "lider": {
+        if (!leader) return this.log(p, "Só o líder passa a liderança.");
+        const id = arg.toLowerCase();
+        if (!guilds.members(g!.id).some((m) => m.charId === id) || id === p.id) return this.log(p, `${arg} não é membro da guilda.`);
+        guilds.setLeader(g!.id, id);
+        this.guildSay(g!.id, { from: "", text: `Novo líder da guilda: ${arg}.`, ch: "guild" });
+        return this.refreshGuild(g!.id);
+      }
+      case "depositar":
+      case "sacar": {
+        if (!g) return this.log(p, "Você não está numa guilda.");
+        const n = Math.floor(Number(arg));
+        if (!(n > 0)) return this.log(p, `Uso: /guilda ${sub} 100`);
+        if (sub.toLowerCase() === "depositar") {
+          if (p.gold < n) return this.log(p, "Você não tem esse dinheiro.");
+          p.gold -= n;
+          guilds.addBank(g.id, n);
+          this.guildSay(g.id, { from: "", text: `${p.name} depositou ${n} kan no banco da guilda.`, ch: "guild" });
+        } else {
+          if (!leader) return this.log(p, "Só o líder saca do banco.");
+          if (!guilds.addBank(g.id, -n)) return this.log(p, "O banco da guilda não tem isso.");
+          p.gold += n;
+          this.guildSay(g.id, { from: "", text: `${p.name} sacou ${n} kan do banco da guilda.`, ch: "guild" });
+        }
+        this.sendInv(p);
+        return this.refreshGuild(g.id);
+      }
+      case "info":
+      case "":
+        if (!g) return this.log(p, "Você não está numa guilda. /guilda criar Nome para fundar uma.");
+        return this.sendGuild(p);
+      default:
+        return this.log(p, "Subcomando de guilda desconhecido. Digite /ajuda.");
+    }
+  }
+
+  private joinedGuild(p: Player, g: guilds.Guild) {
+    p.guildId = g.id;
+    p.guildTag = g.tag;
+    this.refreshGuild(g.id);
+  }
+
+  private leftGuild(p: Player) {
+    p.guildId = 0;
+    p.guildTag = "";
+    this.sendTo(p, "guild", null);
+  }
+
+  private guildSay(guildId: number, msg: { from: string; text: string; ch: string }) {
+    for (const x of this.state.players.values()) if (x.guildId === guildId) this.sendTo(x, "chat", msg);
+  }
+
+  /** Painel da guilda (nome, tag, banco, membros) para quem está online nela. */
+  private sendGuild(p: Player) {
+    const g = p.guildId ? guilds.get(p.guildId) : undefined;
+    if (!g) return this.sendTo(p, "guild", null);
+    const list = guilds.members(g.id).map((m) => {
+      const x = this.state.players.get(m.charId);
+      const saved = x ? undefined : db.load(m.charId)?.data;
+      return { name: x?.name ?? saved?.name ?? m.charId, level: x?.level ?? saved?.level ?? 0, leader: m.rank === "lider", online: !!x?.online };
+    });
+    this.sendTo(p, "guild", { name: g.name, tag: g.tag, bank: g.bank, leader: g.leader === p.id, members: list });
+  }
+
+  private refreshGuild(guildId: number) {
+    for (const x of this.state.players.values()) if (x.guildId === guildId) this.sendGuild(x);
+  }
+
+  /** Ranking: nível (por XP), abates em PvP e guildas (soma de abates e de níveis). */
+  private ranking() {
+    const rows = new Map<string, { name: string; charId: string; level: number; exp: number; frags: number; guild: string }>();
+    for (const r of db.allChars()) rows.set(r.id, { name: r.data.name, charId: r.data.charId, level: r.data.level, exp: r.data.exp, frags: r.data.frags ?? 0, guild: "" });
+    for (const p of this.state.players.values()) rows.set(p.id, { name: p.name, charId: p.charId, level: p.level, exp: p.exp, frags: p.frags, guild: "" });
+    const memberOf = guilds.memberMap();
+    const byId = new Map(guilds.all().map((g) => [g.id, g]));
+    const g = new Map<number, { name: string; tag: string; members: number; levels: number; frags: number }>();
+    for (const [id, r] of rows) {
+      const gid = memberOf.get(id);
+      const guild = gid ? byId.get(gid) : undefined;
+      if (!guild) continue;
+      r.guild = guild.tag;
+      const e = g.get(guild.id) ?? { name: guild.name, tag: guild.tag, members: 0, levels: 0, frags: 0 };
+      e.members++; e.levels += r.level; e.frags += r.frags;
+      g.set(guild.id, e);
+    }
+    const list = [...rows.values()];
+    return {
+      nivel: [...list].sort((a, b) => b.exp - a.exp).slice(0, 20),
+      abates: list.filter((r) => r.frags > 0).sort((a, b) => b.frags - a.frags).slice(0, 20),
+      guildas: [...g.values()].sort((a, b) => b.frags - a.frags || b.levels - a.levels).slice(0, 20),
+    };
+  }
+
+  // ---------- missões ----------
+
+  private registerQuestMessages() {
+    this.onMessage("quests", (c) => { const p = this.me(c); if (p) this.sendQuests(p); });
+    this.onMessage("questAccept", (c, m: { id: string }) => {
+      const p = this.me(c);
+      const q = QUEST_BY_ID[m?.id];
+      if (!p || !q) return;
+      if (!this.near(p, "shop")) return this.log(p, "Fale com o Kisuke para aceitar missões.");
+      if (q.id in p.quests.active) return;
+      if (!q.repeatable && p.quests.done.includes(q.id)) return this.log(p, "Você já completou essa missão.");
+      if (p.level < q.minLevel) return this.log(p, `${q.name} exige nível ${q.minLevel}.`);
+      if (Object.keys(p.quests.active).length >= MAX_ACTIVE_QUESTS) return this.log(p, `No máximo ${MAX_ACTIVE_QUESTS} missões ao mesmo tempo.`);
+      p.quests.active[q.id] = 0;
+      this.log(p, `Missão aceita: ${q.name}.`);
+      this.sendQuests(p);
+    });
+    this.onMessage("questAbandon", (c, m: { id: string }) => {
+      const p = this.me(c);
+      if (!p || !(m?.id in p.quests.active)) return;
+      delete p.quests.active[m.id];
+      this.sendQuests(p);
+    });
+    this.onMessage("questTurnIn", (c, m: { id: string }) => {
+      const p = this.me(c);
+      const q = QUEST_BY_ID[m?.id];
+      if (!p || !q || !(q.id in p.quests.active)) return;
+      if (!this.near(p, "shop")) return this.log(p, "Entregue a missão ao Kisuke.");
+      const g = q.goal;
+      if (g.type === "kill" && p.quests.active[q.id] < g.count) return this.log(p, "A missão ainda não está completa.");
+      if (g.type === "collect" && countItem(p.inv, g.item) < g.count) return this.log(p, `Faltam ${g.count - countItem(p.inv, g.item)} ${ITEMS[g.item].name}.`);
+      // recompensa precisa caber: confere numa cópia do inventário antes de mexer
+      const trial = p.inv.map((sl) => (sl ? { ...sl } : null));
+      if (g.type === "collect") removeItem(trial, g.item, g.count);
+      for (const it of q.reward.items ?? []) if (addItem(trial, it.id, it.qty) < it.qty) return this.log(p, "Inventário cheio para a recompensa.");
+      if (g.type === "collect") removeItem(p.inv, g.item, g.count);
+      for (const it of q.reward.items ?? []) addItem(p.inv, it.id, it.qty);
+      delete p.quests.active[q.id];
+      if (!p.quests.done.includes(q.id)) p.quests.done.push(q.id);
+      p.gold += q.reward.gold;
+      this.log(p, `Missão completa: ${q.name}! +${q.reward.gold} kan${(q.reward.items ?? []).map((it) => `, ${it.qty}x ${ITEMS[it.id].name}`).join("")}.`);
+      this.gainExp(p, q.reward.exp, `Missão ${q.name}`);
+      this.sendInv(p);
+      this.sendQuests(p);
+    });
+  }
+
+  /** Abate conta para as missões de caça ativas. */
+  private questKill(p: Player, kind: string) {
+    let changed = false;
+    for (const [id, prog] of Object.entries(p.quests.active)) {
+      const g = QUEST_BY_ID[id]?.goal;
+      if (!g || g.type !== "kill" || !g.monsters.includes(kind) || prog >= g.count) continue;
+      p.quests.active[id] = prog + 1;
+      changed = true;
+      if (prog + 1 === g.count) this.log(p, `Missão pronta: ${QUEST_BY_ID[id].name}. Volte ao Kisuke para entregar.`);
+    }
+    if (changed) this.sendQuests(p);
+  }
+
+  private sendQuests(p: Player) {
+    this.sendTo(p, "quests", { active: p.quests.active, done: p.quests.done });
+  }
+
   // ---------- utilidades ----------
 
   private me(c: Client) {
@@ -947,12 +1272,13 @@ export class WorldRoom extends Room<WorldState> {
     return {
       name: p.name, charId: p.charId, level: p.level, exp: p.exp, hp: p.hp, rei: Math.round(p.rei), map: p.map, x: p.x, y: p.y,
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
-      autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal,
+      autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests,
       offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, deaths: p.offlineDeaths },
     };
   }
 
   private saveAll() {
     db.saveMany([...this.state.players.values()].map((p) => ({ id: p.id, data: this.toSave(p), inWorld: true })));
+    db.setMeta("parties", [...this.parties.values()]);
   }
 }

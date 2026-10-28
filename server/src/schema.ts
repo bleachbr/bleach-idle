@@ -1,7 +1,7 @@
 // Estado sincronizado com os clientes. defineTypes em vez de decorators para
 // não depender de configuração de decorators no tsx/esbuild.
 import { Schema, MapSchema, defineTypes } from "@colyseus/schema";
-import { INV_SIZE, DEPOT_SIZE, type Slot, type EquipSlot } from "../../shared/src";
+import { INV_SIZE, DEPOT_SIZE, type Slot, type EquipSlot, type QuestState } from "../../shared/src";
 
 export class Player extends Schema {
   id = "";
@@ -26,6 +26,7 @@ export class Player extends Schema {
   map = "karakura"; // mapa em que está
   look = ""; // visual do equipamento (lookOf); todos veem
   partyId = ""; // party atual ("" = sem party); membros se veem em verde
+  guildTag = ""; // tag da guilda, mostrada no nome
   partyLead = false;
   pvpUntil = 0; // ms epoch: até quando está bloqueado depois de atacar um jogador
 
@@ -51,6 +52,9 @@ export class Player extends Schema {
   lastAttackedAt = 0;
   recallReadyAt = 0;
   pzWarnAt = 0;
+  guildId = 0;
+  frags = 0; // jogadores derrotados em PvP (ranking)
+  quests: QuestState = { active: {}, done: [] };
   reiPotionReadyAt = 0;
   /** mortes enquanto caçava offline, para o relatório da volta */
   offlineDeaths: DeathReport[] = [];
@@ -65,7 +69,7 @@ defineTypes(Player, {
   hp: "int32", maxHp: "int32", rei: "number", maxRei: "int32",
   level: "uint16", exp: "number", targetId: "string",
   online: "boolean", autoTarget: "boolean", autoHunt: "boolean", autoHeal: "uint8", look: "string", map: "string",
-  partyId: "string", partyLead: "boolean", pvpUntil: "number",
+  partyId: "string", partyLead: "boolean", pvpUntil: "number", guildTag: "string",
 });
 
 export class Monster extends Schema {

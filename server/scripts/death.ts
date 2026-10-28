@@ -4,11 +4,10 @@
 //  3. morrendo durante a hunt offline: o relatório da volta traz a morte
 import { expForLevel, walkable, INV_SIZE } from "../../shared/src";
 import { HOME } from "../src/maps";
-import { play, patchSave, sleep } from "./lib";
+import { play, patchSave, sleep, ok, done } from "./lib";
 
 const map = HOME;
 const spot = [[45, 39], [44, 40], [46, 40], [43, 41], [47, 41], [45, 43]].find(([x, y]) => walkable(map, x, y))!;
-const ok = (label: string, cond: boolean) => console.log(`${cond ? "OK    " : "FALHOU"} ${label}`);
 const EQUIP = { head: "bandana", armor: "haori", legs: "hakama", boots: "waraji", weapon: "zanpakuto", ring: "anel_rei" };
 const fullInv = () => Array.from({ length: INV_SIZE }, (_, i) => ({ id: i % 2 ? "garra" : "fragmento", qty: 10 }));
 const exp0 = expForLevel(16) + 500;
@@ -55,4 +54,4 @@ const rep: any = await new Promise((r) => room.onMessage("offline", r));
 ok("morte offline aparece no relatório da volta", rep.deaths?.length === 1 && rep.deaths[0].by === "Fishbone D");
 ok("depois da morte offline ele saiu do mundo (Auto Hunt desligado)", room.state.players.get("morte offline")?.autoHunt === false);
 await room.leave();
-process.exit(0);
+done();

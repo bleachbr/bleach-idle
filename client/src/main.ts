@@ -4,6 +4,7 @@ import { Client, type Room } from "colyseus.js";
 import { CHARS, expForLevel, PVP_MIN_LEVEL } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory } from "./inventory";
+import { serverNow, syncClock } from "./clock";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const SERVER = import.meta.env.VITE_SERVER ?? `ws://${location.hostname}:2567`;
@@ -150,7 +151,8 @@ function start(room: Room<any>, myId: string) {
     location.reload();
   };
 
-  const inventory = initInventory(room, (open) => (game.scene.getScene("game") as GameScene | null)?.setPanelOpen(open));
+  const inventory = initInventory(room, (open) => (game.scene.getScene("game") as GameScene | null)?.setPanelOpen(open),
+    () => room.state.players.get(myId)?.level ?? 1);
   const onMe = (p: any) => {
     renderStats(p);
     inventory.onMove(p.x, p.y);
@@ -165,7 +167,12 @@ function start(room: Room<any>, myId: string) {
     Object.assign(window, { __bi: { room, game, sent } });
   }
 
-  room.onMessage("chat", (m: { from: string; text: string }) => chatLine(m.from ? `${m.from}: ${m.text}` : m.text, m.from ? "" : "sys"));
+  // canais: local (sem ch), pm, party, guild e sys (avisos do servidor)
+  room.onMessage("chat", (m: { from: string; text: string; ch?: string }) => {
+    const prefix = m.ch === "pm" ? "[pm] " : m.ch === "party" ? "[party] " : m.ch === "guild" ? "[guilda] " : "";
+    chatLine(m.from ? `${prefix}${m.from}: ${m.text}` : `${prefix}${m.text}`, m.ch && m.ch !== "sys" ? m.ch : m.from ? "" : "sys");
+  });
+  bindGuild(room);
   room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log"));
   room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[] }) => {
     chatLine(`Hunt offline: ${m.minutes} min, ${m.exp >= 0 ? "+" : ""}${m.exp} XP, ${m.gold >= 0 ? "+" : ""}${m.gold} kan. Você está no nível ${m.level}.`, "log");
@@ -179,6 +186,7 @@ function start(room: Room<any>, myId: string) {
 
   bindAuto(room);
   bindParty(room, myId);
+  syncClock(room);
   const chatin = $<HTMLInputElement>("#chatin");
   window.addEventListener("keydown", (e) => {
     if (e.code === "Enter" && document.activeElement !== chatin) { e.preventDefault(); chatin.focus(); }
@@ -243,7 +251,7 @@ function bindParty(room: Room<any>, myId: string) {
   setInterval(() => {
     const me = room.state.players.get(myId);
     if (!me) return;
-    const left = Math.ceil((me.pvpUntil - Date.now()) / 1000);
+    const left = Math.ceil((me.pvpUntil - serverNow()) / 1000);
     const lock = $("#pvp-lock");
     lock.hidden = left <= 0;
     if (left > 0) lock.textContent = `Atacou um jogador: viagem e praça bloqueadas por ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
@@ -256,6 +264,39 @@ function bindParty(room: Room<any>, myId: string) {
     }
     list.innerHTML = members.map((p: any) => `<div class="member">${p.partyLead ? `<span class="lead" title="Líder">★</span>` : ""}<span>${escHtml(p.name)} <small>${p.level}</small></span><span class="mbar"><i style="width:${Math.max(0, (p.hp / p.maxHp) * 100)}%"></i></span></div>`).join("");
   }, 500);
+}
+
+// ---------- guilda e ranking ----------
+
+function bindGuild(room: Room<any>) {
+  room.onMessage("guild", (g: null | { name: string; tag: string; bank: number; leader: boolean; members: { name: string; level: number; leader: boolean; online: boolean }[] }) => {
+    const body = $("#guild-body");
+    if (!g) {
+      body.innerHTML = `<p class="hint">Sem guilda. <code>/guilda criar Nome</code> (500 kan, nível 10+) ou aceite um convite.</p>`;
+      return;
+    }
+    const members = [...g.members].sort((a, b) => Number(b.online) - Number(a.online) || b.level - a.level);
+    body.innerHTML = `<div class="who"><b>${escHtml(g.name)}</b> <span class="tag">[${escHtml(g.tag)}]</span></div>
+      <div class="hint">Banco: ${g.bank} kan · ${g.members.length} membros</div>
+      ${members.map((m) => `<div class="member${m.online ? "" : " off"}">${m.leader ? `<span class="lead" title="Líder">★</span>` : ""}<span>${escHtml(m.name)} <small>${m.level}</small></span></div>`).join("")}
+      <p class="hint"><code>/g</code> fala com a guilda · <code>/guilda depositar 100</code>${g.leader ? " · <code>/guilda convidar Nome</code> · <code>/guilda sacar 100</code>" : ""} · <code>/guilda sair</code></p>`;
+  });
+
+  const panel = $("#ranking");
+  let data: any = null;
+  let tab = "nivel";
+  const render = () => {
+    panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === tab)));
+    if (!data) return;
+    const rows: string[] = (data[tab] as any[]).map((r, i) => tab === "guildas"
+      ? `<tr><td>${i + 1}</td><td>${escHtml(r.name)} <small>[${escHtml(r.tag)}]</small></td><td>${r.frags} abates</td><td>${r.members} membros · ${r.levels} níveis</td></tr>`
+      : `<tr><td>${i + 1}</td><td>${escHtml(r.name)}${r.guild ? ` <small>[${escHtml(r.guild)}]</small>` : ""}</td><td>${CHARS[r.charId]?.name ?? ""}</td><td>${tab === "nivel" ? `nível ${r.level}` : `${r.frags} abates`}</td></tr>`);
+    $("#ranking-body").innerHTML = rows.length ? `<table>${rows.join("")}</table>` : `<p class="hint">Ninguém aqui ainda.</p>`;
+  };
+  room.onMessage("ranking", (d: any) => { data = d; panel.hidden = false; render(); });
+  $("#ranking-btn").onclick = () => room.send("ranking");
+  $("#ranking-close").onclick = () => (panel.hidden = true);
+  panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab!; render(); }));
 }
 
 interface DeathReport { by: string; exp: number; gold: number; items: string[]; protected: boolean; at: number }

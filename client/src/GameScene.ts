@@ -3,6 +3,7 @@
 import Phaser from "phaser";
 import type { Room } from "colyseus.js";
 import { TILE, SPRITES, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, type GameMap } from "../../shared/src";
+import { serverNow } from "./clock";
 
 const VIEW_W = 15;
 const VIEW_H = 11;
@@ -103,7 +104,7 @@ export class GameScene extends Phaser.Scene {
     const spr = this.add.sprite(0, 0, look.key, e.dir * 4 + 1).setOrigin(0.5, 1).setScale(look.scale);
     if (look.tint) spr.setTint(look.tint);
     const top = -spr.displayHeight + (isMonster ? 4 : 2);
-    const name = isMonster ? MONSTERS[e.kind].name : e.name;
+    const name = isMonster ? MONSTERS[e.kind].name : e.guildTag ? `${e.name} [${e.guildTag}]` : e.name;
     const label = this.add.text(0, top - 12, name, {
       fontFamily: "system-ui, sans-serif", fontSize: "10px", color: isMonster ? "#ffb4a8" : "#ffffff",
       stroke: "#000000", strokeThickness: 3, resolution: 2,
@@ -130,6 +131,8 @@ export class GameScene extends Phaser.Scene {
           if (look2.tint) v.spr.setTint(look2.tint); else v.spr.clearTint();
         }
         v.label.setAlpha(e.online ? 1 : 0.55); // offline caçando aparece meio apagado
+        const label = e.guildTag ? `${e.name} [${e.guildTag}]` : e.name;
+        if (v.label.text !== label) v.label.setText(label);
         if (id === this.myId) this.onMe(e);
       }
     });
@@ -347,7 +350,7 @@ export class GameScene extends Phaser.Scene {
         v.spr.setFrame(v.dir * 4 + 1);
       }
     // cor do nome: verde = minha party, vermelho = atacou um jogador há pouco (bloqueado)
-    const now = Date.now();
+    const now = serverNow();
     for (const v of this.views.values()) {
       if (v.isMonster) continue;
       const p = this.room.state.players.get(v.id);

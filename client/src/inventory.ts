@@ -4,6 +4,7 @@
 import type { Room } from "colyseus.js";
 import {
   ITEMS, SHOP, EQUIP_SLOTS, SLOT_LABEL, GOLD_ICON, CURRENCY, TRAVEL, INTERACT_RANGE, chebyshev,
+  QUESTS, QUEST_BY_ID, type QuestState,
   type ItemDef, type Slot, type EquipSlot,
 } from "../../shared/src";
 
@@ -35,7 +36,8 @@ function tooltip(d: ItemDef) {
   return parts.join(" · ");
 }
 
-export function initInventory(room: Room<any>, onPanel: (open: boolean) => void) {
+export function initInventory(room: Room<any>, onPanel: (open: boolean) => void, myLevel: () => number) {
+  let quests: QuestState = { active: {}, done: [] };
   let state: InvMsg | null = null;
   let open: "" | "depot" | "shop" | "travel" = "";
   let openedAt: { x: number; y: number } | null = null;
@@ -51,6 +53,10 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void)
     if (e.code === "Escape" && open) close();
   });
 
+  room.onMessage("quests", (q: QuestState) => {
+    quests = q;
+    render();
+  });
   room.onMessage("inv", (m: InvMsg) => {
     state = m;
     render();
@@ -85,6 +91,7 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void)
     const count = (id: string) => st.inv.reduce((n, s) => n + (s?.id === id ? s.qty : 0), 0);
     $("#potions").textContent = String(count("pocao_vida"));
     $("#rei-potions").textContent = String(count("pocao_rei"));
+    renderTracker(count);
 
     // equipamento: clicar desequipa
     const eq = $("#equip");
@@ -179,8 +186,67 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void)
       h1.textContent = "Comprar";
       const h2 = document.createElement("h2");
       h2.textContent = "Vender";
-      body.replaceChildren(h1, buy, h2, sellLoot, sell);
+      const h0 = document.createElement("h2");
+      h0.textContent = "Missões";
+      body.replaceChildren(h0, questList(count), h1, buy, h2, sellLoot, sell);
     }
+  }
+
+  /** progresso de uma missão: abates contados no servidor; entregas = o que está no inventário */
+  function progress(id: string, count: (id: string) => number) {
+    const g = QUEST_BY_ID[id].goal;
+    return Math.min(g.count, g.type === "kill" ? quests.active[id] ?? 0 : count(g.item));
+  }
+
+  function goalText(id: string) {
+    const g = QUEST_BY_ID[id].goal;
+    return g.type === "kill" ? "abates" : ITEMS[g.item].name;
+  }
+
+  function renderTracker(count: (id: string) => number) {
+    const ids = Object.keys(quests.active);
+    $("#quest-track").innerHTML = ids.length
+      ? ids.map((id) => {
+        const q = QUEST_BY_ID[id];
+        const n = progress(id, count);
+        return `<div class="quest${n >= q.goal.count ? " ready" : ""}"><b>${q.name}</b><small>${n}/${q.goal.count} ${goalText(id)}${n >= q.goal.count ? " · pronta, volte ao Kisuke" : ""}</small></div>`;
+      }).join("")
+      : `<p class="hint">Nenhuma missão. Fale com o Kisuke na praça.</p>`;
+  }
+
+  function questList(count: (id: string) => number) {
+    const list = document.createElement("div");
+    list.className = "shop-list";
+    for (const q of QUESTS) {
+      const active = q.id in quests.active;
+      const doneOnce = quests.done.includes(q.id);
+      if (doneOnce && !q.repeatable && !active) continue;
+      const row = document.createElement("div");
+      row.className = "shop-row quest-row";
+      const reward = [`${q.reward.exp} XP`, q.reward.gold ? `${q.reward.gold} kan` : "", ...(q.reward.items ?? []).map((it) => `${it.qty}x ${ITEMS[it.id].name}`)].filter(Boolean).join(", ");
+      const n = active ? progress(q.id, count) : 0;
+      row.innerHTML = `<span class="name">${q.name}${q.repeatable ? " ↻" : ""}<small>${q.desc}</small><small>Recompensa: ${reward}</small></span>${active ? `<span class="price">${n}/${q.goal.count}</span>` : ""}`;
+      const b = document.createElement("button");
+      b.type = "button";
+      if (active) {
+        b.textContent = "Entregar";
+        b.disabled = n < q.goal.count;
+        b.onclick = () => room.send("questTurnIn", { id: q.id });
+        const drop = document.createElement("button");
+        drop.type = "button";
+        drop.className = "link";
+        drop.textContent = "abandonar";
+        drop.onclick = () => room.send("questAbandon", { id: q.id });
+        row.append(b, drop);
+      } else {
+        b.textContent = myLevel() < q.minLevel ? `Nível ${q.minLevel}` : "Aceitar";
+        b.disabled = myLevel() < q.minLevel;
+        b.onclick = () => room.send("questAccept", { id: q.id });
+        row.append(b);
+      }
+      list.append(row);
+    }
+    return list;
   }
 
   return {
