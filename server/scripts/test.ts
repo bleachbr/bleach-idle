@@ -1,6 +1,6 @@
 // Runner dos testes: sobe um servidor isolado (porta 2577, banco temporário), roda todos
 // os cenários e conta as verificações. Sai com código 1 se alguma falhar.
-// Uso: npm test   (na raiz)   ou   npx tsx scripts/test.ts [cenário ...]  (em server/)
+// Uso: npm run test:scripts   (na raiz)   ou   npx tsx scripts/test.ts [cenário ...]  (em server/)
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";

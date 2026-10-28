@@ -7,7 +7,8 @@ MMORPG 2D de visão de cima com automação (no estilo do DBO Idle), no universo
 ```bash
 npm install
 npm run dev        # servidor em ws://localhost:2567 e cliente em http://localhost:5173
-npm test           # bateria completa de testes (sobe um servidor de teste isolado)
+npm test           # testes unitários e E2E (Vitest), os mesmos do CI
+npm run test:scripts   # bateria de cenários de jogo (sobe um servidor de teste isolado)
 npm run build && npm start   # modo de produção: tudo em http://localhost:2567
 ```
 
