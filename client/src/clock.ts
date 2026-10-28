@@ -14,5 +14,7 @@ export function syncClock(room: Room<any>) {
   });
   const ask = () => { sentAt = Date.now(); room.send("time"); };
   ask();
-  setInterval(ask, 60_000);
+  const timer = setInterval(ask, 60_000);
+  room.onLeave(() => clearInterval(timer)); // sem isso, mandava mensagem num socket já fechado
+
 }

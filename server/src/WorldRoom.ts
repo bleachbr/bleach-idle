@@ -2,7 +2,8 @@
 // ("andar para", "atacar", "usar habilidade") e toda a simulação roda aqui no tick.
 // Como o personagem é uma entidade do servidor, a hunt offline é só não removê-lo
 // quando o socket cai: o mesmo Auto Helper continua rodando.
-import { Room, Client, ServerError } from "@colyseus/core";
+import { Client, ServerError } from "@colyseus/core";
+import { GameRoom } from "./GameRoom";
 import { WorldState, Player, Monster, Bag, type DeathReport, type Interact } from "./schema";
 import {
   walkable, nearestWalkable, inPZ, type GameMap,
@@ -48,7 +49,7 @@ const isPlayer = (e: Player | Monster): e is Player => e instanceof Player;
 
 interface Party { id: string; leader: string; members: string[]; warnedAt: number }
 
-export class WorldRoom extends Room<WorldState> {
+export class WorldRoom extends GameRoom<WorldState> {
   maxClients = 200;
 
   private sessions = new Map<string, string>(); // sessionId -> id do jogador
@@ -70,21 +71,24 @@ export class WorldRoom extends Room<WorldState> {
     // save frequente e em transação: numa queda se perdem no máximo ~10 s
     this.clock.setInterval(() => this.saveAll(), 10_000);
 
-    this.onMessage("move", (c, m: { x: number; y: number }) => {
+    this.handle("move", (c, m: { x: number; y: number }) => {
       const p = this.me(c);
       if (!p || !Number.isInteger(m?.x) || !Number.isInteger(m?.y) || !walkable(mapOf(p), m.x, m.y)) return;
       p.follow = false;
       p.path = findPath(p.x, p.y, (x, y) => x === m.x && y === m.y, (x, y) => !walkable(mapOf(p), x, y));
     });
-    this.onMessage("step", (c, m: { dir: number }) => {
+    this.handle("step", (c, m: { dir: number }) => {
       const p = this.me(c);
-      if (!p || !(m?.dir in DIR_VEC)) return;
-      const [dx, dy] = DIR_VEC[m.dir as Dir];
+      // só inteiro 0..3: uma string aqui ia para o campo uint8 sincronizado e a codificação
+      // do estado falhava, derrubando TODOS os jogadores da sala
+      const dir = m?.dir;
+      if (!p || !Number.isInteger(dir) || !(dir in DIR_VEC)) return;
+      const [dx, dy] = DIR_VEC[dir as Dir];
       p.follow = false;
-      p.dir = m.dir;
+      p.dir = dir;
       p.path = walkable(mapOf(p), p.x + dx, p.y + dy) ? [{ x: p.x + dx, y: p.y + dy }] : [];
     });
-    this.onMessage("target", (c, m: { id: string }) => {
+    this.handle("target", (c, m: { id: string }) => {
       const p = this.me(c);
       if (!p) return;
       if (!m?.id || m.id === p.targetId) { p.targetId = ""; p.follow = false; return; }
@@ -97,7 +101,7 @@ export class WorldRoom extends Room<WorldState> {
       p.targetId = v.id;
       p.follow = true;
     });
-    this.onMessage("nextTarget", (c) => {
+    this.handle("nextTarget", (c) => {
       const p = this.me(c);
       if (!p) return;
       const list = [...this.state.monsters.values()]
@@ -108,7 +112,7 @@ export class WorldRoom extends Room<WorldState> {
       p.targetId = list[(i + 1) % list.length].id;
       p.follow = true;
     });
-    this.onMessage("skill", (c, m: { slot: number }) => {
+    this.handle("skill", (c, m: { slot: number }) => {
       const p = this.me(c);
       if (!p) return;
       const now = Date.now();
@@ -126,8 +130,8 @@ export class WorldRoom extends Room<WorldState> {
     this.registerQuestMessages();
     this.registerBagMessages();
     // relógio: o cliente pergunta a hora do servidor para contar o bloqueio de PvP certo
-    this.onMessage("time", (c) => c.send("time", { now: Date.now() }));
-    this.onMessage("transform", (c) => {
+    this.handle("time", (c) => c.send("time", { now: Date.now() }));
+    this.handle("transform", (c) => {
       const p = this.me(c);
       if (!p) return;
       const bankai = CHARS[p.charId].forms[1];
@@ -136,7 +140,7 @@ export class WorldRoom extends Room<WorldState> {
       if (p.rei < p.maxRei * 0.3) return this.log(p, "Reiatsu insuficiente para o Bankai.");
       this.setForm(p, 1);
     });
-    this.onMessage("auto", (c, m: { autoTarget?: boolean; autoHunt?: boolean; autoTrain?: boolean; autoHeal?: number }) => {
+    this.handle("auto", (c, m: { autoTarget?: boolean; autoHunt?: boolean; autoTrain?: boolean; autoHeal?: number }) => {
       const p = this.me(c);
       if (!p) return;
       if (typeof m?.autoTarget === "boolean") p.autoTarget = m.autoTarget;
@@ -144,14 +148,14 @@ export class WorldRoom extends Room<WorldState> {
       if (typeof m?.autoTrain === "boolean") p.autoTrain = m.autoTrain;
       if (typeof m?.autoHeal === "number") p.autoHeal = Math.max(0, Math.min(90, Math.round(m.autoHeal)));
     });
-    this.onMessage("chat", (c, m: { text: string }) => {
+    this.handle("chat", (c, m: { text: string }) => {
       const p = this.me(c);
       const text = String(m?.text ?? "").trim().slice(0, 200);
       if (!p || !text) return;
       if (text.startsWith("/")) return this.command(p, text);
       this.broadcast("chat", { from: this.display(p), text });
     });
-    this.onMessage("ranking", (c) => c.send("ranking", this.ranking()));
+    this.handle("ranking", (c) => c.send("ranking", this.ranking()));
   }
 
   /** Só entra quem traz um ingresso emitido pelo lobby (conta logada + personagem dela). */
@@ -713,12 +717,12 @@ export class WorldRoom extends Room<WorldState> {
   private registerItemMessages() {
     const idx = (n: unknown, size: number) => (Number.isInteger(n) && (n as number) >= 0 && (n as number) < size ? (n as number) : -1);
 
-    this.onMessage("useItem", (c, m: { index: number }) => {
+    this.handle("useItem", (c, m: { index: number }) => {
       const p = this.me(c);
       const s = p?.inv[idx(m?.index, INV_SIZE)];
       if (p && s && !this.useConsumable(p, s.id, Date.now())) this.log(p, `Não dá para usar ${ITEMS[s.id].name} agora.`);
     });
-    this.onMessage("equip", (c, m: { index: number }) => {
+    this.handle("equip", (c, m: { index: number }) => {
       const p = this.me(c);
       const i = idx(m?.index, INV_SIZE);
       const s = p?.inv[i];
@@ -731,7 +735,7 @@ export class WorldRoom extends Room<WorldState> {
       this.recompute(p);
       this.sendInv(p);
     });
-    this.onMessage("unequip", (c, m: { slot: EquipSlot }) => {
+    this.handle("unequip", (c, m: { slot: EquipSlot }) => {
       const p = this.me(c);
       const id = p && EQUIP_SLOTS.includes(m?.slot) ? p.equip[m.slot] : undefined;
       if (!p || !id) return;
@@ -740,7 +744,7 @@ export class WorldRoom extends Room<WorldState> {
       this.recompute(p);
       this.sendInv(p);
     });
-    this.onMessage("interact", (c, m: { kind: Interact }) => {
+    this.handle("interact", (c, m: { kind: Interact }) => {
       const p = this.me(c);
       if (!p || !["depot", "shop", "travel"].includes(m?.kind)) return;
       if (this.near(p, m.kind)) return this.open(p, m.kind);
@@ -751,7 +755,7 @@ export class WorldRoom extends Room<WorldState> {
       p.path = findPath(p.x, p.y, (x, y) => chebyshev(x, y, at.x, at.y) <= INTERACT_RANGE, (x, y) => !walkable(mapOf(p), x, y));
       p.pendingInteract = p.path.length ? m.kind : "";
     });
-    this.onMessage("depot", (c, m: { op: "put" | "take"; index: number }) => {
+    this.handle("depot", (c, m: { op: "put" | "take"; index: number }) => {
       const p = this.me(c);
       if (!p) return;
       if (!this.near(p, "depot")) return this.log(p, "Chegue perto do baú do depot.");
@@ -765,7 +769,7 @@ export class WorldRoom extends Room<WorldState> {
       if (s.qty <= 0) from[i] = null;
       this.sendInv(p);
     });
-    this.onMessage("buy", (c, m: { id: string; qty: number }) => {
+    this.handle("buy", (c, m: { id: string; qty: number }) => {
       const p = this.me(c);
       const def = ITEMS[m?.id];
       if (!p || !def?.buy || !SHOP.includes(def.id)) return;
@@ -779,7 +783,7 @@ export class WorldRoom extends Room<WorldState> {
       this.log(p, `Comprou ${qty}x ${def.name} por ${cost} kan.`);
       this.sendInv(p);
     });
-    this.onMessage("sell", (c, m: { index: number }) => {
+    this.handle("sell", (c, m: { index: number }) => {
       const p = this.me(c);
       const i = idx(m?.index, INV_SIZE);
       const s = p?.inv[i];
@@ -791,7 +795,7 @@ export class WorldRoom extends Room<WorldState> {
       this.log(p, `Vendeu ${s.qty}x ${ITEMS[s.id].name} por ${gain} kan.`);
       this.sendInv(p);
     });
-    this.onMessage("sellLoot", (c) => {
+    this.handle("sellLoot", (c) => {
       const p = this.me(c);
       if (!p) return;
       if (!this.near(p, "shop")) return this.log(p, "Chegue perto da loja.");
@@ -856,7 +860,7 @@ export class WorldRoom extends Room<WorldState> {
   // ---------- party, PvP e viagem ----------
 
   private registerSocialMessages() {
-    this.onMessage("partyInvite", (c, m: { id: string }) => {
+    this.handle("partyInvite", (c, m: { id: string }) => {
       const p = this.me(c);
       const v = this.state.players.get(String(m?.id ?? ""));
       if (!p || !v || v === p) return;
@@ -875,7 +879,7 @@ export class WorldRoom extends Room<WorldState> {
       this.sendTo(v, "partyInvite", { from: p.name });
       this.log(p, `Convite enviado para ${v.name}.`);
     });
-    this.onMessage("partyAnswer", (c, m: { accept: boolean }) => {
+    this.handle("partyAnswer", (c, m: { accept: boolean }) => {
       const p = this.me(c);
       const inv = p ? this.invites.get(p.id) : undefined;
       if (!p || !inv) return;
@@ -891,11 +895,11 @@ export class WorldRoom extends Room<WorldState> {
       if (p.targetId && party.members.includes(p.targetId)) p.targetId = "";
       this.partyLog(party, `${p.name} entrou na party.`);
     });
-    this.onMessage("partyLeave", (c) => {
+    this.handle("partyLeave", (c) => {
       const p = this.me(c);
       if (p) this.leaveParty(p);
     });
-    this.onMessage("partyKick", (c, m: { id: string }) => {
+    this.handle("partyKick", (c, m: { id: string }) => {
       const p = this.me(c);
       const party = p ? this.parties.get(p.partyId) : undefined;
       const v = this.state.players.get(String(m?.id ?? ""));
@@ -903,7 +907,7 @@ export class WorldRoom extends Room<WorldState> {
       this.log(v, "Você foi removido da party.");
       this.leaveParty(v);
     });
-    this.onMessage("recall", (c) => {
+    this.handle("recall", (c) => {
       const p = this.me(c);
       if (!p) return;
       const now = Date.now();
@@ -915,7 +919,7 @@ export class WorldRoom extends Room<WorldState> {
       this.teleport(p, HOME.id, TEMPLE);
       this.log(p, "Você voltou à cidade.");
     });
-    this.onMessage("travel", (c, m: { dest: string }) => {
+    this.handle("travel", (c, m: { dest: string }) => {
       const p = this.me(c);
       const d = TRAVEL.find((t) => t.id === m?.dest);
       if (!p || !d) return;
@@ -1171,7 +1175,7 @@ export class WorldRoom extends Room<WorldState> {
       case "sacar": {
         if (!g) return this.log(p, "Você não está numa guilda.");
         const n = Math.floor(Number(arg));
-        if (!(n > 0)) return this.log(p, `Uso: /guilda ${sub} 100`);
+        if (!Number.isSafeInteger(n) || n <= 0) return this.log(p, `Uso: /guilda ${sub} 100`);
         if (sub.toLowerCase() === "depositar") {
           if (p.gold < n) return this.log(p, "Você não tem esse dinheiro.");
           p.gold -= n;
@@ -1227,8 +1231,17 @@ export class WorldRoom extends Room<WorldState> {
     for (const x of this.state.players.values()) if (x.guildId === guildId) this.sendGuild(x);
   }
 
-  /** Ranking: nível (por XP), abates em PvP e guildas (soma de abates e de níveis). */
+  private rankingCache: { at: number; data: ReturnType<WorldRoom["buildRanking"]> } | null = null;
+
+  /** Ranking com cache de 15 s (varre todos os personagens do banco). */
   private ranking() {
+    if (!this.rankingCache || Date.now() - this.rankingCache.at > 15_000)
+      this.rankingCache = { at: Date.now(), data: this.buildRanking() };
+    return this.rankingCache.data;
+  }
+
+  /** Ranking: nível (por XP), abates em PvP e guildas (soma de abates e de níveis). */
+  private buildRanking() {
     const rows = new Map<string, { name: string; charId: string; level: number; exp: number; frags: number; guild: string }>();
     for (const r of db.allChars()) rows.set(r.id, { name: r.data.name, charId: r.data.charId, level: r.data.level, exp: r.data.exp, frags: r.data.frags ?? 0, guild: "" });
     for (const p of this.state.players.values()) rows.set(p.id, { name: p.name, charId: p.charId, level: p.level, exp: p.exp, frags: p.frags, guild: "" });
@@ -1255,8 +1268,8 @@ export class WorldRoom extends Room<WorldState> {
   // ---------- missões ----------
 
   private registerQuestMessages() {
-    this.onMessage("quests", (c) => { const p = this.me(c); if (p) this.sendQuests(p); });
-    this.onMessage("questAccept", (c, m: { id: string }) => {
+    this.handle("quests", (c) => { const p = this.me(c); if (p) this.sendQuests(p); });
+    this.handle("questAccept", (c, m: { id: string }) => {
       const p = this.me(c);
       const q = QUEST_BY_ID[m?.id];
       if (!p || !q) return;
@@ -1269,13 +1282,13 @@ export class WorldRoom extends Room<WorldState> {
       this.log(p, `Missão aceita: ${q.name}.`);
       this.sendQuests(p);
     });
-    this.onMessage("questAbandon", (c, m: { id: string }) => {
+    this.handle("questAbandon", (c, m: { id: string }) => {
       const p = this.me(c);
       if (!p || !(m?.id in p.quests.active)) return;
       delete p.quests.active[m.id];
       this.sendQuests(p);
     });
-    this.onMessage("questTurnIn", (c, m: { id: string }) => {
+    this.handle("questTurnIn", (c, m: { id: string }) => {
       const p = this.me(c);
       const q = QUEST_BY_ID[m?.id];
       if (!p || !q || !(q.id in p.quests.active)) return;
@@ -1348,7 +1361,7 @@ export class WorldRoom extends Room<WorldState> {
     const nearBag = (p: Player, b: Bag) => b.map === p.map && chebyshev(p.x, p.y, b.x, b.y) <= 1;
     const show = (p: Player, b: Bag) =>
       this.sendTo(p, "bag", { id: b.id, label: b.label, gold: b.gold, items: b.items, locked: !canTake(p, b), until: b.ownerUntil });
-    this.onMessage("bagOpen", (c, m: { id: string }) => {
+    this.handle("bagOpen", (c, m: { id: string }) => {
       const p = this.me(c);
       const b = this.state.bags.get(String(m?.id ?? ""));
       if (!p || !b) return;
@@ -1360,7 +1373,7 @@ export class WorldRoom extends Room<WorldState> {
       }
       show(p, b);
     });
-    this.onMessage("bagTake", (c, m: { id: string; index?: number }) => {
+    this.handle("bagTake", (c, m: { id: string; index?: number }) => {
       const p = this.me(c);
       const b = this.state.bags.get(String(m?.id ?? ""));
       if (!p || !b || !nearBag(p, b)) return;

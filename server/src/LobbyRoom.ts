@@ -1,6 +1,7 @@
 // Lobby: login, cadastro, lista e criação de personagens. Ao escolher um personagem,
 // emite um ingresso de uso único que o cliente usa para entrar na sala "world".
-import { Room, Client, ServerError } from "@colyseus/core";
+import { Client, ServerError } from "@colyseus/core";
+import { GameRoom } from "./GameRoom";
 import type { IncomingMessage } from "node:http";
 import {
   CHARS, START_LEVEL, START_KIT, INV_SIZE, DEPOT_SIZE, expForLevel, maxHp, maxRei, addItem, type Slot,
@@ -26,7 +27,7 @@ export function newCharacter(name: string, charId: string): db.SaveData {
   };
 }
 
-export class LobbyRoom extends Room {
+export class LobbyRoom extends GameRoom {
   maxClients = 1000;
 
   async onAuth(_client: Client, opts: any, req?: IncomingMessage): Promise<Auth> {
@@ -66,7 +67,7 @@ export class LobbyRoom extends Room {
   }
 
   onCreate() {
-    this.onMessage("create", (c, m: { name: string; charId: string }) => {
+    this.handle("create", (c, m: { name: string; charId: string }) => {
       const { accountId } = c.userData as Auth;
       const name = String(m?.name ?? "").trim().replace(/\s+/g, " ");
       if (!NAME_RE.test(name)) return c.send("error", { text: "Nome: de 3 a 16 letras (espaços permitidos)." });
@@ -75,20 +76,20 @@ export class LobbyRoom extends Room {
       if (!db.createChar(accountId, name.toLowerCase(), newCharacter(name, m.charId))) return c.send("error", { text: "Esse nome já está em uso." });
       this.sendChars(c);
     });
-    this.onMessage("delete", (c, m: { id: string }) => {
+    this.handle("delete", (c, m: { id: string }) => {
       const { accountId } = c.userData as Auth;
       if (!db.deleteChar(accountId, String(m?.id ?? "")))
         return c.send("error", { text: "Não foi possível excluir. Se ele estiver caçando offline, entre e desligue o Auto Hunt antes." });
       guilds.leave(String(m.id)); // sai da guilda (passa a liderança ou desfaz a guilda)
       this.sendChars(c);
     });
-    this.onMessage("play", (c, m: { id: string }) => {
+    this.handle("play", (c, m: { id: string }) => {
       const { accountId } = c.userData as Auth;
       const row = db.load(String(m?.id ?? ""));
       if (!row || row.accountId !== accountId) return c.send("error", { text: "Personagem não encontrado." });
       c.send("ticket", { ticket: issueTicket({ accountId, charId: row.id }) });
     });
-    this.onMessage("logout", (c) => {
+    this.handle("logout", (c) => {
       const { token } = c.userData as Auth;
       if (token) db.deleteSession(token);
       c.leave();

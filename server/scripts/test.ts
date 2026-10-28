@@ -11,7 +11,7 @@ const PORT = 2577;
 const serverDir = fileURLToPath(new URL("..", import.meta.url));
 const tmp = mkdtempSync(join(tmpdir(), "bleach-test-"));
 const env = { ...process.env, PORT: String(PORT), DB_FILE: join(tmp, "test.sqlite"), BI_URL: `ws://localhost:${PORT}`, LOGIN_MAX_FAILS_IP: "1000000" };
-const ALL = ["mapcheck", "accounts", "bankai", "outfit", "items", "death", "social", "social2", "quests", "training", "bags", "bot", "spawncount", "restart"];
+const ALL = ["mapcheck", "robust", "accounts", "bankai", "outfit", "items", "death", "social", "social2", "quests", "training", "bags", "bot", "spawncount", "restart"];
 const only = process.argv.slice(2);
 const scenarios = only.length ? only : ALL;
 
@@ -36,7 +36,11 @@ function startServer(): Promise<ChildProcess> {
   return new Promise((resolve, reject) => {
     const p = node(["src/index.ts"]);
     const timer = setTimeout(() => reject(new Error("servidor não subiu em 30 s")), 30_000);
-    lines(p, (l) => { if (l.includes("Servidor do mundo")) { clearTimeout(timer); resolve(p); } });
+    lines(p, (l) => {
+      if (l.includes("Servidor do mundo")) { clearTimeout(timer); resolve(p); }
+      // exceção num handler: o servidor sobrevive (onUncaughtException), mas é um bug
+      if (l.includes("] erro em ")) record("servidor", `FALHOU ${l.trim()}`);
+    });
     p.on("exit", (code) => reject(new Error(`servidor saiu (${code})`)));
   });
 }

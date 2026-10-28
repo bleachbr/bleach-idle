@@ -258,7 +258,7 @@ function bindParty(room: Room<any>, myId: string) {
   $("#party-leave").onclick = () => room.send("partyLeave");
 
   // painel e contador do bloqueio: redesenha 2x por segundo
-  setInterval(() => {
+  const partyTimer = setInterval(() => {
     const me = room.state.players.get(myId);
     if (!me) return;
     const left = Math.ceil((me.pvpUntil - serverNow()) / 1000);
@@ -274,6 +274,7 @@ function bindParty(room: Room<any>, myId: string) {
     }
     list.innerHTML = members.map((p: any) => `<div class="member">${p.partyLead ? `<span class="lead" title="Líder">★</span>` : ""}<span>${escHtml(p.name)} <small>${p.level}</small></span><span class="mbar"><i style="width:${Math.max(0, (p.hp / p.maxHp) * 100)}%"></i></span></div>`).join("");
   }, 500);
+  room.onLeave(() => clearInterval(partyTimer));
 }
 
 // ---------- guilda e ranking ----------

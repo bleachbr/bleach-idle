@@ -15,8 +15,12 @@ await sleep(12000);
 ok(`caça online (+${me().exp - exp0} XP em 12 s)`, me().exp > exp0);
 await room.leave();
 await sleep(1000);
-const exp1 = (await play("Olheiro")).state.players.get(id)?.exp; // outro jogador vê o personagem ainda no mundo
-ok("depois de sair, segue no mundo", exp1 !== undefined);
+// outro jogador vê o personagem ainda no mundo (espera o estado sincronizar antes de olhar)
+const obs = await play("Olheiro");
+await sleep(800);
+const off = obs.state.players.get(id);
+ok("depois de sair, segue no mundo (offline)", off?.online === false);
+await obs.leave();
 await sleep(10000);
 room = await play(name);
 const rep: any = await new Promise((r) => room.onMessage("offline", r));
