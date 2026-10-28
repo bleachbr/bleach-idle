@@ -236,3 +236,9 @@ Resultado: `npm test` 76 de 76 e `npm run test:scripts` 229 de 229.
 - **Conferido no navegador:** quadros e posição medidos com o Ichigo andando (passa pelos 8 quadros e avança suave) e os 38 inimigos de Karakura visíveis, cada um com o número certo de quadros.
 
 Resultado: `npm test` 76 de 76 e `npm run test:scripts` 229 de 229.
+
+## Polimento enquanto o Codex não libera
+- **Números de dano:** fonte pixel do jogo com contorno. Surgem grandes, assentam, sobem e somem. Golpe de 25% ou mais da vida do alvo vira número grande e amarelo com "!", e treme um pouco a tela quando envolve você.
+- **Nomes sobre os personagens:** na fonte pixel.
+- **Barras de vida em cima de cada um:** moldura escura com borda clara e faixa de brilho em cima.
+- **Câmera:** segue o personagem com leve amortecimento, e pula direto no teleporte (morte, viagem, voltar à cidade) para não atravessar o mapa deslizando.

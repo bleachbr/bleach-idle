@@ -60,6 +60,9 @@ const SKILL_FX: Record<string, { anim: string; fly: boolean }> = {
  * O cliente usa esse ritmo real; com o valor nominal ele deslizava rápido e parava a cada passo. */
 const realStep = (stepMs: number) => Math.ceil(stepMs / TICK_MS) * TICK_MS;
 
+/** fonte pixel do jogo (carregada pelo @fontsource no main.ts) para nomes e números */
+const PIXEL_FONT = '"Pixelify Sans", system-ui, sans-serif';
+
 const px = (x: number) => x * TILE + TILE / 2;
 const py = (y: number) => y * TILE + TILE;
 
@@ -173,7 +176,7 @@ export class GameScene extends Phaser.Scene {
     const top = -spr.displayHeight + (isMonster ? 4 : 2);
     const name = isMonster ? MONSTERS[e.kind].name : e.guildTag ? `${e.name} [${e.guildTag}]` : e.name;
     const label = this.add.text(0, top - 12, name, {
-      fontFamily: "system-ui, sans-serif", fontSize: "10px", color: isMonster ? "#ffb4a8" : "#ffffff",
+      fontFamily: PIXEL_FONT, fontSize: "11px", color: isMonster ? "#ffb4a8" : "#ffffff",
       stroke: "#000000", strokeThickness: 3, resolution: 2,
     }).setOrigin(0.5, 1);
     const bar = this.add.graphics();
@@ -206,7 +209,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     if (id === this.myId) {
-      this.cameras.main.startFollow(c, true, 1, 1, 0, 0);
+      this.cameras.main.startFollow(c, true, 0.18, 0.18, 0, 0); // segue com leve amortecimento
       this.onMe(e);
     }
   }
@@ -218,6 +221,12 @@ export class GameScene extends Phaser.Scene {
     v.lastMoveAt = this.time.now;
     if (far) {
       v.c.setPosition(px(x), py(y));
+      if (v.id === this.myId) {
+        // teleporte: a câmera pula junto, sem atravessar o mapa deslizando
+        const cam = this.cameras.main;
+        cam.setLerp(1, 1);
+        this.time.delayedCall(60, () => cam.setLerp(0.18, 0.18));
+      }
       return;
     }
     this.setIdle(v, false);
@@ -291,21 +300,29 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawBar(v: View, hp: number, max: number) {
-    const w = 26;
+    const w = 28;
     const f = Math.max(0, Math.min(1, hp / max));
+    const col = f > 0.5 ? 0x4cd04c : f > 0.25 ? 0xe8c43a : 0xe0463a;
+    const light = f > 0.5 ? 0x9cf59c : f > 0.25 ? 0xffe68a : 0xff8a7a;
     v.bar.clear();
-    v.bar.fillStyle(0x000000, 0.8).fillRect(-w / 2 - 1, -1, w + 2, 5);
-    v.bar.fillStyle(f > 0.5 ? 0x4cd04c : f > 0.25 ? 0xe8c43a : 0xe0463a).fillRect(-w / 2, 0, Math.round(w * f), 3);
+    // moldura escura com borda clara, preenchimento com faixa de brilho em cima (pixel art)
+    v.bar.fillStyle(0x0b0a12, 0.9).fillRect(-w / 2 - 2, -2, w + 4, 7);
+    v.bar.lineStyle(1, 0xc9c4da, 0.55).strokeRect(-w / 2 - 1.5, -1.5, w + 3, 6);
+    v.bar.fillStyle(col).fillRect(-w / 2, 0, Math.round(w * f), 3);
+    v.bar.fillStyle(light).fillRect(-w / 2, 0, Math.round(w * f), 1);
   }
 
   // ---------- efeitos ----------
 
-  private float(v: View | undefined, text: string, color: string, size = 12) {
+  /** Texto flutuante (dano, cura, nível): surge grande, assenta, sobe e some. `big`: golpe forte. */
+  private float(v: View | undefined, text: string, color: string, size = 12, big = false) {
     if (!v) return;
     const t = this.add.text(v.c.x + Phaser.Math.Between(-6, 6), v.c.y - v.spr.displayHeight, text, {
-      fontFamily: "system-ui, sans-serif", fontSize: `${size}px`, fontStyle: "bold", color, stroke: "#000", strokeThickness: 3, resolution: 2,
-    }).setOrigin(0.5).setDepth(1e6 + 1);
-    this.tweens.add({ targets: t, y: t.y - 22, alpha: 0, duration: 900, onComplete: () => t.destroy() });
+      fontFamily: PIXEL_FONT, fontSize: `${big ? size + 6 : size + 1}px`, fontStyle: "bold", color, stroke: "#000", strokeThickness: big ? 5 : 4, resolution: 2,
+    }).setOrigin(0.5).setDepth(1e6 + 1).setScale(big ? 1.8 : 1.35);
+    this.tweens.add({ targets: t, scale: 1, duration: big ? 160 : 110, ease: "Back.easeOut" });
+    this.tweens.add({ targets: t, y: t.y - (big ? 30 : 22), duration: 900, ease: "Cubic.easeOut" });
+    this.tweens.add({ targets: t, alpha: 0, delay: 500, duration: 400, onComplete: () => t.destroy() });
   }
 
   private onFx(fx: { t: string; id?: string; v?: number; from?: string; to?: string; color?: number; name?: string; text?: string; skill?: boolean }) {
@@ -332,7 +349,12 @@ export class GameScene extends Phaser.Scene {
         sfx.event();
         break;
       case "dmg":
-        this.float(v, fx.v ? String(fx.v) : "errou", v?.isMonster ? "#ffffff" : "#ff5a4a");
+        {
+          const target = v ? (v.isMonster ? this.room.state.monsters.get(v.id) : this.room.state.players.get(v.id)) : undefined;
+          const big = !!fx.v && !!target && fx.v >= target.maxHp * 0.25;
+          this.float(v, fx.v ? (big ? `${fx.v}!` : String(fx.v)) : "errou", big ? "#ffd84a" : v?.isMonster ? "#ffffff" : "#ff5a4a", 12, big);
+          if (big && (fx.from === this.myId || mine)) this.cameras.main.shake(120, 0.003);
+        }
         if (v && fx.v) { v.spr.setTintFill(0xffffff); this.time.delayedCall(70, () => this.restoreTint(v)); }
         {
           // golpe: quem bateu avança, o corte aparece no alvo (habilidade tem efeito próprio) e um impacto
