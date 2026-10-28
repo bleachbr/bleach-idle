@@ -90,6 +90,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 
 **Interface**
 - **Sons** sintetizados no navegador (golpe, dano, habilidade, loot, nível, Bankai, eventos), com botão "som" para silenciar.
+- **Alvo e chefes:** anel pulsante sob o alvo e barra de vida grande no topo da tela ao enfrentar um chefe.
 - **Clima de cada mapa:** vaga-lumes em Karakura, pétalas de cerejeira na Soul Society, areia ao vento em Hueco Mundo, reishi em Las Noches e fagulhas no Dangai. Há poeira nos passos, e o golpe empurra o alvo.
 - **Movimento fluido:** o personagem desliza em velocidade constante no ritmo real do servidor (passos de 100 ms), sem o "anda e trava". Parado, ele respira.
 - **Andar com 8 quadros por direção** para todos os personagens e para 15 dos 18 inimigos (o resto segue com 4). O jogo descobre quantos quadros cada folha tem pela largura da imagem.

@@ -3,7 +3,7 @@
 import Phaser from "phaser";
 import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
-import { TILE, TICK_MS, SPRITES, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, type GameMap } from "../../shared/src";
+import { TILE, TICK_MS, SPRITES, BOSSES, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, type GameMap } from "../../shared/src";
 import { serverNow } from "./clock";
 
 const VIEW_W = 15;
@@ -500,6 +500,35 @@ export class GameScene extends Phaser.Scene {
   }
 
   private ambient?: Phaser.GameObjects.Particles.ParticleEmitter;
+  private targetRing?: Phaser.GameObjects.Graphics;
+
+  /** Anel pulsante sob o alvo atual e barra de chefe no topo da tela. */
+  private updateTarget() {
+    const me = this.room.state.players.get(this.myId);
+    const v = me?.targetId ? this.views.get(me.targetId) : undefined;
+    if (!this.targetRing) {
+      this.targetRing = this.add.graphics();
+      this.tweens.add({ targets: this.targetRing, scale: 1.12, alpha: 0.65, duration: 500, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    }
+    const ring = this.targetRing;
+    if (!v || !v.c.visible) ring.setVisible(false);
+    else {
+      const w = Math.max(26, v.spr.displayWidth * 0.75);
+      ring.clear();
+      ring.lineStyle(2, 0xff3a3a, 1).strokeEllipse(0, 0, w, w * 0.4);
+      ring.lineStyle(1, 0xffffff, 0.6).strokeEllipse(0, 0, w + 6, w * 0.4 + 3);
+      ring.setPosition(v.c.x, v.c.y - 3).setDepth(v.c.y - 2).setVisible(true);
+    }
+    // chefe: nome e vida em barra grande (elemento da página, fora do canvas)
+    const bar = document.getElementById("bossbar");
+    const mon = v?.isMonster ? this.room.state.monsters.get(v.id) : undefined;
+    if (!bar) return;
+    if (!mon || !BOSSES.has(mon.kind)) { bar.hidden = true; return; }
+    bar.hidden = false;
+    (bar.querySelector("b") as HTMLElement).textContent = MONSTERS[mon.kind].name;
+    (bar.querySelector("i") as HTMLElement).style.width = `${Math.max(0, (mon.hp / mon.maxHp) * 100)}%`;
+    (bar.querySelector("span") as HTMLElement).textContent = `${Math.max(0, mon.hp)} / ${mon.maxHp}`;
+  }
 
   /** Partículas do clima do mapa: presas à câmera (cobrem só a tela) e por trás da interface. */
   private startAmbient(id: string) {
@@ -694,6 +723,7 @@ export class GameScene extends Phaser.Scene {
 
   update(time: number, delta: number) {
     this.glide(delta);
+    this.updateTarget();
     if (time >= this.nextMinimapAt) {
       this.nextMinimapAt = time + 250;
       this.drawMinimap(this.room.state.players.get(this.myId));

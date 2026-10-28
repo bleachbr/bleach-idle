@@ -167,3 +167,12 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 #chars { display: grid; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 6px; }
 .char { padding: 6px 2px !important; min-width: 0; }
 .char .portrait { width: 72px; height: 72px; }
+
+/* barra do chefe no topo da tela (aparece com um chefe como alvo) */
+#bossbar { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); width: min(420px, calc(100% - 170px)); z-index: 11; text-align: center; pointer-events: none; }
+#bossbar b { display: block; font-family: var(--title); font-size: 15px; color: #ffd0c8; text-shadow: 0 2px 0 #000, 0 0 8px #e8333a; margin-bottom: 2px; }
+#bossbar .track { position: relative; height: 16px; border: solid transparent; border-width: 4px 6px; border-image: url(/assets/ui/bar.png) 5 6 fill / 4px 6px stretch; image-rendering: pixelated; }
+#bossbar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#ff6a5a 0 35%, #b02420 35% 100%); transition: width .2s; }
+#bossbar span { position: relative; font-family: var(--title); font-size: 10px; line-height: 8px; text-shadow: 0 1px 0 #000; }
+#dangai:not([hidden]) + #bossbar { top: 60px; }
+@media (max-width: 720px) { #bossbar { top: 100px; width: calc(100% - 40px); } }
