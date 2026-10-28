@@ -7,6 +7,7 @@ export interface Listing { id: number; seller: string; sellerName: string; item:
 export const MARKET_FEE = 0.05; // sai do jogo: segura a inflação de kan
 export const MAX_LISTINGS = 10; // por personagem
 export const MAX_PRICE = 1_000_000; // por unidade
+export const EXPIRE_MS = 7 * 24 * 3600_000; // anúncio parado volta para o depot do vendedor
 
 const db = new DatabaseSync(process.env.DB_FILE ?? "bleach-idle.sqlite");
 db.exec(`
@@ -45,4 +46,8 @@ export function add(seller: string, sellerName: string, item: string, qty: numbe
 /** Remove o anúncio; devolve true só para quem conseguiu (evita vender o mesmo item duas vezes). */
 export function remove(id: number): boolean {
   return db.prepare("DELETE FROM market WHERE id = ?").run(id).changes > 0;
+}
+
+export function expired(now = Date.now()): Listing[] {
+  return (db.prepare("SELECT * FROM market WHERE created_at <= ? LIMIT 100").all(now - EXPIRE_MS) as any[]).map(row);
 }

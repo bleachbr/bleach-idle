@@ -1425,7 +1425,8 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   private registerMarketMessages() {
     const show = (p: Player) => this.sendTo(p, "market", { listings: market.list(), me: p.id, fee: market.MARKET_FEE });
-    this.handle("marketList", (c) => { const p = this.me(c); if (p) show(p); });
+    this.handle("marketList", (c) => { const p = this.me(c); if (!p) return; this.expireListings(); show(p); });
+    this.clock.setInterval(() => this.expireListings(), 60_000);
     this.handle("marketSell", (c, m: { index: number; qty: number; price: number }) => {
       const p = this.me(c);
       if (!p) return;
@@ -1474,6 +1475,22 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.sendInv(p);
       show(p);
     });
+  }
+
+  /** Anúncios com mais de 7 dias voltam para o depot do vendedor (fica no anúncio se o depot estiver cheio). */
+  private expireListings() {
+    for (const l of market.expired()) {
+      const x = this.state.players.get(l.seller);
+      const row = x ? undefined : db.load(l.seller);
+      if (row) row.data.depot = Array.from({ length: DEPOT_SIZE }, (_, i) => row.data.depot?.[i] ?? null);
+      const depot = x ? x.depot : row?.data.depot;
+      if (!depot || spaceFor(depot, l.item) < l.qty) continue;
+      if (!market.remove(l.id)) continue;
+      addItem(depot, l.item, l.qty);
+      const text = `Mercado: seu anúncio de ${l.qty}x ${ITEMS[l.item].name} expirou e voltou para o depot.`;
+      if (x) { this.log(x, text); this.sendInv(x); }
+      else if (row) db.save(l.seller, row.data, row.inWorld);
+    }
   }
 
   /** Entrega o dinheiro da venda: na hora se o vendedor está no mundo, senão no save dele. */

@@ -62,6 +62,8 @@ ok("cancelar devolve o item ao inventário", countItem(a.inv().inv, "garra") ===
 a.room.send("marketSell", { index: 0, qty: 1, price: 100 });
 await sleep(300);
 const third = a.mk().listings.find((l: any) => l.seller === "mercador ana");
+a.room.send("marketSell", { index: 0, qty: 1, price: 999 }); // fica parado (vence mais abaixo)
+await sleep(300);
 await a.room.leave();
 await sleep(500);
 b.room.send("marketBuy", { id: third.id });
@@ -70,6 +72,21 @@ const db = new DatabaseSync(DB_FILE);
 const saved = JSON.parse((db.prepare("SELECT data FROM players WHERE id = 'mercador ana'").get() as { data: string }).data);
 db.close();
 ok(`vendedor fora do jogo recebe no save (${saved.gold} kan = 190 + 95)`, saved.gold === 285);
+
+// anúncio com mais de 7 dias volta para o depot (online na hora; offline no save)
+b.room.send("marketSell", { index: b.inv().inv.findIndex((sl: any) => sl?.id === "garra"), qty: 1, price: 70 });
+await sleep(300);
+const old = b.mk().listings.find((l: any) => l.seller === "mercador beto");
+const wdb = new DatabaseSync(DB_FILE);
+wdb.prepare("UPDATE market SET created_at = 0 WHERE id = ? OR seller = 'mercador ana'").run(old.id);
+wdb.close();
+b.room.send("marketList");
+await sleep(400);
+ok("anúncio vencido volta para o depot do vendedor online", countItem(b.inv().depot, "garra") === 1 && !b.mk().listings.some((l: any) => l.id === old.id));
+const db2 = new DatabaseSync(DB_FILE);
+const ana = JSON.parse((db2.prepare("SELECT data FROM players WHERE id = 'mercador ana'").get() as { data: string }).data);
+db2.close();
+ok(`anúncio vencido do vendedor offline vai para o depot no save (${countItem(ana.depot, "garra")} garras)`, countItem(ana.depot, "garra") >= 1);
 
 for (const x of [b, pobre]) await x.room.leave();
 done();

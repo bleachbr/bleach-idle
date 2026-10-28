@@ -36,7 +36,7 @@ function tooltip(d: ItemDef) {
   return parts.join(" · ");
 }
 
-export function initInventory(room: Room<any>, onPanel: (open: boolean) => void, myLevel: () => number) {
+export function initInventory(room: Room<any>, onPanel: (open: boolean) => void, myLevel: () => number, myPos: () => { x: number; y: number } | undefined) {
   let quests: QuestState = { active: {}, done: [] };
   let shopTab: "missoes" | "loja" | "mercado" = "loja";
   let marketData: { listings: { id: number; seller: string; sellerName: string; item: string; qty: number; price: number }[]; me: string; fee: number } | null = null;
@@ -68,7 +68,9 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
   room.onMessage("bag", (b: typeof bag) => {
     bag = b;
     open = "bag";
-    openedAt = { ...lastPos };
+    // posição atual vinda do estado: a última do onMove pode ainda ser (0,0) se a cena não
+    // terminou de carregar, e aí a janela fechava sozinha na primeira atualização
+    openedAt = myPos() ?? { ...lastPos };
     $("#modal").hidden = false;
     onPanel(true);
     render();
@@ -77,7 +79,9 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
   room.onMessage("open", (m: { kind: "depot" | "shop" | "travel" }) => {
     if (m.kind === "shop") room.send("marketList");
     open = m.kind;
-    openedAt = { ...lastPos };
+    // posição atual vinda do estado: a última do onMove pode ainda ser (0,0) se a cena não
+    // terminou de carregar, e aí a janela fechava sozinha na primeira atualização
+    openedAt = myPos() ?? { ...lastPos };
     $("#modal").hidden = false;
     onPanel(true);
     render();

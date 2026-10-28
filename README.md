@@ -47,7 +47,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Loot:** vai direto para o inventário, o que funciona também offline. O que não couber vira uma **sacola no chão**, reservada a quem matou por 1 minuto.
 - **Praça:** depot de 60 espaços e loja com "Vender todo o loot".
 - **Visual:** Haori de Capitão e Máscara de Osso mudam o sprite, e todos veem. Rukia e Renji têm sprite próprio no Bankai.
-- **Mercado entre jogadores** (aba no Kisuke): anuncie itens do inventário com preço por unidade; o item fica guardado até alguém comprar ou você cancelar. Taxa de 5% na venda, e o vendedor recebe mesmo fora do jogo.
+- **Mercado entre jogadores** (aba no Kisuke): anuncie itens do inventário com preço por unidade; o item fica guardado até alguém comprar ou você cancelar. Taxa de 5% na venda, e o vendedor recebe mesmo fora do jogo. Anúncio sem comprador por 7 dias volta para o depot.
 
 **Social**
 - **Party:** até 4, com XP dividida (+10% por membro, regra de 2/3 do nível). Sobrevive a um reinício do servidor.
@@ -106,5 +106,5 @@ Tiles de Karakura e Hueco Mundo: [Roguelike Modern City](https://kenney.nl/asset
 - **Arte:** Karakura e Hueco Mundo usam tiles da Kenney, mais simples que os personagens; a Soul Society já tem arte própria. Não há interiores de prédios nem andares.
 - **Sprites:** só haori e máscara mudam o visual do personagem.
 - **Corpos e sacolas** ficam só na memória: somem se o servidor reiniciar.
-- **Mercado:** anúncios não expiram, e não há troca direta entre jogadores.
+- **Mercado:** não há troca direta entre jogadores.
 - **Servidor:** limite de 40 mensagens/s por cliente e de 4 KB por mensagem; mensagens acima disso derrubam só a conexão de quem mandou.

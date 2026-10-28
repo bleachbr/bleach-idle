@@ -157,7 +157,8 @@ function start(room: Room<any>, myId: string) {
   };
 
   const inventory = initInventory(room, (open) => (game.scene.getScene("game") as GameScene | null)?.setPanelOpen(open),
-    () => room.state.players.get(myId)?.level ?? 1);
+    () => room.state.players.get(myId)?.level ?? 1,
+    () => { const p = room.state.players.get(myId); return p ? { x: p.x, y: p.y } : undefined; });
   const onMe = (p: any) => {
     renderStats(p);
     inventory.onMove(p.x, p.y);
