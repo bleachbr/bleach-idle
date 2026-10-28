@@ -84,7 +84,16 @@ Abra `client/public/maps/*.tmj` no Tiled (1.10+), edite e salve no mesmo formato
 - **Conferir:** `cd server && npx tsx scripts/mapcheck.ts` checa os mapas (objetos obrigatórios, chegadas e muro sem frestas).
 
 ## Testes
-`npm test` sobe um servidor isolado (porta 2577, banco temporário), roda todos os cenários e sai com erro se alguma verificação falhar. Para rodar só alguns: `cd server && npx tsx scripts/test.ts social quests`.
+
+### Testes rápidos e unitários (Vitest)
+Executa de forma rápida e isolada (em memória, sem dependência de portas ou banco local):
+```bash
+npm test             # roda a suíte de testes automatizados com Vitest
+npm run test:watch   # modo observador interativo
+```
+
+### Bateria completa de cenários de integração
+`npm run test:scripts` sobe um servidor isolado (porta 2577, banco temporário), roda todos os cenários e sai com erro se alguma verificação falhar. Para rodar só alguns: `cd server && npx tsx scripts/test.ts social quests`.
 
 Cenários em `server/scripts/`:
 - **Mapas:** `mapcheck`.
