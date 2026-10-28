@@ -412,3 +412,31 @@ Make the image SQUARE. A 2x2 sheet of four SEAMLESS, TILEABLE floor textures for
 ```text
 Make the image SQUARE. A 3x3 sheet of nine separate top-down 3/4 view pixel-art map props for a surreal dark dimensional corridor between worlds, each centered in its own cell with generous magenta padding, nothing crossing the cell edges: 1 a tall twisted dark stone pillar wrapped in glowing purple veins; 2 a block of dark violet rock wall (square, for building walls); 3 a floating teal spirit flame on a small black stone pedestal; 4 a large circular stone gate with a swirling purple portal inside; 5 a cluster of jagged black crystal shards; 6 a broken stone archway; 7 a hanging tattered black and purple banner on a pole; 8 a small stone altar with a glowing white orb; 9 a pile of old bones and a cracked white mask. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no shadow, no text, no labels, no border, no grid lines.
 ```
+
+# Rodada 16: kit de interface
+
+Script `work/gen_ui.sh`, com a primeira folha de ícones (12) como referência. As quatro na 1ª tentativa. Processadas por `art/ui.py` para `client/public/assets/ui/`.
+
+## p_58_ui_panel
+
+```text
+Make the image SQUARE. ONE game UI window frame filling about 90% of the image: a rectangular panel with a thick ornate border made of black lacquered wood with a thin white-silver inner line and a thin crimson outer line, four decorative corner pieces shaped like silver Japanese sword guards (tsuba), the long edges plain and repeating (so they can be stretched), and a flat solid very dark navy-black interior (#14121c) with no pattern. Symmetric. Style: crisp pixel art matching the attached reference image (same pixel density, dark outline #1a1822, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering). Theme: the elegant black-and-white uniform of Japanese soul reapers: deep black lacquer, clean white and silver trim, small crimson accents. Flat front view (UI, not a scene). Background: 100% solid flat magenta #FF00FF around the elements, no gradient, no shadow, no text, no letters, no labels.
+```
+
+## p_59_ui_buttons
+
+```text
+Make the image SQUARE. A 2x3 grid (2 columns, 3 rows) of SIX wide rectangular game UI buttons with no text, each centered in its cell with magenta padding, all the same size, about 4 times wider than tall, with flat interiors and plain stretchable middles: left column = PRIMARY buttons: row 1 a crimson red lacquer button with a white-silver rim (normal), row 2 the same brighter and glowing (hover), row 3 the same darker and pressed in. Right column = SECONDARY buttons: row 1 a black lacquer button with a silver rim (normal), row 2 the same lighter (hover), row 3 the same darker pressed in. Style: crisp pixel art matching the attached reference image (same pixel density, dark outline #1a1822, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering). Theme: the elegant black-and-white uniform of Japanese soul reapers: deep black lacquer, clean white and silver trim, small crimson accents. Flat front view (UI, not a scene). Background: 100% solid flat magenta #FF00FF around the elements, no gradient, no shadow, no text, no letters, no labels.
+```
+
+## p_60_ui_parts
+
+```text
+Make the image SQUARE. A 2x2 grid of four separate game UI parts, each centered in its cell with magenta padding: top-left: an empty square inventory slot, recessed dark navy-black interior with a thin silver bevel and black outline; top-right: the same inventory slot highlighted with a glowing light-blue spirit-energy border; bottom-left: a long horizontal empty status bar frame (about 6 times wider than tall) with a black lacquer border, silver trim and a dark empty interior; bottom-right: a small horizontal title plate (about 4 times wider than tall) in black lacquer with silver trim and a tiny crimson knot ornament in the middle top. Style: crisp pixel art matching the attached reference image (same pixel density, dark outline #1a1822, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering). Theme: the elegant black-and-white uniform of Japanese soul reapers: deep black lacquer, clean white and silver trim, small crimson accents. Flat front view (UI, not a scene). Background: 100% solid flat magenta #FF00FF around the elements, no gradient, no shadow, no text, no letters, no labels.
+```
+
+## p_61_ui_icons
+
+```text
+Make the image SQUARE. A 4x4 grid (4 rows, 4 columns, 16 equal square cells) of SIXTEEN different small game menu icons, one per cell, centered with magenta padding, same scale and style as the reference icon sheet, mostly white-silver with crimson and light-blue accents. In order, left to right, top to bottom: 1 an open book; 2 a trophy cup; 3 a speaker with sound waves; 4 a speaker crossed out (muted); 5 two curved arrows forming a circle (swap); 6 a scroll with a red seal (quests); 7 a blacksmith hammer over an anvil (forge); 8 a stack of gold coins with a square hole (market); 9 a swirling portal ring (travel); 10 a treasure chest (storage); 11 three small people silhouettes (party); 12 a hanging war banner (guild); 13 a gear cog (settings); 14 a crossed katana pair (combat); 15 a glowing star (rebirth); 16 an hourglass (daily). Style: crisp pixel art matching the attached reference image (same pixel density, dark outline #1a1822, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering). Theme: the elegant black-and-white uniform of Japanese soul reapers: deep black lacquer, clean white and silver trim, small crimson accents. Flat front view (UI, not a scene). Background: 100% solid flat magenta #FF00FF around the elements, no gradient, no shadow, no text, no letters, no labels.
+```

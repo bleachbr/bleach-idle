@@ -21,7 +21,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **server/**: Node + Colyseus 0.15, **autoritativo**, com tick de 100 ms: movimento, combate, XP, IA dos monstros, Auto Helper, treino e missões. Em produção, entrega também a página do jogo.
 - **shared/**: leitura dos mapas do Tiled, personagens, monstros, itens, missões, treino e fórmulas.
 - **client/public/maps/**: os mapas (`karakura.tmj`, `hueco.tmj`, `soul.tmj`, `lasnoches.tmj`), feitos para abrir e editar no [Tiled](https://www.mapeditor.org/). Cliente e servidor leem os mesmos arquivos.
-- **art/**: arte gerada pelo Codex (`art/raw/`, prompts em `art/raw/prompts.md`) → `art/process.py` → `client/public/assets/`. Os mapas saem de `art/maps/build_maps.py`.
+- **art/**: arte gerada pelo Codex (`art/raw/`, prompts em `art/raw/prompts.md`) → `art/process.py` → `client/public/assets/`. O kit de interface (molduras, botões, espaços, barras e ícones de menu) sai de `art/ui.py` para `client/public/assets/ui/` e é aplicado por `client/src/theme.css`. Os mapas saem de `art/maps/build_maps.py`.
 - **Banco:** SQLite (`node:sqlite`, modo WAL) com contas, sessões, personagens, guildas e parties. Save a cada 10 s, em transação, e também ao entrar, sair e morrer.
 
 ## O que o jogo tem

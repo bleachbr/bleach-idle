@@ -1,0 +1,165 @@
+/* Visual do jogo: kit de interface em pixel art (art/raw/58 a 61, processado por art/ui.py).
+   Preto laqueado, prata e vermelho, com cantos de tsuba. Carregado depois de style.css:
+   aqui só entra a aparência, a disposição continua lá. */
+
+:root {
+  --panel: #14121c;
+  --line: #3a3550;
+  --accent: #e8333a;
+  --gold: #ffcf5a;
+  --title: "Pixelify Sans", system-ui, sans-serif;
+}
+
+/* ---------- fonte pixel nos títulos e botões ---------- */
+h1, h2, h3, #modal header, #ranking header b, #book header b, #dangai b, .who, button, .tabs button {
+  font-family: var(--title);
+}
+h2 { color: #c9c4da; letter-spacing: .06em; font-weight: 500; font-size: 13px; display: flex; align-items: center; gap: 4px; }
+h1 { font-weight: 700; letter-spacing: .02em; }
+
+/* ---------- molduras (tsuba nos cantos; o meio estica) ---------- */
+/* janelas: moldura em 2x (36 px), 12 px dela por fora da caixa para não roubar espaço do conteúdo */
+#modal, #ranking, #book, #death, #ctx, .screen .card {
+  background: none;
+  border: 24px solid transparent;
+  border-radius: 0;
+  border-image: url(/assets/ui/panel.png) 18 fill / 36px / 12px stretch;
+  image-rendering: pixelated;
+}
+#modal header, #ranking header, #book header { border-bottom: 1px solid #ffffff1a; padding: 0 2px 8px; }
+#modal-body, #ranking-body, #book-body { padding: 8px 2px 0; }
+#ctx { padding: 0; border-width: 12px; border-image-width: 18px; border-image-outset: 6px; }
+.screen .card { padding: 6px 8px; backdrop-filter: none; }
+#death { padding: 6px; }
+
+/* barra lateral e chat: moldura também, sem os cantos grossos */
+#side { width: 292px; background: none; border: 18px solid transparent; border-image: url(/assets/ui/panel.png) 18 fill / 18px stretch; padding: 4px 6px; overflow-x: hidden; }
+/* janelas um pouco afastadas da borda: a moldura passa 12 px para fora da caixa */
+#modal { top: 22px; right: 22px; }
+#ranking, #book { top: 22px; }
+#chat { background: none; border: 14px solid transparent; border-image: url(/assets/ui/panel.png) 18 fill / 14px stretch; }
+#chatin { background: #0b0a12; border: 1px solid #ffffff22; border-radius: 0; }
+#side section { padding-bottom: 10px; border-bottom: 1px solid #ffffff12; }
+
+/* ---------- ícones (folha 4x4 de 24 px) ---------- */
+[data-ico]::before {
+  content: ""; display: inline-block; flex: none; width: 24px; height: 24px; vertical-align: middle; margin-right: 2px;
+  background: url(/assets/ui/icons.png) no-repeat; image-rendering: pixelated;
+}
+[data-ico="book"]::before { background-position: 0 0; }
+[data-ico="trophy"]::before { background-position: -24px 0; }
+[data-ico="sound"]::before { background-position: -48px 0; }
+[data-ico="mute"]::before { background-position: -72px 0; }
+[data-ico="swap"]::before { background-position: 0 -24px; }
+[data-ico="scroll"]::before { background-position: -24px -24px; }
+[data-ico="forge"]::before { background-position: -48px -24px; }
+[data-ico="coins"]::before { background-position: -72px -24px; }
+[data-ico="portal"]::before { background-position: 0 -48px; }
+[data-ico="chest"]::before { background-position: -24px -48px; }
+[data-ico="party"]::before { background-position: -48px -48px; }
+[data-ico="guild"]::before { background-position: -72px -48px; }
+[data-ico="gear"]::before { background-position: 0 -72px; }
+[data-ico="swords"]::before { background-position: -24px -72px; }
+[data-ico="star"]::before { background-position: -48px -72px; }
+[data-ico="hourglass"]::before { background-position: -72px -72px; }
+
+/* atalhos do topo (livro, ranking, som, trocar): só o ícone, com dica ao passar o mouse */
+.who { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.who #pname { font-size: 17px; }
+.who .icon-btn, .who button.link.icon-btn { float: none; margin: 0; text-decoration: none; width: 28px; height: 28px; display: inline-grid; place-items: center; border-radius: 4px; }
+/* 1ª linha: nome e nível; 2ª linha: os quatro ícones */
+.who #plevel { font-size: 12px; color: #c9c4da; font-family: var(--title); }
+.who-icons { display: flex; gap: 2px; width: 100%; }
+.who .icon-btn::before { margin: 0; }
+.who .icon-btn:hover { background: #ffffff14; }
+#book-btn.ping { position: relative; }
+#book-btn.ping::after { content: ""; position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 1px #000, 0 0 6px var(--accent); }
+
+/* ---------- botões: vermelho para a ação principal, preto para o resto ---------- */
+.screen button:not(.char):not(.link), #modal-body button:not(.slot):not([aria-label]), #modal-body .primary,
+#death button, #dangai button, #invite-yes, #book .claim, #rebirth-btn {
+  border-style: solid; border-color: transparent; border-radius: 0; background: none !important;
+  border-width: 6px 10px; border-image: url(/assets/ui/btn_black.png) 6 10 fill / 6px 10px stretch;
+  image-rendering: pixelated; color: #f2eef8; font-weight: 500; padding: 0 6px; min-height: 30px; text-shadow: 0 1px 0 #000;
+}
+.screen button.primary:not(.char):not(.link), #modal-body .primary, #death button, #invite-yes, #book .claim, #dangai button:first-child {
+  border-image-source: url(/assets/ui/btn_red.png); color: #fff;
+}
+.screen button:not(.char):not(.link):hover, #modal-body button:not(.slot):not([aria-label]):hover, #death button:hover, #dangai button:hover, #book .claim:hover {
+  border-image-source: url(/assets/ui/btn_black_hover.png);
+}
+.screen button.primary:not(.char):not(.link):hover, #modal-body .primary:hover, #death button:hover, #invite-yes:hover, #book .claim:hover, #dangai button:first-child:hover {
+  border-image-source: url(/assets/ui/btn_red_hover.png);
+}
+.screen button:not(.char):not(.link):active, #modal-body button:not(.slot):not([aria-label]):active { border-image-source: url(/assets/ui/btn_black_down.png); }
+.screen button.primary:not(.char):not(.link):active, #modal-body .primary:active, #book .claim:active { border-image-source: url(/assets/ui/btn_red_down.png); }
+button:disabled { filter: grayscale(.8) brightness(.7); }
+
+/* abas: pretas; a ativa fica vermelha */
+.tabs button, .shop-tabs button {
+  display: inline-flex !important; align-items: center; justify-content: center; gap: 2px;
+  background: none !important; border-style: solid !important; border-color: transparent !important; border-radius: 0 !important;
+  border-width: 5px 8px !important; border-image: url(/assets/ui/btn_black.png) 6 10 fill / 5px 8px stretch !important;
+  color: #cfc9de !important; padding: 0 4px !important; min-height: 28px; image-rendering: pixelated; font-size: 12px !important;
+}
+.tabs button[aria-pressed="true"], .shop-tabs button[aria-pressed="true"] { border-image-source: url(/assets/ui/btn_red.png) !important; color: #fff !important; }
+.tabs button[data-ico]::before, .shop-tabs button[data-ico]::before { transform: scale(.75); margin: -3px -2px; }
+
+/* ---------- espaços de inventário ---------- */
+.slot {
+  border: 0; border-radius: 0; background: url(/assets/ui/slot.png) center / 100% 100% no-repeat; image-rendering: pixelated; padding: 4px;
+}
+.slot:not(:disabled):hover { background-image: url(/assets/ui/slot_hi.png); }
+.equip-slot:disabled::after { font-family: var(--title); color: #6d6880; }
+
+/* ---------- barras de vida, reiatsu e XP ---------- */
+.bar {
+  height: 20px; border-radius: 0; background: none; overflow: visible;
+  border: solid transparent; border-width: 4px 6px; border-image: url(/assets/ui/bar.png) 5 6 fill / 4px 6px stretch; image-rendering: pixelated;
+}
+.bar i { inset: 0 auto 0 0; }
+.bar.hp i { background: linear-gradient(#ff6a5a 0 35%, #c8302a 35% 100%); }
+.bar.rei i { background: linear-gradient(#6fb2ff 0 35%, #2f6fe0 35% 100%); }
+.bar.exp i { background: linear-gradient(#ffe27a 0 35%, #d29b24 35% 100%); }
+.bar span { line-height: 12px; font-size: 11px; font-family: var(--title); text-shadow: 0 1px 0 #000, 1px 0 0 #000; padding-left: 2px; }
+
+/* ---------- detalhes ---------- */
+#pform { color: var(--gold); font-family: var(--title); }
+#gold { color: var(--gold); font-family: var(--title); margin-left: auto; }
+#minimap { border: 2px solid #c9c4da; border-radius: 0; box-shadow: 0 0 0 2px #000, 0 0 0 3px #e8333a; }
+#rebirth-btn { color: #fff; font-weight: 700; border-image-source: url(/assets/ui/btn_red.png); animation: rebirth-glow 1.6s ease-in-out infinite alternate; }
+#rebirth-btn::before { content: "✦ "; }
+#dangai { border-radius: 0; border: 12px solid transparent; border-image: url(/assets/ui/panel.png) 18 fill / 18px / 6px stretch; padding: 0 4px; background: none; }
+#dangai b { color: #d9c2ff; display: inline-flex; align-items: center; }
+#death h2 { color: #ff6a5a; justify-content: center; font-size: 20px; }
+#ctx button:hover { background: #e8333a33; }
+#sets .set { border-radius: 0; font-family: var(--title); }
+#book .days div { border-radius: 0; background: #0b0a12; }
+#book .days div.today { border-color: var(--accent); box-shadow: 0 0 8px #e8333a66 inset; }
+kbd, code { background: #ffffff14; border-radius: 0; font-family: var(--title); }
+.screen .char-row { border-radius: 0; background: #0b0a12; border-color: #ffffff1f; }
+.char { border-radius: 0 !important; background: #0b0a12 !important; }
+.char[aria-pressed="true"] { border-color: var(--accent) !important; box-shadow: 0 0 10px #e8333a55; }
+.screen input:not([type="checkbox"]) { border-radius: 0; background: #0b0a12; border-color: #ffffff2a; }
+#menu-btn { border-radius: 0; border: 2px solid #c9c4da; box-shadow: 0 0 0 2px #000; background: #14121c; }
+#actions button { border-color: #c9c4da; box-shadow: 0 0 0 2px #000; }
+
+@media (max-width: 720px) {
+  /* gaveta: largura pela tela e espaço em cima para o botão do menu (☰) */
+  #side { width: auto; border-width: 12px; border-image-width: 12px; padding-top: 48px; }
+}
+
+/* ajustes finos */
+.who .icon-btn, .who button.link.icon-btn { padding: 0; width: 26px; height: 26px; gap: 0; }
+#ranking header b, #book header b { display: inline-flex; align-items: center; gap: 2px; }
+/* barrinhas de progresso dentro do livro: simples, sem a moldura das barras de vida */
+#book .bar { height: 6px; border: 1px solid #ffffff22; border-image: none; background: #0b0a12; }
+#book .bar i { background: linear-gradient(90deg, #e8333a, #ffcf5a); }
+#ranking header, #book header { flex-wrap: wrap; row-gap: 6px; }
+/* caixas de seleção, campos e rolagem no tema */
+input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; vertical-align: -2px; }
+#auto-heal, .market-form select, .market-form input { border-radius: 0; background: #0b0a12; border: 1px solid #ffffff2a; color: var(--text); font-family: var(--title); }
+* { scrollbar-width: thin; scrollbar-color: #8a2a30 #0b0a12; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #0b0a12; }
+::-webkit-scrollbar-thumb { background: #8a2a30; border: 1px solid #c9c4da55; }

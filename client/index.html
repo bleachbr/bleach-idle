@@ -10,6 +10,7 @@
     <link rel="icon" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="stylesheet" href="/src/style.css" />
+    <link rel="stylesheet" href="/src/theme.css" />
   </head>
   <body>
     <div id="login" class="screen" hidden>
@@ -54,7 +55,7 @@
       <button type="button" id="menu-btn" aria-label="Abrir menu">☰</button>
       <aside id="side">
         <section id="stats">
-          <div class="who"><b id="pname"></b> <span id="plevel"></span><button type="button" id="exit-btn" class="link" title="Voltar à lista de personagens">trocar</button><button type="button" id="ranking-btn" class="link">ranking</button><button type="button" id="book-btn" class="link" title="Bestiário, conquistas e recompensa diária">livro</button><button type="button" id="mute-btn" class="link" title="Ligar ou desligar o som">som</button></div>
+          <div class="who"><b id="pname"></b> <span id="plevel"></span><span class="who-icons"><button type="button" id="exit-btn" class="link icon-btn" data-ico="swap" title="Trocar de personagem"></button><button type="button" id="ranking-btn" class="link icon-btn" data-ico="trophy" title="Ranking"></button><button type="button" id="book-btn" class="link icon-btn" data-ico="book" title="Livro: bestiário, conquistas, diário e caçada"></button><button type="button" id="mute-btn" class="link icon-btn" data-ico="sound" title="Ligar ou desligar o som"></button></span></div>
           <div class="bar hp"><i></i><span></span></div>
           <div class="bar rei"><i></i><span></span></div>
           <div class="bar exp"><i></i><span></span></div>
@@ -64,7 +65,7 @@
           <button type="button" id="rebirth-btn" class="rebirth" hidden></button>
         </section>
         <section id="skills">
-          <h2>Atalhos</h2>
+          <h2 data-ico="swords">Atalhos</h2>
           <div><kbd>1</kbd> <span id="skill-name"></span></div>
           <div><kbd>2</kbd> Poção de Cura (<span id="potions">0</span>)</div>
           <div><kbd>3</kbd> Poção de Reiatsu (<span id="rei-potions">0</span>)</div>
@@ -74,34 +75,34 @@
           <div><kbd>WASD</kbd> ou clique no chão para andar</div>
         </section>
         <section id="gear">
-          <h2>Equipamento</h2>
+          <h2 data-ico="forge">Equipamento</h2>
           <div id="atkdef"></div>
           <div id="sets"></div>
           <div id="equip" class="grid"></div>
-          <h2>Inventário <span id="gold"></span></h2>
+          <h2 data-ico="chest">Inventário <span id="gold"></span></h2>
           <div id="inv" class="grid"></div>
           <p class="hint">Clique para equipar ou usar. Baú (depot) e loja ficam na praça.</p>
         </section>
         <section id="tutorial" hidden>
-          <h2>Primeiros passos</h2>
+          <h2 data-ico="star">Primeiros passos</h2>
           <div id="tutorial-list"></div>
         </section>
         <section id="quests">
-          <h2>Missões</h2>
+          <h2 data-ico="scroll">Missões</h2>
           <div id="quest-track"><p class="hint">Nenhuma missão. Fale com o Kisuke na praça.</p></div>
         </section>
         <section id="guild">
-          <h2>Guilda</h2>
+          <h2 data-ico="guild">Guilda</h2>
           <div id="guild-body"><p class="hint">Sem guilda. <code>/guilda criar Nome</code> (500 kan, nível 10+) ou aceite um convite.</p></div>
         </section>
         <section id="party">
-          <h2>Party</h2>
+          <h2 data-ico="party">Party</h2>
           <div id="invite" hidden><span id="invite-text"></span> <button type="button" id="invite-yes">Aceitar</button> <button type="button" id="invite-no" class="link">recusar</button></div>
           <div id="party-list"></div>
           <button type="button" id="party-leave" class="link" hidden>Sair da party</button>
         </section>
         <section id="auto">
-          <h2>Auto Helper</h2>
+          <h2 data-ico="gear">Auto Helper</h2>
           <label><input type="checkbox" id="auto-target" /> Auto Target</label>
           <label><input type="checkbox" id="auto-hunt" /> Auto Hunt (continua offline)</label>
           <label title="Fora de combate, gasta o reiatsu parado para subir o Reiryoku. Também mantém o personagem no mundo treinando quando você sai (ataque um Boneco de Treino na Soul Society para treinar Zanjutsu)."><input type="checkbox" id="auto-train" /> Auto Treino (continua offline)</label>
@@ -114,18 +115,18 @@
         <canvas id="minimap" title="Minimapa: clique para andar até lá"></canvas>
         <div id="ctx" hidden></div>
         <div id="ranking" hidden>
-          <header><b>Ranking</b>
+          <header><b data-ico="trophy">Ranking</b>
             <span class="tabs"><button type="button" data-tab="nivel" aria-pressed="true">Nível</button><button type="button" data-tab="abates">Abates (PvP)</button><button type="button" data-tab="guildas">Guildas</button><button type="button" data-tab="conquistas">Conquistas</button><button type="button" data-tab="bestiario">Bestiário</button><button type="button" data-tab="dangai">Dangai</button></span>
             <button type="button" id="ranking-close" aria-label="Fechar">✕</button></header>
           <div id="ranking-body"></div>
         </div>
         <div id="dangai" hidden>
-          <b>Dangai</b> <span id="dangai-info"></span>
+          <b data-ico="portal">Dangai</b> <span id="dangai-info"></span>
           <span id="dangai-actions"></span>
         </div>
         <div id="book" class="window" hidden>
-          <header><b>Livro</b>
-            <span class="tabs"><button type="button" data-tab="bestiario" aria-pressed="true">Bestiário</button><button type="button" data-tab="conquistas">Conquistas</button><button type="button" data-tab="diario">Diário</button><button type="button" data-tab="cacada">Caçada</button></span>
+          <header><b data-ico="book">Livro</b>
+            <span class="tabs"><button type="button" data-tab="bestiario" data-ico="swords" aria-pressed="true">Bestiário</button><button type="button" data-tab="conquistas" data-ico="trophy">Conquistas</button><button type="button" data-tab="diario" data-ico="hourglass">Diário</button><button type="button" data-tab="cacada" data-ico="star">Caçada</button></span>
             <button type="button" id="book-close" aria-label="Fechar">✕</button></header>
           <div id="book-body"></div>
         </div>

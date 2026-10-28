@@ -1,5 +1,7 @@
 // Login, conexão com o servidor e HUD em DOM ao redor do canvas do Phaser.
 import Phaser from "phaser";
+import "@fontsource/pixelify-sans/500.css";
+import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
 import { CHARS, ITEMS, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
@@ -204,7 +206,7 @@ function start(room: Room<any>, myId: string) {
     if (ok) room.send("rebirth");
   };
   const mute = $("#mute-btn");
-  const showMute = () => { mute.textContent = sfx.isMuted() ? "sem som" : "som"; };
+  const showMute = () => { mute.dataset.ico = sfx.isMuted() ? "mute" : "sound"; mute.title = sfx.isMuted() ? "Som desligado (clique para ligar)" : "Som ligado (clique para desligar)"; };
   showMute();
   mute.onclick = () => { sfx.setMuted(!sfx.isMuted()); showMute(); };
   room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log"));

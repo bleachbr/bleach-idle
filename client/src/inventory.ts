@@ -266,10 +266,11 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
       // abas: com tudo empilhado, o mercado ficava escondido no fim da janela
       const tabs = document.createElement("div");
       tabs.className = "tabs shop-tabs";
-      for (const [id, label] of [["missoes", "Missões"], ["loja", "Loja"], ["forja", "Forja"], ["mercado", "Mercado"]] as const) {
+      for (const [id, label, ico] of [["missoes", "Missões", "scroll"], ["loja", "Loja", "chest"], ["forja", "Forja", "forge"], ["mercado", "Mercado", "coins"]] as const) {
         const t = document.createElement("button");
         t.type = "button";
         t.textContent = label;
+        t.dataset.ico = ico;
         t.setAttribute("aria-pressed", String(shopTab === id));
         t.onclick = () => { shopTab = id; render(); };
         tabs.append(t);

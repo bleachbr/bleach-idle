@@ -200,3 +200,11 @@ Mais uma meta curta com recompensa visível: peças do mesmo conjunto equipadas 
 
 ### Mais uma falha intermitente explicada: `quests`
 O diagnóstico novo mostrou que a Ana do teste **morria**: ela entrava só com os fragmentos no inventário, sem poção para o Auto Heal usar. E, para voltar ao Kisuke, ficava cercada ou em combate. Agora ela tem poções e volta reentrando ao lado da loja. Rodei 3 vezes seguidas sem falha, e a bateria completa deu 229 de 229.
+
+## Menus bonitos: kit de interface próprio
+Os menus pareciam um site genérico escuro. Gerei no Codex um kit de interface em pixel art no tema dos shinigami (preto laqueado, prata e vermelho, cantos em forma de tsuba):
+- **Peças:** moldura de painel, botões vermelho e preto (normal, passar o mouse e pressionado), espaço de inventário (com versão realçada em azul), moldura de barra e 16 ícones de menu.
+- **Processamento:** `art/ui.py` recorta e reduz cada peça. Nos ícones, todas as partes ficam e o magenta interno some, porque o primeiro recorte perdeu uma das setas e deixou magenta na engrenagem e na ampulheta.
+- **Aplicação:** a camada `client/src/theme.css` usa molduras de 9 partes (as janelas em 2x, a lateral e o chat em 1x), a fonte pixel Pixelify Sans (licença OFL, pelo npm) nos títulos e botões, e ícones nos títulos das seções, nas abas e nos atalhos do topo (livro, ranking, som e trocar).
+- **Onde:** login, lista de personagens, barra lateral, Kisuke (loja, forja, missões e mercado), livro, ranking, Dangai, tela de morte, menu de contexto, chat, minimapa, caixas de seleção e barras de rolagem.
+- **Conferido no navegador:** login, personagens, lateral inteira, Kisuke e livro. No celular (375 px) também, sem rolagem para os lados.
