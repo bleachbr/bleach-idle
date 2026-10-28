@@ -5,6 +5,7 @@ Saída em client/public/maps/:
   karakura.tmj + karakura_tiles.png   (arte própria, gerada pelo Codex: art/raw/44 a 46; sem elas, Kenney)
   hueco.tmj    + hueco_tiles.png      (arte própria, gerada pelo Codex: art/raw/47 e 48; sem elas, Kenney)
   lasnoches.tmj + lasnoches_tiles.png (arte própria, gerada pelo Codex: art/raw/53 e 54)
+  dangai.tmj   + dangai_tiles.png    (arte própria, gerada pelo Codex: art/raw/56 e 57)
   soul.tmj     + soul_tiles.png   (arte própria, gerada pelo Codex: art/raw/26 a 28)
 
 Camadas de cada mapa:
@@ -258,8 +259,9 @@ def pixel_tools():
         local = [c for c, _ in P.kmeans_colors([p[:3] for p in img.get_flattened_data() if p[3]], colors)]
         return P.apply_palette(img, local)
 
-    def prop(img, w_tiles, h_tiles, outline=True):
-        body, _ = P.keep_main(P.remove_bg(img))
+    def prop(img, w_tiles, h_tiles, outline=True, flood=False):
+        # flood: só apaga o fundo ligado às bordas (objetos com roxo forte, como no Dangai)
+        body, _ = P.keep_main(P.remove_bg_flood(img) if flood else P.remove_bg(img))
         k = min((w_tiles * T - 2) / body.width, (h_tiles * T - 2) / body.height)
         small = crisp(P.downscale(body, k))
         if outline:
@@ -638,6 +640,87 @@ def lasnoches():
     m.save()
 
 
+# ------------------------------------------------------------------ Dangai (arte do Codex)
+
+def dangai():
+    """Corredor entre os mundos: entrada segura a oeste (portal) e a arena redonda do desafio sem fim."""
+    P = pixel_tools()
+    import process as PR
+    ts = Tileset("dangai")
+    ground = Image.open(RAW / "56_dg_ground.png").convert("RGBA")
+    q = ground.width // 2
+    for name, (qx, qy) in {"pedra": (0, 0), "fluxo": (1, 0), "runas": (0, 1), "obsidiana": (1, 1)}.items():
+        tex = P["crisp"](ground.crop((qx * q + 6, qy * q + 6, qx * q + q - 6, qy * q + q - 6)).resize((4 * T, 4 * T), Image.BOX), 10)
+        for y, row in enumerate(P["tiles_of"](tex)):
+            for x, t in enumerate(row):
+                ts.add(f"{name}{x}{y}", t)
+    props = P["split"](Image.open(RAW / "57_dg_props.png").convert("RGBA"), 3, 3)
+    prop = lambda img, w, h: P["prop"](img, w, h, flood=True)
+    for name, cell in {"pilar": props[0], "chama": props[2], "bandeira": props[6]}.items():
+        (top,), (bottom,) = P["tiles_of"](prop(cell, 1, 2))
+        ts.add(name, bottom, True)
+        ts.add(f"{name}_topo", top)
+    wall, _ = PR.keep_main(PR.remove_bg(props[1]))
+    ts.add("parede", P["crisp"](wall.resize((T, T), Image.BOX), 8), True)
+    for y, row in enumerate(P["tiles_of"](prop(props[3], 2, 2))):
+        for x, t in enumerate(row):
+            ts.add(f"portal{x}{y}", t, True)
+    for name, cell in (("cristais", props[4]), ("arco", props[5]), ("altar", props[7]), ("ossos", props[8])):
+        ts.add(name, prop(cell, 1, 1), True)
+
+    m = Map("dangai", "Dangai", 36, 26, ts)
+    m.tex = {k: k for k in ("pedra", "fluxo", "runas", "obsidiana")}
+
+    def floor(x0, y0, x1, y1, kind):
+        for y in range(y0, y1 + 1):
+            for x in range(x0, x1 + 1):
+                m.set("chao", x, y, kind)
+
+    def tall(x, y, name):
+        m.set("objetos", x, y, name)
+        m.set("acima", x, y - 1, f"{name}_topo")
+
+    floor(0, 0, m.w - 1, m.h - 1, "pedra")
+    for x in range(m.w):
+        m.set("objetos", x, 0, "parede")
+        m.set("objetos", x, m.h - 1, "parede")
+    for y in range(m.h):
+        m.set("objetos", 0, y, "parede")
+        m.set("objetos", m.w - 1, y, "parede")
+    # entrada segura a oeste
+    PZ = (2, 9, 8, 16)
+    floor(*PZ, "runas")
+    for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1)):
+        m.set("objetos", 4 + dx, 9 + dy, f"portal{dx}{dy}")
+    tall(2, 16, "chama")
+    tall(8, 16, "chama")
+    m.set("objetos", 7, 10, "altar")
+    # rio de reishi da entrada até a arena
+    floor(9, 12, 13, 13, "fluxo")
+    # arena redonda: obsidiana com borda de runas, pilares em volta
+    cx, cy, r = 23, 13, 8
+    for y in range(m.h):
+        for x in range(m.w):
+            d = math.hypot(x - cx, y - cy)
+            if d <= r:
+                m.set("chao", x, y, "obsidiana" if d <= r - 1 else "runas")
+    for k in range(12):
+        a = k * math.pi / 6
+        x, y = round(cx + math.cos(a) * (r + 1)), round(cy + math.sin(a) * (r + 1))
+        if not (12 <= y <= 13 and x < cx) and 1 <= x < m.w - 1 and 2 <= y < m.h - 1:
+            tall(x, y, "pilar" if k % 2 else "chama")
+    for x, y, k in ((11, 3, "cristais"), (30, 3, "arco"), (12, 22, "ossos"), (33, 21, "cristais"), (31, 9, "ossos"), (3, 4, "cristais"), (5, 21, "arco")):
+        m.set("objetos", x, y, k)
+    for x in (10, 16, 22, 28):
+        tall(x, 2, "bandeira")
+
+    m.rect("pz", *PZ)
+    m.point("portal", 4, 10, "Saída do Dangai")
+    m.point("chegada", 5, 13, "dangai")
+    m.point("arena", cx, cy, "arena", {"raio": r - 2})
+    m.save()
+
+
 # ------------------------------------------------------------------ Soul Society (arte do Codex)
 
 def soul():
@@ -765,3 +848,4 @@ if __name__ == "__main__":
     hueco()
     soul()
     lasnoches()
+    dangai()

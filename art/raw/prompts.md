@@ -396,3 +396,19 @@ Script `work/gen_login.sh`, com o chão da Soul Society (26) como referência de
 ```text
 Make the image WIDE (landscape, about 16:9). A moody pixel-art illustration for a game title screen: a quiet modern Japanese town at night seen from a rooftop, rows of tiled roofs and small apartment blocks with a few lit windows, utility poles and wires, a huge pale full moon low in a deep blue-violet sky, and on distant rooftops the dark silhouettes of two masked monster spirits with glowing white bone masks watching the town. In the foreground on the right, the small dark silhouette of a young swordsman in a black kimono holding a very large sword over his shoulder, seen from behind, looking at the town. Lots of dark empty sky in the upper left (space for a login box). Clean pixel art, limited palette of deep blues and violets with pale moonlight highlights, crisp pixels, no text, no logo, no letters, no UI.
 ```
+
+# Rodada 15: Dangai
+
+Script `work/gen_dangai.sh`, com as peças da Soul Society (26 e 28) como referência. As duas na 1ª tentativa. Os roxos fortes do portal e das bandeiras eram apagados junto com o fundo magenta; os objetos do Dangai agora usam `remove_bg_flood` (só apaga o magenta ligado às bordas).
+
+## p_56_dg_ground
+
+```text
+Make the image SQUARE. A 2x2 sheet of four SEAMLESS, TILEABLE floor textures for a top-down RPG set in a surreal dimensional corridor between worlds, each filling its whole quarter edge to edge (no borders, no gaps, no objects): top-left: dark violet stone floor with faint glowing purple cracks; top-right: deep purple swirling energy floor with darker streaks (like a flowing river of spirit energy, walkable); bottom-left: ancient dark grey stone tiles with small engraved runes glowing faint teal; bottom-right: polished black obsidian floor with violet reflections. Flat top-down view, eerie purple lighting. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs.
+```
+
+## p_57_dg_props
+
+```text
+Make the image SQUARE. A 3x3 sheet of nine separate top-down 3/4 view pixel-art map props for a surreal dark dimensional corridor between worlds, each centered in its own cell with generous magenta padding, nothing crossing the cell edges: 1 a tall twisted dark stone pillar wrapped in glowing purple veins; 2 a block of dark violet rock wall (square, for building walls); 3 a floating teal spirit flame on a small black stone pedestal; 4 a large circular stone gate with a swirling purple portal inside; 5 a cluster of jagged black crystal shards; 6 a broken stone archway; 7 a hanging tattered black and purple banner on a pole; 8 a small stone altar with a glowing white orb; 9 a pile of old bones and a cracked white mask. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no shadow, no text, no labels, no border, no grid lines.
+```

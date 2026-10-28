@@ -90,6 +90,27 @@ def remove_bg(img):
     return img
 
 
+def remove_bg_flood(img):
+    """Como remove_bg, mas só apaga o magenta ligado às bordas: roxos fortes dentro do
+    objeto (portais, bandeiras) não somem. Para objetos de mapa; os sprites usam remove_bg
+    porque o buraco no peito dos Hollows também é magenta e precisa sumir."""
+    img = img.convert("RGBA")
+    px = img.load()
+    w, h = img.size
+    seen = bytearray(w * h)
+    stack = [(x, y) for x in range(w) for y in (0, h - 1)] + [(x, y) for y in range(h) for x in (0, w - 1)]
+    while stack:
+        x, y = stack.pop()
+        if not (0 <= x < w and 0 <= y < h) or seen[y * w + x]:
+            continue
+        seen[y * w + x] = 1
+        if not is_bg(px[x, y]):
+            continue
+        px[x, y] = (0, 0, 0, 0)
+        stack += ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1))
+    return img
+
+
 def split_cells(img, rows, cols):
     w, h = img.size
     cw, ch = w / cols, h / rows

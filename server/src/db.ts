@@ -21,6 +21,7 @@ export interface SaveData {
   equip?: Partial<Record<EquipSlot, string>>;
   frags?: number;
   skullUntil?: number;
+  rebirths?: number;
   autoTrain?: boolean;
   autoSell?: boolean;
   ignore?: string[];

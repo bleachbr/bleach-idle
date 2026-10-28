@@ -61,6 +61,7 @@
           <div id="pform"></div>
           <div id="pskills" class="hint"></div>
           <div id="pvp-lock" hidden></div>
+          <button type="button" id="rebirth-btn" class="rebirth" hidden></button>
         </section>
         <section id="skills">
           <h2>Atalhos</h2>
@@ -113,9 +114,13 @@
         <div id="ctx" hidden></div>
         <div id="ranking" hidden>
           <header><b>Ranking</b>
-            <span class="tabs"><button type="button" data-tab="nivel" aria-pressed="true">Nível</button><button type="button" data-tab="abates">Abates (PvP)</button><button type="button" data-tab="guildas">Guildas</button><button type="button" data-tab="conquistas">Conquistas</button><button type="button" data-tab="bestiario">Bestiário</button></span>
+            <span class="tabs"><button type="button" data-tab="nivel" aria-pressed="true">Nível</button><button type="button" data-tab="abates">Abates (PvP)</button><button type="button" data-tab="guildas">Guildas</button><button type="button" data-tab="conquistas">Conquistas</button><button type="button" data-tab="bestiario">Bestiário</button><button type="button" data-tab="dangai">Dangai</button></span>
             <button type="button" id="ranking-close" aria-label="Fechar">✕</button></header>
           <div id="ranking-body"></div>
+        </div>
+        <div id="dangai" hidden>
+          <b>Dangai</b> <span id="dangai-info"></span>
+          <span id="dangai-actions"></span>
         </div>
         <div id="book" class="window" hidden>
           <header><b>Livro</b>

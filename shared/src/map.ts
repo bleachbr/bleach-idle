@@ -10,7 +10,7 @@
 //     portal (ponto) · chegada (ponto; o nome é o id do destino de viagem)
 //     spawn (ponto; propriedades monstro, raio, quantidade)
 
-export const MAP_IDS = ["karakura", "hueco", "soul", "lasnoches"] as const;
+export const MAP_IDS = ["karakura", "hueco", "soul", "lasnoches", "dangai"] as const;
 export const HOME_MAP = "karakura";
 export const SHOP_SPRITE = "npc_shop";
 
@@ -31,6 +31,8 @@ export interface GameMap {
   gate?: Pt & { name: string };
   arrivals: Record<string, Pt>;
   spawns: SpawnDef[];
+  /** área do desafio do Dangai (objeto "arena", com propriedade raio) */
+  arena?: Pt & { radius: number };
 }
 
 const FLIP_MASK = 0x1fffffff; // bits altos do gid guardam espelhamento no Tiled
@@ -66,6 +68,7 @@ export function parseMap(id: string, json: any): GameMap {
       else if (kind === "loja") map.shop = { ...pt, name: o.name || "Loja" };
       else if (kind === "portal") map.gate = { ...pt, name: o.name || "Portal" };
       else if (kind === "chegada") map.arrivals[o.name] = pt;
+      else if (kind === "arena") map.arena = { ...pt, radius: Number(prop(o, "raio") ?? 6) };
       else if (kind === "spawn")
         map.spawns.push({
           map: id, kind: String(prop(o, "monstro") ?? o.name), x: pt.x, y: pt.y,

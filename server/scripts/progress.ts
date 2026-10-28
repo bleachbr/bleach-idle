@@ -87,5 +87,17 @@ await sleep(400);
 ok("veterano (nível 30) não vê o guia", veterano.length === 1 && veterano[0] === null);
 await vet.leave();
 
+// marco de nível: passar do 14 para o 15 pela 1ª vez paga 900 kan; depois de renascer, não paga de novo
+const marco: string[] = [];
+let minv: any;
+const m15 = await play("Livro Marco", "ichigo", (id) => patchSave(id, { level: 14, exp: expForLevel(15) - 30, gold: 0, map: "karakura", ...nearestWalkable(HOME, 36, 10) }),
+  (r) => { r.onMessage("log", (m) => marco.push(m.text)); r.onMessage("inv", (m) => (minv = m)); });
+await sleep(300);
+m15.send("auto", { autoHunt: true, autoHeal: 40 });
+for (let i = 0; i < 120 && !marco.some((l) => l.startsWith("Marco do nível 15")); i++) await sleep(500);
+m15.send("auto", { autoHunt: false });
+ok(`chegar ao 15 paga o marco (${marco.find((l) => l.startsWith("Marco")) ?? "nada"})`, marco.some((l) => l.startsWith("Marco do nível 15: 900 kan")) && minv.gold >= 900);
+await m15.leave();
+
 for (const x of [a, b, c]) await x.room.leave();
 done();

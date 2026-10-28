@@ -476,7 +476,7 @@ export class GameScene extends Phaser.Scene {
       // ☠ vermelho escuro = assassino; vermelho = marcado (atacou alguém há pouco); verde = minha party
       const skull = p.skullUntil > now;
       const color = skull ? "#ff2020" : p.pvpUntil > now ? "#ff6a5a" : me?.partyId && p.partyId === me.partyId && v.id !== this.myId ? "#7dff8a" : "#ffffff";
-      const text = `${skull ? "☠ " : ""}${p.name}${p.guildTag ? ` [${p.guildTag}]` : ""}`;
+      const text = `${skull ? "☠ " : ""}${p.rebirths ? `✦${p.rebirths} ` : ""}${p.name}${p.guildTag ? ` [${p.guildTag}]` : ""}`;
       if (v.label.text !== text) v.label.setText(text);
       if (v.label.style.color !== color) v.label.setColor(color);
     }

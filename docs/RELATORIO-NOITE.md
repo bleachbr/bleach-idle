@@ -169,3 +169,22 @@ Três pushes desta manhã ficaram vermelhos no CI, todos por testes que dependia
 - **`quests` e `progress`:** esperas fixas viraram esperas até a condição. Se o `quests` voltar a falhar, ele imprime um diagnóstico (posição, alvo e monstros vivos).
 - **Runner:** o limite por cenário passou de 180 s para 300 s, para o CI, que é mais lento.
 - **Auto Hunt e missão diária:** isto saiu do mesmo problema. O Auto Hunt não sabia da missão diária e caçava outro Hollow. Agora ele prioriza o monstro da missão diária de caça, como já fazia com as missões do Kisuke.
+
+## "Dopamina barata, mas sempre com mais o que fazer"
+A taxa de XP ficou como estava, como você decidiu. Pesquisei como outros idles seguram o público:
+- **Começo:** muito rápido.
+- **Meio:** ritmo por faixas de tempo.
+- **Retenção:** renascimento (prestígio) como motor, e expansões que sobem o teto (o Melvor Idle fez isso com o nível 120).
+
+Daí vieram:
+- **Renascimento:** a partir do nível 60, volta ao 8 com bônus permanentes (+10% de XP, +5% de dano e +5% de vida por renascimento) e mantém tudo. O equipamento forte continua no corpo, então a subida seguinte é bem mais rápida. Aparece no nome (✦), no ranking e em 2 conquistas.
+- **Marcos de nível:** kan a cada 5 níveis novos e Caixa do Kisuke a cada 10. Só o nível mais alto já alcançado conta, para o renascimento não virar fazenda de recompensa.
+- **Dangai, o desafio sem fim**, um quinto mapa com arte própria:
+  - **Andares:** cada um traz monstros só seus. Vai até o Arrancar mais forte e depois cresce 12% por andar, sem teto, com chefe a cada 10.
+  - **Recompensa:** cada andar paga, e o recorde paga em dobro. Morrer lá não tira nada.
+  - **Recomeço:** sempre um pouco abaixo do recorde.
+  - **Idle:** com Auto Hunt, sobe sozinho, inclusive offline.
+  - **Ranking:** aba própria.
+- **Testes novos:** `rebirth` e `dangai`.
+
+Resultado: `npm test` 76 de 76 e `npm run test:scripts` 226 de 226.

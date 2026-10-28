@@ -36,6 +36,11 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Soul Society** (arte própria, gerada pelo Codex): Seireitei com quartéis, muro, jardim zen, cerejeiras e campo de treino; Rukongai com Hollows de nível médio. Nível 14+, 120 kan.
 - **Hueco Mundo** (arte própria, gerada pelo Codex): deserto branco com ruínas, árvores de quartzo e ossadas; lá vivem Adjuchas, Arrancar e o Menos Grande (Gillian). Nível 22+, 200 kan, chegando pela Garganta.
 - **Las Noches** (arte própria, gerada pelo Codex): o palácio em Hueco Mundo, para nível 45+ (400 kan). Tem saguão seguro, salão com pilares e alas com Arrancar Números, Exequias e Fracción; na sala do trono fica o chefe **Privaron Espada**.
+- **Dangai** (arte própria): o desafio sem fim, a partir do nível 20 e de graça.
+  - **Andares:** cada um traz uma leva de monstros só sua, em 3 minutos. A cada 10 andares vem um chefe. Depois do Arrancar mais forte (andar 28), os monstros ficam 12% mais fortes a cada andar, sem teto.
+  - **Recompensa:** cada andar paga, e o recorde paga em dobro, com Caixa do Kisuke a cada 5.
+  - **Recomeço e Auto Hunt:** o desafio recomeça 4 andares abaixo do recorde. Com Auto Hunt, sobe sozinho, inclusive offline.
+  - **Morte e ranking:** morrer lá não tira nada. O melhor andar tem ranking próprio.
 - **Invasão de Hollows:** de 3 em 3 horas, 12 Hollows e um Fishbone D cercam a praça de Karakura por 15 min, com +50% de XP e chance de Caixa do Kisuke (o líder sempre dá uma). Eles não renascem; o chat anuncia quem mais abateu.
 - **Viagem:** pelos portais. "Voltar à cidade" (tecla R) leva ao templo de Karakura.
 
@@ -47,6 +52,8 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Missões do Kisuke:** 15, de caçar ou entregar itens, com XP, kan e itens de recompensa. O progresso de caça conta para a party, e o Auto Hunt prioriza os monstros das missões (do Kisuke e a diária de caça).
 
 **Progresso de longo prazo** (botão "livro" ao lado do nome)
+- **Renascimento:** a partir do nível 60 (65, 70... até 100 nos seguintes), volta ao nível 8 mantendo itens, kan, forja, bestiário e conquistas. Cada renascimento dá, para sempre, +10% de XP, +5% de dano e +5% de vida. O número aparece no nome (✦) e conta primeiro no ranking.
+- **Marcos de nível:** cada nível novo múltiplo de 5 paga kan, e cada múltiplo de 10 dá também uma Caixa do Kisuke (só na primeira vez, mesmo depois de renascer).
 - **Bestiário:** cada monstro tem 3 estágios (25/150/500 abates; chefes 1/5/15). Cada estágio dá +4% de dano contra ele, revela vida, XP e loot, e o último dá +20% de chance de loot. Abates da party contam para todos.
 - **Conquistas:** 19 (nível, abates, chefes, bestiário, missões, treino, PvP, dias seguidos), com recompensa automática. As grandes são anunciadas no chat.
 - **Missões diárias:** 3 por dia, sorteadas de acordo com o nível (caçar um monstro da sua faixa, abates no geral, kan caçando, um chefe ou usar a forja). Cada uma paga kan e XP sozinha; as três juntas dão uma Caixa do Kisuke.
@@ -68,7 +75,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Caveira (☠):** matar quem não atacou ninguém vira **assassino** por 15 min (somando até 2 h). O assassino não pode viajar, e qualquer um pode atacá-lo sem ser marcado. Se morrer, perde 50% de chance por item e 30% do dinheiro, e o Amuleto da Alma não protege. Atacar ou matar quem está marcado ou é assassino é defesa e não pune.
 - **Guildas:** `/guilda criar Nome` (500 kan, nível 10+), convites, banco, líder e tag no nome.
 - **Chat:** `/pm Nome, msg`, `/p` (party), `/g` (guilda), `/ignorar Nome` (para de receber as mensagens dessa pessoa) e `/ajuda`.
-- **Ranking:** nível, abates em PvP, guildas, conquistas e bestiário.
+- **Ranking:** nível (renascimentos primeiro), abates em PvP, guildas, conquistas, bestiário e Dangai.
 
 **Automação (Auto Helper)**
 - Auto Target, Auto Hunt, Auto Heal (%), Auto Treino e **Auto Venda** (o loot puro que não cabe no inventário vira kan na hora, em vez de cair numa sacola).
@@ -93,7 +100,8 @@ Abra `client/public/maps/*.tmj` no Tiled (1.10+), edite e salve no mesmo formato
   - `loja` (o nome aparece sobre o NPC);
   - `portal`;
   - `chegada` (o nome é o id do destino em `shared/src/social.ts`);
-  - `spawn` (propriedades `monstro`, `raio` e `quantidade`).
+  - `spawn` (propriedades `monstro`, `raio` e `quantidade`);
+  - `arena` (centro e `raio` da área do desafio do Dangai).
 - **Mapa novo:** acrescente o id em `MAP_IDS` (`shared/src/map.ts`), crie o `.tmj` e um destino em `TRAVEL`.
 - **Primeira versão:** `art/maps/build_maps.py` gera os 4 mapas do zero. **Depois de editar no Tiled, não rode o script**, porque ele sobrescreve os arquivos.
 - **Conferir:** `cd server && npx tsx scripts/mapcheck.ts` checa os mapas (objetos obrigatórios, chegadas e muro sem frestas).
@@ -116,7 +124,8 @@ Cenários em `server/scripts/`:
 - **Combate e personagem:** `bankai`, `outfit`, `death`, `training`, `spawncount`.
 - **Itens, missões e economia:** `items`, `quests`, `bags` (corpos e sacolas), `market` (mercado), `forge` (forja, pergaminho, caixa e escolha da poção).
 - **Progresso:** `progress` (bestiário, conquistas e recompensa diária), `hunt` (Auto Venda, analisador, aviso da diária e missões diárias) e `invasion` (evento).
-- **Mapas:** `lasnoches` (viagem e monstros do palácio).
+- **Mapas:** `lasnoches` (viagem e monstros do palácio) e `dangai` (desafio sem fim).
+- **Conta e prestígio:** `account2` (troca de senha e `/ignorar`) e `rebirth` (renascimento e marcos de nível).
 - **Robustez:** `robust` (lixo em todas as mensagens, rajada de 500, mensagem acima de 4 KB). O runner também conta como falha qualquer exceção registrada pelo servidor.
 - **Social:** `social` (party, PvP, viagem), `social2` (chat, guildas, ranking) e `skull` (caveira).
 - **Offline e queda:** `bot` (hunt offline) e `restart` (queda do servidor com hunts e party).

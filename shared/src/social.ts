@@ -50,4 +50,5 @@ export const TRAVEL: TravelDest[] = [
   { id: "soul", name: "Soul Society (Seireitei)", map: "soul", minLevel: 14, cost: 120 },
   { id: "hueco", name: "Hueco Mundo (Garganta)", map: "hueco", minLevel: 22, cost: 200 },
   { id: "lasnoches", name: "Las Noches (palácio)", map: "lasnoches", minLevel: 45, cost: 400 },
+  { id: "dangai", name: "Dangai (desafio sem fim)", map: "dangai", minLevel: 20, cost: 0 },
 ];

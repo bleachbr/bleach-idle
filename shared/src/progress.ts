@@ -33,6 +33,7 @@ export const BESTIARY_KINDS = () => Object.values(MONSTERS).filter((m) => !m.dum
 
 export interface Stats {
   level: number;
+  rebirths: number;
   kills: number;
   bossKills: number;
   stages: number; // soma dos estágios do bestiário
@@ -60,6 +61,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   a("lv25", "Oficial do Gotei", "Chegue ao nível 25.", "level", 25, 1000, [{ id: "pocao_rei", qty: 5 }]),
   a("lv40", "Tenente", "Chegue ao nível 40.", "level", 40, 4000, [{ id: "amuleto_alma", qty: 1 }]),
   a("lv60", "Capitão", "Chegue ao nível 60.", "level", 60, 10000, [{ id: "haori", qty: 1 }]),
+  a("rb1", "Renascido", "Renasça pela primeira vez.", "rebirths", 1, 5000, [{ id: "pergaminho_xp", qty: 3 }]),
+  a("rb5", "Ciclo Eterno", "Renasça 5 vezes.", "rebirths", 5, 30000, [{ id: "caixa_kisuke", qty: 5 }]),
   a("k100", "Purificador", "Derrote 100 Hollows.", "kills", 100, 200, [{ id: "pocao_vida", qty: 5 }]),
   a("k1000", "Caçador de Hollows", "Derrote 1.000 Hollows.", "kills", 1000, 1500),
   a("k10000", "Flagelo de Hueco Mundo", "Derrote 10.000 Hollows.", "kills", 10000, 8000, [{ id: "amuleto_alma", qty: 2 }]),
@@ -109,7 +112,57 @@ export interface Progress {
   dm?: DailyState;
   /** primeiros passos já feitos (ids de TUTORIAL) */
   tut?: string[];
+  /** maior nível já alcançado (os marcos pagam só ao passar dele, mesmo depois de renascer) */
+  peak?: number;
+  /** melhor andar do Dangai */
+  dgBest?: number;
 }
+
+// ---------- desafio do Dangai (torre sem fim) ----------
+// Cada andar traz uma leva de monstros só sua. Os andares sobem pela escada de monstros e,
+// depois do topo, os monstros ficam 12% mais fortes a cada andar: não há fim.
+
+export const DANGAI = { timeMs: 3 * 60_000, bossEvery: 10, startBack: 4 };
+const DG_BOSSES = ["grand_fisher", "metastacia", "gillian", "privaron"];
+
+export function dangaiFloor(f: number): { kind: string; count: number; power: number; defMult: number } {
+  const over = Math.max(0, f - 2 * LADDER.length);
+  const power = 1.12 ** over;
+  if (f % DANGAI.bossEvery === 0) {
+    const kind = DG_BOSSES[Math.min(DG_BOSSES.length - 1, f / DANGAI.bossEvery - 1)];
+    return { kind, count: 1, power, defMult: 1 + 0.03 * over };
+  }
+  const kind = LADDER[Math.min(LADDER.length - 1, Math.floor((f - 1) / 2))];
+  return { kind, count: Math.min(8, 3 + Math.floor(f / 4)), power, defMult: 1 + 0.03 * over };
+}
+
+/** recompensa por limpar o andar (recorde paga em dobro; Caixa do Kisuke a cada 5 andares de recorde) */
+export function dangaiReward(f: number, record: boolean): { gold: number; items?: { id: string; qty: number }[] } {
+  const items = [];
+  if (f >= 6) items.push({ id: "pedra_reishi", qty: 1 + Math.floor(f / 10) });
+  if (record && f % 5 === 0) items.push({ id: "caixa_kisuke", qty: 1 });
+  return { gold: 40 * f * (record ? 2 : 1), items };
+}
+
+/** andar de onde o desafio recomeça: um pouco abaixo do recorde, para subir rápido de novo */
+export const dangaiStart = (best: number) => Math.max(1, best - DANGAI.startBack);
+
+// ---------- marcos de nível ----------
+
+/** recompensa por chegar a um nível novo: kan a cada 5 níveis e uma Caixa do Kisuke a cada 10 */
+export function levelMilestone(level: number): { gold: number; items?: { id: string; qty: number }[] } | undefined {
+  if (level % 5) return undefined;
+  return level % 10 ? { gold: 60 * level } : { gold: 100 * level, items: [{ id: "caixa_kisuke", qty: 1 }] };
+}
+
+// ---------- renascimento (prestígio) ----------
+// Volta ao nível inicial guardando tudo (itens, kan, forja, bestiário) e ganha bônus
+// permanentes: subir de novo é mais rápido e o personagem fica mais forte a cada ciclo.
+
+export const REBIRTH = { baseLevel: 60, stepLevel: 5, maxLevel: 100, exp: 0.1, dmg: 0.05, hp: 0.05 };
+/** nível exigido para o próximo renascimento */
+export const rebirthLevel = (n: number) => Math.min(REBIRTH.maxLevel, REBIRTH.baseLevel + REBIRTH.stepLevel * n);
+export const rebirthBonus = (n: number) => ({ exp: 1 + REBIRTH.exp * n, dmg: 1 + REBIRTH.dmg * n, hp: 1 + REBIRTH.hp * n });
 
 // ---------- primeiros passos ----------
 

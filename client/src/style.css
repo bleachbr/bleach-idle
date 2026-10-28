@@ -219,3 +219,10 @@ body.touch #touch { bottom: 120px; }
 @media (max-width: 720px) { #ranking, #book { top: 56px; max-height: calc(100% - 230px); } }
 #tutorial .tut { font-size: 12px; padding: 2px 0; color: var(--text); }
 #tutorial .tut.done { color: var(--muted); text-decoration: line-through; }
+#rebirth-btn { margin-top: 6px; width: 100%; padding: 6px; border: 1px solid #ffcf5a; border-radius: 4px; background: linear-gradient(90deg, #3a2a08, #5a3f0a); color: #ffe7a3; font-weight: 700; cursor: pointer; animation: rebirth-glow 1.6s ease-in-out infinite alternate; }
+@keyframes rebirth-glow { from { box-shadow: 0 0 2px #ffcf5a55; } to { box-shadow: 0 0 10px #ffcf5acc; } }
+/* desafio do Dangai: barra no topo do mapa */
+#dangai { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 12; display: flex; gap: 10px; align-items: center; padding: 6px 12px; background: #1d1430ee; border: 1px solid #8a5cff; border-radius: 8px; font-size: 13px; white-space: nowrap; }
+#dangai b { color: #c9a8ff; }
+#dangai button { padding: 4px 10px; border: 1px solid #8a5cff; border-radius: 4px; background: #3a2566; color: #fff; cursor: pointer; font-size: 12px; }
+@media (max-width: 720px) { #dangai { top: 56px; font-size: 12px; white-space: normal; max-width: calc(100% - 120px); flex-wrap: wrap; } }

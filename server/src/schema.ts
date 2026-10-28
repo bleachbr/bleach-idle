@@ -36,6 +36,7 @@ export class Player extends Schema {
   partyLead = false;
   pvpUntil = 0; // ms epoch: até quando está bloqueado depois de atacar um jogador
   skullUntil = 0; // ms epoch: caveira de assassino (abates injustos)
+  rebirths = 0; // renascimentos (prestígio)
 
   // só no servidor (não sincronizado)
   path: { x: number; y: number }[] = [];
@@ -91,7 +92,7 @@ defineTypes(Player, {
   hp: "int32", maxHp: "int32", rei: "number", maxRei: "int32",
   level: "uint16", exp: "number", targetId: "string",
   online: "boolean", autoTarget: "boolean", autoHunt: "boolean", autoHeal: "uint8", look: "string", map: "string",
-  partyId: "string", partyLead: "boolean", pvpUntil: "number", skullUntil: "number", guildTag: "string",
+  partyId: "string", partyLead: "boolean", pvpUntil: "number", skullUntil: "number", rebirths: "uint8", guildTag: "string",
   autoTrain: "boolean", autoSell: "boolean", zanjutsu: "uint8", zanPct: "uint8", reiryoku: "uint8", reiPct: "uint8",
 });
 
@@ -110,6 +111,10 @@ export class Monster extends Schema {
   spawnIndex = 0;
   /** monstro de invasão: não renasce e volta para a própria casa (não para um spawn do mapa) */
   invader = false;
+  /** monstro do Dangai: só o dono vê como alvo, ataca e é atacado por ele */
+  owner = "";
+  power = 1;
+  defMult = 1;
   homeX = 0;
   homeY = 0;
   path: { x: number; y: number }[] = [];

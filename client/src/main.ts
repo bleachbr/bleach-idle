@@ -1,7 +1,7 @@
 // Login, conexão com o servidor e HUD em DOM ao redor do canvas do Phaser.
 import Phaser from "phaser";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, expForLevel, PVP_MIN_LEVEL } from "../../shared/src";
+import { CHARS, ITEMS, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { serverNow, syncClock } from "./clock";
@@ -195,6 +195,14 @@ function start(room: Room<any>, myId: string) {
   });
   bindGuild(room);
   bindBook(room);
+  bindDangai(room, myId);
+  $("#rebirth-btn").onclick = () => {
+    const me = room.state.players.get(myId);
+    if (!me) return;
+    const b = rebirthBonus(me.rebirths + 1);
+    const ok = confirm(`Renascer volta você ao nível 8 e leva para a praça de Karakura.\n\nVocê mantém itens, equipamento, kan, forja, bestiário, conquistas e habilidades.\n\nBônus permanentes depois deste renascimento: +${Math.round((b.exp - 1) * 100)}% de XP, +${Math.round((b.dmg - 1) * 100)}% de dano e +${Math.round((b.hp - 1) * 100)}% de vida.\n\nRenascer agora?`);
+    if (ok) room.send("rebirth");
+  };
   const mute = $("#mute-btn");
   const showMute = () => { mute.textContent = sfx.isMuted() ? "sem som" : "som"; };
   showMute();
@@ -370,6 +378,40 @@ function bindBook(room: Room<any>) {
   panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab!; render(); }));
 }
 
+// ---------- desafio do Dangai ----------
+
+function bindDangai(room: Room<any>, myId: string) {
+  const panel = $("#dangai");
+  let st: { best: number; start: number; floor: number; left: number; until: number; waiting: boolean } | null = null;
+  const button = (label: string, msg: string) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = label;
+    b.onclick = () => room.send(msg);
+    return b;
+  };
+  const render = () => {
+    const me = room.state.players.get(myId);
+    panel.hidden = me?.map !== "dangai";
+    if (panel.hidden || !st) return;
+    const secs = Math.max(0, Math.ceil((st.until - serverNow()) / 1000));
+    $("#dangai-info").textContent = !st.floor
+      ? `recorde: andar ${st.best}`
+      : st.waiting ? `andar ${st.floor} limpo! · recorde ${st.best}`
+      : `andar ${st.floor} · faltam ${st.left} · ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")} · recorde ${st.best}`;
+    const actions = $("#dangai-actions");
+    actions.replaceChildren(...(!st.floor ? [button(`Começar no andar ${st.start}`, "dangaiStart")]
+      : st.waiting ? [button("Próximo andar", "dangaiNext"), button("Sair", "dangaiStop")]
+      : [button("Desistir", "dangaiStop")]));
+  };
+  room.onMessage("dangai", (m: typeof st) => { st = m; render(); });
+  room.state.players.onAdd((p: any, id: string) => {
+    if (id === myId) p.listen("map", (map: string) => { if (map === "dangai") room.send("dangaiInfo"); render(); });
+  });
+  const timer = window.setInterval(() => { if (!panel.hidden && st?.floor && !st.waiting) render(); }, 1000);
+  room.onLeave(() => window.clearInterval(timer));
+}
+
 // ---------- guilda e ranking ----------
 
 function bindGuild(room: Room<any>) {
@@ -395,7 +437,7 @@ function bindGuild(room: Room<any>) {
     const rows: string[] = (data[tab] as any[]).map((r, i) => tab === "guildas"
       ? `<tr><td>${i + 1}</td><td>${escHtml(r.name)} <small>[${escHtml(r.tag)}]</small></td><td>${r.frags} abates</td><td>${r.members} membros · ${r.levels} níveis</td></tr>`
       : `<tr><td>${i + 1}</td><td>${escHtml(r.name)}${r.guild ? ` <small>[${escHtml(r.guild)}]</small>` : ""}</td><td>${CHARS[r.charId]?.name ?? ""}</td><td>${
-        tab === "nivel" ? `nível ${r.level}` : tab === "conquistas" ? `${r.ach} conquistas` : tab === "bestiario" ? `${r.stages} estágios` : `${r.frags} abates`}</td></tr>`);
+        tab === "nivel" ? `${r.rebirths ? `✦${r.rebirths} · ` : ""}nível ${r.level}` : tab === "dangai" ? `andar ${r.dg}` : tab === "conquistas" ? `${r.ach} conquistas` : tab === "bestiario" ? `${r.stages} estágios` : `${r.frags} abates`}</td></tr>`);
     $("#ranking-body").innerHTML = rows.length ? `<table>${rows.join("")}</table>` : `<p class="hint">Ninguém aqui ainda.</p>`;
   };
   room.onMessage("ranking", (d: any) => { data = d; panel.hidden = false; render(); });
@@ -426,7 +468,10 @@ function setBar(sel: string, value: number, max: number, text: string) {
 function renderStats(p: any) {
   const ch = CHARS[p.charId];
   $("#pname").textContent = p.name;
-  $("#plevel").textContent = `nível ${p.level}`;
+  $("#plevel").textContent = `${p.rebirths ? `✦${p.rebirths} · ` : ""}nível ${p.level}`;
+  const rb = $<HTMLButtonElement>("#rebirth-btn");
+  rb.hidden = p.level < rebirthLevel(p.rebirths);
+  if (!rb.hidden) rb.textContent = `✦ Renascer (${p.rebirths + 1}º)`;
   setBar(".bar.hp", p.hp, p.maxHp, `HP ${p.hp}/${p.maxHp}`);
   setBar(".bar.rei", p.rei, p.maxRei, `Reiatsu ${Math.floor(p.rei)}/${p.maxRei}`);
   const a = expForLevel(p.level), b = expForLevel(p.level + 1);

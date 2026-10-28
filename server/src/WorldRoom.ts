@@ -15,7 +15,7 @@ import {
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
-  ACHIEVEMENTS, DAILY, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, equipBonus,
+  ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, equipBonus,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -108,7 +108,11 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (!p) return;
       if (!m?.id || m.id === p.targetId) { p.targetId = ""; p.follow = false; return; }
       const mo = this.state.monsters.get(m.id);
-      if (mo) { if (sameMap(p, mo)) { p.targetId = m.id; p.follow = true; } return; }
+      if (mo) {
+        if (mo.owner && mo.owner !== p.id) return this.log(p, "Esse monstro é do desafio de outra pessoa.");
+        if (sameMap(p, mo)) { p.targetId = m.id; p.follow = true; }
+        return;
+      }
       const v = this.state.players.get(m.id);
       if (!v) return;
       const why = this.cantAttack(p, v);
@@ -120,7 +124,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const p = this.me(c);
       if (!p) return;
       const list = [...this.state.monsters.values()]
-        .filter((mo) => sameMap(p, mo) && chebyshev(p.x, p.y, mo.x, mo.y) <= VIEW)
+        .filter((mo) => sameMap(p, mo) && (!mo.owner || mo.owner === p.id) && chebyshev(p.x, p.y, mo.x, mo.y) <= VIEW)
         .sort((a, b) => chebyshev(p.x, p.y, a.x, a.y) - chebyshev(p.x, p.y, b.x, b.y));
       if (!list.length) return;
       const i = list.findIndex((mo) => mo.id === p.targetId);
@@ -148,6 +152,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.registerMarketMessages();
     this.registerBookMessages();
     this.registerForgeMessages();
+    this.registerRebirthMessages();
+    this.registerDangaiMessages();
     // relógio: o cliente pergunta a hora do servidor para contar o bloqueio de PvP certo
     this.handle("time", (c) => c.send("time", { now: Date.now() }));
     this.handle("transform", (c) => {
@@ -279,6 +285,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.autoHeal = saved.autoHeal ?? 0;
     p.frags = saved.frags ?? 0;
     p.skullUntil = saved.skullUntil ?? 0;
+    p.rebirths = saved.rebirths ?? 0;
     p.autoTrain = !!saved.autoTrain;
     p.autoSell = !!saved.autoSell;
     p.ignore = (saved.ignore ?? []).slice(0, 100);
@@ -289,6 +296,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.train(p, 0, 0);
     p.quests = saved.quests ?? { active: {}, done: [] };
     p.prog = { ...newProgress(), ...saved.prog };
+    p.prog.peak = Math.max(p.prog.peak ?? 0, saved.level);
     // quem já é veterano quando o guia chegou não precisa dele
     if (!p.prog.tut && p.level >= TUTORIAL_MAX_LEVEL) p.prog.tut = TUTORIAL.map((t) => t.id);
     p.forge = saved.forge ?? {};
@@ -457,7 +465,8 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (now >= m.nextAttackAt) { m.nextAttackAt = now + 3000; m.hp = m.maxHp; } // cura total a cada 3 s
       return;
     }
-    const sp = m.invader ? { x: m.homeX, y: m.homeY, radius: 3 } : SPAWNS[m.spawnIndex];
+    const sp = m.owner ? { x: m.homeX, y: m.homeY, radius: 8 } : m.invader ? { x: m.homeX, y: m.homeY, radius: 3 } : SPAWNS[m.spawnIndex];
+    if (m.owner) m.targetId = this.state.players.get(m.owner)?.map === m.map ? m.owner : "";
     let t = m.targetId ? this.state.players.get(m.targetId) : undefined;
     if (t && (t.hp <= 0 || !sameMap(m, t) || inPZ(mapOf(t), t.x, t.y) || chebyshev(m.x, m.y, sp.x, sp.y) > LEASH + sp.radius)) {
       t = undefined;
@@ -469,7 +478,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       let bd = AGGRO + 1;
       for (const p of this.state.players.values()) {
         const d = chebyshev(m.x, m.y, p.x, p.y);
-        if (d < bd && p.hp > 0 && sameMap(m, p) && !inPZ(mapOf(p), p.x, p.y)) { best = p; bd = d; }
+        if (d < bd && p.hp > 0 && sameMap(m, p) && !inPZ(mapOf(p), p.x, p.y) && (!m.owner || m.owner === p.id)) { best = p; bd = d; }
       }
       if (best) { t = best; m.targetId = best.id; }
     }
@@ -486,7 +495,7 @@ export class WorldRoom extends GameRoom<WorldState> {
           m.nextAttackAt = now + def.attackMs;
           this.face(m, t);
           const ch = CHARS[t.charId];
-          const dmg = rollDamage(def.atk, 1, playerDef(ch.def, t.level) + equipBonus(t.equip, t.forge).def);
+          const dmg = rollDamage(def.atk * m.power, 1, playerDef(ch.def, t.level) + equipBonus(t.equip, t.forge).def);
           t.hp -= dmg;
           t.lastCombatAt = now;
           this.broadcast("fx", { t: "dmg", id: t.id, v: dmg });
@@ -535,16 +544,16 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private hit(p: Player, t: Player | Monster, mult: number, now: number, skill = false) {
-    mult *= skill ? reiMult(p.reiryoku) : zanMult(p.zanjutsu);
+    mult *= (skill ? reiMult(p.reiryoku) : zanMult(p.zanjutsu)) * rebirthBonus(p.rebirths).dmg;
     if (!skill) this.train(p, 1, 0);
     if (isPlayer(t)) return this.pvpHit(p, t, mult, now);
     // no mesmo tick a habilidade pode matar e o golpe corpo a corpo acertar o mesmo alvo:
     // monstro já morto não apanha (antes contava 2 mortes: XP e loot em dobro e 2 respawns)
-    if (t.hp <= 0 || !this.state.monsters.has(t.id)) return;
+    if (t.hp <= 0 || !this.state.monsters.has(t.id) || (t.owner && t.owner !== p.id)) return;
     const ch = CHARS[p.charId];
     const def = MONSTERS[t.kind];
     mult *= bestiaryDmgMult(t.kind, p.prog.bestiary[t.kind] ?? 0);
-    const dmg = rollDamage(playerAtk(ch.atk, p.level) + equipBonus(p.equip, p.forge).atk, ch.forms[p.form].dmgMult * mult, def.def);
+    const dmg = rollDamage(playerAtk(ch.atk, p.level) + equipBonus(p.equip, p.forge).atk, ch.forms[p.form].dmgMult * mult, def.def * t.defMult);
     t.hp -= dmg;
     t.lastHitBy = p.id;
     if (!t.targetId && !def.dummy) t.targetId = p.id;
@@ -640,12 +649,14 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.state.monsters.delete(m.id);
     this.monsterAt.delete(tileKey(m.map, m.x, m.y));
     if (m.invader) return this.invaderKilled(m, killer);
+    if (m.owner) return this.dangaiKilled(m, killer);
     this.clock.setTimeout(() => this.spawnMonster(m.spawnIndex), def.respawnMs);
     this.shareExp(killer, m, def.exp, def.name);
     this.giveLoot(killer, m.kind, m);
   }
 
   private killPlayer(p: Player, by: string, killerId = "") {
+    if (p.map === "dangai") return this.dangaiDeath(p, by);
     const deathAt = { map: p.map, x: p.x, y: p.y };
     const dropped: Slot[] = [];
     // Amuleto da Alma (o "Band of Loss" daqui): protege XP, itens e dinheiro, e se desfaz
@@ -724,6 +735,11 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.rei = p.maxRei;
       this.broadcast("fx", { t: "level", id: p.id, v: p.level });
       this.log(p, `Você subiu para o nível ${p.level}!`);
+      if (p.level > (p.prog.peak ?? 0)) {
+        p.prog.peak = p.level;
+        const m = levelMilestone(p.level);
+        if (m) this.log(p, `Marco do nível ${p.level}: ${this.grant(p, m)}!`);
+      }
     }
   }
 
@@ -736,7 +752,7 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   private recompute(p: Player) {
     const b = equipBonus(p.equip, p.forge);
-    p.maxHp = maxHp(p.level) + b.hp;
+    p.maxHp = Math.round((maxHp(p.level) + b.hp) * rebirthBonus(p.rebirths).hp);
     p.maxRei = maxRei(p.level) + b.rei;
     p.hp = Math.min(p.hp, p.maxHp);
     p.rei = Math.min(p.rei, p.maxRei);
@@ -760,7 +776,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     let best: Monster | undefined;
     let bd = range + 1;
     for (const m of this.state.monsters.values()) {
-      if (!sameMap(p, m) || (only && !only.has(m.kind)) || (invaders && !m.invader) || MONSTERS[m.kind].dummy) continue;
+      if (!sameMap(p, m) || (m.owner && m.owner !== p.id) || (only && !only.has(m.kind)) || (invaders && !m.invader) || MONSTERS[m.kind].dummy) continue;
       const d = chebyshev(p.x, p.y, m.x, m.y);
       if (d < bd) { best = m; bd = d; }
     }
@@ -1055,6 +1071,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     if (a === v) return "Não dá para atacar a si mesmo.";
     if (v.hp <= 0) return `${v.name} já caiu.`;
     if (!sameMap(a, v)) return `${v.name} está em outro mapa.`;
+    if (a.map === "dangai") return "Não há PvP no Dangai.";
     if (a.partyId && a.partyId === v.partyId) return `${v.name} está na sua party.`;
     if (a.level < PVP_MIN_LEVEL) return `PvP só a partir do nível ${PVP_MIN_LEVEL}.`;
     if (v.level < PVP_MIN_LEVEL) return `${v.name} está protegido (abaixo do nível ${PVP_MIN_LEVEL}).`;
@@ -1066,7 +1083,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   private targetOf(p: Player): Player | Monster | undefined {
     if (!p.targetId) return undefined;
     const m = this.state.monsters.get(p.targetId);
-    if (m) return m;
+    if (m) return !m.owner || m.owner === p.id ? m : undefined;
     const v = this.state.players.get(p.targetId);
     return v && !this.cantAttack(p, v) ? v : undefined;
   }
@@ -1362,9 +1379,9 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   /** Ranking: nível (por XP), abates em PvP e guildas (soma de abates e de níveis). */
   private buildRanking() {
-    const rows = new Map<string, { name: string; charId: string; level: number; exp: number; frags: number; guild: string; ach: number; stages: number }>();
-    for (const r of db.allChars()) rows.set(r.id, { name: r.data.name, charId: r.data.charId, level: r.data.level, exp: r.data.exp, frags: r.data.frags ?? 0, guild: "", ach: r.data.prog?.ach.length ?? 0, stages: stagesSum(r.data.prog?.bestiary ?? {}) });
-    for (const p of this.state.players.values()) rows.set(p.id, { name: p.name, charId: p.charId, level: p.level, exp: p.exp, frags: p.frags, guild: "", ach: p.prog.ach.length, stages: stagesSum(p.prog.bestiary) });
+    const rows = new Map<string, { name: string; charId: string; level: number; exp: number; frags: number; guild: string; ach: number; stages: number; rebirths: number; dg: number }>();
+    for (const r of db.allChars()) rows.set(r.id, { name: r.data.name, charId: r.data.charId, level: r.data.level, exp: r.data.exp, frags: r.data.frags ?? 0, guild: "", ach: r.data.prog?.ach.length ?? 0, stages: stagesSum(r.data.prog?.bestiary ?? {}), rebirths: r.data.rebirths ?? 0, dg: r.data.prog?.dgBest ?? 0 });
+    for (const p of this.state.players.values()) rows.set(p.id, { name: p.name, charId: p.charId, level: p.level, exp: p.exp, frags: p.frags, guild: "", ach: p.prog.ach.length, stages: stagesSum(p.prog.bestiary), rebirths: p.rebirths, dg: p.prog.dgBest ?? 0 });
     const memberOf = guilds.memberMap();
     const byId = new Map(guilds.all().map((g) => [g.id, g]));
     const g = new Map<number, { name: string; tag: string; members: number; levels: number; frags: number }>();
@@ -1379,10 +1396,11 @@ export class WorldRoom extends GameRoom<WorldState> {
     }
     const list = [...rows.values()];
     return {
-      nivel: [...list].sort((a, b) => b.exp - a.exp).slice(0, 20),
+      nivel: [...list].sort((a, b) => b.rebirths - a.rebirths || b.exp - a.exp).slice(0, 20),
       abates: list.filter((r) => r.frags > 0).sort((a, b) => b.frags - a.frags).slice(0, 20),
       guildas: [...g.values()].sort((a, b) => b.frags - a.frags || b.levels - a.levels).slice(0, 20),
       conquistas: list.filter((r) => r.ach > 0).sort((a, b) => b.ach - a.ach || b.exp - a.exp).slice(0, 20),
+      dangai: list.filter((r) => r.dg > 0).sort((a, b) => b.dg - a.dg || b.exp - a.exp).slice(0, 20),
       bestiario: list.filter((r) => r.stages > 0).sort((a, b) => b.stages - a.stages || b.exp - a.exp).slice(0, 20),
     };
   }
@@ -1535,7 +1553,7 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   /** XP de monstro: aplica o Pergaminho de Treino e soma no analisador de caçada */
   private monsterExp(p: Player, exp: number, from: string) {
-    const v = Math.max(1, Math.round(exp * EXP_RATE * (p.expBoostUntil > Date.now() ? BOOST_EXP : 1)));
+    const v = Math.max(1, Math.round(exp * EXP_RATE * rebirthBonus(p.rebirths).exp * (p.expBoostUntil > Date.now() ? BOOST_EXP : 1)));
     p.hunt.exp += v;
     this.gainExp(p, v, from);
   }
@@ -1613,6 +1631,162 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.broadcast("chat", { from: "", ch: "sys", text: won
       ? `✔ Invasão repelida!${top ? ` Mais abates: ${name} (${top[1]}).` : ""}`
       : `A invasão terminou: os Hollows que sobraram voltaram para Hueco Mundo.${top ? ` Mais abates: ${name} (${top[1]}).` : ""}` });
+  }
+
+  // ---------- desafio do Dangai ----------
+
+  /** desafio em andamento por jogador */
+  private dangai = new Map<string, { floor: number; until: number; left: number; next: number }>();
+
+  private registerDangaiMessages() {
+    this.handle("dangaiStart", (c) => {
+      const p = this.me(c);
+      if (!p || p.map !== "dangai") return;
+      if (this.dangai.get(p.id)?.floor) return this.log(p, "Você já está num desafio.");
+      this.dangaiFloorStart(p, dangaiStart(p.prog.dgBest ?? 0));
+    });
+    this.handle("dangaiStop", (c) => {
+      const p = this.me(c);
+      if (!p || !this.dangai.has(p.id)) return;
+      p.autoHunt = false; // senão o Auto Hunt recomeçaria o desafio sozinho
+      this.dangaiEnd(p.id, "Você saiu do desafio.");
+    });
+    this.handle("dangaiInfo", (c) => { const p = this.me(c); if (p) this.sendDangai(p); });
+    this.handle("dangaiNext", (c) => {
+      const p = this.me(c);
+      const run = p && this.dangai.get(p.id);
+      if (p && run && run.left === 0) this.dangaiFloorStart(p, run.floor + 1);
+    });
+    // tempo esgotado, próximo andar e recomeço automáticos (com Auto Hunt ligado, inclusive offline)
+    this.clock.setInterval(() => {
+      const now = Date.now();
+      for (const [id, run] of this.dangai) {
+        const p = this.state.players.get(id);
+        if (!p || p.map !== "dangai") { this.dangaiEnd(id, ""); continue; }
+        if (run.left > 0 && now > run.until) this.dangaiEnd(id, `Tempo esgotado no andar ${run.floor}.`);
+        else if (run.left === 0 && run.next && now >= run.next) this.dangaiFloorStart(p, run.floor + 1);
+      }
+      for (const p of this.state.players.values()) {
+        if (p.map !== "dangai" || !p.autoHunt || p.hp <= 0 || this.dangai.has(p.id) || now < (this.dangaiRetry.get(p.id) ?? 0)) continue;
+        this.dangaiFloorStart(p, dangaiStart(p.prog.dgBest ?? 0));
+      }
+    }, 1000);
+  }
+
+  private sendDangai(p: Player) {
+    const run = this.dangai.get(p.id);
+    const best = p.prog.dgBest ?? 0;
+    this.sendTo(p, "dangai", { best, start: dangaiStart(best), floor: run?.floor ?? 0, left: run?.left ?? 0, until: run?.until ?? 0, waiting: !!run && run.left === 0 });
+  }
+
+  private dangaiFloorStart(p: Player, floor: number) {
+    const arena = mapOf(p).arena;
+    if (!arena) return;
+    const f = dangaiFloor(floor);
+    const def = MONSTERS[f.kind];
+    let n = 0;
+    for (let tries = 0; tries < 300 && n < f.count; tries++) {
+      const x = arena.x + Math.round((Math.random() * 2 - 1) * arena.radius);
+      const y = arena.y + Math.round((Math.random() * 2 - 1) * arena.radius);
+      if (!walkable(mapOf(p), x, y) || inPZ(mapOf(p), x, y) || this.blockedForMonster(p.map, x, y)) continue;
+      const m = new Monster();
+      m.id = `dg${++this.monsterSeq}`;
+      m.kind = f.kind;
+      m.map = p.map;
+      m.x = m.homeX = x;
+      m.y = m.homeY = y;
+      m.hp = m.maxHp = Math.round(def.hp * f.power);
+      m.stepMs = def.stepMs;
+      m.owner = p.id;
+      m.power = f.power;
+      m.defMult = f.defMult;
+      this.state.monsters.set(m.id, m);
+      this.monsterAt.add(tileKey(p.map, x, y));
+      n++;
+    }
+    this.dangai.set(p.id, { floor, until: Date.now() + DANGAI.timeMs, left: n, next: 0 });
+    this.log(p, `Dangai, andar ${floor}: ${n}x ${def.name}${f.power > 1 ? ` (força x${f.power.toFixed(2)})` : ""}. Você tem 3 minutos.`);
+    this.sendDangai(p);
+  }
+
+  private dangaiKilled(m: Monster, killer: Player) {
+    const def = MONSTERS[m.kind];
+    this.monsterExp(killer, Math.round(def.exp * m.power), `${def.name} (Dangai)`);
+    this.bestiaryKill(killer, m.kind);
+    this.questKill(killer, m.kind);
+    this.giveLoot(killer, m.kind, m);
+    const run = this.dangai.get(m.owner);
+    if (!run) return;
+    run.left--;
+    if (run.left > 0) return this.sendDangai(killer);
+    const record = run.floor > (killer.prog.dgBest ?? 0);
+    if (record) killer.prog.dgBest = run.floor;
+    const got = this.grant(killer, dangaiReward(run.floor, record));
+    this.log(killer, `Andar ${run.floor} limpo${record ? " (recorde!)" : ""}: ${got}.`);
+    this.sendTo(killer, "fx", { t: "book", text: `Andar ${run.floor}${record ? " · recorde!" : ""}` });
+    if (record && run.floor % 10 === 0) this.broadcast("chat", { from: "", ch: "sys", text: `🜂 ${killer.name} chegou ao andar ${run.floor} do Dangai.` });
+    // com Auto Hunt, o próximo andar começa sozinho; senão espera o botão
+    run.next = killer.autoHunt ? Date.now() + 3000 : 0;
+    this.sendDangai(killer);
+  }
+
+  /** quando o Auto Hunt pode recomeçar o desafio de alguém (depois de perder um andar) */
+  private dangaiRetry = new Map<string, number>();
+
+  /** encerra o desafio (fim do tempo, saída ou morte) e tira os monstros que sobraram */
+  private dangaiEnd(id: string, why: string) {
+    for (const m of [...this.state.monsters.values()]) {
+      if (m.owner !== id) continue;
+      this.state.monsters.delete(m.id);
+      this.monsterAt.delete(tileKey(m.map, m.x, m.y));
+    }
+    this.dangai.delete(id);
+    this.dangaiRetry.set(id, Date.now() + 8000);
+    const p = this.state.players.get(id);
+    if (!p) return;
+    if (why) this.log(p, `${why} Melhor andar: ${p.prog.dgBest ?? 0}.`);
+    this.sendDangai(p);
+  }
+
+  /** morrer no Dangai não tira nada: volta para a entrada e o desafio acaba */
+  private dangaiDeath(p: Player, by: string) {
+    this.broadcast("fx", { t: "die", id: p.id });
+    p.hp = p.maxHp;
+    p.rei = p.maxRei;
+    p.form = 0;
+    this.recompute(p);
+    const back = mapOf(p).arrivals.dangai ?? { x: p.x, y: p.y };
+    this.teleport(p, "dangai", back);
+    const run = this.dangai.get(p.id);
+    this.dangaiEnd(p.id, `${by} derrubou você no andar ${run?.floor ?? "?"} (no Dangai não se perde nada).`);
+  }
+
+  // ---------- renascimento ----------
+
+  private registerRebirthMessages() {
+    this.handle("rebirth", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      const need = rebirthLevel(p.rebirths);
+      if (p.level < need) return this.log(p, `Renascer exige nível ${need}.`);
+      if (Date.now() - p.lastCombatAt < 6000) return this.log(p, "Saia de combate para renascer.");
+      if (p.rebirths >= 250) return;
+      p.rebirths++;
+      p.level = START_LEVEL;
+      p.exp = expForLevel(START_LEVEL);
+      if (p.form) p.form = 0;
+      this.recompute(p);
+      p.hp = p.maxHp;
+      p.rei = p.maxRei;
+      const b = rebirthBonus(p.rebirths);
+      this.teleport(p, HOME.id, TEMPLE);
+      this.log(p, `Você renasceu (${p.rebirths}º)! Bônus permanentes: +${Math.round((b.exp - 1) * 100)}% de XP, +${Math.round((b.dmg - 1) * 100)}% de dano e +${Math.round((b.hp - 1) * 100)}% de vida. Próximo renascimento no nível ${rebirthLevel(p.rebirths)}.`);
+      this.broadcast("chat", { from: "", ch: "sys", text: `✦ ${p.name} renasceu pela ${p.rebirths}ª vez.` });
+      this.broadcast("fx", { t: "level", id: p.id, v: p.level });
+      this.sendTo(p, "fx", { t: "event", text: `Renascimento ${p.rebirths}!` });
+      this.checkAchievements(p);
+      this.sendInv(p);
+    });
   }
 
   // ---------- forja do Kisuke ----------
@@ -1714,7 +1888,7 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   private stats(p: Player): Stats {
     return {
-      level: p.level, kills: p.prog.kills, bossKills: p.prog.bossKills, stages: stagesSum(p.prog.bestiary), frags: p.frags,
+      level: p.level, rebirths: p.rebirths, kills: p.prog.kills, bossKills: p.prog.bossKills, stages: stagesSum(p.prog.bestiary), frags: p.frags,
       quests: p.quests.done.length, zanjutsu: p.zanjutsu, reiryoku: p.reiryoku, streak: p.prog.daily.streak,
     };
   }
@@ -1907,7 +2081,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     return {
       name: p.name, charId: p.charId, level: p.level, exp: p.exp, hp: p.hp, rei: Math.round(p.rei), map: p.map, x: p.x, y: p.y,
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
-      autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil, prog: p.prog, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
+      autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil, rebirths: p.rebirths, prog: p.prog, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
       autoTrain: p.autoTrain, autoSell: p.autoSell, ignore: p.ignore, zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
       offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, zanAtLeave: p.zanAtLeave, reiAtLeave: p.reiAtLeave, deaths: p.offlineDeaths, kills: p.offKills, items: p.offItems },
     };
