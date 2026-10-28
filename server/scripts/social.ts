@@ -83,7 +83,7 @@ const dest = at(HOME.arrivals.leste.x, HOME.arrivals.leste.y);
 ok(`Senkaimon leva à Floresta Leste e cobra 30 kan`, h.me().x === dest.x && h.me().y === dest.y && h.logs.some((l) => l.includes("30 kan")));
 h.room.send("travel", { dest: "rio" });
 await sleep(300);
-ok("longe do portal não viaja", h.logs.some((l) => l.includes("Chegue perto de um portal")));
+ok("viaja de qualquer lugar (sem precisar do portal)", !h.logs.some((l) => l.includes("Chegue perto de um portal")));
 h.room.send("recall");
 await sleep(400);
 console.log("  recall na floresta:", h.logs.at(-1));

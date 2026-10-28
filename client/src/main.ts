@@ -3,7 +3,7 @@ import Phaser from "phaser";
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss } from "../../shared/src";
+import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { serverNow, syncClock } from "./clock";
@@ -198,6 +198,7 @@ function start(room: Room<any>, myId: string) {
   bindGuild(room);
   bindBook(room);
   bindDangai(room, myId);
+  $("#travel-btn").onclick = () => inventory.openTravel();
   $("#rebirth-btn").onclick = () => {
     const me = room.state.players.get(myId);
     if (!me) return;
@@ -480,29 +481,56 @@ function renderStats(p: any) {
   setBar(".bar.exp", p.exp - a, b - a, `XP ${Math.round(((p.exp - a) / (b - a)) * 100)}%`);
   $("#pform").textContent = ch.forms[p.form].label;
   $("#skill-name").textContent = `${ch.skill.name} (${ch.skill.cost} reiatsu)`;
-  // o servidor pode desligar o Auto Hunt (ex.: ao morrer): espelha nos controles
-  $<HTMLInputElement>("#auto-target").checked = p.autoTarget;
-  $<HTMLInputElement>("#auto-hunt").checked = p.autoHunt;
-  $<HTMLInputElement>("#auto-train").checked = p.autoTrain;
-  $<HTMLInputElement>("#auto-sell").checked = p.autoSell;
   $("#pskills").textContent = `Zanjutsu ${p.zanjutsu} (${p.zanPct}%) · Reiryoku ${p.reiryoku} (${p.reiPct}%)`;
-  $<HTMLInputElement>("#auto-heal-on").checked = p.autoHeal > 0;
+  // o servidor pode mudar o Auto Helper (ex.: desligar ao morrer): espelha nos controles
+  renderAuto(p);
+}
+
+/** Cartões do Auto Helper: um por automação, aceso quando ligado. */
+const AUTO_CARDS: { key: string; name: string; ico: string; tip: string }[] = [
+  { key: "autoHunt", name: "Caçar", ico: "swords", tip: "Procura monstros e caça sozinho, inclusive com o jogo fechado (até 12 h)." },
+  { key: "autoTarget", name: "Mirar", ico: "trophy", tip: "Mira sozinho no monstro mais próximo que estiver à vista." },
+  { key: "autoBankai", name: "Bankai", ico: "star", tip: "Libera o Bankai em combate quando houver reiatsu de sobra e volta ao normal fora de combate." },
+  { key: "autoReturn", name: "Voltar", ico: "swap", tip: "Depois de morrer, volta a caçar sozinho (para depois de 3 mortes em 10 minutos)." },
+  { key: "autoTrain", name: "Treinar", ico: "hourglass", tip: "Fora de combate, gasta o reiatsu parado para subir o Reiryoku. Também segue treinando com o jogo fechado." },
+  { key: "autoSell", name: "Vender", ico: "coins", tip: "O loot que não couber no inventário vira kan na hora, pelo preço da loja." },
+  { key: "autoRestock", name: "Repor", ico: "scroll", tip: "Compra poções de qualquer lugar quando acabam: até 20 de cura e 10 de reiatsu." },
+  { key: "autoBox", name: "Caixas", ico: "chest", tip: "Abre sozinho as Caixas do Kisuke que cair." },
+];
+
+function renderAuto(p: any) {
+  for (const b of document.querySelectorAll<HTMLButtonElement>("#auto-grid .auto-card")) b.setAttribute("aria-pressed", String(!!p[b.dataset.key!]));
+  const spot = $<HTMLSelectElement>("#hunt-spot");
+  if (document.activeElement !== spot) spot.value = p.huntSpot ?? "";
+  for (const [id, val] of [["auto-heal", p.autoHeal], ["auto-rei", p.autoRei]] as const) {
+    const r = $<HTMLInputElement>(`#${id}`);
+    if (document.activeElement !== r) r.value = String(val ?? 0);
+    $(`#${id}-val`).textContent = val ? `${val}%` : "desligado";
+  }
 }
 
 function bindAuto(room: Room<any>) {
-  const target = $<HTMLInputElement>("#auto-target");
-  const hunt = $<HTMLInputElement>("#auto-hunt");
-  const healOn = $<HTMLInputElement>("#auto-heal-on");
-  const heal = $<HTMLInputElement>("#auto-heal");
-  const sendHeal = () => room.send("auto", { autoHeal: healOn.checked ? Number(heal.value) || 50 : 0 });
-  target.onchange = () => room.send("auto", { autoTarget: target.checked });
-  hunt.onchange = () => room.send("auto", { autoHunt: hunt.checked });
-  const train = $<HTMLInputElement>("#auto-train");
-  train.onchange = () => room.send("auto", { autoTrain: train.checked });
-  const sell = $<HTMLInputElement>("#auto-sell");
-  sell.onchange = () => room.send("auto", { autoSell: sell.checked });
-  healOn.onchange = sendHeal;
-  heal.onchange = sendHeal;
+  const grid = $("#auto-grid");
+  grid.replaceChildren(...AUTO_CARDS.map((c) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "auto-card";
+    b.dataset.key = c.key;
+    b.dataset.ico = c.ico;
+    b.title = c.tip;
+    b.setAttribute("aria-pressed", "false");
+    b.innerHTML = `<span>${c.name}</span><small></small>`;
+    b.onclick = () => room.send("auto", { [c.key]: b.getAttribute("aria-pressed") !== "true" });
+    return b;
+  }));
+  const spot = $<HTMLSelectElement>("#hunt-spot");
+  spot.innerHTML = `<option value="">onde eu estiver</option>` + TRAVEL.filter((t) => t.id !== "karakura").map((t) => `<option value="${t.id}">${t.name} (nível ${t.minLevel}+)</option>`).join("");
+  spot.onchange = () => room.send("auto", { huntSpot: spot.value });
+  for (const [id, key] of [["auto-heal", "autoHeal"], ["auto-rei", "autoRei"]] as const) {
+    const r = $<HTMLInputElement>(`#${id}`);
+    r.oninput = () => ($(`#${id}-val`).textContent = r.value === "0" ? "desligado" : `${r.value}%`);
+    r.onchange = () => room.send("auto", { [key]: Number(r.value) });
+  }
 }
 
 function chatLine(text: string, cls: string) {

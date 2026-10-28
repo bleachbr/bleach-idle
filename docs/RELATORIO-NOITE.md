@@ -251,3 +251,11 @@ Resultado: `npm test` 76 de 76 e `npm run test:scripts` 229 de 229.
 - **Peso nos passos e golpes:** poeira nos pés a cada passo, e o inimigo recua um pouco quando apanha.
 - **Alvo e chefes:** um anel vermelho pulsa sob o alvo atual. Com um chefe como alvo, aparece no topo da tela uma barra grande de vida com o nome dele.
 - **Surgir:** monstro que renasce e jogador que entra aparecem com fumaça e esmaecer, em vez de surgir do nada.
+
+## Viagem livre, ✕ no canto e Auto Helper novo
+- **Viagem:** abre de qualquer lugar (ícone de portal no topo), desde que fora de combate.
+- **Fechar:** o ✕ de cada janela agora é um botão vermelho no canto superior direito.
+- **Praça de Karakura:** objetos e prédios sem fundo; o chão de verdade aparece por baixo (colisão igual).
+- **Auto Helper:** 8 cartões que acendem quando ligados, lugar de caça, cura e reiatsu por barra deslizante.
+  - automações novas: ir caçar no lugar escolhido, voltar a caçar depois de morrer (até 3 mortes em 10 min), Bankai automático, abrir caixas e repor poções de qualquer lugar.
+- **Teste novo:** `helper` (7 de 7). A bateria completa não foi rodada depois destas mudanças.

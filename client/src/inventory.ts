@@ -153,7 +153,7 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
     }, hint)));
 
     if (!open) return;
-    $("#modal-title").textContent = open === "depot" ? "Depot" : open === "shop" ? "Loja do Kisuke" : "Portal";
+    $("#modal-title").textContent = open === "depot" ? "Depot" : open === "shop" ? "Loja do Kisuke" : "Viagem";
     const body = $("#modal-body");
     if (open === "bag" && bag) {
       const b = bag;
@@ -203,14 +203,14 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
         const b = document.createElement("button");
         b.type = "button";
         b.textContent = "Viajar";
-        b.disabled = st.gold < d.cost;
+        b.disabled = st.gold < d.cost || myLevel() < d.minLevel;
         b.onclick = () => { room.send("travel", { dest: d.id }); close(); };
         row.append(b);
         list.append(row);
       }
       const p = document.createElement("p");
       p.className = "hint";
-      p.textContent = "Para voltar, use \"Voltar à cidade\" (tecla R). Depois de atacar um jogador, viajar fica bloqueado por 3 minutos.";
+      p.textContent = "Viaja de qualquer lugar, fora de combate. Para voltar, use \"Voltar à cidade\" (tecla R) ou a praça de Karakura. Depois de atacar um jogador, viajar fica bloqueado por 3 minutos.";
       body.replaceChildren(list, p);
     } else if (open === "depot") {
       const grid = document.createElement("div");
@@ -428,6 +428,14 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
   }
 
   return {
+    /** janela de viagem aberta de qualquer lugar (botão do topo); não fecha ao andar */
+    openTravel() {
+      open = "travel";
+      openedAt = null;
+      $("#modal").hidden = false;
+      onPanel(true);
+      render();
+    },
     /** fecha a janela se o jogador se afastar do depot ou da loja */
     onMove(x: number, y: number) {
       lastPos = { x, y };

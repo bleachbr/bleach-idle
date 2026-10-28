@@ -37,6 +37,12 @@ export interface SaveData {
   autoTarget?: boolean;
   autoHunt?: boolean;
   autoHeal?: number;
+  huntSpot?: string;
+  autoReturn?: boolean;
+  autoRei?: number;
+  autoBankai?: boolean;
+  autoBox?: boolean;
+  autoRestock?: boolean;
   /** presente enquanto o personagem caça offline (para o relatório e o limite de 12 h) */
   offline?: { since: number; expAtLeave: number; goldAtLeave: number; zanAtLeave?: number; reiAtLeave?: number; deaths?: import("./schema").DeathReport[]; kills?: number; items?: Record<string, number> };
 }

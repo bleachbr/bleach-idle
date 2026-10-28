@@ -42,6 +42,8 @@ const AGGRO = 5;
 const LEASH = 10;
 const VIEW = 8;
 const HUNT_RADIUS = 30;
+/** "já estou no lugar de caça": até esta distância da chegada do destino */
+const HUNT_SPOT_RADIUS = 12;
 const REGEN_MS = 2000;
 const BAG_OWNER_MS = 60_000; // prioridade de quem matou
 const BAG_TTL_MS = 5 * 60_000; // tempo até o corpo/sacola sumir
@@ -165,7 +167,8 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (p.rei < p.maxRei * 0.3) return this.log(p, "Reiatsu insuficiente para o Bankai.");
       this.setForm(p, 1);
     });
-    this.handle("auto", (c, m: { autoTarget?: boolean; autoHunt?: boolean; autoTrain?: boolean; autoSell?: boolean; autoHeal?: number }) => {
+    this.handle("auto", (c, m: { autoTarget?: boolean; autoHunt?: boolean; autoTrain?: boolean; autoSell?: boolean; autoHeal?: number;
+      huntSpot?: string; autoReturn?: boolean; autoRei?: number; autoBankai?: boolean; autoBox?: boolean; autoRestock?: boolean }) => {
       const p = this.me(c);
       if (!p) return;
       if (typeof m?.autoTarget === "boolean") p.autoTarget = m.autoTarget;
@@ -173,6 +176,12 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (p.autoHunt) this.tutorial(p, "auto");
       if (typeof m?.autoTrain === "boolean") p.autoTrain = m.autoTrain;
       if (typeof m?.autoSell === "boolean") p.autoSell = m.autoSell;
+      if (typeof m?.huntSpot === "string" && (m.huntSpot === "" || TRAVEL.some((t) => t.id === m.huntSpot))) p.huntSpot = m.huntSpot;
+      if (typeof m?.autoReturn === "boolean") p.autoReturn = m.autoReturn;
+      if (typeof m?.autoRei === "number") p.autoRei = Math.max(0, Math.min(90, Math.round(m.autoRei)));
+      if (typeof m?.autoBankai === "boolean") p.autoBankai = m.autoBankai;
+      if (typeof m?.autoBox === "boolean") p.autoBox = m.autoBox;
+      if (typeof m?.autoRestock === "boolean") p.autoRestock = m.autoRestock;
       if (typeof m?.autoHeal === "number") p.autoHeal = Math.max(0, Math.min(90, Math.round(m.autoHeal)));
     });
     this.handle("chat", (c, m: { text: string }) => {
@@ -288,6 +297,12 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.rebirths = saved.rebirths ?? 0;
     p.autoTrain = !!saved.autoTrain;
     p.autoSell = !!saved.autoSell;
+    p.huntSpot = TRAVEL.some((t) => t.id === saved.huntSpot) ? saved.huntSpot! : "";
+    p.autoReturn = !!saved.autoReturn;
+    p.autoRei = saved.autoRei ?? 0;
+    p.autoBankai = !!saved.autoBankai;
+    p.autoBox = !!saved.autoBox;
+    p.autoRestock = !!saved.autoRestock;
     p.ignore = (saved.ignore ?? []).slice(0, 100);
     p.zanjutsu = saved.zanjutsu ?? 0;
     p.zanTries = saved.zanTries ?? 0;
@@ -404,6 +419,11 @@ export class WorldRoom extends GameRoom<WorldState> {
       const id = this.bestPotion(p, "hp");
       if (id) this.useConsumable(p, id, now);
     }
+    if (p.autoRei && (p.rei * 100) / p.maxRei < p.autoRei) {
+      const id = this.bestPotion(p, "rei");
+      if (id) this.useConsumable(p, id, now);
+    }
+    this.helper(p, now);
     if (p.pendingInteract && !p.path.length) {
       // chegou (ou desistiu) do caminho até o depot ou a loja
       if (this.near(p, p.pendingInteract)) this.open(p, p.pendingInteract);
@@ -707,15 +727,19 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.y = TEMPLE.y;
     p.path = [];
     p.targetId = "";
-    p.autoHunt = false; // não volta sozinho para a hunt depois de morrer
+    // volta sozinho para a hunt só com "voltar a caçar" e no máximo 3 mortes em 10 min (senão vira um loop de mortes)
+    p.deathTimes = [...p.deathTimes.filter((t) => Date.now() - t < 10 * 60_000), Date.now()];
+    const back = p.autoHunt && p.autoReturn && p.deathTimes.length < 3;
+    p.autoHunt = back;
     p.pvpUntil = 0;
 
     const report: DeathReport = { by, exp: loss, gold: goldLost, items, protected: prot, at: Date.now() };
     if (p.online) this.sendTo(p, "death", report);
     else p.offlineDeaths.push(report);
+    const after = back ? "O Auto Helper volta à caça." : p.autoReturn && p.deathTimes.length >= 3 ? "3 mortes em 10 min: Auto Hunt desligado." : "Auto Hunt desligado.";
     this.log(p, prot
-      ? `Você foi morto por ${by}. O Amuleto da Alma se desfez e protegeu XP e itens. Auto Hunt desligado.`
-      : `Você foi morto por ${by}: perdeu ${loss} XP, ${goldLost} kan${items.length ? " e " + items.join(", ") : ""}. Auto Hunt desligado.`);
+      ? `Você foi morto por ${by}. O Amuleto da Alma se desfez e protegeu XP e itens. ${after}`
+      : `Você foi morto por ${by}: perdeu ${loss} XP, ${goldLost} kan${items.length ? " e " + items.join(", ") : ""}. ${after}`);
     this.sendInv(p);
     db.save(p.id, this.toSave(p), true); // morte não espera o save periódico
   }
@@ -948,6 +972,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.log(p, "Inventário cheio: o loot que não coube ficou numa sacola no chão (reservada a você por 1 min).");
     }
     this.log(p, `Loot: ${loot.gold} kan${got.length ? ", " + got.join(", ") : ""}.`);
+    if (p.autoBox) for (let i = 0; i < 5 && countItem(p.inv, "caixa_kisuke") > 0; i++) if (!this.useConsumable(p, "caixa_kisuke", Date.now())) break;
     if (got.length) this.broadcast("fx", { t: "loot", id: p.id, v: got.length });
     this.sendInv(p);
   }
@@ -1044,7 +1069,8 @@ export class WorldRoom extends GameRoom<WorldState> {
       const d = TRAVEL.find((t) => t.id === m?.dest);
       if (!p || !d) return;
       const now = Date.now();
-      if (!this.near(p, "travel")) return this.log(p, "Chegue perto de um portal (Senkaimon ou Garganta).");
+      // de qualquer lugar (o portal é só ambientação): basta estar fora de combate
+      if (now - p.lastCombatAt < RECALL_COMBAT_MS) return this.log(p, "Em combate: espere alguns segundos para viajar.");
       const why = this.travelBlocked(p, now);
       if (why) return this.log(p, why);
       if (p.level < d.minLevel) return this.log(p, `${d.name} exige nível ${d.minLevel}.`);
@@ -1802,6 +1828,56 @@ export class WorldRoom extends GameRoom<WorldState> {
     });
   }
 
+  // ---------- Auto Helper: lugar de caça, Bankai e reposição ----------
+
+  private helper(p: Player, now: number) {
+    if (p.hp <= 0) return;
+    const fighting = now - p.lastCombatAt < 2500;
+    // Bankai em combate (com reiatsu de sobra) e de volta ao normal fora dele, para guardar reiatsu
+    if (p.autoBankai) {
+      const bankai = CHARS[p.charId].forms[1];
+      if (p.form === 0 && fighting && p.level >= bankai.minLevel && p.rei > p.maxRei * 0.6) this.setForm(p, 1);
+      else if (p.form === 1 && now - p.lastCombatAt > 8000) this.setForm(p, 0);
+    }
+    if (now < p.helperAt) return;
+    p.helperAt = now + 3000;
+    if (p.autoRestock) this.restock(p);
+    if (p.autoHunt && p.huntSpot && !fighting) this.goHunt(p, now);
+  }
+
+  /** Com lugar de caça escolhido, viaja até lá quando estiver longe e sem monstro por perto. */
+  private goHunt(p: Player, now: number) {
+    const d = TRAVEL.find((t) => t.id === p.huntSpot);
+    const at = d && MAPS[d.map]?.arrivals[d.id];
+    if (!d || !at || p.level < d.minLevel) return;
+    if (p.map === d.map && chebyshev(p.x, p.y, at.x, at.y) <= HUNT_SPOT_RADIUS) return;
+    if (now - p.lastCombatAt < RECALL_COMBAT_MS || this.travelBlocked(p, now) || p.gold < d.cost) return;
+    p.gold -= d.cost;
+    this.teleport(p, d.map, nearestWalkable(MAPS[d.map], at.x, at.y));
+    this.log(p, `Auto Helper: indo caçar em ${d.name}${d.cost ? ` (${d.cost} kan)` : ""}.`);
+    this.sendInv(p);
+  }
+
+  /** Repõe poções de qualquer lugar quando acabam: até 20 de cura e 10 de reiatsu. */
+  private restock(p: Player) {
+    const hp = countItem(p.inv, "onigiri") + countItem(p.inv, "pocao_vida") + countItem(p.inv, "pocao_grande");
+    const rei = countItem(p.inv, "pocao_rei") + countItem(p.inv, "pocao_rei_grande");
+    const bought: string[] = [];
+    const buy = (id: string, want: number) => {
+      const price = ITEMS[id].buy!;
+      const n = Math.min(want, Math.floor(p.gold / price), spaceFor(p.inv, id));
+      if (n <= 0) return;
+      p.gold -= n * price;
+      addItem(p.inv, id, n);
+      bought.push(`${n}x ${ITEMS[id].name} (${n * price} kan)`);
+    };
+    if (hp < 5) buy("pocao_vida", 20 - hp);
+    if (rei < 3) buy("pocao_rei", 10 - rei);
+    if (!bought.length) return;
+    this.log(p, `Auto Helper: comprou ${bought.join(" e ")}.`);
+    this.sendInv(p);
+  }
+
   // ---------- forja do Kisuke ----------
 
   private registerForgeMessages() {
@@ -2095,7 +2171,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       name: p.name, charId: p.charId, level: p.level, exp: p.exp, hp: p.hp, rei: Math.round(p.rei), map: p.map, x: p.x, y: p.y,
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
       autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil, rebirths: p.rebirths, prog: p.prog, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
-      autoTrain: p.autoTrain, autoSell: p.autoSell, ignore: p.ignore, zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
+      autoTrain: p.autoTrain, autoSell: p.autoSell, ignore: p.ignore, huntSpot: p.huntSpot, autoReturn: p.autoReturn, autoRei: p.autoRei, autoBankai: p.autoBankai, autoBox: p.autoBox, autoRestock: p.autoRestock, zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
       offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, zanAtLeave: p.zanAtLeave, reiAtLeave: p.reiAtLeave, deaths: p.offlineDeaths, kills: p.offKills, items: p.offItems },
     };
   }

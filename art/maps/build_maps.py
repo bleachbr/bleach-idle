@@ -216,18 +216,18 @@ def karakura_own_tiles(ts):
             for x, t in enumerate(row):
                 ts.add(f"{name}{x}{y}", t, solid=name == "agua")
     props = P["split"](Image.open(RAW / "46_kk_props.png").convert("RGBA"), 3, 3)
-    praca = texs["praca"].crop((0, 0, T, T))
     for i, cell in enumerate((props[0], props[3], props[6])):
         (top,), (bottom,) = P["tiles_of"](P["prop"](cell, 1, 2))
         ts.add(f"arvore{i}", bottom, True)
         ts.add(f"copa{i}", top)
     ts.add("arbusto", P["prop"](props[1], 1, 1), True)
-    ts.add("lixeira", Image.alpha_composite(praca, P["prop"](props[7], 1, 1)), True)
-    ts.add("maquina", Image.alpha_composite(praca, P["prop"](props[2], 1, 1)), True)
-    ts.add("banco", Image.alpha_composite(praca, P["prop"](props[8], 1, 1)), True)
-    ts.add("depot", Image.alpha_composite(praca, P["prop"](props[4], 1, 1)), True)
+    # objetos sem fundo: o chão do mapa (com a textura certa) aparece por baixo
+    ts.add("lixeira", P["prop"](props[7], 1, 1), True)
+    ts.add("maquina", P["prop"](props[2], 1, 1), True)
+    ts.add("banco", P["prop"](props[8], 1, 1), True)
+    ts.add("depot", P["prop"](props[4], 1, 1), True)
     (top,), (bottom,) = P["tiles_of"](P["prop"](props[5], 1, 2))
-    ts.add("senkaimon", Image.alpha_composite(praca, bottom), True)
+    ts.add("senkaimon", bottom, True)
     ts.add("senkaimon_topo", top)
     houses = P["split"](Image.open(RAW / "45_kk_buildings.png").convert("RGBA"), 2, 2)
     made = set()
@@ -242,9 +242,11 @@ def karakura_own_tiles(ts):
             for dy, row in enumerate(P["tiles_of"](P["prop"](houses[k], w, h))):
                 for dx, t in enumerate(row):
                     # o terreno inteiro do prédio bloqueia, como no traçado original
-                    ts.add(f"casa{k}_{w}x{h}_{dx}{dy}", Image.alpha_composite(texs["calcada"].crop((0, 0, T, T)), t), True)
+                    ts.add(f"casa{k}_{w}x{h}_{dx}{dy}", t, True)
+        # o prédio vem sem fundo: o terreno dele vira calçada (com a textura emendando)
         for dy in range(h):
             for dx in range(w):
+                m.set("chao", x0 + dx, y0 + dy, "calcada")
                 m.set("objetos", x0 + dx, y0 + dy, f"casa{k}_{w}x{h}_{dx}{dy}")
     return building
 

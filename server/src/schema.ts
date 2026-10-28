@@ -23,6 +23,13 @@ export class Player extends Schema {
   autoTarget = false;
   autoHunt = false;
   autoHeal = 0; // % de HP para tomar poção; 0 = desligado
+  // Auto Helper ampliado
+  huntSpot = ""; // destino de viagem onde caçar (id de TRAVEL); "" = onde estiver
+  autoReturn = false; // depois de morrer, volta a caçar sozinho
+  autoRei = 0; // % de reiatsu para tomar poção; 0 = desligado
+  autoBankai = false; // libera em combate e volta ao normal fora dele
+  autoBox = false; // abre as Caixas do Kisuke que cair
+  autoRestock = false; // compra poções quando acabam (de qualquer lugar)
   map = "karakura"; // mapa em que está
   look = ""; // visual do equipamento (lookOf); todos veem
   partyId = ""; // party atual ("" = sem party); membros se veem em verde
@@ -78,6 +85,9 @@ export class Player extends Schema {
   offlineDeaths: DeathReport[] = [];
   /** abates e loot da caçada offline, para o relatório da volta */
   offKills = 0;
+  /** horários das últimas mortes (trava do voltar a caçar) e próximas checagens do Auto Helper */
+  deathTimes: number[] = [];
+  helperAt = 0;
   /** alvo sem caminho: desde quando, e qual monstro o Auto Hunt deve ignorar por um tempo */
   stuckSince = 0;
   skipId = "";
@@ -95,7 +105,7 @@ defineTypes(Player, {
   x: "int16", y: "int16", dir: "uint8", stepMs: "uint16",
   hp: "int32", maxHp: "int32", rei: "number", maxRei: "int32",
   level: "uint16", exp: "number", targetId: "string",
-  online: "boolean", autoTarget: "boolean", autoHunt: "boolean", autoHeal: "uint8", look: "string", map: "string",
+  online: "boolean", autoTarget: "boolean", autoHunt: "boolean", autoHeal: "uint8", huntSpot: "string", autoReturn: "boolean", autoRei: "uint8", autoBankai: "boolean", autoBox: "boolean", autoRestock: "boolean", look: "string", map: "string",
   partyId: "string", partyLead: "boolean", pvpUntil: "number", skullUntil: "number", rebirths: "uint8", guildTag: "string",
   autoTrain: "boolean", autoSell: "boolean", zanjutsu: "uint8", zanPct: "uint8", reiryoku: "uint8", reiPct: "uint8",
 });

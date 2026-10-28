@@ -55,7 +55,7 @@
       <button type="button" id="menu-btn" aria-label="Abrir menu">☰</button>
       <aside id="side">
         <section id="stats">
-          <div class="who"><b id="pname"></b> <span id="plevel"></span><span class="who-icons"><button type="button" id="exit-btn" class="link icon-btn" data-ico="swap" title="Trocar de personagem"></button><button type="button" id="ranking-btn" class="link icon-btn" data-ico="trophy" title="Ranking"></button><button type="button" id="book-btn" class="link icon-btn" data-ico="book" title="Livro: bestiário, conquistas, diário e caçada"></button><button type="button" id="mute-btn" class="link icon-btn" data-ico="sound" title="Ligar ou desligar o som"></button></span></div>
+          <div class="who"><b id="pname"></b> <span id="plevel"></span><span class="who-icons"><button type="button" id="travel-btn" class="link icon-btn" data-ico="portal" title="Viajar (de qualquer lugar)"></button><button type="button" id="exit-btn" class="link icon-btn" data-ico="swap" title="Trocar de personagem"></button><button type="button" id="ranking-btn" class="link icon-btn" data-ico="trophy" title="Ranking"></button><button type="button" id="book-btn" class="link icon-btn" data-ico="book" title="Livro: bestiário, conquistas, diário e caçada"></button><button type="button" id="mute-btn" class="link icon-btn" data-ico="sound" title="Ligar ou desligar o som"></button></span></div>
           <div class="bar hp"><i></i><span></span></div>
           <div class="bar rei"><i></i><span></span></div>
           <div class="bar exp"><i></i><span></span></div>
@@ -103,11 +103,11 @@
         </section>
         <section id="auto">
           <h2 data-ico="gear">Auto Helper</h2>
-          <label><input type="checkbox" id="auto-target" /> Auto Target</label>
-          <label><input type="checkbox" id="auto-hunt" /> Auto Hunt (continua offline)</label>
-          <label title="Fora de combate, gasta o reiatsu parado para subir o Reiryoku. Também mantém o personagem no mundo treinando quando você sai (ataque um Boneco de Treino na Soul Society para treinar Zanjutsu)."><input type="checkbox" id="auto-train" /> Auto Treino (continua offline)</label>
-          <label title="O loot puro que não couber no inventário é vendido na hora, pelo preço da loja (equipamentos continuam caindo numa sacola)."><input type="checkbox" id="auto-sell" /> Auto Venda do loot</label>
-          <label><input type="checkbox" id="auto-heal-on" /> Auto Heal abaixo de <input type="number" id="auto-heal" min="10" max="90" step="5" value="50" />%</label>
+          <div class="auto-grid" id="auto-grid"></div>
+          <label class="auto-row">Caçar em <select id="hunt-spot"></select></label>
+          <label class="auto-row">Curar abaixo de <input type="range" id="auto-heal" min="0" max="90" step="5" /><b id="auto-heal-val"></b></label>
+          <label class="auto-row">Reiatsu abaixo de <input type="range" id="auto-rei" min="0" max="90" step="5" /><b id="auto-rei-val"></b></label>
+          <p class="hint">Tudo continua com o jogo fechado. Arraste até 0 para desligar a poção.</p>
         </section>
       </aside>
       <main>
