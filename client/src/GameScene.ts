@@ -200,6 +200,12 @@ export class GameScene extends Phaser.Scene {
     this.views.set(id, v);
     c.setDepth(c.y);
     this.setIdle(v, true);
+    // quem surge com o jogo já rodando (renascer, entrar no mundo) aparece com fumaça e esmaecer
+    if (this.time.now > 2500 && e.map === this.mapId) {
+      c.setAlpha(0);
+      this.tweens.add({ targets: c, alpha: 1, duration: 450, ease: "Quad.easeOut" });
+      this.playFx("death", c.x, c.y - spr.displayHeight / 3, { scale: 0.6 })?.setAlpha(0.6);
+    }
     if (!isMonster) this.setAura(v, e.form ? e.charId : undefined);
     this.drawBar(v, e.hp, e.maxHp);
 

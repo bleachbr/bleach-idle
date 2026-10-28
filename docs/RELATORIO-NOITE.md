@@ -250,3 +250,4 @@ Resultado: `npm test` 76 de 76 e `npm run test:scripts` 229 de 229.
   - Dangai: fagulhas roxas.
 - **Peso nos passos e golpes:** poeira nos pés a cada passo, e o inimigo recua um pouco quando apanha.
 - **Alvo e chefes:** um anel vermelho pulsa sob o alvo atual. Com um chefe como alvo, aparece no topo da tela uma barra grande de vida com o nome dele.
+- **Surgir:** monstro que renasce e jogador que entra aparecem com fumaça e esmaecer, em vez de surgir do nada.
