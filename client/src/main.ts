@@ -358,6 +358,10 @@ function bindBook(room: Room<any>) {
   };
   room.onMessage("book", (d: any) => { data = d; panel.hidden = false; render(); });
   room.onMessage("dailyReady", (m: { ready: boolean }) => $("#book-btn").classList.toggle("ping", m.ready));
+  room.onMessage("tutorial", (steps: { text: string; done: boolean }[] | null) => {
+    $("#tutorial").hidden = !steps;
+    if (steps) $("#tutorial-list").innerHTML = steps.map((s) => `<div class="tut${s.done ? " done" : ""}">${s.done ? "✔" : "○"} ${escHtml(s.text)}</div>`).join("");
+  });
   $("#book-btn").onclick = () => room.send("book");
   // a aba Caçada muda sozinha: atualiza enquanto estiver aberta
   const timer = window.setInterval(() => { if (!panel.hidden && tab === "cacada") room.send("book"); }, 5000);

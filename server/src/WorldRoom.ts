@@ -15,7 +15,7 @@ import {
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
-  ACHIEVEMENTS, DAILY, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, equipBonus,
+  ACHIEVEMENTS, DAILY, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, equipBonus,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -164,6 +164,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (!p) return;
       if (typeof m?.autoTarget === "boolean") p.autoTarget = m.autoTarget;
       if (typeof m?.autoHunt === "boolean") p.autoHunt = m.autoHunt;
+      if (p.autoHunt) this.tutorial(p, "auto");
       if (typeof m?.autoTrain === "boolean") p.autoTrain = m.autoTrain;
       if (typeof m?.autoSell === "boolean") p.autoSell = m.autoSell;
       if (typeof m?.autoHeal === "number") p.autoHeal = Math.max(0, Math.min(90, Math.round(m.autoHeal)));
@@ -229,6 +230,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.sendGuild(p);
     this.sendQuests(p);
     client.send("dailyReady", { ready: p.prog.daily.last !== dayKey(Date.now()) });
+    this.sendTutorial(p);
     this.broadcast("chat", { from: "", text: `${p.name} entrou no mundo.` });
   }
 
@@ -287,6 +289,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.train(p, 0, 0);
     p.quests = saved.quests ?? { active: {}, done: [] };
     p.prog = { ...newProgress(), ...saved.prog };
+    // quem já é veterano quando o guia chegou não precisa dele
+    if (!p.prog.tut && p.level >= TUTORIAL_MAX_LEVEL) p.prog.tut = TUTORIAL.map((t) => t.id);
     p.forge = saved.forge ?? {};
     p.expBoostUntil = saved.expBoostUntil ?? 0;
     p.lootBoostUntil = saved.lootBoostUntil ?? 0;
@@ -725,6 +729,7 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   private setForm(p: Player, i: number) {
     p.form = i;
+    if (i === 1) this.tutorial(p, "bankai");
     this.recompute(p);
     this.broadcast("fx", { t: "form", id: p.id, v: i });
   }
@@ -927,6 +932,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private open(p: Player, kind: Interact) {
+    if (kind === "shop") this.tutorial(p, "shop");
     for (const c of this.clients) if (this.sessions.get(c.sessionId) === p.id) c.send("open", { kind });
   }
 
@@ -1394,6 +1400,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (Object.keys(p.quests.active).length >= MAX_ACTIVE_QUESTS) return this.log(p, `No máximo ${MAX_ACTIVE_QUESTS} missões ao mesmo tempo.`);
       p.quests.active[q.id] = 0;
       this.log(p, `Missão aceita: ${q.name}.`);
+      this.tutorial(p, "quest");
       this.sendQuests(p);
     });
     this.handle("questAbandon", (c, m: { id: string }) => {
@@ -1642,6 +1649,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     const before = pr.bestiary[kind] ?? 0;
     pr.bestiary[kind] = before + 1;
     pr.kills++;
+    this.tutorial(p, "kill");
     p.hunt.kills++;
     this.dailyStep(p, "any");
     this.dailyStep(p, "kill", 1, kind);
@@ -1656,6 +1664,22 @@ export class WorldRoom extends GameRoom<WorldState> {
         : `Bestiário: ${name} no estágio ${st}/3. +${st * 4}% de dano contra ele.`);
       this.sendTo(p, "fx", { t: "book", text: `Bestiário: ${name} ${st}/3` });
     }
+  }
+
+  /** Marca um passo do guia de primeiros passos e paga a recompensa dele. */
+  private tutorial(p: Player, id: TutorialId) {
+    const done = (p.prog.tut ??= []);
+    if (done.includes(id)) return;
+    done.push(id);
+    const step = TUTORIAL.find((t) => t.id === id)!;
+    this.log(p, `Primeiros passos: ${step.text.split(":")[0]}. Recompensa: ${this.grant(p, step.reward)}.`);
+    if (done.length === TUTORIAL.length) this.log(p, "Primeiros passos completos! O resto do caminho é seu.");
+    this.sendTutorial(p);
+  }
+
+  private sendTutorial(p: Player) {
+    const done = p.prog.tut ?? [];
+    this.sendTo(p, "tutorial", done.length >= TUTORIAL.length ? null : TUTORIAL.map((t) => ({ text: t.text, done: done.includes(t.id) })));
   }
 
   /** Missões diárias do dia; sorteia de novo quando o dia vira. */
@@ -1772,6 +1796,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const got = this.grant(p, DAILY[(d.streak - 1) % DAILY.length]);
       this.log(p, `Recompensa diária (${d.streak}º dia seguido): ${got}.`);
       this.sendTo(p, "dailyReady", { ready: false });
+      this.tutorial(p, "daily");
       this.checkAchievements(p);
       show(p);
     });

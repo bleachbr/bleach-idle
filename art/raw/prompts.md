@@ -386,3 +386,13 @@ Make the image SQUARE. A 2x2 sheet of four SEAMLESS, TILEABLE floor textures for
 ```text
 Make the image SQUARE. A 3x3 sheet of nine separate top-down 3/4 view pixel-art map props for the interior of an enormous white palace in a desert of the spirit world, each centered in its own cell with generous magenta padding, nothing crossing the cell edges: 1 a tall smooth white cylindrical pillar with a simple base and capital; 2 a thick white palace wall block seen from the front-top (square, plain, with a thin grey line pattern); 3 a tall black iron brazier with a cold teal flame; 4 a white stone throne with a high back; 5 a large crescent-moon-shaped window frame in white stone showing a black night sky; 6 a pile of white rubble and broken marble; 7 a dark grey stone statue of a hooded figure on a pedestal; 8 a tall narrow white banner hanging on a black pole; 9 a small white marble bench. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no shadow, no text, no labels, no border, no grid lines.
 ```
+
+# Rodada 14: fundo da tela de login
+
+Script `work/gen_login.sh`, com o chão da Soul Society (26) como referência de estilo. Na 1ª tentativa. Vai para `client/public/assets/login_bg.jpg` reduzido a 1280 px (JPEG, 160 KB).
+
+## p_55_login_bg
+
+```text
+Make the image WIDE (landscape, about 16:9). A moody pixel-art illustration for a game title screen: a quiet modern Japanese town at night seen from a rooftop, rows of tiled roofs and small apartment blocks with a few lit windows, utility poles and wires, a huge pale full moon low in a deep blue-violet sky, and on distant rooftops the dark silhouettes of two masked monster spirits with glowing white bone masks watching the town. In the foreground on the right, the small dark silhouette of a young swordsman in a black kimono holding a very large sword over his shoulder, seen from behind, looking at the town. Lots of dark empty sky in the upper left (space for a login box). Clean pixel art, limited palette of deep blues and violets with pale moonlight highlights, crisp pixels, no text, no logo, no letters, no UI.
+```

@@ -63,5 +63,29 @@ ok("100 abates no total dão a conquista Purificador", b.logs.some((l) => l.incl
 const unknown = b.book().bestiary.find((x: any) => x.kind === "gillian");
 ok("monstro nunca derrotado não mostra números", unknown.kills === 0 && unknown.hp === 0);
 
+// primeiros passos: personagem novo vê o guia; cada passo paga uma vez
+const tut: any[] = [];
+const novo = await play("Livro Novato", "ichigo", (id) => patchSave(id, {
+  level: 8, exp: expForLevel(8), gold: 0, inv: [], map: "karakura", ...pos, prog: { bestiary: {}, ach: [], daily: { last: "", streak: 0 }, kills: 0, bossKills: 0 },
+}), (r) => r.onMessage("tutorial", (m) => tut.push(m)));
+await sleep(400);
+ok("personagem novo recebe o guia com 6 passos", tut[0]?.length === 6 && tut[0].every((s: any) => !s.done));
+novo.send("auto", { autoHunt: true });
+await sleep(300);
+novo.send("auto", { autoHunt: false });
+novo.send("auto", { autoHunt: true });
+await sleep(300);
+novo.send("auto", { autoHunt: false });
+const last = tut[tut.length - 1];
+ok("ligar o Auto Hunt marca o passo (e só uma vez)", last?.filter((s: any) => s.done).length >= 1 && tut.filter((t) => t?.[1]?.done).length >= 1 && tut.length <= 4);
+await novo.leave();
+const veterano: any[] = [];
+const vet = await play("Livro Veterano", "ichigo", (id) => patchSave(id, {
+  level: 30, exp: expForLevel(30), map: "karakura", ...pos, prog: { bestiary: {}, ach: [], daily: { last: "", streak: 0 }, kills: 0, bossKills: 0 },
+}), (r) => r.onMessage("tutorial", (m) => veterano.push(m)));
+await sleep(400);
+ok("veterano (nível 30) não vê o guia", veterano.length === 1 && veterano[0] === null);
+await vet.leave();
+
 for (const x of [a, b, c]) await x.room.leave();
 done();

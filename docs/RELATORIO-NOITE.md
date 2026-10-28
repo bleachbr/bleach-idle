@@ -153,3 +153,10 @@ Resultado: `npm test` 76 de 76 e `npm run test:scripts` 192 de 192.
 - **`/ignorar Nome`** no chat: as mensagens dessa pessoa param de chegar, no público, na PM, na party e na guilda. A lista é salva com o personagem.
 - **Corpos e sacolas sobrevivem a um reinício do servidor:** são salvos junto com o resto a cada 10 s e voltam com o mesmo prazo.
 - **Testes:** cenário novo `account2`, e o `restart` agora confere o corpo depois da queda.
+
+## Para quem chega
+- **Primeiros passos:** personagem novo vê na barra lateral um guia de 6 tarefas, cada uma com uma pequena recompensa. O guia some quando termina e não aparece para quem já passou do nível 15.
+- **Celular:** as janelas do livro e do ranking começam abaixo do botão do menu, que antes cobria o título. Conferi a 375 px de largura, e a página não rola para os lados.
+- **Tela de entrada:** login e lista de personagens ganharam uma ilustração de fundo (Karakura à noite, lua cheia e Hollows nos telhados), gerada pelo Codex.
+
+Resultado: `npm test` 76 de 76 e `npm run test:scripts` 204 de 204.

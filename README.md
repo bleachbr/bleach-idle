@@ -28,6 +28,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 **Contas e personagens**
 - **Login e senha:** hash scrypt; bloqueio de 1 min depois de 5 senhas erradas (30 por IP); "Lembrar neste navegador" com token de 30 dias. Troca de senha na tela de personagens (derruba os outros aparelhos lembrados).
 - **Personagens:** até 5 por conta, com nome único: Ichigo, Rukia ou Renji.
+- **Primeiros passos:** personagem novo vê na barra lateral um guia de 6 tarefas (derrotar um Hollow, ligar o Auto Hunt, visitar o Kisuke, aceitar uma missão, pegar a diária, soltar o Bankai), cada uma com uma pequena recompensa.
 - **Entrada no mundo:** por ingresso de uso único. Se o mesmo personagem abre em outra janela, a nova assume.
 
 **Mundo**

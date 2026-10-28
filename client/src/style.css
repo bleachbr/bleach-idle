@@ -17,8 +17,10 @@ h1 small { color: var(--muted); font-size: 13px; font-weight: 400; }
 h2 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 kbd { background: var(--line); border-radius: 3px; padding: 0 5px; font-size: 12px; }
 
-.screen { display: grid; place-items: center; min-height: 100%; padding: 16px; }
-.screen .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 24px; width: min(520px, 100%); }
+.screen { display: grid; place-items: center; min-height: 100%; padding: 16px;
+  /* ilustração do login (Codex, art/raw/55); o escurecimento deixa o cartão legível */
+  background: linear-gradient(#0b0a1499, #0b0a14cc), url(/assets/login_bg.jpg) center / cover no-repeat, var(--bg); }
+.screen .card { background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(2px); box-shadow: 0 10px 40px #000a; border: 1px solid var(--line); border-radius: 8px; padding: 24px; width: min(520px, 100%); }
 .screen label { display: block; margin-bottom: 14px; }
 .screen input:not([type="checkbox"]) { display: block; width: 100%; margin-top: 4px; padding: 8px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 4px; font-size: 15px; }
 .screen label.check { display: flex; gap: 6px; align-items: center; color: var(--muted); }
@@ -213,3 +215,7 @@ body.touch #touch { bottom: 120px; }
 #book .loot-list { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
 #book .loot-list .slot { cursor: default; }
 #book h3 { margin: 10px 0 2px; font-size: 13px; color: var(--accent); }
+/* celular: as janelas do ranking e do livro começam abaixo do botão do menu (☰) */
+@media (max-width: 720px) { #ranking, #book { top: 56px; max-height: calc(100% - 230px); } }
+#tutorial .tut { font-size: 12px; padding: 2px 0; color: var(--text); }
+#tutorial .tut.done { color: var(--muted); text-decoration: line-through; }

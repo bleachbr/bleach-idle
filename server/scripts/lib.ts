@@ -2,7 +2,7 @@
 // criado se preciso, ingresso pelo lobby e entrada no mundo.
 import { DatabaseSync } from "node:sqlite";
 import { Client, type Room } from "colyseus.js";
-import { ACHIEVEMENTS, newProgress } from "../../shared/src";
+import { ACHIEVEMENTS, TUTORIAL, newProgress } from "../../shared/src";
 
 // o runner (scripts/test.ts) aponta para um servidor e um banco de teste por estas variáveis
 export const URL = process.env.BI_URL ?? "ws://localhost:2567";
@@ -67,9 +67,9 @@ export function patchSave(id: string, fields: Record<string, unknown>) {
   const db = new DatabaseSync(DB_FILE);
   const row = db.prepare("SELECT data FROM players WHERE id = ?").get(id) as { data: string };
   const data = { ...JSON.parse(row.data), ...fields };
-  // conquistas pagam kan e itens ao entrar: sem isso as contas de dinheiro dos cenários mudam.
+  // conquistas e primeiros passos pagam kan e itens: sem isso as contas de dinheiro dos cenários mudam.
   // Quem testa conquistas passa o próprio `prog`.
-  if (!("prog" in fields)) data.prog = { ...newProgress(), ...data.prog, ach: ACHIEVEMENTS.map((a) => a.id) };
+  if (!("prog" in fields)) data.prog = { ...newProgress(), ...data.prog, ach: ACHIEVEMENTS.map((a) => a.id), tut: TUTORIAL.map((t) => t.id) };
   db.prepare("UPDATE players SET data = ? WHERE id = ?").run(JSON.stringify(data), id);
   db.close();
 }

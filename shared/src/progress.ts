@@ -107,7 +107,23 @@ export interface Progress {
   bossKills: number;
   /** missões diárias do dia (refeitas quando o dia vira) */
   dm?: DailyState;
+  /** primeiros passos já feitos (ids de TUTORIAL) */
+  tut?: string[];
 }
+
+// ---------- primeiros passos ----------
+
+export type TutorialId = "kill" | "auto" | "shop" | "quest" | "daily" | "bankai";
+export const TUTORIAL: { id: TutorialId; text: string; reward: { gold: number; items?: { id: string; qty: number }[] } }[] = [
+  { id: "kill", text: "Derrote um Hollow: clique nele ou aperte Tab", reward: { gold: 50 } },
+  { id: "auto", text: "Ligue o Auto Hunt (continua caçando com o jogo fechado)", reward: { gold: 0, items: [{ id: "pocao_vida", qty: 5 }] } },
+  { id: "shop", text: "Visite o Kisuke na praça (loja, missões e forja)", reward: { gold: 100 } },
+  { id: "quest", text: "Aceite uma missão do Kisuke", reward: { gold: 0, items: [{ id: "pocao_rei", qty: 3 }] } },
+  { id: "daily", text: "Abra o livro e pegue a recompensa diária", reward: { gold: 100 } },
+  { id: "bankai", text: "No nível 10, solte o Bankai (tecla T)", reward: { gold: 0, items: [{ id: "amuleto_alma", qty: 1 }] } },
+];
+/** personagem que já passou deste nível não vê o guia */
+export const TUTORIAL_MAX_LEVEL = 15;
 
 export const newProgress = (): Progress => ({ bestiary: {}, ach: [], daily: { last: "", streak: 0 }, kills: 0, bossKills: 0 });
 
