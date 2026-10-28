@@ -105,10 +105,63 @@ export interface Progress {
   daily: { last: string; streak: number };
   kills: number;
   bossKills: number;
+  /** missões diárias do dia (refeitas quando o dia vira) */
+  dm?: DailyState;
 }
 
 export const newProgress = (): Progress => ({ bestiary: {}, ach: [], daily: { last: "", streak: 0 }, kills: 0, bossKills: 0 });
 
 export function stagesSum(bestiary: Record<string, number>): number {
   return Object.entries(bestiary).reduce((s, [k, n]) => s + bestiaryStage(k, n), 0);
+}
+
+// ---------- missões diárias ----------
+// Três por dia, sorteadas por personagem e por dia (as mesmas o dia todo) conforme o nível.
+// Completas pagam sozinhas; as três juntas dão uma Caixa do Kisuke.
+
+export type DailyKind = "kill" | "any" | "boss" | "gold" | "forge";
+export interface DailyMission { kind: DailyKind; target?: string; need: number; have: number; done: boolean }
+export interface DailyState { day: string; list: DailyMission[]; bonus: boolean }
+
+/** monstros comuns do mais fraco para o mais forte (o nível sugere a faixa) */
+const LADDER = ["hollow_menor", "hollow_rastejante", "hollow_sombrio", "hollow_uivante", "hollow_faminto", "hollow_acido",
+  "hollow_encouracado", "hollow_devorador", "fishbone", "adjuchas", "arrancar"];
+
+function seeded(seed: string) {
+  let h = 2166136261;
+  for (const c of seed) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  return () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+}
+
+export function dailyMissions(id: string, day: string, level: number): DailyMission[] {
+  const rnd = seeded(`${id}|${day}`);
+  const top = Math.max(0, Math.min(LADDER.length - 1, Math.round((level - 8) / 3)));
+  const target = LADDER[Math.max(0, top - Math.floor(rnd() * 2))];
+  const pool: DailyMission[] = [
+    { kind: "any", need: 60 + 10 * Math.floor(level / 5), have: 0, done: false },
+    { kind: "gold", need: 150 * level, have: 0, done: false },
+  ];
+  if (level >= 20) pool.push({ kind: "boss", need: 1, have: 0, done: false });
+  if (level >= 12) pool.push({ kind: "forge", need: 2, have: 0, done: false });
+  // a de caçar um monstro específico sempre entra; as outras duas são sorteadas
+  const out: DailyMission[] = [{ kind: "kill", target, need: 30, have: 0, done: false }];
+  while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+  return out;
+}
+
+/** recompensa de cada missão diária (cresce com o nível) */
+export const dailyReward = (level: number) => ({ gold: 40 * level, expFrac: 0.08 });
+
+export function dailyText(m: DailyMission, monsterName: (id: string) => string): string {
+  switch (m.kind) {
+    case "kill": return `${monsterName(m.target!)}: derrote ${m.need}`;
+    case "any": return `Derrote ${m.need} monstros`;
+    case "boss": return "Derrote um chefe";
+    case "gold": return `Junte ${m.need} kan caçando`;
+    case "forge": return `Tente a forja ${m.need} vezes`;
+  }
 }

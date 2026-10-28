@@ -335,7 +335,10 @@ function bindBook(room: Room<any>) {
       body.querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("huntReset");
     } else {
       const d = data.daily;
-      body.innerHTML = `<p class="hint">Pegue uma vez por dia (o dia vira à meia-noite de Brasília). Perder um dia zera a sequência.</p>
+      const ms = data.missions;
+      const missions = `<h3>Missões de hoje</h3><p class="hint">Cada uma paga ${ms.gold} kan e ${ms.exp} XP sozinha ao completar; as três juntas dão uma Caixa do Kisuke${ms.bonus ? " (já ganha)" : ""}.</p>` +
+        ms.list.map((m: any) => `<div class="ach${m.done ? " done" : ""}"><b>${escHtml(m.text)}</b><div class="hint">${m.done ? "Feita" : `${m.have}/${m.need}`}</div>${m.done ? "" : bar(m.have, m.need)}</div>`).join("");
+      body.innerHTML = missions + `<h3>Recompensa de entrada</h3><p class="hint">Pegue uma vez por dia (o dia vira à meia-noite de Brasília). Perder um dia zera a sequência.</p>
         <div><b>Sequência: ${d.streak} ${d.streak === 1 ? "dia" : "dias"}</b></div>
         <div class="days">${d.rewards.map((r: any, i: number) => `<div class="${i < d.index || (d.claimed && i === d.index) ? "got" : ""}${i === d.index ? " today" : ""}"><b>Dia ${i + 1}</b><br>${reward(r)}</div>`).join("")}</div>
         <button type="button" class="claim" ${d.claimed ? "disabled" : ""}>${d.claimed ? "Já pegou hoje" : "Pegar a recompensa de hoje"}</button>`;
@@ -376,7 +379,8 @@ function bindGuild(room: Room<any>) {
     if (!data) return;
     const rows: string[] = (data[tab] as any[]).map((r, i) => tab === "guildas"
       ? `<tr><td>${i + 1}</td><td>${escHtml(r.name)} <small>[${escHtml(r.tag)}]</small></td><td>${r.frags} abates</td><td>${r.members} membros · ${r.levels} níveis</td></tr>`
-      : `<tr><td>${i + 1}</td><td>${escHtml(r.name)}${r.guild ? ` <small>[${escHtml(r.guild)}]</small>` : ""}</td><td>${CHARS[r.charId]?.name ?? ""}</td><td>${tab === "nivel" ? `nível ${r.level}` : `${r.frags} abates`}</td></tr>`);
+      : `<tr><td>${i + 1}</td><td>${escHtml(r.name)}${r.guild ? ` <small>[${escHtml(r.guild)}]</small>` : ""}</td><td>${CHARS[r.charId]?.name ?? ""}</td><td>${
+        tab === "nivel" ? `nível ${r.level}` : tab === "conquistas" ? `${r.ach} conquistas` : tab === "bestiario" ? `${r.stages} estágios` : `${r.frags} abates`}</td></tr>`);
     $("#ranking-body").innerHTML = rows.length ? `<table>${rows.join("")}</table>` : `<p class="hint">Ninguém aqui ainda.</p>`;
   };
   room.onMessage("ranking", (d: any) => { data = d; panel.hidden = false; render(); });

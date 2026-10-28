@@ -113,3 +113,24 @@ Pesquisei o que os idles e o Tibia têm em comum que ainda faltava aqui: bestiá
 Cenários novos: `progress`, `forge`, `hunt` e `invasion`; o `robust` passou a cobrir as mensagens novas.
 ## Resultado
 `npm test` (Vitest): 76 de 76. `npm run test:scripts`: 180 de 180, sem exceção no servidor. CI do GitHub verde.
+
+## Depois: missões diárias, ranking e balanceamento
+- **Missões diárias:** 3 por dia, sorteadas por personagem e de acordo com o nível. Cada uma paga sozinha ao completar, e as três juntas dão uma Caixa do Kisuke. Ficam na aba Diário do livro.
+- **Ranking:** abas novas de conquistas e de bestiário.
+
+### Balanceamento: o jogo sobe rápido demais (precisa da sua decisão)
+Fiz um simulador, `server/scripts/balance.ts`. Ele considera Ichigo em Shikai, com equipamento inicial, caçando sozinho o melhor monstro seguro para o nível, e respeita o tempo de renascimento.
+
+| Nível | XP/h | Horas de caça acumuladas desde o 8 |
+|---|---|---|
+| 20 | 145 mil | 0,8 |
+| 40 | 324 mil | 3,9 |
+| 60 | 488 mil | 9,3 |
+| 100 | 806 mil | 27,5 |
+
+- **Ritmo:** com 12 h de hunt offline por dia, um jogador chega ao 100 em 2 ou 3 dias.
+- **Conteúdo:** a partir do nível 45 a 50 o melhor lugar vira sempre o Arrancar, porque o conteúdo acaba aí.
+
+Para não mudar o ritmo sem você decidir, deixei um ajuste: a variável **`EXP_RATE`** do servidor. O padrão é 1, então nada mudou. Com `EXP_RATE=0.25`, o nível 60 leva umas 37 h de caça. A minha sugestão é algo entre 0,25 e 0,4 quando o jogo for ao ar, mais um próximo bloco de conteúdo acima do nível 50. Dá para simular antes com `EXP_RATE=0.3 npx tsx scripts/balance.ts`.
+
+Resultado: `npm test` 76 de 76 e `npm run test:scripts` 185 de 185.

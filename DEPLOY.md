@@ -18,6 +18,9 @@ Tudo o que o código precisa para ir ao ar já está pronto. O que falta é **co
 | `BACKUP_DIR` | sem backup (container: `/data/backups`) | onde salvar os backups |
 | `BACKUP_HOURS` / `BACKUP_KEEP` | 6 / 28 | intervalo e quantidade |
 | `DOMINIO` | (obrigatório no compose) | domínio para o HTTPS |
+| `EXP_RATE` | 1 | taxa de XP dos monstros (0,3 = 30%); simule antes com `server/scripts/balance.ts` |
+| `INVASION_FIRST_MS` / `INVASION_EVERY_MS` | 30 min / 3 h | quando começa a primeira invasão de Hollows e o intervalo entre elas |
+| `LOGIN_MAX_FAILS_IP` | 30 | senhas erradas por IP antes do bloqueio de 1 min |
 
 ## Opções de servidor (preços conferidos em out/2026; confira antes de contratar)
 | Opção | Custo | Observações |

@@ -47,6 +47,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 **Progresso de longo prazo** (botão "livro" ao lado do nome)
 - **Bestiário:** cada monstro tem 3 estágios (25/150/500 abates; chefes 1/5/15). Cada estágio dá +4% de dano contra ele, revela vida, XP e loot, e o último dá +20% de chance de loot. Abates da party contam para todos.
 - **Conquistas:** 19 (nível, abates, chefes, bestiário, missões, treino, PvP, dias seguidos), com recompensa automática. As grandes são anunciadas no chat.
+- **Missões diárias:** 3 por dia, sorteadas de acordo com o nível (caçar um monstro da sua faixa, abates no geral, kan caçando, um chefe ou usar a forja). Cada uma paga kan e XP sozinha; as três juntas dão uma Caixa do Kisuke.
 - **Recompensa diária:** o botão "livro" ganha um ponto vermelho quando ela está esperando. Ciclo de 7 dias (o 7º dá Amuleto da Alma). Perder um dia zera a sequência; o dia vira à meia-noite de Brasília.
 
 **Itens**
@@ -65,7 +66,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Caveira (☠):** matar quem não atacou ninguém vira **assassino** por 15 min (somando até 2 h). O assassino não pode viajar, e qualquer um pode atacá-lo sem ser marcado. Se morrer, perde 50% de chance por item e 30% do dinheiro, e o Amuleto da Alma não protege. Atacar ou matar quem está marcado ou é assassino é defesa e não pune.
 - **Guildas:** `/guilda criar Nome` (500 kan, nível 10+), convites, banco, líder e tag no nome.
 - **Chat:** `/pm Nome, msg`, `/p` (party), `/g` (guilda) e `/ajuda`.
-- **Ranking:** nível, abates em PvP e guildas.
+- **Ranking:** nível, abates em PvP, guildas, conquistas e bestiário.
 
 **Automação (Auto Helper)**
 - Auto Target, Auto Hunt, Auto Heal (%), Auto Treino e **Auto Venda** (o loot puro que não cabe no inventário vira kan na hora, em vez de cair numa sacola).
@@ -116,6 +117,8 @@ Cenários em `server/scripts/`:
 - **Robustez:** `robust` (lixo em todas as mensagens, rajada de 500, mensagem acima de 4 KB). O runner também conta como falha qualquer exceção registrada pelo servidor.
 - **Social:** `social` (party, PvP, viagem), `social2` (chat, guildas, ranking) e `skull` (caveira).
 - **Offline e queda:** `bot` (hunt offline) e `restart` (queda do servidor com hunts e party).
+
+**Balanceamento:** `cd server && npx tsx scripts/balance.ts [personagem] [nível]` simula, nível a nível, o melhor monstro para caçar, o XP por hora e as horas acumuladas. Não precisa de servidor. A taxa de XP do servidor é a variável `EXP_RATE` (padrão 1; `EXP_RATE=0.3` simula e aplica 30%).
 
 Avulsos (com o servidor rodando): `partner.ts` (um bot que aceita convites de party) e `peek.ts` (lista os jogadores no mundo).
 

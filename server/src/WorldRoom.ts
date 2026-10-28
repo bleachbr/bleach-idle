@@ -15,7 +15,7 @@ import {
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
-  ACHIEVEMENTS, DAILY, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, equipBonus,
+  ACHIEVEMENTS, DAILY, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, equipBonus,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -50,6 +50,9 @@ const sameMap = (a: { map: string }, b: { map: string }) => a.map === b.map;
 const isPlayer = (e: Player | Monster): e is Player => e instanceof Player;
 
 interface Party { id: string; leader: string; members: string[]; warnedAt: number }
+
+// taxa de XP dos monstros, como nos servidores de Tibia (1 = o valor da tabela). Veja scripts/balance.ts.
+const EXP_RATE = Number(process.env.EXP_RATE) || 1;
 
 // da mais fraca para a mais forte
 const HP_POTIONS = ["onigiri", "pocao_vida", "pocao_grande"];
@@ -873,6 +876,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     const loot = rollLoot(kind, bestiaryLootMult(kind, p.prog.bestiary[kind] ?? 0) * (p.lootBoostUntil > Date.now() ? BOOST_LOOT : 1));
     p.gold += loot.gold;
     p.hunt.gold += loot.gold;
+    this.dailyStep(p, "gold", loot.gold);
     const got: string[] = [];
     let overflow: Slot[] = [];
     for (const s of loot.items) {
@@ -1324,9 +1328,9 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   /** Ranking: nível (por XP), abates em PvP e guildas (soma de abates e de níveis). */
   private buildRanking() {
-    const rows = new Map<string, { name: string; charId: string; level: number; exp: number; frags: number; guild: string }>();
-    for (const r of db.allChars()) rows.set(r.id, { name: r.data.name, charId: r.data.charId, level: r.data.level, exp: r.data.exp, frags: r.data.frags ?? 0, guild: "" });
-    for (const p of this.state.players.values()) rows.set(p.id, { name: p.name, charId: p.charId, level: p.level, exp: p.exp, frags: p.frags, guild: "" });
+    const rows = new Map<string, { name: string; charId: string; level: number; exp: number; frags: number; guild: string; ach: number; stages: number }>();
+    for (const r of db.allChars()) rows.set(r.id, { name: r.data.name, charId: r.data.charId, level: r.data.level, exp: r.data.exp, frags: r.data.frags ?? 0, guild: "", ach: r.data.prog?.ach.length ?? 0, stages: stagesSum(r.data.prog?.bestiary ?? {}) });
+    for (const p of this.state.players.values()) rows.set(p.id, { name: p.name, charId: p.charId, level: p.level, exp: p.exp, frags: p.frags, guild: "", ach: p.prog.ach.length, stages: stagesSum(p.prog.bestiary) });
     const memberOf = guilds.memberMap();
     const byId = new Map(guilds.all().map((g) => [g.id, g]));
     const g = new Map<number, { name: string; tag: string; members: number; levels: number; frags: number }>();
@@ -1344,6 +1348,8 @@ export class WorldRoom extends GameRoom<WorldState> {
       nivel: [...list].sort((a, b) => b.exp - a.exp).slice(0, 20),
       abates: list.filter((r) => r.frags > 0).sort((a, b) => b.frags - a.frags).slice(0, 20),
       guildas: [...g.values()].sort((a, b) => b.frags - a.frags || b.levels - a.levels).slice(0, 20),
+      conquistas: list.filter((r) => r.ach > 0).sort((a, b) => b.ach - a.ach || b.exp - a.exp).slice(0, 20),
+      bestiario: list.filter((r) => r.stages > 0).sort((a, b) => b.stages - a.stages || b.exp - a.exp).slice(0, 20),
     };
   }
 
@@ -1494,7 +1500,7 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   /** XP de monstro: aplica o Pergaminho de Treino e soma no analisador de caçada */
   private monsterExp(p: Player, exp: number, from: string) {
-    const v = p.expBoostUntil > Date.now() ? Math.round(exp * BOOST_EXP) : exp;
+    const v = Math.max(1, Math.round(exp * EXP_RATE * (p.expBoostUntil > Date.now() ? BOOST_EXP : 1)));
     p.hunt.exp += v;
     this.gainExp(p, v, from);
   }
@@ -1589,6 +1595,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (p.gold < cost.gold) return this.log(p, `Faltam ${cost.gold - p.gold} kan.`);
       removeItem(p.inv, "pedra_reishi", cost.stones);
       p.gold -= cost.gold;
+      this.dailyStep(p, "forge");
       if (Math.random() < FORGE_CHANCE[lv]) {
         p.forge[slot] = lv + 1;
         this.log(p, `Forja: ${SLOT_LABEL[slot]} subiu para +${lv + 1}!`);
@@ -1610,6 +1617,9 @@ export class WorldRoom extends GameRoom<WorldState> {
     pr.bestiary[kind] = before + 1;
     pr.kills++;
     p.hunt.kills++;
+    this.dailyStep(p, "any");
+    this.dailyStep(p, "kill", 1, kind);
+    if (BOSSES.has(kind)) this.dailyStep(p, "boss");
     if (!p.online) p.offKills++;
     if (BOSSES.has(kind)) pr.bossKills++;
     const st = bestiaryStage(kind, before + 1);
@@ -1619,6 +1629,34 @@ export class WorldRoom extends GameRoom<WorldState> {
         ? `Bestiário: ${name} completo! +${st * 4}% de dano e +20% de chance de loot contra ele.`
         : `Bestiário: ${name} no estágio ${st}/3. +${st * 4}% de dano contra ele.`);
       this.sendTo(p, "fx", { t: "book", text: `Bestiário: ${name} ${st}/3` });
+    }
+  }
+
+  /** Missões diárias do dia; sorteia de novo quando o dia vira. */
+  private dailyOf(p: Player) {
+    const today = dayKey(Date.now());
+    if (p.prog.dm?.day !== today) p.prog.dm = { day: today, list: dailyMissions(p.id, today, p.level), bonus: false };
+    return p.prog.dm;
+  }
+
+  private dailyStep(p: Player, kind: DailyKind, n = 1, target?: string) {
+    const dm = this.dailyOf(p);
+    for (const m of dm.list) {
+      if (m.done || m.kind !== kind || (m.target && m.target !== target)) continue;
+      m.have = Math.min(m.need, m.have + n);
+      if (m.have < m.need) continue;
+      m.done = true;
+      const r = dailyReward(p.level);
+      const exp = Math.round((expForLevel(p.level + 1) - expForLevel(p.level)) * r.expFrac);
+      p.gold += r.gold;
+      this.log(p, `Missão diária completa: ${dailyText(m, (id) => MONSTERS[id].name)}. +${r.gold} kan e +${exp} XP.`);
+      this.sendTo(p, "fx", { t: "book", text: "Missão diária completa!" });
+      this.gainExp(p, exp, "Missão diária");
+      this.sendInv(p);
+    }
+    if (!dm.bonus && dm.list.every((m) => m.done)) {
+      dm.bonus = true;
+      this.log(p, `Todas as missões diárias feitas! Bônus: ${this.grant(p, { gold: 0, items: [{ id: "caixa_kisuke", qty: 1 }] })}.`);
     }
   }
 
@@ -1673,6 +1711,14 @@ export class WorldRoom extends GameRoom<WorldState> {
         }),
         hunt: { ...p.hunt, now: Date.now(), items: Object.entries(p.hunt.items).map(([id, n]) => ({ name: ITEMS[id].name, icon: ITEMS[id].icon, n })).sort((a, b) => b.n - a.n) },
         ach: ACHIEVEMENTS.map((a) => ({ name: a.name, desc: a.desc, done: p.prog.ach.includes(a.id), have: Math.min(s[a.stat], a.need), need: a.need, reward: a.reward })),
+        missions: (() => {
+          const dm = this.dailyOf(p);
+          const r = dailyReward(p.level);
+          return {
+            bonus: dm.bonus, gold: r.gold, exp: Math.round((expForLevel(p.level + 1) - expForLevel(p.level)) * r.expFrac),
+            list: dm.list.map((m) => ({ text: dailyText(m, (id) => MONSTERS[id].name), have: m.have, need: m.need, done: m.done })),
+          };
+        })(),
         daily: {
           claimed: d.last === today,
           streak: alive ? d.streak : 0,

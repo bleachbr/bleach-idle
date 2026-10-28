@@ -212,3 +212,4 @@ body.touch #touch { bottom: 120px; }
 #book-btn.ping::after { content: " ●"; color: #ff5a4a; }
 #book .loot-list { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
 #book .loot-list .slot { cursor: default; }
+#book h3 { margin: 10px 0 2px; font-size: 13px; color: var(--accent); }
