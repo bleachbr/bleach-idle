@@ -1,7 +1,7 @@
 // Teste: entra, liga Auto Hunt, desconecta (hunt offline) e volta com relatório.
 import { expForLevel, nearestWalkable } from "../../shared/src";
 import { HOME } from "../src/maps";
-import { play, patchSave, sleep, ok, done } from "./lib";
+import { play, patchSave, sleep, ok, done, playWithReport } from "./lib";
 
 const name = process.argv[2] ?? "Bot Teste";
 const id = name.toLowerCase();
@@ -22,8 +22,9 @@ const off = obs.state.players.get(id);
 ok("depois de sair, segue no mundo (offline)", off?.online === false);
 await obs.leave();
 await sleep(10000);
-room = await play(name);
-const rep: any = await new Promise((r) => room.onMessage("offline", r));
+const back = await playWithReport(name);
+room = back.room;
+const rep: any = await back.report;
 ok(`relatório da hunt offline (+${rep.exp} XP, +${rep.gold} kan)`, rep.exp > 0);
 ok(`relatório conta abates e loot offline (${rep.kills} abates; ${rep.items?.join(", ") || "sem itens"})`, rep.kills > 0 && Array.isArray(rep.items));
 room.send("auto", { autoHunt: false });

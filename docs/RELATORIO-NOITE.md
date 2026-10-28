@@ -160,3 +160,12 @@ Resultado: `npm test` 76 de 76 e `npm run test:scripts` 192 de 192.
 - **Tela de entrada:** login e lista de personagens ganharam uma ilustração de fundo (Karakura à noite, lua cheia e Hollows nos telhados), gerada pelo Codex.
 
 Resultado: `npm test` 76 de 76 e `npm run test:scripts` 204 de 204.
+
+## CI do GitHub: três falhas que eu não tinha visto
+Três pushes desta manhã ficaram vermelhos no CI, todos por testes que dependiam de tempo e passavam aqui. Nenhum era bug do jogo:
+- **`death`:** o personagem do teste de morte offline às vezes morria nos 300 ms **antes** de sair. Aí a morte era online, não havia relatório offline, e o teste esperava para sempre.
+- **Relatório offline (`death`, `bot`, `training`, `restart`):** o handler era registrado depois de entrar, e a mensagem às vezes chegava antes. Agora há o `playWithReport`, que escuta desde a entrada.
+- **`restart`:** os bots começavam na praça e gastavam a janela de 10 s andando até os monstros. Agora começam na floresta, e o teste espera até a condição.
+- **`quests` e `progress`:** esperas fixas viraram esperas até a condição. Se o `quests` voltar a falhar, ele imprime um diagnóstico (posição, alvo e monstros vivos).
+- **Runner:** o limite por cenário passou de 180 s para 300 s, para o CI, que é mais lento.
+- **Auto Hunt e missão diária:** isto saiu do mesmo problema. O Auto Hunt não sabia da missão diária e caçava outro Hollow. Agora ele prioriza o monstro da missão diária de caça, como já fazia com as missões do Kisuke.

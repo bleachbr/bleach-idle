@@ -2,7 +2,7 @@
 // criado se preciso, ingresso pelo lobby e entrada no mundo.
 import { DatabaseSync } from "node:sqlite";
 import { Client, type Room } from "colyseus.js";
-import { ACHIEVEMENTS, TUTORIAL, newProgress } from "../../shared/src";
+import { ACHIEVEMENTS, TUTORIAL, newProgress, dayKey } from "../../shared/src";
 
 // o runner (scripts/test.ts) aponta para um servidor e um banco de teste por estas variáveis
 export const URL = process.env.BI_URL ?? "ws://localhost:2567";
@@ -62,6 +62,15 @@ export async function play(name: string, charId = "ichigo", before?: (id: string
   return world;
 }
 
+/** Entra e já escuta o relatório da hunt offline, que o servidor manda logo na entrada
+ * (registrar depois do play() às vezes perdia a mensagem e o teste travava). */
+export async function playWithReport(name: string, charId = "ichigo"): Promise<{ room: Room<any>; report: Promise<any> }> {
+  let got!: (m: any) => void;
+  const report = new Promise<any>((res) => (got = res));
+  const room = await play(name, charId, undefined, (r) => r.onMessage("offline", got));
+  return { room, report };
+}
+
 /** Altera campos do save direto no banco (só para montar cenários de teste). */
 export function patchSave(id: string, fields: Record<string, unknown>) {
   const db = new DatabaseSync(DB_FILE);
@@ -69,7 +78,12 @@ export function patchSave(id: string, fields: Record<string, unknown>) {
   const data = { ...JSON.parse(row.data), ...fields };
   // conquistas e primeiros passos pagam kan e itens: sem isso as contas de dinheiro dos cenários mudam.
   // Quem testa conquistas passa o próprio `prog`.
-  if (!("prog" in fields)) data.prog = { ...newProgress(), ...data.prog, ach: ACHIEVEMENTS.map((a) => a.id), tut: TUTORIAL.map((t) => t.id) };
+  // As missões diárias do dia vêm vazias: senão o Auto Hunt priorizaria o monstro sorteado e
+  // mudaria o comportamento dos cenários. Quem testa conquistas, guia ou diárias passa o próprio `prog`.
+  if (!("prog" in fields)) data.prog = {
+    ...newProgress(), ...data.prog, ach: ACHIEVEMENTS.map((a) => a.id), tut: TUTORIAL.map((t) => t.id),
+    dm: { day: dayKey(Date.now()), list: [], bonus: true },
+  };
   db.prepare("UPDATE players SET data = ? WHERE id = ?").run(JSON.stringify(data), id);
   db.close();
 }

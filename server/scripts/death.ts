@@ -4,7 +4,7 @@
 //  3. morrendo durante a hunt offline: o relatório da volta traz a morte
 import { expForLevel, walkable, INV_SIZE } from "../../shared/src";
 import { HOME } from "../src/maps";
-import { play, patchSave, sleep, ok, done } from "./lib";
+import { play, patchSave, sleep, ok, done, playWithReport } from "./lib";
 
 const map = HOME;
 const spot = [[45, 39], [44, 40], [46, 40], [43, 41], [47, 41], [45, 43]].find(([x, y]) => walkable(map, x, y))!;
@@ -44,13 +44,15 @@ ok("sem amuleto: depot intacto", b.inv.depot[0]?.id === "nucleo" && b.inv.depot[
 
 // 3: liga Auto Hunt, sai (offline), morre sozinho, volta
 const name = "Morte Offline";
-let room = await play(name, "renji", (id) => patchSave(id, { ...base, hp: 40, inv: [], equip: {} }));
+// vida para aguentar uns segundos: com 40 ele às vezes morria antes de sair (morte online, sem relatório)
+let room = await play(name, "renji", (id) => patchSave(id, { ...base, hp: 150, inv: [], equip: {} }));
 room.send("auto", { autoHunt: true });
 await sleep(300);
 await room.leave();
-await sleep(8000);
-room = await play(name, "renji");
-const rep: any = await new Promise((r) => room.onMessage("offline", r));
+await sleep(15000); // morre sozinho caçando (o CI é mais lento)
+const back = await playWithReport(name, "renji");
+room = back.room;
+const rep: any = await Promise.race([back.report, sleep(15000).then(() => ({}))]);
 ok("morte offline aparece no relatório da volta", rep.deaths?.length === 1 && rep.deaths[0].by === "Fishbone D");
 ok("depois da morte offline ele saiu do mundo (Auto Hunt desligado)", room.state.players.get("morte offline")?.autoHunt === false);
 await room.leave();

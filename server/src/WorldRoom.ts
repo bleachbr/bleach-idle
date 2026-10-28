@@ -744,13 +744,15 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.look = lookOf(p.equip);
   }
 
-  /** tipos de monstro que ainda faltam nas missões de caça ativas */
+  /** tipos de monstro que ainda faltam nas missões de caça ativas (do Kisuke e a diária) */
   private questKinds(p: Player): Set<string> | undefined {
     const kinds = new Set<string>();
     for (const [id, prog] of Object.entries(p.quests.active)) {
       const g = QUEST_BY_ID[id]?.goal;
       if (g?.type === "kill" && prog < g.count) for (const k of g.monsters) kinds.add(k);
     }
+    // e o monstro da missão diária de caça, enquanto ela não estiver feita
+    for (const m of this.dailyOf(p).list) if (m.kind === "kill" && !m.done && m.target) kinds.add(m.target);
     return kinds.size ? kinds : undefined;
   }
 

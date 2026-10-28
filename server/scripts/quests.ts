@@ -47,7 +47,13 @@ await sleep(200);
 for (const x of [a, b]) x.room.send("travel", { dest: "leste" });
 await sleep(400);
 for (const x of [a, b]) x.room.send("auto", { autoHunt: true, autoHeal: 40 });
-for (let i = 0; i < 120 && (a.q().active.patrulha ?? 0) < 10; i++) await sleep(500);
+for (let i = 0; i < 300 && (a.q().active.patrulha ?? 0) < 10; i++) await sleep(500);
+if ((a.q().active.patrulha ?? 0) < 10) {
+  // diagnóstico para o log do CI: onde a Ana está, o que ela persegue e quantos Hollows Menores existem
+  const me = a.me(), t = a.room.state.monsters.get(me.targetId);
+  const menores = [...a.room.state.monsters.values()].filter((m: any) => m.kind === "hollow_menor").map((m: any) => `${m.x},${m.y}`);
+  console.log(`  diagnóstico: Ana em ${me.map} ${me.x},${me.y} alvo=${t ? `${t.kind} ${t.x},${t.y}` : "nenhum"} hunt=${me.autoHunt} hp=${me.hp}; Hollows Menores: ${menores.join(" ")}`);
+}
 ok(`Ana completa os 10 Hollows Menores (${a.q().active.patrulha}/10)`, a.q().active.patrulha >= 10);
 ok(`o parceiro de party também conta (${b.q().active.patrulha}/10)`, b.q().active.patrulha >= 5);
 

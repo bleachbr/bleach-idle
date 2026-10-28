@@ -49,7 +49,7 @@ function startServer(): Promise<ChildProcess> {
 function scenario(name: string, args: string[] = [], until?: string): Promise<void> {
   return new Promise((resolve) => {
     const p = node([`scripts/${name}.ts`, ...args]);
-    const timer = setTimeout(() => { record(name, "FALHOU tempo esgotado (180 s)"); p.kill(); }, 180_000);
+    const timer = setTimeout(() => { record(name, "FALHOU tempo esgotado (300 s)"); p.kill(); }, 300_000);
     let sawCheck = false;
     lines(p, (l) => {
       if (/^(OK|FALHOU)\b/.test(l)) { sawCheck = true; record(name, l); }

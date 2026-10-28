@@ -36,7 +36,7 @@ a.room.send("daily");
 await sleep(300);
 ok("segundo resgate no mesmo dia é recusado", a.inv().gold === 100 && a.logs.some((l) => l.includes("já pegou")));
 
-const b = await bot("Livro Beto", { prog: { bestiary: { hollow_menor: 24 }, ach: [], daily: { last: prevDay(today), streak: 6 }, kills: 99, bossKills: 0 } });
+const b = await bot("Livro Beto", { prog: { bestiary: { hollow_menor: 24 }, ach: [], daily: { last: prevDay(today), streak: 6 }, kills: 99, bossKills: 0, dm: { day: today, list: [], bonus: true } } });
 b.room.send("daily");
 await sleep(300);
 ok("sequência continua: 7º dia dá o Amuleto da Alma", b.book().daily.streak === 7 && countItem(b.inv().inv, "amuleto_alma") === 1);

@@ -1,7 +1,7 @@
 // Treino: Zanjutsu nos bonecos (que não morrem), Reiryoku com Auto Treino e treino offline.
 import { expForLevel } from "../../shared/src";
 import { MAPS } from "../src/maps";
-import { play, patchSave, sleep, ok, done } from "./lib";
+import { play, patchSave, sleep, ok, done, playWithReport } from "./lib";
 
 const dummies = MAPS.soul.spawns.filter((s) => s.kind === "boneco");
 ok(`a Soul Society tem bonecos de treino (${dummies.length})`, dummies.length >= 1);
@@ -46,8 +46,8 @@ const off = obs.state.players.get("treino tania");
 ok("com Auto Treino, segue no mundo depois de sair", off?.online === false);
 ok(`segue treinando Zanjutsu offline (${zan0} ${pct0}% → ${off?.zanjutsu} ${off?.zanPct}%)`, !!off && (off.zanjutsu > zan0 || off.zanPct > pct0));
 await obs.leave();
-const back = await play("Treino Tania", "rukia");
-const rep: any = await new Promise((r) => back.onMessage("offline", r));
+const { room: back, report } = await playWithReport("Treino Tania", "rukia");
+const rep: any = await report;
 ok("relatório da volta traz as habilidades", typeof rep.zanjutsu === "number" && typeof rep.reiryoku === "number");
 back.send("auto", { autoTrain: false });
 back.send("target", { id: "" });

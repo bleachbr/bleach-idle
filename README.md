@@ -44,7 +44,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Monstros:** 18 tipos, mais o boneco de treino, todos com sprite próprio. Chefes: Grand Fisher (Karakura), Metastacia (sul do Rukongai), Gillian (Hueco Mundo) e Privaron Espada (Las Noches).
 - **Treino:** **Zanjutsu** sobe com golpes e aumenta o dano corpo a corpo (+2%/nível). **Reiryoku** sobe com o reiatsu gasto e aumenta o dano das habilidades (+3%/nível). O **Auto Treino** queima o reiatsu parado, e os **bonecos de treino** da Soul Society não morrem. Os dois continuam offline.
 - **Morte (estilo Tibia):** perde 8% de XP, 10% do dinheiro carregado e cada item tem 10% de chance de cair. O que cai fica num **corpo no chão** por 5 minutos (sobrevive a um reinício do servidor); em PvP, quem matou (e a party dele) tem prioridade por 1 minuto. O **Amuleto da Alma** protege tudo, e o depot nunca perde nada.
-- **Missões do Kisuke:** 15, de caçar ou entregar itens, com XP, kan e itens de recompensa. O progresso de caça conta para a party, e o Auto Hunt prioriza os monstros das missões.
+- **Missões do Kisuke:** 15, de caçar ou entregar itens, com XP, kan e itens de recompensa. O progresso de caça conta para a party, e o Auto Hunt prioriza os monstros das missões (do Kisuke e a diária de caça).
 
 **Progresso de longo prazo** (botão "livro" ao lado do nome)
 - **Bestiário:** cada monstro tem 3 estágios (25/150/500 abates; chefes 1/5/15). Cada estágio dá +4% de dano contra ele, revela vida, XP e loot, e o último dá +20% de chance de loot. Abates da party contam para todos.
