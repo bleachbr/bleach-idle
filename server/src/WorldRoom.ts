@@ -430,9 +430,22 @@ export class WorldRoom extends GameRoom<WorldState> {
 
     if (t && p.follow && now >= p.nextStepAt) {
       const tx = t.x, ty = t.y;
-      p.path = chebyshev(p.x, p.y, tx, ty) > 1
+      const far = chebyshev(p.x, p.y, tx, ty) > 1;
+      p.path = far
         ? findPath(p.x, p.y, (x, y) => chebyshev(x, y, tx, ty) === 1, (x, y) => !walkable(mapOf(p), x, y) || this.monsterAt.has(tileKey(p.map, x, y)))
         : [];
+      // sem caminho até o alvo (cercado por árvores ou por outros monstros): o Auto Helper desiste
+      // depois de 3 s e ignora esse monstro por 20 s; antes, a caçada ficava parada para sempre
+      if (far && !p.path.length && (p.autoHunt || p.autoTarget) && !isPlayer(t)) {
+        if (!p.stuckSince) p.stuckSince = now;
+        else if (now - p.stuckSince > 3000) {
+          p.skipId = t.id;
+          p.skipUntil = now + 20_000;
+          p.targetId = "";
+          p.follow = false;
+          p.stuckSince = 0;
+        }
+      } else p.stuckSince = 0;
     }
     if (p.path.length && now >= p.nextStepAt) {
       const next = p.path[0];
@@ -776,7 +789,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     let best: Monster | undefined;
     let bd = range + 1;
     for (const m of this.state.monsters.values()) {
-      if (!sameMap(p, m) || (m.owner && m.owner !== p.id) || (only && !only.has(m.kind)) || (invaders && !m.invader) || MONSTERS[m.kind].dummy) continue;
+      if (!sameMap(p, m) || (m.owner && m.owner !== p.id) || (m.id === p.skipId && Date.now() < p.skipUntil) || (only && !only.has(m.kind)) || (invaders && !m.invader) || MONSTERS[m.kind].dummy) continue;
       const d = chebyshev(p.x, p.y, m.x, m.y);
       if (d < bd) { best = m; bd = d; }
     }

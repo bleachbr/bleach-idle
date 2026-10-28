@@ -188,3 +188,6 @@ Daí vieram:
 - **Testes novos:** `rebirth` e `dangai`.
 
 Resultado: `npm test` 76 de 76 e `npm run test:scripts` 226 de 226.
+
+### Bug real achado pelo CI: Auto Hunt travado
+O `quests` seguia falhando de vez em quando no CI: na mesma party, o Beto fazia 10 abates e a Ana travava em 6. A causa é um bug do jogo, não do teste. Quando o alvo não tem caminho (cercado de árvores ou de outros monstros), o personagem ficava parado com aquele alvo **para sempre**, e numa hunt offline isso perdia horas de caçada. Agora, depois de 3 s sem caminho, o Auto Helper larga o alvo e ignora aquele monstro por 20 s. Se o teste voltar a falhar, a própria linha de falha mostra a posição, o alvo e os monstros vivos.
