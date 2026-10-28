@@ -250,6 +250,47 @@ export function lookOf(equip: Partial<Record<EquipSlot, string>>): string {
   return parts.join("_");
 }
 
+// ---------- conjuntos: peças do mesmo conjunto equipadas juntas dão bônus extra ----------
+
+export interface SetBonus { atk?: number; def?: number; hp?: number; rei?: number; exp?: number; dmg?: number; loot?: number; text: string }
+export interface SetDef { id: string; name: string; pieces: string[]; bonus: Record<number, SetBonus> }
+
+export const SETS: SetDef[] = [
+  { id: "shinigami", name: "Uniforme Shinigami", pieces: ["bandana", "shihakusho", "hakama", "waraji"], bonus: {
+    2: { def: 2, text: "+2 de defesa" },
+    4: { def: 2, exp: 0.05, text: "+2 de defesa e +5% de XP" },
+  } },
+  { id: "capitao", name: "Traje de Capitão", pieces: ["haori", "hakama_capitao", "botas_shunpo"], bonus: {
+    2: { hp: 40, text: "+40 de vida" },
+    3: { dmg: 0.08, text: "+8% de dano" },
+  } },
+  { id: "hollow", name: "Herança Hollow", pieces: ["elmo_osso", "lamina_garra", "talisma_kido"], bonus: {
+    2: { atk: 3, text: "+3 de ataque" },
+    3: { loot: 0.1, text: "+10% de chance de loot" },
+  } },
+  { id: "luanegra", name: "Lua Negra", pieces: ["lua_negra", "anel_espiritual"], bonus: {
+    2: { dmg: 0.06, exp: 0.05, text: "+6% de dano e +5% de XP" },
+  } },
+];
+
+/** Conjuntos com peças equipadas e o bônus somado dos estágios atingidos. */
+export function setBonuses(equip: Partial<Record<EquipSlot, string>>) {
+  const worn = new Set(Object.values(equip));
+  const total = { atk: 0, def: 0, hp: 0, rei: 0, exp: 1, dmg: 1, loot: 1 };
+  const active: { name: string; have: number; of: number; bonus: string[] }[] = [];
+  for (const s of SETS) {
+    const have = s.pieces.filter((p) => worn.has(p)).length;
+    if (!have) continue;
+    const reached = Object.entries(s.bonus).filter(([n]) => have >= Number(n)).map(([, b]) => b);
+    for (const b of reached) {
+      total.atk += b.atk ?? 0; total.def += b.def ?? 0; total.hp += b.hp ?? 0; total.rei += b.rei ?? 0;
+      total.exp += b.exp ?? 0; total.dmg += b.dmg ?? 0; total.loot += b.loot ?? 0;
+    }
+    active.push({ name: s.name, have, of: s.pieces.length, bonus: Object.entries(s.bonus).map(([n, b]) => `${n} peças: ${b.text}${have >= Number(n) ? " ✔" : ""}`) });
+  }
+  return { total, active };
+}
+
 /** Bônus somados do equipamento e da forja (a forja só vale com item no espaço). */
 export function equipBonus(equip: Partial<Record<EquipSlot, string>>, forge: Partial<Record<EquipSlot, number>> = {}) {
   const b = { atk: 0, def: 0, hp: 0, rei: 0 };
@@ -263,4 +304,12 @@ export function equipBonus(equip: Partial<Record<EquipSlot, string>>, forge: Par
     b.rei += (d.rei ?? 0) + f.rei;
   }
   return b;
+}
+
+/** Equipamento + forja + a parte fixa dos conjuntos (ataque, defesa, vida, reiatsu).
+ * O XP, o dano e o loot dos conjuntos são multiplicadores aplicados no servidor. */
+export function gearBonus(equip: Partial<Record<EquipSlot, string>>, forge: Partial<Record<EquipSlot, number>> = {}) {
+  const b = equipBonus(equip, forge);
+  const set = setBonuses(equip).total;
+  return { atk: b.atk + set.atk, def: b.def + set.def, hp: b.hp + set.hp, rei: b.rei + set.rei };
 }

@@ -14,8 +14,8 @@ import {
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
-  rollLoot, addItem, isPureLoot, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
-  ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, equipBonus,
+  rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
+  ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -508,7 +508,7 @@ export class WorldRoom extends GameRoom<WorldState> {
           m.nextAttackAt = now + def.attackMs;
           this.face(m, t);
           const ch = CHARS[t.charId];
-          const dmg = rollDamage(def.atk * m.power, 1, playerDef(ch.def, t.level) + equipBonus(t.equip, t.forge).def);
+          const dmg = rollDamage(def.atk * m.power, 1, playerDef(ch.def, t.level) + gearBonus(t.equip, t.forge).def);
           t.hp -= dmg;
           t.lastCombatAt = now;
           this.broadcast("fx", { t: "dmg", id: t.id, v: dmg });
@@ -557,7 +557,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private hit(p: Player, t: Player | Monster, mult: number, now: number, skill = false) {
-    mult *= (skill ? reiMult(p.reiryoku) : zanMult(p.zanjutsu)) * rebirthBonus(p.rebirths).dmg;
+    mult *= (skill ? reiMult(p.reiryoku) : zanMult(p.zanjutsu)) * rebirthBonus(p.rebirths).dmg * setBonuses(p.equip).total.dmg;
     if (!skill) this.train(p, 1, 0);
     if (isPlayer(t)) return this.pvpHit(p, t, mult, now);
     // no mesmo tick a habilidade pode matar e o golpe corpo a corpo acertar o mesmo alvo:
@@ -566,7 +566,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     const ch = CHARS[p.charId];
     const def = MONSTERS[t.kind];
     mult *= bestiaryDmgMult(t.kind, p.prog.bestiary[t.kind] ?? 0);
-    const dmg = rollDamage(playerAtk(ch.atk, p.level) + equipBonus(p.equip, p.forge).atk, ch.forms[p.form].dmgMult * mult, def.def * t.defMult);
+    const dmg = rollDamage(playerAtk(ch.atk, p.level) + gearBonus(p.equip, p.forge).atk, ch.forms[p.form].dmgMult * mult, def.def * t.defMult);
     t.hp -= dmg;
     t.lastHitBy = p.id;
     if (!t.targetId && !def.dummy) t.targetId = p.id;
@@ -764,7 +764,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private recompute(p: Player) {
-    const b = equipBonus(p.equip, p.forge);
+    const b = gearBonus(p.equip, p.forge);
     p.maxHp = Math.round((maxHp(p.level) + b.hp) * rebirthBonus(p.rebirths).hp);
     p.maxRei = maxRei(p.level) + b.rei;
     p.hp = Math.min(p.hp, p.maxHp);
@@ -922,7 +922,7 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   /** Loot vai direto para o inventário de quem matou: funciona igual na hunt offline. */
   private giveLoot(p: Player, kind: string, at: { map: string; x: number; y: number }) {
-    const loot = rollLoot(kind, bestiaryLootMult(kind, p.prog.bestiary[kind] ?? 0) * (p.lootBoostUntil > Date.now() ? BOOST_LOOT : 1));
+    const loot = rollLoot(kind, bestiaryLootMult(kind, p.prog.bestiary[kind] ?? 0) * setBonuses(p.equip).total.loot * (p.lootBoostUntil > Date.now() ? BOOST_LOOT : 1));
     p.gold += loot.gold;
     p.hunt.gold += loot.gold;
     this.dailyStep(p, "gold", loot.gold);
@@ -968,10 +968,10 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private sendInv(p: Player) {
-    const b = equipBonus(p.equip, p.forge);
+    const b = gearBonus(p.equip, p.forge);
     const ch = CHARS[p.charId];
     const msg = {
-      gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
+      gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip, forge: p.forge, sets: setBonuses(p.equip).active, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
       atk: Math.round(playerAtk(ch.atk, p.level) + b.atk), def: Math.round(playerDef(ch.def, p.level) + b.def),
     };
     for (const c of this.clients) if (this.sessions.get(c.sessionId) === p.id) c.send("inv", msg);
@@ -1104,8 +1104,8 @@ export class WorldRoom extends GameRoom<WorldState> {
   private pvpHit(p: Player, v: Player, mult: number, now: number) {
     if (this.cantAttack(p, v)) { p.targetId = ""; return; }
     const ch = CHARS[p.charId];
-    const raw = rollDamage(playerAtk(ch.atk, p.level) + equipBonus(p.equip, p.forge).atk, ch.forms[p.form].dmgMult * mult,
-      playerDef(CHARS[v.charId].def, v.level) + equipBonus(v.equip, v.forge).def);
+    const raw = rollDamage(playerAtk(ch.atk, p.level) + gearBonus(p.equip, p.forge).atk, ch.forms[p.form].dmgMult * mult,
+      playerDef(CHARS[v.charId].def, v.level) + gearBonus(v.equip, v.forge).def);
     const dmg = Math.max(1, Math.round(raw * PVP_DAMAGE));
     v.hp -= dmg;
     v.lastCombatAt = p.lastCombatAt = now;
@@ -1566,7 +1566,7 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   /** XP de monstro: aplica o Pergaminho de Treino e soma no analisador de caçada */
   private monsterExp(p: Player, exp: number, from: string) {
-    const v = Math.max(1, Math.round(exp * EXP_RATE * rebirthBonus(p.rebirths).exp * (p.expBoostUntil > Date.now() ? BOOST_EXP : 1)));
+    const v = Math.max(1, Math.round(exp * EXP_RATE * rebirthBonus(p.rebirths).exp * setBonuses(p.equip).total.exp * (p.expBoostUntil > Date.now() ? BOOST_EXP : 1)));
     p.hunt.exp += v;
     this.gainExp(p, v, from);
   }

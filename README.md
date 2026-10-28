@@ -66,6 +66,11 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Forja do Kisuke:** fortalece o **espaço** de equipamento até +10 com Pedras de Reishi e kan (arma +2 de ataque por nível, anel e amuleto +10 de vida, o resto +1 de defesa). A chance cai a cada nível e, a partir de +5, falhar desce um nível. Trocar de item não perde a forja e a morte não leva.
 - **Consumíveis novos:** Onigiri, Poção Grande de Cura e de Reiatsu (o Auto Heal e os atalhos escolhem a menor poção que resolve), **Pergaminho de Treino** (+50% de XP por 1 h), **Incenso da Sorte** (+30% de loot por 1 h; os dois somam até 6 h e contam offline) e **Caixa do Kisuke** (prêmio surpresa).
 - **Equipamentos novos:** Elmo de Osso, Botas de Shunpo, Hakama de Capitão, Zanpakutō Lua Negra, Anel Espiritual e Talismã de Kidō, dos Hollows mais fortes e dos chefes.
+- **Conjuntos:** peças do mesmo conjunto equipadas juntas dão bônus extra; os conjuntos aparecem embaixo do ataque e da defesa, com os estágios no tooltip.
+  - **Uniforme Shinigami** (o kit inicial): +4 de defesa e +5% de XP completo.
+  - **Traje de Capitão:** +40 de vida com 2 peças e +8% de dano com 3.
+  - **Herança Hollow:** +3 de ataque com 2 peças e +10% de loot com 3.
+  - **Lua Negra:** +6% de dano e +5% de XP.
 - **Visual:** Haori de Capitão e Máscara de Osso mudam o sprite, e todos veem. Rukia e Renji têm sprite próprio no Bankai.
 - **Mercado entre jogadores** (aba no Kisuke): anuncie itens do inventário com preço por unidade; o item fica guardado até alguém comprar ou você cancelar. Taxa de 5% na venda, e o vendedor recebe mesmo fora do jogo. Anúncio sem comprador por 7 dias volta para o depot.
 

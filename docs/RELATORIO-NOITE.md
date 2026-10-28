@@ -191,3 +191,12 @@ Resultado: `npm test` 76 de 76 e `npm run test:scripts` 226 de 226.
 
 ### Bug real achado pelo CI: Auto Hunt travado
 O `quests` seguia falhando de vez em quando no CI: na mesma party, o Beto fazia 10 abates e a Ana travava em 6. A causa é um bug do jogo, não do teste. Quando o alvo não tem caminho (cercado de árvores ou de outros monstros), o personagem ficava parado com aquele alvo **para sempre**, e numa hunt offline isso perdia horas de caçada. Agora, depois de 3 s sem caminho, o Auto Helper larga o alvo e ignora aquele monstro por 20 s. Se o teste voltar a falhar, a própria linha de falha mostra a posição, o alvo e os monstros vivos.
+
+## Conjuntos de equipamento
+Mais uma meta curta com recompensa visível: peças do mesmo conjunto equipadas juntas dão bônus.
+- **Uniforme Shinigami:** é o kit inicial, então todo personagem novo já vê o efeito.
+- **Traje de Capitão, Herança Hollow e Lua Negra:** dão motivo para caçar peça por peça.
+- **Testes do Waldir:** o `equipBonus` continua só somando os itens, como eles esperam. O bônus de conjunto entra numa função nova, `gearBonus`, usada no servidor.
+
+### Mais uma falha intermitente explicada: `quests`
+O diagnóstico novo mostrou que a Ana do teste **morria**: ela entrava só com os fragmentos no inventário, sem poção para o Auto Heal usar. E, para voltar ao Kisuke, ficava cercada ou em combate. Agora ela tem poções e volta reentrando ao lado da loja. Rodei 3 vezes seguidas sem falha, e a bateria completa deu 229 de 229.

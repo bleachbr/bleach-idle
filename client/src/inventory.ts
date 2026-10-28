@@ -4,7 +4,7 @@
 import type { Room } from "colyseus.js";
 import {
   ITEMS, SHOP, EQUIP_SLOTS, SLOT_LABEL, GOLD_ICON, CURRENCY, TRAVEL, INTERACT_RANGE, chebyshev,
-  QUESTS, QUEST_BY_ID, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, forgeBonus, type QuestState,
+  QUESTS, QUEST_BY_ID, SETS, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, forgeBonus, type QuestState,
   type ItemDef, type Slot, type EquipSlot,
 } from "../../shared/src";
 
@@ -16,6 +16,7 @@ interface InvMsg {
   atk: number;
   def: number;
   forge: Partial<Record<EquipSlot, number>>;
+  sets?: { name: string; have: number; of: number; bonus: string[] }[];
   expBoostUntil: number;
   lootBoostUntil: number;
 }
@@ -29,6 +30,8 @@ export function iconHtml(icon: number, qty?: number) {
 
 function tooltip(d: ItemDef) {
   const parts = [d.name];
+  const set = SETS.find((s) => s.pieces.includes(d.id));
+  if (set) parts.push(`Conjunto ${set.name} (${set.pieces.length} peças)`);
   if (d.slot) parts.push(SLOT_LABEL[d.slot]);
   if (d.atk) parts.push(`Ataque +${d.atk}`);
   if (d.def) parts.push(`Defesa +${d.def}`);
@@ -113,6 +116,15 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
     const now = Date.now();
     const boosts = [st.expBoostUntil > now ? `XP +50% até ${until(st.expBoostUntil)}` : "", st.lootBoostUntil > now ? `loot +30% até ${until(st.lootBoostUntil)}` : ""].filter(Boolean);
     $("#atkdef").textContent = `Ataque ${st.atk} · Defesa ${st.def}${boosts.length ? ` · ${boosts.join(" · ")}` : ""}`;
+    // conjuntos: quantas peças e o que cada estágio dá (o atingido vem com ✔)
+    const sets = $("#sets");
+    sets.replaceChildren(...(st.sets ?? []).map((s) => {
+      const el = document.createElement("div");
+      el.className = `set${s.have === s.of ? " full" : ""}`;
+      el.textContent = `${s.name} ${s.have}/${s.of}`;
+      el.title = s.bonus.join("\n");
+      return el;
+    }));
     const count = (id: string) => st.inv.reduce((n, s) => n + (s?.id === id ? s.qty : 0), 0);
     $("#potions").textContent = String(count("onigiri") + count("pocao_vida") + count("pocao_grande"));
     $("#rei-potions").textContent = String(count("pocao_rei") + count("pocao_rei_grande"));

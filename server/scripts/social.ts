@@ -9,7 +9,8 @@ const at = (x: number, y: number) => nearestWalkable(map, x, y);
 const lvl = (level: number) => ({ level, exp: expForLevel(level), hp: 9999, rei: 9999, gold: 500, inv: [] });
 
 async function bot(name: string, level: number, pos: { x: number; y: number }, charId = "ichigo") {
-  const room = await play(name, charId, (id) => patchSave(id, { ...lvl(level), ...pos }));
+  // sem equipamento: o +5% de XP do uniforme inicial mudaria as contas exatas da party
+  const room = await play(name, charId, (id) => patchSave(id, { ...lvl(level), ...pos, equip: {} }));
   const logs: string[] = [];
   room.onMessage("log", (m) => logs.push(m.text));
   await sleep(300);

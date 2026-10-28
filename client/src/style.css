@@ -226,3 +226,6 @@ body.touch #touch { bottom: 120px; }
 #dangai b { color: #c9a8ff; }
 #dangai button { padding: 4px 10px; border: 1px solid #8a5cff; border-radius: 4px; background: #3a2566; color: #fff; cursor: pointer; font-size: 12px; }
 @media (max-width: 720px) { #dangai { top: 56px; font-size: 12px; white-space: normal; max-width: calc(100% - 120px); flex-wrap: wrap; } }
+#sets { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+#sets .set { font-size: 11px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); cursor: help; }
+#sets .set.full { color: #ffcf5a; border-color: #ffcf5a; }

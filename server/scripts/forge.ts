@@ -1,11 +1,16 @@
 // Forja do Kisuke (nível por espaço), Pergaminho de Treino, Caixa do Kisuke e escolha da poção.
-import { nearestWalkable, countItem, forgeBonus, forgeCost, equipBonus, BOOST_MS } from "../../shared/src";
+import { nearestWalkable, countItem, forgeBonus, forgeCost, equipBonus, gearBonus, setBonuses, BOOST_MS } from "../../shared/src";
 import { HOME } from "../src/maps";
 import { play, patchSave, sleep, ok, done } from "./lib";
 
 ok("forja: arma +2 atq, anel +10 vida, resto +1 def por nível", forgeBonus("weapon", 3).atk === 6 && forgeBonus("ring", 2).hp === 20 && forgeBonus("boots", 4).def === 4);
 ok("custo cresce: +0→+1 1 pedra/200 kan, +4→+5 5 pedras/5000 kan", forgeCost(0).stones === 1 && forgeCost(0).gold === 200 && forgeCost(4).gold === 5000);
 ok("forja só vale com item no espaço", equipBonus({}, { weapon: 5 }).atk === 0 && equipBonus({ weapon: "zanpakuto" }, { weapon: 5 }).atk === 14);
+const kit = { head: "bandana", armor: "shihakusho", legs: "hakama", boots: "waraji" } as const;
+const sh = setBonuses(kit);
+ok("Uniforme Shinigami completo: +4 de defesa e +5% de XP", sh.total.def === 4 && Math.abs(sh.total.exp - 1.05) < 1e-9 && sh.active[0].have === 4);
+ok("a defesa do conjunto entra no total do equipamento", gearBonus(kit).def === 2 + 5 + 3 + 1 + 4 && equipBonus(kit).def === 2 + 5 + 3 + 1);
+ok("2 de 3 peças do Traje de Capitão: só o 1º estágio (+40 de vida)", setBonuses({ armor: "haori", legs: "hakama_capitao" }).total.hp === 40 && setBonuses({ armor: "haori", legs: "hakama_capitao" }).total.dmg === 1);
 
 const shop = HOME.shop!;
 const nearShop = nearestWalkable(HOME, shop.x - 1, shop.y + 1);
