@@ -11,7 +11,7 @@ const frags = Array.from({ length: 20 }, (_, i) => (i === 0 ? { id: "fragmento",
 /** `extra` completa o save de teste; `null` mantém o save e só põe o personagem ao lado da loja */
 async function bot(name: string, extra: Record<string, unknown> | null = {}) {
   const room = await play(name, "ichigo", (id) => patchSave(id, extra === null ? { map: "karakura", ...nearShop } : {
-    level: 16, exp: expForLevel(16), hp: 9999, rei: 9999, gold: 500, map: "karakura", ...nearShop, quests: { active: {}, done: [] }, ...extra,
+    level: 25, exp: expForLevel(25), hp: 9999, rei: 9999, gold: 500, map: "karakura", ...nearShop, quests: { active: {}, done: [] }, ...extra,
   }));
   let q: any = { active: {}, done: [] };
   let inv: any;
