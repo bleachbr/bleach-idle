@@ -65,6 +65,11 @@ GAME_SPRITES = {
     "hollow_devorador": ("41_hollow_devorador_walk.png", 4, 4, 1.35, 2),
     # chefe da Soul Society
     "metastacia": ("42_metastacia_walk.png", 4, 4, 1.6, 2),
+    # Las Noches
+    "arrancar_numeros": ("49_arrancar_numeros_walk.png", 4, 4, 1.0, 1),
+    "exequias": ("50_exequias_walk.png", 4, 4, 1.06, 1),
+    "fraccion": ("51_fraccion_walk.png", 4, 4, 1.4, 2),
+    "privaron": ("52_privaron_walk.png", 4, 4, 1.3, 2),
 }
 
 

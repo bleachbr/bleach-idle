@@ -10,7 +10,7 @@
 //     portal (ponto) · chegada (ponto; o nome é o id do destino de viagem)
 //     spawn (ponto; propriedades monstro, raio, quantidade)
 
-export const MAP_IDS = ["karakura", "hueco", "soul"] as const;
+export const MAP_IDS = ["karakura", "hueco", "soul", "lasnoches"] as const;
 export const HOME_MAP = "karakura";
 export const SHOP_SPRITE = "npc_shop";
 

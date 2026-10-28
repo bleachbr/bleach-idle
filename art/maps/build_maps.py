@@ -4,6 +4,7 @@ dos pacotes CC0 da Kenney em art/maps/kenney/.
 Saída em client/public/maps/:
   karakura.tmj + karakura_tiles.png   (arte própria, gerada pelo Codex: art/raw/44 a 46; sem elas, Kenney)
   hueco.tmj    + hueco_tiles.png      (arte própria, gerada pelo Codex: art/raw/47 e 48; sem elas, Kenney)
+  lasnoches.tmj + lasnoches_tiles.png (arte própria, gerada pelo Codex: art/raw/53 e 54)
   soul.tmj     + soul_tiles.png   (arte própria, gerada pelo Codex: art/raw/26 a 28)
 
 Camadas de cada mapa:
@@ -512,6 +513,131 @@ def hueco_own_tiles(ts):
     ts.add("arvore_peq", P["prop"](props[8], 1, 1), True)
 
 
+# ------------------------------------------------------------------ Las Noches (arte do Codex)
+
+def lasnoches():
+    """Palácio em Hueco Mundo (nível 45+): saguão seguro ao sul, salão com tapete até a sala
+    do trono ao norte (chefe) e duas alas com pilares (Arrancar Números, Exequias e Fracción)."""
+    P = pixel_tools()
+    ts = Tileset("lasnoches")
+    ground = Image.open(RAW / "53_ln_ground.png").convert("RGBA")
+    q = ground.width // 2
+    for name, (qx, qy) in {"marmore": (0, 0), "escuro": (1, 0), "tapete": (0, 1), "areia": (1, 1)}.items():
+        tex = P["crisp"](ground.crop((qx * q + 6, qy * q + 6, qx * q + q - 6, qy * q + q - 6)).resize((4 * T, 4 * T), Image.BOX), 10)
+        for y, row in enumerate(P["tiles_of"](tex)):
+            for x, t in enumerate(row):
+                ts.add(f"{name}{x}{y}", t)
+    props = P["split"](Image.open(RAW / "54_ln_props.png").convert("RGBA"), 3, 3)
+    tall = {"pilar": props[0], "braseiro": props[2], "estatua": props[6], "bandeira": props[7]}
+    for name, cell in tall.items():
+        (top,), (bottom,) = P["tiles_of"](P["prop"](cell, 1, 2))
+        ts.add(name, bottom, True)
+        ts.add(f"{name}_topo", top)
+    # parede: o bloco inteiro esticado no tile, para as paredes emendarem sem frestas
+    import process as PR
+    wall, _ = PR.keep_main(PR.remove_bg(props[1]))
+    ts.add("parede", P["crisp"](wall.resize((T, T), Image.BOX), 8), True)
+    for name, cell, (w, h) in (("trono", props[3], (2, 2)), ("janela", props[4], (2, 1))):
+        for y, row in enumerate(P["tiles_of"](P["prop"](cell, w, h))):
+            for x, t in enumerate(row):
+                ts.add(f"{name}{x}{y}", t, True)
+    ts.add("entulho", P["prop"](props[5], 1, 1), True)
+    ts.add("banco", P["prop"](props[8], 1, 1), True)
+    # portal: a mesma fenda da Garganta de Hueco Mundo
+    rift = P["split"](Image.open(RAW / "48_hm_props.png").convert("RGBA"), 3, 3)[6]
+    (top,), (bottom,) = P["tiles_of"](P["prop"](rift, 1, 2))
+    ts.add("garganta", bottom, True)
+    ts.add("garganta_topo", top)
+
+    m = Map("lasnoches", "Las Noches", 48, 40, ts)
+    m.tex = {k: k for k in ("marmore", "escuro", "tapete", "areia")}
+
+    def floor(x0, y0, x1, y1, kind):
+        for y in range(y0, y1 + 1):
+            for x in range(x0, x1 + 1):
+                m.set("chao", x, y, kind)
+
+    def wall(x0, y0, x1, y1, gaps=()):
+        for y in range(y0, y1 + 1):
+            for x in range(x0, x1 + 1):
+                if (x, y) not in gaps:
+                    m.set("objetos", x, y, "parede")
+
+    def tall_prop(x, y, name):
+        m.set("objetos", x, y, name)
+        m.set("acima", x, y - 1, f"{name}_topo")
+
+    floor(0, 0, m.w - 1, m.h - 1, "escuro")
+    # contorno do palácio
+    wall(0, 0, m.w - 1, 0)
+    wall(0, m.h - 1, m.w - 1, m.h - 1)
+    wall(0, 0, 0, m.h - 1)
+    wall(m.w - 1, 0, m.w - 1, m.h - 1)
+    # saguão seguro ao sul (zona de proteção) com o portal
+    PZ = (19, 32, 28, 37)
+    floor(*PZ, "marmore")
+    tall_prop(23, 33, "garganta")
+    for x in (19, 28):
+        tall_prop(x, 36, "braseiro")
+    m.set("objetos", 20, 37, "banco")
+    m.set("objetos", 27, 37, "banco")
+    # salão central: tapete do saguão até o trono, pilares dos dois lados
+    floor(21, 4, 26, 31, "marmore")
+    floor(23, 4, 24, 31, "tapete")
+    for y in range(13, 31, 3):
+        tall_prop(21, y, "pilar")
+        tall_prop(26, y, "pilar")
+    # paredes do salão (portas para as alas em y 17 e 27) e do saguão
+    wall(20, 11, 20, 31, gaps={(20, 17), (20, 18), (20, 27), (20, 28)})
+    wall(27, 11, 27, 31, gaps={(27, 17), (27, 18), (27, 27), (27, 28)})
+    wall(18, 31, 20, 31)
+    wall(27, 31, 29, 31)
+    wall(18, 31, 18, 38)
+    wall(29, 31, 29, 38)
+    # sala do trono ao norte: separada por um muro com porta no tapete
+    wall(1, 11, 19, 11)
+    wall(28, 11, 46, 11)
+    floor(12, 2, 35, 10, "marmore")
+    floor(23, 2, 24, 10, "tapete")
+    for x in range(12, 36):
+        m.set("objetos", x, 1, "parede")
+    for x in (14, 18, 28, 32):
+        m.set("objetos", x, 1, "janela00")
+        m.set("objetos", x + 1, 1, "janela10")
+    for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1)):
+        m.set("objetos", 23 + dx, 2 + dy, f"trono{dx}{dy}")
+    for x in (13, 34):
+        tall_prop(x, 5, "estatua")
+    for x in (17, 30):
+        tall_prop(x, 9, "braseiro")
+    wall(11, 1, 11, 10)
+    wall(36, 1, 36, 10)
+    # alas: pilares em grade, bandeiras e entulho
+    for x0 in (3, 30):
+        for y in range(14, 31, 4):
+            for x in range(x0 + 1, x0 + 15, 5):
+                tall_prop(x, y, "pilar")
+        for y in (13, 21, 29):
+            tall_prop(x0, y, "bandeira")
+    for x, y in ((8, 24), (39, 20), (15, 30), (33, 14), (5, 35), (42, 36)):
+        m.set("objetos", x, y, "entulho")
+    # cantos de areia: o palácio está meio soterrado pelo deserto
+    floor(1, 33, 10, 38, "areia")
+    floor(37, 33, 46, 38, "areia")
+
+    m.rect("pz", *PZ)
+    m.point("portal", 23, 33, "Garganta")
+    m.point("chegada", 23, 35, "lasnoches")
+    for kind, x, y, r, n in [
+        ("arrancar_numeros", 10, 17, 4, 6), ("exequias", 37, 17, 4, 6),
+        ("fraccion", 10, 26, 3, 4), ("fraccion", 37, 26, 3, 4),
+        ("arrancar_numeros", 6, 36, 3, 3), ("exequias", 41, 36, 3, 3),
+        ("privaron", 24, 7, 2, 1),
+    ]:
+        m.point("spawn", *m.nearest_free(x, y), kind, {"monstro": kind, "raio": r, "quantidade": n})
+    m.save()
+
+
 # ------------------------------------------------------------------ Soul Society (arte do Codex)
 
 def soul():
@@ -638,3 +764,4 @@ if __name__ == "__main__":
     karakura()
     hueco()
     soul()
+    lasnoches()

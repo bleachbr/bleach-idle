@@ -134,3 +134,17 @@ Fiz um simulador, `server/scripts/balance.ts`. Ele considera Ichigo em Shikai, c
 Para não mudar o ritmo sem você decidir, deixei um ajuste: a variável **`EXP_RATE`** do servidor. O padrão é 1, então nada mudou. Com `EXP_RATE=0.25`, o nível 60 leva umas 37 h de caça. A minha sugestão é algo entre 0,25 e 0,4 quando o jogo for ao ar, mais um próximo bloco de conteúdo acima do nível 50. Dá para simular antes com `EXP_RATE=0.3 npx tsx scripts/balance.ts`.
 
 Resultado: `npm test` 76 de 76 e `npm run test:scripts` 185 de 185.
+
+## Las Noches: conteúdo acima do nível 45
+O simulador mostrou que o conteúdo acabava no Arrancar. Para isso fiz o **quarto mapa, Las Noches**: o palácio em Hueco Mundo, para nível 45+ e 400 kan.
+- **O mapa:** saguão seguro com a Garganta, salão com tapete vermelho e pilares até a sala do trono, duas alas com pilares e cantos tomados pela areia.
+- **Monstros novos**, cada faixa rendendo mais XP que a anterior:
+  - **Arrancar Números:** o melhor do nível 55 ao 70;
+  - **Exequias:** do 75 em diante;
+  - **Fracción:** o mais forte das alas;
+  - **Privaron Espada:** o chefe, na sala do trono.
+- **Missões:** 3 novas (15 no total).
+- **Arte:** os 4 monstros e o tileset vieram do Codex, todos na 1ª tentativa.
+- **Teste:** cenário novo `lasnoches`, que confere a viagem e os monstros.
+
+Resultado: `npm test` 76 de 76 e `npm run test:scripts` 192 de 192.

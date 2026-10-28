@@ -80,6 +80,21 @@ export const QUESTS: QuestDef[] = [
     desc: "Derrube um Menos Grande (Gillian) no deserto.",
     goal: { type: "kill", monsters: ["gillian"], count: 1 }, reward: { exp: 42000, gold: 2000, items: [{ id: "haori", qty: 1 }] },
   },
+  {
+    id: "lasnoches", name: "Invasão a Las Noches", minLevel: 45,
+    desc: "Entre no palácio e derrote 20 Arrancar Números ou Exequias.",
+    goal: { type: "kill", monsters: ["arrancar_numeros", "exequias"], count: 20 }, reward: { exp: 90000, gold: 3000, items: [{ id: "pedra_reishi", qty: 10 }] },
+  },
+  {
+    id: "fraccion", name: "A Fracción", minLevel: 50,
+    desc: "Os guarda-costas do palácio guardam a sala do trono. Derrote 15 Fracción.",
+    goal: { type: "kill", monsters: ["fraccion"], count: 15 }, reward: { exp: 120000, gold: 4000, items: [{ id: "pergaminho_xp", qty: 2 }] },
+  },
+  {
+    id: "privaron", name: "O Trono Vazio", minLevel: 55,
+    desc: "Um Privaron Espada tomou a sala do trono. Derrote-o.",
+    goal: { type: "kill", monsters: ["privaron"], count: 1 }, reward: { exp: 150000, gold: 5000, items: [{ id: "caixa_kisuke", qty: 3 }] },
+  },
 ];
 
 export const QUEST_BY_ID: Record<string, QuestDef> = Object.fromEntries(QUESTS.map((q) => [q.id, q]));

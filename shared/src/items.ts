@@ -106,6 +106,13 @@ export const LOOT: Record<string, LootTable> = {
   arrancar: { gold: [90, 180], items: [{ item: "pedra_reishi", chance: 0.2 }, { item: "hakama_capitao", chance: 0.015 }, { item: "caixa_kisuke", chance: 0.02 }, { item: "nucleo", chance: 0.28 }, { item: "haori", chance: 0.03 }, { item: "lamina_garra", chance: 0.05 }, { item: "pocao_rei", chance: 0.15 }] },
   gillian: { gold: [500, 1000], items: [{ item: "pedra_reishi", chance: 1, min: 3, max: 6 }, { item: "lua_negra", chance: 0.08 }, { item: "caixa_kisuke", chance: 0.5 }, { item: "nucleo", chance: 1, min: 3, max: 6 }, { item: "haori", chance: 0.25 }, { item: "mascara", chance: 0.5 }, { item: "lamina_garra", chance: 0.3 }] },
   grand_fisher: { gold: [400, 800], items: [{ item: "pedra_reishi", chance: 1, min: 2, max: 4 }, { item: "caixa_kisuke", chance: 0.4 }, { item: "nucleo", chance: 1, min: 3, max: 6 }, { item: "lamina_garra", chance: 0.4 }, { item: "haori", chance: 0.3 }, { item: "mascara", chance: 0.5 }] },
+  arrancar_numeros: { gold: [110, 220], items: [{ item: "pedra_reishi", chance: 0.22 }, { item: "nucleo", chance: 0.3 }, { item: "hakama_capitao", chance: 0.02 }, { item: "pocao_rei_grande", chance: 0.1 }] },
+  exequias: { gold: [140, 260], items: [{ item: "pedra_reishi", chance: 0.25 }, { item: "nucleo", chance: 0.32 }, { item: "elmo_osso", chance: 0.02 }, { item: "caixa_kisuke", chance: 0.02 }] },
+  fraccion: { gold: [180, 330], items: [{ item: "pedra_reishi", chance: 0.3, max: 2 }, { item: "nucleo", chance: 0.35, max: 2 }, { item: "lua_negra", chance: 0.012 }, { item: "anel_espiritual", chance: 0.015 }, { item: "caixa_kisuke", chance: 0.03 }] },
+  privaron: { gold: [1500, 3000], items: [
+    { item: "pedra_reishi", chance: 1, min: 5, max: 10 }, { item: "nucleo", chance: 1, min: 5, max: 8 }, { item: "lua_negra", chance: 0.3 },
+    { item: "anel_espiritual", chance: 0.3 }, { item: "haori", chance: 0.3 }, { item: "caixa_kisuke", chance: 1, min: 1, max: 2 },
+  ] },
   metastacia: { gold: [450, 900], items: [
     { item: "tentaculo", chance: 1, min: 1, max: 3 }, { item: "pedra_reishi", chance: 1, min: 2, max: 5 }, { item: "nucleo", chance: 1, min: 2, max: 4 },
     { item: "lua_negra", chance: 0.1 }, { item: "anel_espiritual", chance: 0.2 }, { item: "hakama_capitao", chance: 0.15 }, { item: "caixa_kisuke", chance: 0.5 },

@@ -35,6 +35,10 @@ export const SPRITES: Record<string, SpriteDef> = {
   hollow_devorador: { frame: 96 },
   grand_fisher: { frame: 96 },
   metastacia: { frame: 96 },
+  arrancar_numeros: { frame: 48 },
+  exequias: { frame: 48 },
+  fraccion: { frame: 96 },
+  privaron: { frame: 96 },
 };
 
 // Variantes de visual por equipamento (folha inteira por combinação: <base>__<look>).
@@ -154,5 +158,10 @@ export const MONSTERS: Record<string, MonsterDef> = Object.fromEntries([
   m("arrancar", "Arrancar", 1400, 50, 14, 2300, 1, 0xffffff, 300, 30000, "arrancar"),
   m("metastacia", "Metastacia", 3800, 44, 11, 8000, 1, 0xffffff, 360, 150000, "metastacia"),
   m("gillian", "Menos Grande (Gillian)", 5200, 62, 16, 9000, 1, 0xffffff, 650, 120000, "gillian"),
+  // Las Noches (nível 45+)
+  m("arrancar_numeros", "Arrancar Números", 2300, 60, 17, 4800, 1, 0xffffff, 300, 30000, "arrancar_numeros"),
+  m("exequias", "Exequias", 3200, 68, 20, 7000, 1, 0xffffff, 330, 30000, "exequias"),
+  m("fraccion", "Fracción", 4300, 78, 24, 9800, 1, 0xffffff, 360, 35000, "fraccion"),
+  m("privaron", "Privaron Espada", 18000, 92, 28, 42000, 1, 0xffffff, 300, 240000, "privaron"),
   { ...m("boneco", "Boneco de Treino", 3000, 0, 0, 0, 1, 0xffffff, 1000, 5000, "boneco"), dummy: true },
 ].map((d) => [d.id, d]));

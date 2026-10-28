@@ -20,7 +20,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **client/**: Phaser 3 + TypeScript + Vite. Só desenha o estado e envia intenções. Também é um app instalável (PWA).
 - **server/**: Node + Colyseus 0.15, **autoritativo**, com tick de 100 ms: movimento, combate, XP, IA dos monstros, Auto Helper, treino e missões. Em produção, entrega também a página do jogo.
 - **shared/**: leitura dos mapas do Tiled, personagens, monstros, itens, missões, treino e fórmulas.
-- **client/public/maps/**: os mapas (`karakura.tmj`, `hueco.tmj`, `soul.tmj`), feitos para abrir e editar no [Tiled](https://www.mapeditor.org/). Cliente e servidor leem os mesmos arquivos.
+- **client/public/maps/**: os mapas (`karakura.tmj`, `hueco.tmj`, `soul.tmj`, `lasnoches.tmj`), feitos para abrir e editar no [Tiled](https://www.mapeditor.org/). Cliente e servidor leem os mesmos arquivos.
 - **art/**: arte gerada pelo Codex (`art/raw/`, prompts em `art/raw/prompts.md`) → `art/process.py` → `client/public/assets/`. Os mapas saem de `art/maps/build_maps.py`.
 - **Banco:** SQLite (`node:sqlite`, modo WAL) com contas, sessões, personagens, guildas e parties. Save a cada 10 s, em transação, e também ao entrar, sair e morrer.
 
@@ -34,15 +34,16 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Karakura** (arte própria, gerada pelo Codex): cidade japonesa com casas, prédios e lojas, praça central (zona segura, depot, loja do Kisuke, portal Senkaimon) e Hollows a leste e ao sul.
 - **Soul Society** (arte própria, gerada pelo Codex): Seireitei com quartéis, muro, jardim zen, cerejeiras e campo de treino; Rukongai com Hollows de nível médio. Nível 14+, 120 kan.
 - **Hueco Mundo** (arte própria, gerada pelo Codex): deserto branco com ruínas, árvores de quartzo e ossadas; lá vivem Adjuchas, Arrancar e o Menos Grande (Gillian). Nível 22+, 200 kan, chegando pela Garganta.
+- **Las Noches** (arte própria, gerada pelo Codex): o palácio em Hueco Mundo, para nível 45+ (400 kan). Tem saguão seguro, salão com pilares e alas com Arrancar Números, Exequias e Fracción; na sala do trono fica o chefe **Privaron Espada**.
 - **Invasão de Hollows:** de 3 em 3 horas, 12 Hollows e um Fishbone D cercam a praça de Karakura por 15 min, com +50% de XP e chance de Caixa do Kisuke (o líder sempre dá uma). Eles não renascem; o chat anuncia quem mais abateu.
 - **Viagem:** pelos portais. "Voltar à cidade" (tecla R) leva ao templo de Karakura.
 
 **Combate e progressão**
 - **Níveis:** fórmula do Tibia, começando no nível 8. Shikai/Bankai na tecla T (nível 10+), com mais dano e velocidade, mas gastando reiatsu.
-- **Monstros:** 14 tipos, mais o boneco de treino, todos com sprite próprio. Chefes: Grand Fisher (Karakura), **Metastacia** (sul do Rukongai) e Gillian (Hueco Mundo).
+- **Monstros:** 18 tipos, mais o boneco de treino, todos com sprite próprio. Chefes: Grand Fisher (Karakura), Metastacia (sul do Rukongai), Gillian (Hueco Mundo) e Privaron Espada (Las Noches).
 - **Treino:** **Zanjutsu** sobe com golpes e aumenta o dano corpo a corpo (+2%/nível). **Reiryoku** sobe com o reiatsu gasto e aumenta o dano das habilidades (+3%/nível). O **Auto Treino** queima o reiatsu parado, e os **bonecos de treino** da Soul Society não morrem. Os dois continuam offline.
 - **Morte (estilo Tibia):** perde 8% de XP, 10% do dinheiro carregado e cada item tem 10% de chance de cair. O que cai fica num **corpo no chão** por 5 minutos; em PvP, quem matou (e a party dele) tem prioridade por 1 minuto. O **Amuleto da Alma** protege tudo, e o depot nunca perde nada.
-- **Missões do Kisuke:** 12, de caçar ou entregar itens, com XP, kan e itens de recompensa. O progresso de caça conta para a party, e o Auto Hunt prioriza os monstros das missões.
+- **Missões do Kisuke:** 15, de caçar ou entregar itens, com XP, kan e itens de recompensa. O progresso de caça conta para a party, e o Auto Hunt prioriza os monstros das missões.
 
 **Progresso de longo prazo** (botão "livro" ao lado do nome)
 - **Bestiário:** cada monstro tem 3 estágios (25/150/500 abates; chefes 1/5/15). Cada estágio dá +4% de dano contra ele, revela vida, XP e loot, e o último dá +20% de chance de loot. Abates da party contam para todos.
@@ -93,7 +94,7 @@ Abra `client/public/maps/*.tmj` no Tiled (1.10+), edite e salve no mesmo formato
   - `chegada` (o nome é o id do destino em `shared/src/social.ts`);
   - `spawn` (propriedades `monstro`, `raio` e `quantidade`).
 - **Mapa novo:** acrescente o id em `MAP_IDS` (`shared/src/map.ts`), crie o `.tmj` e um destino em `TRAVEL`.
-- **Primeira versão:** `art/maps/build_maps.py` gera os 3 mapas do zero. **Depois de editar no Tiled, não rode o script**, porque ele sobrescreve os arquivos.
+- **Primeira versão:** `art/maps/build_maps.py` gera os 4 mapas do zero. **Depois de editar no Tiled, não rode o script**, porque ele sobrescreve os arquivos.
 - **Conferir:** `cd server && npx tsx scripts/mapcheck.ts` checa os mapas (objetos obrigatórios, chegadas e muro sem frestas).
 
 ## Testes
@@ -113,7 +114,8 @@ Cenários em `server/scripts/`:
 - **Contas:** `accounts`.
 - **Combate e personagem:** `bankai`, `outfit`, `death`, `training`, `spawncount`.
 - **Itens, missões e economia:** `items`, `quests`, `bags` (corpos e sacolas), `market` (mercado), `forge` (forja, pergaminho, caixa e escolha da poção).
-- **Progresso:** `progress` (bestiário, conquistas e recompensa diária), `hunt` (Auto Venda, analisador, aviso da diária) e `invasion` (evento).
+- **Progresso:** `progress` (bestiário, conquistas e recompensa diária), `hunt` (Auto Venda, analisador, aviso da diária e missões diárias) e `invasion` (evento).
+- **Mapas:** `lasnoches` (viagem e monstros do palácio).
 - **Robustez:** `robust` (lixo em todas as mensagens, rajada de 500, mensagem acima de 4 KB). O runner também conta como falha qualquer exceção registrada pelo servidor.
 - **Social:** `social` (party, PvP, viagem), `social2` (chat, guildas, ranking) e `skull` (caveira).
 - **Offline e queda:** `bot` (hunt offline) e `restart` (queda do servidor com hunts e party).

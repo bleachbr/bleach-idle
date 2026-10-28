@@ -6,7 +6,7 @@ import { MONSTERS } from "./data";
 // ---------- bestiário ----------
 
 /** chefes: poucos abates por estágio */
-export const BOSSES = new Set(["grand_fisher", "gillian", "metastacia"]);
+export const BOSSES = new Set(["grand_fisher", "gillian", "metastacia", "privaron"]);
 
 /** abates para cada um dos 3 estágios */
 export function bestiaryStages(kind: string): [number, number, number] {
@@ -125,7 +125,7 @@ export interface DailyState { day: string; list: DailyMission[]; bonus: boolean 
 
 /** monstros comuns do mais fraco para o mais forte (o nível sugere a faixa) */
 const LADDER = ["hollow_menor", "hollow_rastejante", "hollow_sombrio", "hollow_uivante", "hollow_faminto", "hollow_acido",
-  "hollow_encouracado", "hollow_devorador", "fishbone", "adjuchas", "arrancar"];
+  "hollow_encouracado", "hollow_devorador", "fishbone", "adjuchas", "arrancar", "arrancar_numeros", "exequias", "fraccion"];
 
 function seeded(seed: string) {
   let h = 2166136261;
