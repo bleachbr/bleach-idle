@@ -208,3 +208,17 @@ Os menus pareciam um site genérico escuro. Gerei no Codex um kit de interface e
 - **Aplicação:** a camada `client/src/theme.css` usa molduras de 9 partes (as janelas em 2x, a lateral e o chat em 1x), a fonte pixel Pixelify Sans (licença OFL, pelo npm) nos títulos e botões, e ícones nos títulos das seções, nas abas e nos atalhos do topo (livro, ranking, som e trocar).
 - **Onde:** login, lista de personagens, barra lateral, Kisuke (loja, forja, missões e mercado), livro, ranking, Dangai, tela de morte, menu de contexto, chat, minimapa, caixas de seleção e barras de rolagem.
 - **Conferido no navegador:** login, personagens, lateral inteira, Kisuke e livro. No celular (375 px) também, sem rolagem para os lados.
+
+## Sprites, efeitos e o andar esquisito
+- **Por que o andar era esquisito:** o servidor anda em ticks de 100 ms, então um passo de 260 ms acontece, na prática, a cada 300 ms. O cliente deslizava o sprite em 260 ms e parava 40 ms ("anda, trava, anda"). E cada pacote que chegava atrasado reiniciava o deslize, mudando a velocidade.
+- **A correção:** agora cada personagem e monstro desliza em velocidade constante no ritmo real, acelerando um pouco só quando está atrasado. A animação de passos segue o mesmo ritmo, e parado ele respira (escala sutil).
+- **Efeito colateral do mesmo motivo:** velocidades nominais entre 240 e 300 ms viram todas 300 na prática. Levei isso em conta nos personagens novos.
+- **Efeitos animados** (3 folhas do Codex): corte e impacto, o atacante avançando no golpe, habilidade própria de cada personagem, fumaça com ossos na morte do Hollow, luz de nível, cura e aura de Bankai por personagem.
+- **Personagens novos:**
+  - **Ishida** (Quincy): arco de longe e barato, com o Letzt Stil como liberação;
+  - **Sado:** o mais forte e resistente, de ataque lento, com o Diablo como liberação.
+
+  Cada um tem folha de andar nas duas formas e efeito de habilidade próprio (flecha e soco). O texto de transformação usa o nome certo de cada liberação.
+- **Conferido no navegador:** aura, gelo, impactos e fumaça em combate real, e a tela de criação com os 5 personagens. O Ishida foi criado e caçou; as animações dele carregam, mas o painel do navegador estava escondido nessa hora e não deu para fotografar.
+
+Resultado: `npm test` 76 de 76 e `npm run test:scripts` 229 de 229.

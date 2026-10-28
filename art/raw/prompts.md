@@ -440,3 +440,59 @@ Make the image SQUARE. A 2x2 grid of four separate game UI parts, each centered 
 ```text
 Make the image SQUARE. A 4x4 grid (4 rows, 4 columns, 16 equal square cells) of SIXTEEN different small game menu icons, one per cell, centered with magenta padding, same scale and style as the reference icon sheet, mostly white-silver with crimson and light-blue accents. In order, left to right, top to bottom: 1 an open book; 2 a trophy cup; 3 a speaker with sound waves; 4 a speaker crossed out (muted); 5 two curved arrows forming a circle (swap); 6 a scroll with a red seal (quests); 7 a blacksmith hammer over an anvil (forge); 8 a stack of gold coins with a square hole (market); 9 a swirling portal ring (travel); 10 a treasure chest (storage); 11 three small people silhouettes (party); 12 a hanging war banner (guild); 13 a gear cog (settings); 14 a crossed katana pair (combat); 15 a glowing star (rebirth); 16 an hourglass (daily). Style: crisp pixel art matching the attached reference image (same pixel density, dark outline #1a1822, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering). Theme: the elegant black-and-white uniform of Japanese soul reapers: deep black lacquer, clean white and silver trim, small crimson accents. Flat front view (UI, not a scene). Background: 100% solid flat magenta #FF00FF around the elements, no gradient, no shadow, no text, no letters, no labels.
 ```
+
+# Rodada 17: efeitos animados
+
+Script `work/gen_fx.sh`. Três folhas 4x4 (uma linha por efeito, 4 quadros), processadas por `art/fx.py`. Todas na 1ª tentativa.
+
+## p_62_fx_combat
+
+```text
+Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of animated visual effects: each ROW is ONE effect animated over 4 frames from left to right (start, grow, peak, fade). In every cell the effect is centered and fully inside the cell with magenta padding; nothing crosses a cell edge; no characters, no ground. Row 1: a fast sword slash: a curved white crescent arc with a light-blue edge sweeping across, appearing, at full size, then thinning and vanishing. Row 2: a hit impact: a small white and yellow star-burst spark with flying sparks, expanding then fading. Row 3: a defeated spirit monster dissolving: a dark purple-black smoke cloud with small white bone mask fragments, puffing out then fading to wisps. Row 4: a level-up: a vertical pillar of golden light with rising sparkles, growing taller, brightest, then fading. Style: crisp pixel art matching the attached reference image (same pixel density, dark outline #1a1822 only where it helps, no anti-aliasing, no dithering, no gradients), bright saturated glowing colors for magical energy, for a top-down RPG. Background: 100% solid flat magenta #FF00FF, no text, no labels, no grid lines.
+```
+
+## p_63_fx_skills
+
+```text
+Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of animated visual effects: each ROW is ONE effect animated over 4 frames from left to right (start, grow, peak, fade). In every cell the effect is centered and fully inside the cell with magenta padding; nothing crosses a cell edge; no characters, no ground. Row 1: a big crescent-shaped wave of sword energy, bright light-blue and white with a thin dark outline, flying horizontally to the right (it grows from a thin sliver to a large crescent, then breaks into fading streaks). Row 2: an icy burst: white and cyan ice crystals and snowflakes exploding outward from the center in a ring, then shimmering and fading. Row 3: a red-orange energy bolt shaped like a snake's open fanged jaw lunging to the right, growing then fading into sparks. Row 4: a healing effect: soft green and white sparkles and small plus signs rising upward in a column, then fading. Style: crisp pixel art matching the attached reference image (same pixel density, dark outline #1a1822 only where it helps, no anti-aliasing, no dithering, no gradients), bright saturated glowing colors for magical energy, for a top-down RPG. Background: 100% solid flat magenta #FF00FF, no text, no labels, no grid lines.
+```
+
+## p_64_fx_aura
+
+```text
+Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of animated visual effects: each ROW is ONE effect animated over 4 frames from left to right (start, grow, peak, fade). In every cell the effect is centered and fully inside the cell with magenta padding; nothing crosses a cell edge; no characters, no ground. Each row is a LOOPING aura of spirit energy flames rising around an EMPTY center where a standing person would be (leave the middle of each cell empty magenta, the flames form a tall oval ring around it, taller than wide), animated over 4 frames that loop smoothly. Row 1: black flames with a glowing crimson red edge. Row 2: white and pale cyan flames with tiny snowflakes. Row 3: crimson red flames with orange tips. Row 4: bright light-blue flames. Style: crisp pixel art matching the attached reference image (same pixel density, dark outline #1a1822 only where it helps, no anti-aliasing, no dithering, no gradients), bright saturated glowing colors for magical energy, for a top-down RPG. Background: 100% solid flat magenta #FF00FF, no text, no labels, no grid lines.
+```
+
+# Rodada 18: Ishida e Sado
+
+Script `work/gen_chars2.sh`, com a folha do Ichigo (06) como referência. Os cinco na 1ª tentativa.
+
+## p_65_ishida_walk
+
+```text
+A slim young archer in a pristine white high-collared uniform with a long white cape and thin blue trim, a small blue cross emblem on the chest, neat straight black hair, rectangular glasses, white gloves, holding a glowing light-blue energy bow made of spirit particles in his left hand. Calm and precise. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE character walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle with clearly alternating legs and arms. In every cell the character is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same realistic (not chibi) body proportions, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_66_ishida_power_walk
+
+```text
+The same slim young archer in a white high-collared uniform with long white cape and blue trim, glasses and black hair, but in a powered-up form: a huge glowing light-blue bow shaped like spread wings floats behind him, and a faint blue glow surrounds him. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE character walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle with clearly alternating legs and arms. In every cell the character is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same realistic (not chibi) body proportions, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_67_sado_walk
+
+```text
+A very tall, broad and muscular young man with dark brown skin and wavy dark brown hair covering his eyes, wearing a loose red and black Hawaiian-style shirt open over a white tank top and dark jeans; his right arm is covered in black armor with red and white stripes from the shoulder to the fist. Calm, heavy steps. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE character walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle with clearly alternating legs and arms. In every cell the character is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same realistic (not chibi) body proportions, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_68_sado_power_walk
+
+```text
+The same very tall, broad and muscular young man with dark brown skin and wavy hair covering his eyes, red and black shirt and dark jeans, but powered up: BOTH arms are covered in bulky black armor with red and white stripes, the left arm armor is white with black stripes and a shield-like shoulder, and a faint red glow surrounds him. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE character walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle with clearly alternating legs and arms. In every cell the character is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same realistic (not chibi) body proportions, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_69_fx_skills2
+
+```text
+Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of animated visual effects: each ROW is ONE effect animated over 4 frames from left to right (start, grow, peak, fade). In every cell the effect is centered and fully inside the cell with magenta padding; no characters, no ground. Row 1: a thin glowing light-blue spirit-energy arrow flying to the right with a sparkling trail. Row 2: a rain of many small light-blue energy arrows falling in a burst, then fading. Row 3: a huge black and red armored fist punch shockwave expanding to the right, with a white impact ring. Row 4: a big round blast of white light with a red core exploding outward, then fading into sparks. Style: crisp pixel art matching the reference, bright glowing colors, no anti-aliasing. Background: 100% solid flat magenta #FF00FF, no text.
+```

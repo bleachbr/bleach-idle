@@ -27,7 +27,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 ## O que o jogo tem
 **Contas e personagens**
 - **Login e senha:** hash scrypt; bloqueio de 1 min depois de 5 senhas erradas (30 por IP); "Lembrar neste navegador" com token de 30 dias. Troca de senha na tela de personagens (derruba os outros aparelhos lembrados).
-- **Personagens:** até 5 por conta, com nome único: Ichigo, Rukia ou Renji.
+- **Personagens:** até 5 por conta, com nome único: Ichigo, Rukia, Renji, **Ishida** (Quincy: flecha de longe e barata, corpo a corpo fraco; libera o Letzt Stil) ou **Sado** (o mais forte e resistente, de ataque lento; libera o Brazo Izquierda del Diablo).
 - **Primeiros passos:** personagem novo vê na barra lateral um guia de 6 tarefas (derrotar um Hollow, ligar o Auto Hunt, visitar o Kisuke, aceitar uma missão, pegar a diária, soltar o Bankai), cada uma com uma pequena recompensa.
 - **Entrada no mundo:** por ingresso de uso único. Se o mesmo personagem abre em outra janela, a nova assume.
 
@@ -90,6 +90,8 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 
 **Interface**
 - **Sons** sintetizados no navegador (golpe, dano, habilidade, loot, nível, Bankai, eventos), com botão "som" para silenciar.
+- **Movimento fluido:** o personagem desliza em velocidade constante no ritmo real do servidor (passos de 100 ms), sem o "anda e trava". Parado, ele respira.
+- **Efeitos animados** (art/fx.py): corte e impacto nos golpes, quem bate avança um pouco, a habilidade de cada personagem tem efeito próprio (Getsuga Tenshō, gelo, Zabimaru, flecha, soco), fumaça com ossos quando o Hollow morre, coluna de luz no nível, brilho na cura e aura de reiatsu enquanto o Bankai estiver ativo.
 - Minimapa no canto (você, party, outros jogadores e monstros); clique nele para andar até lá.
 
 **Celular**

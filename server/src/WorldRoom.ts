@@ -511,7 +511,7 @@ export class WorldRoom extends GameRoom<WorldState> {
           const dmg = rollDamage(def.atk * m.power, 1, playerDef(ch.def, t.level) + gearBonus(t.equip, t.forge).def);
           t.hp -= dmg;
           t.lastCombatAt = now;
-          this.broadcast("fx", { t: "dmg", id: t.id, v: dmg });
+          this.broadcast("fx", { t: "dmg", id: t.id, v: dmg, from: m.id });
           if (t.hp <= 0) this.killPlayer(t, def.name);
         }
       }
@@ -571,7 +571,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     t.lastHitBy = p.id;
     if (!t.targetId && !def.dummy) t.targetId = p.id;
     p.lastCombatAt = now;
-    this.broadcast("fx", { t: "dmg", id: t.id, v: dmg });
+    this.broadcast("fx", { t: "dmg", id: t.id, v: dmg, from: p.id, skill });
     if (t.hp <= 0) {
       if (def.dummy) t.hp = t.maxHp; // boneco não morre
       else this.killMonster(t, p);
@@ -1117,7 +1117,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (p.pvpUntil <= now) this.log(p, `Você atacou ${v.name}: viagem e zona de proteção bloqueadas por ${PVP_LOCK_MS / 60000} min.`);
       p.pvpUntil = now + PVP_LOCK_MS;
     }
-    this.broadcast("fx", { t: "dmg", id: v.id, v: dmg });
+    this.broadcast("fx", { t: "dmg", id: v.id, v: dmg, from: p.id });
     if (v.hp <= 0) {
       p.targetId = "";
       this.broadcast("chat", { from: "", text: `${v.name} foi derrotado por ${p.name}.` });

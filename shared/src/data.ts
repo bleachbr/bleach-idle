@@ -25,6 +25,10 @@ export const SPRITES: Record<string, SpriteDef> = {
   fishbone: { frame: 96 },
   rukia_bankai: { frame: 48 },
   renji_bankai: { frame: 48 },
+  ishida: { frame: 48 },
+  ishida_power: { frame: 48 },
+  sado: { frame: 48 },
+  sado_power: { frame: 48 },
   hollow_menor: { frame: 96 },
   hollow_rastejante: { frame: 96 },
   hollow_acido: { frame: 96 },
@@ -116,6 +120,30 @@ export const CHARS: Record<string, CharDef> = {
       { id: "bankai", label: "Bankai: Hihiō Zabimaru", sprite: "renji_bankai", dmgMult: 1.8, stepMs: 200, attackMs: 750, reiDrain: 2.5, minLevel: 10 },
     ],
     skill: { name: "Higa Zekkō", range: 3, cost: 18, mult: 2.4, cdMs: 2500, color: 0xff6a4a },
+  },
+  // Quincy: corpo a corpo fraco, flecha de longe e barata (a "segunda forma" é o Letzt Stil)
+  ishida: {
+    id: "ishida",
+    name: "Ishida",
+    atk: 10,
+    def: 3,
+    forms: [
+      { id: "shikai", label: "Quincy: Ginrei Kojaku", sprite: "ishida", dmgMult: 1, stepMs: 240, attackMs: 900, reiDrain: 0, minLevel: 1 },
+      { id: "bankai", label: "Quincy: Letzt Stil", sprite: "ishida_power", dmgMult: 1.6, stepMs: 180, attackMs: 650, reiDrain: 2.5, minLevel: 10 },
+    ],
+    skill: { name: "Licht Regen", range: 7, cost: 16, mult: 2.5, cdMs: 2500, color: 0x7fd6ff },
+  },
+  // braço do gigante: o mais forte e resistente, o mais lento
+  sado: {
+    id: "sado",
+    name: "Sado",
+    atk: 17,
+    def: 7,
+    forms: [
+      { id: "shikai", label: "Brazo Derecha de Gigante", sprite: "sado", dmgMult: 1, stepMs: 290, attackMs: 1100, reiDrain: 0, minLevel: 1 },
+      { id: "bankai", label: "Brazo Izquierda del Diablo", sprite: "sado_power", dmgMult: 1.85, stepMs: 200, attackMs: 800, reiDrain: 2.5, minLevel: 10 },
+    ],
+    skill: { name: "El Directo", range: 3, cost: 20, mult: 2.8, cdMs: 3000, color: 0xff5040 },
   },
 };
 

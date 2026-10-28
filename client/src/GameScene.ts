@@ -3,7 +3,7 @@
 import Phaser from "phaser";
 import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
-import { TILE, SPRITES, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, type GameMap } from "../../shared/src";
+import { TILE, TICK_MS, SPRITES, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, type GameMap } from "../../shared/src";
 import { serverNow } from "./clock";
 
 const VIEW_W = 15;
@@ -22,7 +22,33 @@ interface View {
   lastMoveAt: number;
   stepMs: number;
   isMonster: boolean;
+  /** respirando parado (tween de escala) */
+  idle?: Phaser.Tweens.Tween;
+  /** aura do Bankai, atrás do sprite */
+  aura?: Phaser.GameObjects.Sprite;
 }
+
+// efeitos (art/raw/62 a 64 -> art/fx.py): uma linha por efeito, 4 quadros
+const FX = {
+  combat: { cell: 64, rows: ["slash", "hit", "death", "level"] },
+  skills: { cell: 64, rows: ["getsuga", "ice", "fang", "heal"] },
+  aura: { cell: 96, rows: ["aura_ichigo", "aura_rukia", "aura_renji", "aura_blue"] },
+  skills2: { cell: 64, rows: ["arrow", "arrowrain", "punch", "blast"] },
+} as const;
+/** aura do Bankai (ou forma liberada) de cada personagem */
+const AURA: Record<string, string> = { ichigo: "aura_ichigo", rukia: "aura_rukia", renji: "aura_renji", ishida: "aura_blue", sado: "aura_renji" };
+/** habilidade de cada personagem: projétil que voa até o alvo, ou explosão no alvo */
+const SKILL_FX: Record<string, { anim: string; fly: boolean }> = {
+  ichigo: { anim: "getsuga", fly: true },
+  rukia: { anim: "ice", fly: false },
+  renji: { anim: "fang", fly: true },
+  ishida: { anim: "arrow", fly: true },
+  sado: { anim: "punch", fly: true },
+};
+
+/** O servidor anda em ticks de 100 ms: um passo de 260 ms acontece, na prática, a cada 300 ms.
+ * O cliente usa esse ritmo real; com o valor nominal ele deslizava rápido e parava a cada passo. */
+const realStep = (stepMs: number) => Math.ceil(stepMs / TICK_MS) * TICK_MS;
 
 const px = (x: number) => x * TILE + TILE / 2;
 const py = (y: number) => y * TILE + TILE;
@@ -60,6 +86,7 @@ export class GameScene extends Phaser.Scene {
       this.load.spritesheet(key, `/assets/sprites/${key}.png`, { frameWidth: def.frame, frameHeight: def.frame });
     this.load.image(SHOP_SPRITE, `/assets/sprites/${SHOP_SPRITE}.png`);
     this.load.spritesheet("items", "/assets/items.png", { frameWidth: 32, frameHeight: 32 });
+    for (const [name, f] of Object.entries(FX)) this.load.spritesheet(`fx_${name}`, `/assets/fx/${name}.png`, { frameWidth: f.cell, frameHeight: f.cell });
     // mapas do Tiled: o tileset é embutido no .tmj e a imagem fica ao lado
     for (const id of MAP_IDS) {
       this.load.tilemapTiledJSON(`map_${id}`, `/maps/${id}.tmj`);
@@ -72,6 +99,13 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setRoundPixels(true);
     this.showMap(this.room.state.players.get(this.myId)?.map ?? HOME_MAP);
 
+    for (const [name, f] of Object.entries(FX)) {
+      if (!this.textures.exists(`fx_${name}`)) continue;
+      f.rows.forEach((anim, row) => this.anims.create({
+        key: `fx-${anim}`, frames: this.anims.generateFrameNumbers(`fx_${name}`, { start: row * 4, end: row * 4 + 3 }),
+        frameRate: name === "aura" ? 8 : 14, repeat: name === "aura" ? -1 : 0,
+      }));
+    }
     for (const key of Object.keys(SPRITES).filter((k) => this.textures.exists(k)))
       for (let d = 0; d < 4; d++)
         this.anims.create({ key: `${key}-${d}`, frames: this.anims.generateFrameNumbers(key, { start: d * 4, end: d * 4 + 3 }), repeat: -1 });
@@ -126,6 +160,8 @@ export class GameScene extends Phaser.Scene {
     const v: View = { id, c, spr, label, bar, sprite: look.key, dir: e.dir, tx: e.x, ty: e.y, lastMoveAt: 0, stepMs: e.stepMs, isMonster };
     this.views.set(id, v);
     c.setDepth(c.y);
+    this.setIdle(v, true);
+    if (!isMonster) this.setAura(v, e.form ? e.charId : undefined);
     this.drawBar(v, e.hp, e.maxHp);
 
     e.onChange(() => {
@@ -142,6 +178,7 @@ export class GameScene extends Phaser.Scene {
           if (look2.tint) v.spr.setTint(look2.tint); else v.spr.clearTint();
         }
         v.label.setAlpha(e.online ? 1 : 0.55); // offline caçando aparece meio apagado
+        this.setAura(v, e.form ? e.charId : undefined);
         if (id === this.myId) this.onMe(e);
       }
     });
@@ -157,16 +194,70 @@ export class GameScene extends Phaser.Scene {
     v.tx = x;
     v.ty = y;
     v.lastMoveAt = this.time.now;
-    this.tweens.killTweensOf(v.c);
     if (far) {
       v.c.setPosition(px(x), py(y));
       return;
     }
-    this.tweens.add({ targets: v.c, x: px(x), y: py(y), duration: v.stepMs, ease: "Linear", onUpdate: () => v.c.setDepth(v.c.y) });
+    this.setIdle(v, false);
     const key = `${v.sprite}-${dir}`;
-    // 4 frames = 2 passos
+    // 4 frames = 2 passos, no ritmo real do servidor
     if (v.spr.anims.currentAnim?.key !== key || !v.spr.anims.isPlaying)
-      v.spr.anims.play({ key, frameRate: 2000 / v.stepMs, startFrame: v.spr.anims.isPlaying ? undefined : 0 });
+      v.spr.anims.play({ key, frameRate: 2000 / realStep(v.stepMs), startFrame: v.spr.anims.isPlaying ? undefined : 0 });
+  }
+
+  /** Leva cada personagem até o tile do servidor em velocidade constante (um tile por passo real).
+   * Se ficou para trás (pacote atrasado), acelera um pouco em vez de pular. */
+  private glide(delta: number) {
+    for (const v of this.views.values()) {
+      const tx = px(v.tx), ty = py(v.ty);
+      const dx = tx - v.c.x, dy = ty - v.c.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 0.01) continue;
+      let speed = TILE / realStep(v.stepMs);
+      if (dist > TILE * 1.2) speed *= 1 + (dist - TILE) / TILE; // atrasado: alcança sem teleportar
+      const step = Math.min(dist, speed * delta);
+      v.c.setPosition(v.c.x + (dx / dist) * step, v.c.y + (dy / dist) * step);
+      v.c.setDepth(v.c.y);
+    }
+  }
+
+  /** Toca um efeito de uma vez no mundo e some no fim. */
+  private playFx(anim: string, x: number, y: number, opts: { rotation?: number; scale?: number; depthOver?: boolean } = {}) {
+    if (!this.anims.exists(`fx-${anim}`)) return undefined;
+    const fx = this.add.sprite(x, y, "", 0).setScale(opts.scale ?? 1).setRotation(opts.rotation ?? 0).setDepth(opts.depthOver === false ? y - 1 : 1e6);
+    fx.play(`fx-${anim}`);
+    fx.once("animationcomplete", () => fx.destroy());
+    return fx;
+  }
+
+  /** Atacante avança um pouco na direção do alvo e volta (dá peso ao golpe). */
+  private lunge(a: View, b: View) {
+    const ang = Phaser.Math.Angle.Between(a.c.x, a.c.y, b.c.x, b.c.y);
+    this.tweens.add({ targets: a.spr, x: Math.cos(ang) * 6, y: Math.sin(ang) * 6, duration: 70, yoyo: true, ease: "Quad.easeOut",
+      onComplete: () => a.spr.setPosition(0, 0) });
+  }
+
+  /** Aura do Bankai: anel de reiatsu animado atrás do personagem enquanto a forma estiver ativa. */
+  private setAura(v: View, charId: string | undefined) {
+    const anim = charId && AURA[charId] ? `fx-${AURA[charId]}` : "";
+    if (anim && !this.anims.exists(anim)) return;
+    if (!anim) { v.aura?.destroy(); v.aura = undefined; return; }
+    if (v.aura?.anims.currentAnim?.key === anim) return;
+    v.aura?.destroy();
+    v.aura = this.add.sprite(0, 8, "", 0).setOrigin(0.5, 1).setAlpha(0.85).setBlendMode(Phaser.BlendModes.ADD);
+    v.aura.play(anim);
+    v.c.addAt(v.aura, 1); // atrás do sprite, na frente da sombra
+  }
+
+  /** Parado, o sprite "respira" (escala vertical sutil); andando, não. */
+  private setIdle(v: View, on: boolean) {
+    if (on && !v.idle) {
+      v.idle = this.tweens.add({ targets: v.spr, scaleY: v.spr.scaleX * 1.025, duration: 900 + Math.random() * 300, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    } else if (!on && v.idle) {
+      v.idle.stop();
+      v.idle = undefined;
+      v.spr.setScale(v.spr.scaleX);
+    }
   }
 
   private removeView(id: string, fade = false) {
@@ -195,7 +286,7 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({ targets: t, y: t.y - 22, alpha: 0, duration: 900, onComplete: () => t.destroy() });
   }
 
-  private onFx(fx: { t: string; id?: string; v?: number; from?: string; to?: string; color?: number; name?: string; text?: string }) {
+  private onFx(fx: { t: string; id?: string; v?: number; from?: string; to?: string; color?: number; name?: string; text?: string; skill?: boolean }) {
     const v = fx.id ? this.views.get(fx.id) : undefined;
     // som só do que envolve você: o próprio personagem ou o seu alvo
     const mine = fx.id === this.myId;
@@ -203,6 +294,11 @@ export class GameScene extends Phaser.Scene {
     switch (fx.t) {
       case "die":
         if (myTarget) sfx.die();
+        if (v?.isMonster) {
+          // fumaça do tamanho do monstro, mas contida (vários morrendo juntos cobriam a tela)
+          const puff = this.playFx("death", v.c.x, v.c.y - v.spr.displayHeight / 3, { scale: Math.min(1.1, 0.5 + v.spr.displayHeight / 120) });
+          if (puff) this.tweens.add({ targets: puff, alpha: 0, duration: 300, delay: 120 });
+        }
         break;
       case "book":
         sfx.chime();
@@ -216,6 +312,15 @@ export class GameScene extends Phaser.Scene {
       case "dmg":
         this.float(v, fx.v ? String(fx.v) : "errou", v?.isMonster ? "#ffffff" : "#ff5a4a");
         if (v && fx.v) { v.spr.setTintFill(0xffffff); this.time.delayedCall(70, () => this.restoreTint(v)); }
+        {
+          // golpe: quem bateu avança, o corte aparece no alvo (habilidade tem efeito próprio) e um impacto
+          const a = fx.from ? this.views.get(fx.from) : undefined;
+          if (a && v && !fx.skill) {
+            this.lunge(a, v);
+            if (!a.isMonster) this.playFx("slash", v.c.x, v.c.y - v.spr.displayHeight / 2, { rotation: Phaser.Math.Angle.Between(a.c.x, a.c.y, v.c.x, v.c.y) });
+          }
+          if (v && fx.v) this.playFx("hit", v.c.x + Phaser.Math.Between(-6, 6), v.c.y - v.spr.displayHeight / 2 + Phaser.Math.Between(-6, 6), { scale: 0.6 });
+        }
         if (mine && fx.v) sfx.hurt();
         else if (myTarget && fx.v) sfx.hit();
         break;
@@ -229,14 +334,21 @@ export class GameScene extends Phaser.Scene {
         break;
       case "heal":
         this.float(v, `+${fx.v}`, "#6dff7a");
+        if (v) this.playFx("heal", v.c.x, v.c.y - 20, { scale: 0.8 });
         if (mine) sfx.heal();
         break;
       case "level":
         this.float(v, `NÍVEL ${fx.v}!`, "#ffd84a", 14);
+        if (v) this.playFx("level", v.c.x, v.c.y - 28, { scale: 1.3 });
         if (mine) sfx.level();
         break;
       case "form":
-        this.float(v, fx.v ? "BANKAI!" : "Shikai", fx.v ? "#ff6a3a" : "#cfd8ff", 14);
+        {
+          // nome da liberação de cada um (Quincy e Fullbring não têm Bankai)
+          const cid = fx.id ? this.room.state.players.get(fx.id)?.charId : "";
+          const up = ({ ishida: "LETZT STIL!", sado: "DIABLO!" } as Record<string, string>)[cid ?? ""] ?? "BANKAI!";
+          this.float(v, fx.v ? up : "Forma normal", fx.v ? "#ff6a3a" : "#cfd8ff", 14);
+        }
         if (v && fx.v) this.cameras.main.shake(200, 0.004);
         if (mine && fx.v) sfx.bankai();
         break;
@@ -246,9 +358,22 @@ export class GameScene extends Phaser.Scene {
         if (!a || !b) break;
         this.float(a, fx.name!, "#bfe9ff", 11);
         if (fx.from === this.myId) sfx.skill();
-        const orb = this.add.ellipse(a.c.x, a.c.y - 20, 22, 10, fx.color, 0.9).setDepth(1e6);
-        orb.rotation = Phaser.Math.Angle.Between(a.c.x, a.c.y, b.c.x, b.c.y);
-        this.tweens.add({ targets: orb, x: b.c.x, y: b.c.y - 20, duration: 180, onComplete: () => orb.destroy() });
+        const p = this.room.state.players.get(fx.from!);
+        const sk = SKILL_FX[p?.charId ?? ""];
+        const ang = Phaser.Math.Angle.Between(a.c.x, a.c.y, b.c.x, b.c.y);
+        this.lunge(a, b);
+        if (sk && this.anims.exists(`fx-${sk.anim}`)) {
+          if (sk.fly) {
+            // projétil: sai do personagem e voa até o alvo
+            const shot = this.playFx(sk.anim, a.c.x, a.c.y - 20, { rotation: ang, scale: 0.9 });
+            if (shot) this.tweens.add({ targets: shot, x: b.c.x, y: b.c.y - 20, duration: 220 });
+          } else this.playFx(sk.anim, b.c.x, b.c.y - 20, { scale: 1.1 });
+          this.time.delayedCall(200, () => this.playFx("hit", b.c.x, b.c.y - 20));
+        } else {
+          const orb = this.add.ellipse(a.c.x, a.c.y - 20, 22, 10, fx.color, 0.9).setDepth(1e6);
+          orb.rotation = ang;
+          this.tweens.add({ targets: orb, x: b.c.x, y: b.c.y - 20, duration: 180, onComplete: () => orb.destroy() });
+        }
         break;
       }
     }
@@ -375,7 +500,7 @@ export class GameScene extends Phaser.Scene {
     const me = this.room.state.players.get(this.myId);
     if (this.held.length && me && time >= this.nextStepSend) {
       this.room.send("step", { dir: this.held[this.held.length - 1] });
-      this.nextStepSend = time + me.stepMs;
+      this.nextStepSend = time + realStep(me.stepMs);
     }
   }
 
@@ -441,7 +566,8 @@ export class GameScene extends Phaser.Scene {
     dot(me.x, me.y, "#ffffff", 3);
   }
 
-  update(time: number) {
+  update(time: number, delta: number) {
+    this.glide(delta);
     if (time >= this.nextMinimapAt) {
       this.nextMinimapAt = time + 250;
       this.drawMinimap(this.room.state.players.get(this.myId));
@@ -463,9 +589,10 @@ export class GameScene extends Phaser.Scene {
     }
     // volta ao quadro parado quando a entidade deixa de andar
     for (const v of this.views.values())
-      if (v.spr.anims.isPlaying && time - v.lastMoveAt > v.stepMs + 80) {
+      if (v.spr.anims.isPlaying && time - v.lastMoveAt > realStep(v.stepMs) + 120) {
         v.spr.anims.stop();
         v.spr.setFrame(v.dir * 4 + 1);
+        this.setIdle(v, true);
       }
     // cor do nome: verde = minha party, vermelho = atacou um jogador há pouco (bloqueado)
     const now = serverNow();

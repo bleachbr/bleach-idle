@@ -55,6 +55,11 @@ GAME_SPRITES = {
     "fishbone": ("31_fishbone_walk.png", 4, 4, 1.3, 2),
     "rukia_bankai": ("32_rukia_bankai_walk.png", 4, 4, 0.86, 1),
     "renji_bankai": ("33_renji_bankai_walk.png", 4, 4, 1.04, 1),
+    # personagens novos
+    "ishida": ("65_ishida_walk.png", 4, 4, 0.98, 1),
+    "ishida_power": ("66_ishida_power_walk.png", 4, 4, 0.98, 1),
+    "sado": ("67_sado_walk.png", 4, 4, 1.1, 1),
+    "sado_power": ("68_sado_power_walk.png", 4, 4, 1.1, 1),
     "hollow_menor": ("34_hollow_menor_walk.png", 4, 4, 0.8, 2),
     "hollow_rastejante": ("35_hollow_rastejante_walk.png", 4, 4, 0.85, 2),
     "hollow_acido": ("36_hollow_acido_walk.png", 4, 4, 1.15, 2),
