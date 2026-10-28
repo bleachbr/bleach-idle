@@ -152,3 +152,31 @@ Add a white captain coat (haori) worn over the black kimono: open at the front, 
 This is an EDIT of the attached sprite sheet: keep EXACTLY the same 4x4 layout, the same 16 cells, the same poses, the same body positions, the same scale, the same feet baseline, the same art style, the same colors, the same outline (#1a1822) and the same solid magenta #FF00FF background. Row 1 walking down (front), row 2 walking left, row 3 walking right, row 4 walking up (back). Change ONLY what is described below, consistently in all 16 cells; do not change the face, hair, weapon or body. Nothing may cross a cell edge. No text, no labels, no grid lines, no border.
 Add a white bone mask (like a hollow monster skull mask) covering the whole face: front view shows the white mask with two black eye holes and a grinning row of teeth at the mouth; side views show the mask in profile covering the face; back view (row 4) shows only a thin white edge of the mask at the sides of the head, hair unchanged.
 ```
+
+# Rodada 5: monstros de Hueco Mundo
+
+Script `work/gen_hueco.sh`. Adjuchas e Gillian usaram a folha do Hollow (09) como referência de estilo e layout; o Arrancar usou a do Renji (11). Os três saíram na 1ª tentativa, sem recusas.
+
+## p_23_adjuchas_walk
+
+```text
+A monster: a sleek, fast, wolf-like four-legged spirit beast. Black body with dark violet shading and white bone armor plates along the spine, long thin tail, sharp claws. Its head is a long white bone skull mask shaped like a wolf or lizard skull, with dark eye holes and bared teeth. A round hole goes straight through its chest/torso (magenta shows through it in front and side views).
+Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT (left side view), row 3 walking RIGHT (right side view), row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle with a clear stride. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge.
+Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_24_gillian_walk
+
+```text
+A monster: a gigantic, very tall spirit giant shaped like a long narrow cone wrapped in a floor-length jet-black cloak, a ring of white spikes around the collar, and a white bone mask with a very long pointed nose and small round dark eye holes at the top. No visible arms; only small black feet peek out under the cloak while walking. It fills most of the cell height (tall and thin), slow heavy walk.
+Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT (left side view), row 3 walking RIGHT (right side view), row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle with a clear stride. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge.
+Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_25_arrancar_walk
+
+```text
+A humanoid warrior with REALISTIC adult proportions (same height and proportions as the reference character, NOT chibi): messy pale blue hair, a fragment of white bone mask covering one side of the jaw, a white high-collared uniform jacket and white hakama trousers with a black sash, black shoes, a katana with a white hilt at the left hip, and a small round hole visible through the stomach in the front view.
+Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT (left side view), row 3 walking RIGHT (right side view), row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle with a clear stride. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge.
+Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```

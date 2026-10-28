@@ -11,6 +11,8 @@ export interface SaveData {
   exp: number;
   hp: number;
   rei: number;
+  /** mapa (ausente em saves antigos = Karakura) */
+  map?: string;
   x: number;
   y: number;
   gold?: number;

@@ -23,6 +23,7 @@ export class Player extends Schema {
   autoTarget = false;
   autoHunt = false;
   autoHeal = 0; // % de HP para tomar poção; 0 = desligado
+  map = "karakura"; // mapa em que está
   look = ""; // visual do equipamento (lookOf); todos veem
   partyId = ""; // party atual ("" = sem party); membros se veem em verde
   partyLead = false;
@@ -63,13 +64,14 @@ defineTypes(Player, {
   x: "int16", y: "int16", dir: "uint8", stepMs: "uint16",
   hp: "int32", maxHp: "int32", rei: "number", maxRei: "int32",
   level: "uint16", exp: "number", targetId: "string",
-  online: "boolean", autoTarget: "boolean", autoHunt: "boolean", autoHeal: "uint8", look: "string",
+  online: "boolean", autoTarget: "boolean", autoHunt: "boolean", autoHeal: "uint8", look: "string", map: "string",
   partyId: "string", partyLead: "boolean", pvpUntil: "number",
 });
 
 export class Monster extends Schema {
   id = "";
   kind = "";
+  map = "karakura";
   x = 0;
   y = 0;
   dir = 0;
@@ -86,7 +88,7 @@ export class Monster extends Schema {
   lastHitBy = "";
 }
 defineTypes(Monster, {
-  id: "string", kind: "string", x: "int16", y: "int16", dir: "uint8", stepMs: "uint16",
+  id: "string", kind: "string", map: "string", x: "int16", y: "int16", dir: "uint8", stepMs: "uint16",
   hp: "int32", maxHp: "int32", targetId: "string",
 });
 

@@ -3,9 +3,10 @@
 import { Room, Client, ServerError } from "@colyseus/core";
 import type { IncomingMessage } from "node:http";
 import {
-  CHARS, START_LEVEL, START_KIT, TEMPLE, INV_SIZE, DEPOT_SIZE, expForLevel, maxHp, maxRei, addItem, type Slot,
+  CHARS, START_LEVEL, START_KIT, INV_SIZE, DEPOT_SIZE, expForLevel, maxHp, maxRei, addItem, type Slot,
 } from "../../shared/src";
 import * as db from "./db";
+import { HOME, TEMPLE } from "./maps";
 import { hashPassword, verifyPassword, issueTicket, blocked, fail, clearFails } from "./auth";
 
 const MAX_CHARS = 5;
@@ -19,7 +20,7 @@ export function newCharacter(name: string, charId: string): db.SaveData {
   for (const s of START_KIT.inv) addItem(inv, s.id, s.qty);
   return {
     name, charId, level: START_LEVEL, exp: expForLevel(START_LEVEL),
-    hp: maxHp(START_LEVEL), rei: maxRei(START_LEVEL), x: TEMPLE.x, y: TEMPLE.y,
+    hp: maxHp(START_LEVEL), rei: maxRei(START_LEVEL), map: HOME.id, x: TEMPLE.x, y: TEMPLE.y,
     gold: START_KIT.gold, inv, depot: Array(DEPOT_SIZE).fill(null), equip: { ...START_KIT.equip },
   };
 }

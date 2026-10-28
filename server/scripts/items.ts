@@ -1,9 +1,10 @@
 // Teste de itens: kit inicial, loja, depot, loot da hunt e venda do loot.
-import { play } from "./lib";
+import { play, patchSave } from "./lib";
+import { TEMPLE } from "../src/maps";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const name = process.argv[2] ?? "Teste Loja";
-const room = await play(name);
+const room = await play(name, "ichigo", (id) => patchSave(id, { map: "karakura", x: TEMPLE.x, y: TEMPLE.y + 1, hp: 9999 }));
 let inv: any = null;
 const opened: string[] = [];
 room.onMessage("*", () => {});
@@ -37,8 +38,14 @@ room.send("auto", { autoHunt: true, autoHeal: 50 });
 await sleep(25000);
 room.send("auto", { autoHunt: false });
 console.log(`hunt 25s: +${inv.gold - g0} kan, inv:`, summary().inv);
+// volta à praça por "voltar à cidade", tentando até sair de combate
+const me = () => room.state.players.get(name.toLowerCase());
+for (let i = 0; i < 12 && !(me().x === TEMPLE.x && me().y === TEMPLE.y); i++) {
+  room.send("recall");
+  await sleep(2500);
+}
 room.send("interact", { kind: "shop" });
-await sleep(9000);
+await sleep(3000);
 console.log("abriu loja de novo:", opened.at(-1));
 room.send("sellLoot");
 await sleep(400);

@@ -3,7 +3,7 @@
 // quem valida distância, dinheiro e espaço é o servidor.
 import type { Room } from "colyseus.js";
 import {
-  ITEMS, SHOP, EQUIP_SLOTS, SLOT_LABEL, GOLD_ICON, CURRENCY, DEPOT, SHOP_NPC, SENKAIMON, TRAVEL, INTERACT_RANGE, chebyshev,
+  ITEMS, SHOP, EQUIP_SLOTS, SLOT_LABEL, GOLD_ICON, CURRENCY, TRAVEL, INTERACT_RANGE, chebyshev,
   type ItemDef, type Slot, type EquipSlot,
 } from "../../shared/src";
 
@@ -38,6 +38,8 @@ function tooltip(d: ItemDef) {
 export function initInventory(room: Room<any>, onPanel: (open: boolean) => void) {
   let state: InvMsg | null = null;
   let open: "" | "depot" | "shop" | "travel" = "";
+  let openedAt: { x: number; y: number } | null = null;
+  let lastPos = { x: 0, y: 0 };
 
   const close = () => {
     open = "";
@@ -55,6 +57,7 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void)
   });
   room.onMessage("open", (m: { kind: "depot" | "shop" | "travel" }) => {
     open = m.kind;
+    openedAt = { ...lastPos };
     $("#modal").hidden = false;
     onPanel(true);
     render();
@@ -104,7 +107,7 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void)
     }, hint)));
 
     if (!open) return;
-    $("#modal-title").textContent = open === "depot" ? "Depot" : open === "shop" ? "Loja do Kisuke" : "Senkaimon";
+    $("#modal-title").textContent = open === "depot" ? "Depot" : open === "shop" ? "Loja do Kisuke" : "Portal";
     const body = $("#modal-body");
     if (open === "travel") {
       const list = document.createElement("div");
@@ -183,8 +186,8 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void)
   return {
     /** fecha a janela se o jogador se afastar do depot ou da loja */
     onMove(x: number, y: number) {
-      const at = open === "depot" ? DEPOT : open === "shop" ? SHOP_NPC : open === "travel" ? SENKAIMON : null;
-      if (at && chebyshev(x, y, at.x, at.y) > INTERACT_RANGE) close();
+      lastPos = { x, y };
+      if (open && openedAt && chebyshev(x, y, openedAt.x, openedAt.y) > INTERACT_RANGE) close();
     },
   };
 }

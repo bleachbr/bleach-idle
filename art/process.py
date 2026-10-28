@@ -46,6 +46,10 @@ GAME_SPRITES = {
     "ichigo_shikai__haori_mask": ("20_ichigo_haori_mask_walk.png", 4, 4, 1.00, 1),
     "rukia__haori_mask": ("21_rukia_haori_mask_walk.png", 4, 4, 0.86, 1),
     "renji__haori_mask": ("22_renji_haori_mask_walk.png", 4, 4, 1.04, 1),
+    # Hueco Mundo
+    "adjuchas": ("23_adjuchas_walk.png", 4, 4, 1.15, 2),
+    "gillian": ("24_gillian_walk.png", 4, 4, 2.0, 2),
+    "arrancar": ("25_arrancar_walk.png", 4, 4, 1.0, 1),
 }
 
 

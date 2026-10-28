@@ -5,10 +5,10 @@
 import { Room, Client, ServerError } from "@colyseus/core";
 import { WorldState, Player, Monster, type DeathReport, type Interact } from "./schema";
 import {
-  generateMap, walkable, nearestWalkable, inPZ, TEMPLE, MAP_W, DEPOT, SHOP_NPC, SENKAIMON,
+  walkable, nearestWalkable, inPZ, type GameMap,
   PARTY_MAX, PARTY_SHARE_RANGE, PARTY_SHARE_BONUS, PARTY_LEVEL_RATIO, PARTY_INVITE_MS,
   PVP_MIN_LEVEL, PVP_DAMAGE, PVP_LOCK_MS, RECALL_COMBAT_MS, RECALL_COOLDOWN_MS, TRAVEL,
-  CHARS, MONSTERS, SPAWNS, TICK_MS, DIR_VEC, type Dir,
+  CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir,
   expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot,
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf,
@@ -17,8 +17,8 @@ import {
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
 import { consumeTicket, type Ticket } from "./auth";
+import { MAPS, HOME, TEMPLE, SPAWNS, tileKey } from "./maps";
 
-const MAP = generateMap();
 const OFFLINE_MAX_MS = 12 * 3600_000;
 const AGGRO = 5;
 const LEASH = 10;
@@ -26,7 +26,8 @@ const VIEW = 8;
 const HUNT_RADIUS = 30;
 const REGEN_MS = 2000;
 
-const key = (x: number, y: number) => y * MAP_W + x;
+const mapOf = (e: { map: string }): GameMap => MAPS[e.map] ?? HOME;
+const sameMap = (a: { map: string }, b: { map: string }) => a.map === b.map;
 const isPlayer = (e: Player | Monster): e is Player => e instanceof Player;
 
 interface Party { id: string; leader: string; members: string[]; warnedAt: number }
@@ -55,9 +56,9 @@ export class WorldRoom extends Room<WorldState> {
 
     this.onMessage("move", (c, m: { x: number; y: number }) => {
       const p = this.me(c);
-      if (!p || !Number.isInteger(m?.x) || !Number.isInteger(m?.y) || !walkable(MAP, m.x, m.y)) return;
+      if (!p || !Number.isInteger(m?.x) || !Number.isInteger(m?.y) || !walkable(mapOf(p), m.x, m.y)) return;
       p.follow = false;
-      p.path = findPath(p.x, p.y, (x, y) => x === m.x && y === m.y, (x, y) => !walkable(MAP, x, y));
+      p.path = findPath(p.x, p.y, (x, y) => x === m.x && y === m.y, (x, y) => !walkable(mapOf(p), x, y));
     });
     this.onMessage("step", (c, m: { dir: number }) => {
       const p = this.me(c);
@@ -65,13 +66,14 @@ export class WorldRoom extends Room<WorldState> {
       const [dx, dy] = DIR_VEC[m.dir as Dir];
       p.follow = false;
       p.dir = m.dir;
-      p.path = walkable(MAP, p.x + dx, p.y + dy) ? [{ x: p.x + dx, y: p.y + dy }] : [];
+      p.path = walkable(mapOf(p), p.x + dx, p.y + dy) ? [{ x: p.x + dx, y: p.y + dy }] : [];
     });
     this.onMessage("target", (c, m: { id: string }) => {
       const p = this.me(c);
       if (!p) return;
       if (!m?.id || m.id === p.targetId) { p.targetId = ""; p.follow = false; return; }
-      if (this.state.monsters.has(m.id)) { p.targetId = m.id; p.follow = true; return; }
+      const mo = this.state.monsters.get(m.id);
+      if (mo) { if (sameMap(p, mo)) { p.targetId = m.id; p.follow = true; } return; }
       const v = this.state.players.get(m.id);
       if (!v) return;
       const why = this.cantAttack(p, v);
@@ -83,7 +85,7 @@ export class WorldRoom extends Room<WorldState> {
       const p = this.me(c);
       if (!p) return;
       const list = [...this.state.monsters.values()]
-        .filter((mo) => chebyshev(p.x, p.y, mo.x, mo.y) <= VIEW)
+        .filter((mo) => sameMap(p, mo) && chebyshev(p.x, p.y, mo.x, mo.y) <= VIEW)
         .sort((a, b) => chebyshev(p.x, p.y, a.x, a.y) - chebyshev(p.x, p.y, b.x, b.y));
       if (!list.length) return;
       const i = list.findIndex((mo) => mo.id === p.targetId);
@@ -215,7 +217,8 @@ export class WorldRoom extends Room<WorldState> {
     this.recompute(p);
     p.hp = Math.max(1, Math.min(saved.hp ?? p.maxHp, p.maxHp));
     p.rei = Math.min(saved.rei ?? p.maxRei, p.maxRei);
-    const pos = walkable(MAP, saved.x, saved.y) ? saved : TEMPLE;
+    p.map = saved.map && MAPS[saved.map] ? saved.map : HOME.id;
+    const pos = walkable(mapOf(p), saved.x, saved.y) ? saved : (p.map = HOME.id, TEMPLE);
     p.x = pos.x;
     p.y = pos.y;
     return p;
@@ -251,9 +254,9 @@ export class WorldRoom extends Room<WorldState> {
   private tick() {
     const now = Date.now();
     this.monsterAt.clear();
-    for (const m of this.state.monsters.values()) this.monsterAt.add(key(m.x, m.y));
+    for (const m of this.state.monsters.values()) this.monsterAt.add(tileKey(m.map, m.x, m.y));
     this.playerAt.clear();
-    for (const p of this.state.players.values()) this.playerAt.set(key(p.x, p.y), 1);
+    for (const p of this.state.players.values()) this.playerAt.set(tileKey(p.map, p.x, p.y), 1);
 
     for (const p of [...this.state.players.values()]) {
       if (!p.online && (!p.autoHunt || now - p.offlineSince > OFFLINE_MAX_MS)) {
@@ -306,13 +309,13 @@ export class WorldRoom extends Room<WorldState> {
     if (t && p.follow && now >= p.nextStepAt) {
       const tx = t.x, ty = t.y;
       p.path = chebyshev(p.x, p.y, tx, ty) > 1
-        ? findPath(p.x, p.y, (x, y) => chebyshev(x, y, tx, ty) === 1, (x, y) => !walkable(MAP, x, y) || this.monsterAt.has(key(x, y)))
+        ? findPath(p.x, p.y, (x, y) => chebyshev(x, y, tx, ty) === 1, (x, y) => !walkable(mapOf(p), x, y) || this.monsterAt.has(tileKey(p.map, x, y)))
         : [];
     }
     if (p.path.length && now >= p.nextStepAt) {
       const next = p.path[0];
-      if (this.monsterAt.has(key(next.x, next.y))) p.path = [];
-      else if (p.pvpUntil > now && inPZ(next.x, next.y) && !inPZ(p.x, p.y)) {
+      if (this.monsterAt.has(tileKey(p.map, next.x, next.y))) p.path = [];
+      else if (p.pvpUntil > now && inPZ(mapOf(p), next.x, next.y) && !inPZ(mapOf(p), p.x, p.y)) {
         p.path = [];
         if (now > p.pzWarnAt) {
           p.pzWarnAt = now + 5000;
@@ -320,13 +323,14 @@ export class WorldRoom extends Room<WorldState> {
         }
       } else {
         p.path.shift();
-        this.playerAt.delete(key(p.x, p.y));
+        this.playerAt.delete(tileKey(p.map, p.x, p.y));
         this.stepTo(p, next, now);
-        this.playerAt.set(key(p.x, p.y), 1);
+        this.playerAt.set(tileKey(p.map, p.x, p.y), 1);
       }
     }
 
-    if (t && chebyshev(p.x, p.y, t.x, t.y) <= 1 && now >= p.nextAttackAt && !inPZ(p.x, p.y)) {
+    if (t && t.hp <= 0) t = undefined; // morreu pela habilidade neste mesmo tick
+    if (t && chebyshev(p.x, p.y, t.x, t.y) <= 1 && now >= p.nextAttackAt && !inPZ(mapOf(p), p.x, p.y)) {
       p.nextAttackAt = now + form.attackMs;
       this.face(p, t);
       this.hit(p, t, 1, now);
@@ -337,7 +341,7 @@ export class WorldRoom extends Room<WorldState> {
     const def = MONSTERS[m.kind];
     const sp = SPAWNS[m.spawnIndex];
     let t = m.targetId ? this.state.players.get(m.targetId) : undefined;
-    if (t && (t.hp <= 0 || inPZ(t.x, t.y) || chebyshev(m.x, m.y, sp.x, sp.y) > LEASH + sp.radius)) {
+    if (t && (t.hp <= 0 || !sameMap(m, t) || inPZ(mapOf(t), t.x, t.y) || chebyshev(m.x, m.y, sp.x, sp.y) > LEASH + sp.radius)) {
       t = undefined;
       m.targetId = "";
       m.path = this.monsterPath(m, (x, y) => x === sp.x && y === sp.y, 2000);
@@ -347,7 +351,7 @@ export class WorldRoom extends Room<WorldState> {
       let bd = AGGRO + 1;
       for (const p of this.state.players.values()) {
         const d = chebyshev(m.x, m.y, p.x, p.y);
-        if (d < bd && p.hp > 0 && !inPZ(p.x, p.y)) { best = p; bd = d; }
+        if (d < bd && p.hp > 0 && sameMap(m, p) && !inPZ(mapOf(p), p.x, p.y)) { best = p; bd = d; }
       }
       if (best) { t = best; m.targetId = best.id; }
     }
@@ -380,22 +384,23 @@ export class WorldRoom extends Room<WorldState> {
 
     if (m.path.length && now >= m.nextStepAt) {
       const next = m.path[0];
-      if (this.blockedForMonster(next.x, next.y)) m.path = [];
+      if (this.blockedForMonster(m.map, next.x, next.y)) m.path = [];
       else {
         m.path.shift();
-        this.monsterAt.delete(key(m.x, m.y));
+        this.monsterAt.delete(tileKey(m.map, m.x, m.y));
         this.stepTo(m, next, now);
-        this.monsterAt.add(key(m.x, m.y));
+        this.monsterAt.add(tileKey(m.map, m.x, m.y));
       }
     }
   }
 
-  private blockedForMonster(x: number, y: number) {
-    return !walkable(MAP, x, y) || inPZ(x, y) || this.monsterAt.has(key(x, y)) || this.playerAt.has(key(x, y));
+  private blockedForMonster(map: string, x: number, y: number) {
+    const k = tileKey(map, x, y);
+    return !walkable(MAPS[map], x, y) || inPZ(MAPS[map], x, y) || this.monsterAt.has(k) || this.playerAt.has(k);
   }
 
   private monsterPath(m: Monster, goal: (x: number, y: number) => boolean, maxNodes: number) {
-    return findPath(m.x, m.y, goal, (x, y) => this.blockedForMonster(x, y), maxNodes);
+    return findPath(m.x, m.y, goal, (x, y) => this.blockedForMonster(m.map, x, y), maxNodes);
   }
 
   private stepTo(e: Player | Monster, next: Pt, now: number) {
@@ -413,6 +418,9 @@ export class WorldRoom extends Room<WorldState> {
 
   private hit(p: Player, t: Player | Monster, mult: number, now: number) {
     if (isPlayer(t)) return this.pvpHit(p, t, mult, now);
+    // no mesmo tick a habilidade pode matar e o golpe corpo a corpo acertar o mesmo alvo:
+    // monstro já morto não apanha (antes contava 2 mortes: XP e loot em dobro e 2 respawns)
+    if (t.hp <= 0 || !this.state.monsters.has(t.id)) return;
     const ch = CHARS[p.charId];
     const def = MONSTERS[t.kind];
     const dmg = rollDamage(playerAtk(ch.atk, p.level) + equipBonus(p.equip).atk, ch.forms[p.form].dmgMult * mult, def.def);
@@ -426,7 +434,7 @@ export class WorldRoom extends Room<WorldState> {
 
   private trySkill(p: Player, t: Player | Monster, now: number, auto: boolean): boolean {
     const sk = CHARS[p.charId].skill;
-    if (now < p.skillReadyAt || p.rei < sk.cost || inPZ(p.x, p.y)) return false;
+    if (now < p.skillReadyAt || p.rei < sk.cost || inPZ(mapOf(p), p.x, p.y)) return false;
     if (auto && p.rei < p.maxRei * 0.4) return false; // Auto Hunt guarda reiatsu para o Bankai
     if (chebyshev(p.x, p.y, t.x, t.y) > sk.range) return false;
     if (isPlayer(t) && this.cantAttack(p, t)) return false;
@@ -465,10 +473,11 @@ export class WorldRoom extends Room<WorldState> {
   }
 
   private killMonster(m: Monster, killer: Player) {
+    if (!this.state.monsters.has(m.id)) return;
     const def = MONSTERS[m.kind];
     this.broadcast("fx", { t: "die", id: m.id });
     this.state.monsters.delete(m.id);
-    this.monsterAt.delete(key(m.x, m.y));
+    this.monsterAt.delete(tileKey(m.map, m.x, m.y));
     this.clock.setTimeout(() => this.spawnMonster(m.spawnIndex), def.respawnMs);
     this.shareExp(killer, m, def.exp, def.name);
     this.giveLoot(killer, m.kind);
@@ -500,6 +509,7 @@ export class WorldRoom extends Room<WorldState> {
     this.recompute(p);
     p.hp = p.maxHp;
     p.rei = p.maxRei;
+    p.map = HOME.id;
     p.x = TEMPLE.x;
     p.y = TEMPLE.y;
     p.path = [];
@@ -563,6 +573,7 @@ export class WorldRoom extends Room<WorldState> {
     let best: Monster | undefined;
     let bd = range + 1;
     for (const m of this.state.monsters.values()) {
+      if (!sameMap(p, m)) continue;
       const d = chebyshev(p.x, p.y, m.x, m.y);
       if (d < bd) { best = m; bd = d; }
     }
@@ -575,17 +586,18 @@ export class WorldRoom extends Room<WorldState> {
     for (let tries = 0; tries < 40; tries++) {
       const x = sp.x + Math.round((Math.random() * 2 - 1) * sp.radius);
       const y = sp.y + Math.round((Math.random() * 2 - 1) * sp.radius);
-      if (this.blockedForMonster(x, y)) continue;
+      if (this.blockedForMonster(sp.map, x, y)) continue;
       const m = new Monster();
       m.id = `m${++this.monsterSeq}`;
       m.kind = sp.kind;
+      m.map = sp.map;
       m.x = x;
       m.y = y;
       m.hp = m.maxHp = def.hp;
       m.stepMs = def.stepMs;
       m.spawnIndex = i;
       this.state.monsters.set(m.id, m);
-      this.monsterAt.add(key(x, y));
+      this.monsterAt.add(tileKey(sp.map, x, y));
       return;
     }
     this.clock.setTimeout(() => this.spawnMonster(i), 5000); // spawn ocupado: tenta de novo
@@ -628,9 +640,10 @@ export class WorldRoom extends Room<WorldState> {
       if (!p || !["depot", "shop", "travel"].includes(m?.kind)) return;
       if (this.near(p, m.kind)) return this.open(p, m.kind);
       // anda até ficar ao alcance; o tick abre a janela quando o caminho acabar
-      const at = m.kind === "depot" ? DEPOT : m.kind === "shop" ? SHOP_NPC : SENKAIMON;
+      const at = this.placeOf(p, m.kind);
+      if (!at) return;
       p.follow = false;
-      p.path = findPath(p.x, p.y, (x, y) => chebyshev(x, y, at.x, at.y) <= INTERACT_RANGE, (x, y) => !walkable(MAP, x, y));
+      p.path = findPath(p.x, p.y, (x, y) => chebyshev(x, y, at.x, at.y) <= INTERACT_RANGE, (x, y) => !walkable(mapOf(p), x, y));
       p.pendingInteract = p.path.length ? m.kind : "";
     });
     this.onMessage("depot", (c, m: { op: "put" | "take"; index: number }) => {
@@ -706,9 +719,14 @@ export class WorldRoom extends Room<WorldState> {
     this.sendInv(p);
   }
 
+  private placeOf(p: Player, kind: Interact) {
+    const m = mapOf(p);
+    return kind === "depot" ? m.depot : kind === "shop" ? m.shop : m.gate;
+  }
+
   private near(p: Player, kind: Interact) {
-    const at = kind === "depot" ? DEPOT : kind === "shop" ? SHOP_NPC : SENKAIMON;
-    return chebyshev(p.x, p.y, at.x, at.y) <= INTERACT_RANGE;
+    const at = this.placeOf(p, kind);
+    return !!at && chebyshev(p.x, p.y, at.x, at.y) <= INTERACT_RANGE;
   }
 
   private open(p: Player, kind: Interact) {
@@ -784,7 +802,7 @@ export class WorldRoom extends Room<WorldState> {
         ?? (now < p.recallReadyAt ? `"Voltar à cidade" recarrega em ${Math.ceil((p.recallReadyAt - now) / 1000)} s.` : undefined);
       if (why) return this.log(p, why);
       p.recallReadyAt = now + RECALL_COOLDOWN_MS;
-      this.teleport(p, TEMPLE);
+      this.teleport(p, HOME.id, TEMPLE);
       this.log(p, "Você voltou à cidade.");
     });
     this.onMessage("travel", (c, m: { dest: string }) => {
@@ -792,13 +810,15 @@ export class WorldRoom extends Room<WorldState> {
       const d = TRAVEL.find((t) => t.id === m?.dest);
       if (!p || !d) return;
       const now = Date.now();
-      if (!this.near(p, "travel")) return this.log(p, "Chegue perto do Senkaimon.");
+      if (!this.near(p, "travel")) return this.log(p, "Chegue perto de um portal (Senkaimon ou Garganta).");
       const why = this.travelBlocked(p, now);
       if (why) return this.log(p, why);
       if (p.level < d.minLevel) return this.log(p, `${d.name} exige nível ${d.minLevel}.`);
       if (p.gold < d.cost) return this.log(p, `A viagem custa ${d.cost} kan.`);
       p.gold -= d.cost;
-      this.teleport(p, nearestWalkable(MAP, d.x, d.y));
+      const arrival = MAPS[d.map]?.arrivals[d.id];
+      if (!arrival) return this.log(p, `Destino ${d.name} sem ponto de chegada no mapa.`);
+      this.teleport(p, d.map, nearestWalkable(MAPS[d.map], arrival.x, arrival.y));
       this.log(p, `Viajou para ${d.name} (${d.cost} kan).`);
       this.sendInv(p);
     });
@@ -810,7 +830,8 @@ export class WorldRoom extends Room<WorldState> {
     return `Você atacou um jogador: viagem bloqueada por ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}.`;
   }
 
-  private teleport(p: Player, to: { x: number; y: number }) {
+  private teleport(p: Player, map: string, to: { x: number; y: number }) {
+    p.map = map;
     p.path = [];
     p.targetId = "";
     p.follow = false;
@@ -824,10 +845,11 @@ export class WorldRoom extends Room<WorldState> {
   private cantAttack(a: Player, v: Player): string | undefined {
     if (a === v) return "Não dá para atacar a si mesmo.";
     if (v.hp <= 0) return `${v.name} já caiu.`;
+    if (!sameMap(a, v)) return `${v.name} está em outro mapa.`;
     if (a.partyId && a.partyId === v.partyId) return `${v.name} está na sua party.`;
     if (a.level < PVP_MIN_LEVEL) return `PvP só a partir do nível ${PVP_MIN_LEVEL}.`;
     if (v.level < PVP_MIN_LEVEL) return `${v.name} está protegido (abaixo do nível ${PVP_MIN_LEVEL}).`;
-    if (inPZ(a.x, a.y) || inPZ(v.x, v.y)) return "Não há combate na zona de proteção.";
+    if (inPZ(mapOf(a), a.x, a.y) || inPZ(mapOf(v), v.x, v.y)) return "Não há combate na zona de proteção.";
     return undefined;
   }
 
@@ -866,7 +888,7 @@ export class WorldRoom extends Room<WorldState> {
     const party = this.parties.get(killer.partyId);
     const near = party
       ? party.members.map((id) => this.state.players.get(id)).filter((x): x is Player =>
-        !!x && x.hp > 0 && chebyshev(x.x, x.y, m.x, m.y) <= PARTY_SHARE_RANGE)
+        !!x && x.hp > 0 && sameMap(x, m) && chebyshev(x.x, x.y, m.x, m.y) <= PARTY_SHARE_RANGE)
       : [killer];
     const lv = near.map((x) => x.level);
     const fair = Math.min(...lv) >= Math.floor(Math.max(...lv) * PARTY_LEVEL_RATIO);
@@ -923,7 +945,7 @@ export class WorldRoom extends Room<WorldState> {
 
   private toSave(p: Player): db.SaveData {
     return {
-      name: p.name, charId: p.charId, level: p.level, exp: p.exp, hp: p.hp, rei: Math.round(p.rei), x: p.x, y: p.y,
+      name: p.name, charId: p.charId, level: p.level, exp: p.exp, hp: p.hp, rei: Math.round(p.rei), map: p.map, x: p.x, y: p.y,
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
       autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal,
       offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, deaths: p.offlineDeaths },

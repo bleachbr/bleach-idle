@@ -1,8 +1,10 @@
 // Teste de party, PvP e viagem.
-import { expForLevel, generateMap, nearestWalkable, TEMPLE, TRAVEL, SENKAIMON } from "../../shared/src";
+import { expForLevel, nearestWalkable } from "../../shared/src";
+import { HOME, MAPS, TEMPLE } from "../src/maps";
 import { play, patchSave, sleep, once } from "./lib";
 
-const map = generateMap();
+const map = HOME;
+const GATE = HOME.gate!;
 const ok = (label: string, cond: boolean) => console.log(`${cond ? "OK    " : "FALHOU"} ${label}`);
 const at = (x: number, y: number) => nearestWalkable(map, x, y);
 const lvl = (level: number) => ({ level, exp: expForLevel(level), hp: 9999, rei: 9999, gold: 500, inv: [] });
@@ -74,14 +76,14 @@ await sleep(7000);
 ok("não entra na zona de proteção", e.logs.some((l) => l.includes("zona de proteção")) && e.me().y < 11);
 
 // ---- viagem e voltar à cidade (sem bloqueio)
-const h = await bot("Viajante", 12, { x: SENKAIMON.x, y: SENKAIMON.y + 2 });
+const h = await bot("Viajante", 12, { x: GATE.x, y: GATE.y + 2 });
 h.room.send("travel", { dest: "leste" });
 await sleep(400);
-const dest = at(TRAVEL[0].x, TRAVEL[0].y);
+const dest = at(HOME.arrivals.leste.x, HOME.arrivals.leste.y);
 ok(`Senkaimon leva à Floresta Leste e cobra 30 kan`, h.me().x === dest.x && h.me().y === dest.y && h.logs.some((l) => l.includes("30 kan")));
 h.room.send("travel", { dest: "rio" });
 await sleep(300);
-ok("longe do portal não viaja", h.logs.some((l) => l.includes("Chegue perto do Senkaimon")));
+ok("longe do portal não viaja", h.logs.some((l) => l.includes("Chegue perto de um portal")));
 h.room.send("recall");
 await sleep(400);
 console.log("  recall na floresta:", h.logs.at(-1));
@@ -92,5 +94,19 @@ g.room.send("recall");
 await sleep(300);
 ok("voltar à cidade tem recarga", g.logs.some((l) => l.includes("recarrega")));
 
-for (const x of [a, b, c, d, e, f, g, h]) await x.room.leave();
+// ---- Hueco Mundo pela Senkaimon (nível 22+, 200 kan) e volta
+const k = await bot("Viajante Hueco", 25, { x: GATE.x, y: GATE.y + 2 }, "renji");
+k.room.send("travel", { dest: "hueco" });
+await sleep(400);
+const hueco = MAPS.hueco;
+ok(`viaja para Hueco Mundo (mapa ${k.me().map})`, k.me().map === "hueco" && k.logs.some((l) => l.includes("Hueco Mundo")));
+const huecoMonsters = [...k.room.state.monsters.values()].filter((m: any) => m.map === "hueco").map((m: any) => m.kind);
+ok(`Hueco Mundo tem Adjuchas, Arrancar e Gillian (${new Set(huecoMonsters).size} tipos, ${huecoMonsters.length} monstros)`,
+  ["adjuchas", "arrancar", "gillian"].every((t) => huecoMonsters.includes(t)));
+ok("chega dentro da zona segura da Garganta", hueco.pz.some((r) => k.me().x >= r.x0 && k.me().x <= r.x1 && k.me().y >= r.y0 && k.me().y <= r.y1));
+k.room.send("travel", { dest: "karakura" });
+await sleep(400);
+ok("a Garganta traz de volta à praça de Karakura", k.me().map === "karakura" && k.me().x === HOME.arrivals.karakura.x);
+
+for (const x of [a, b, c, d, e, f, g, h, k]) await x.room.leave();
 process.exit(0);

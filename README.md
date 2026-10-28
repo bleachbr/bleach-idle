@@ -14,7 +14,8 @@ O servidor sobe em `ws://localhost:2567` e o cliente em http://localhost:5173. A
 ## Stack
 - **client/**: Phaser 3 + TypeScript + Vite. Só desenha o estado e envia intenções.
 - **server/**: Node + Colyseus 0.15, **autoritativo**, com tick de 100 ms. Movimento, combate, XP, IA dos monstros e Auto Helper rodam aqui.
-- **shared/**: mapa (gerado de forma determinística, igual nos dois lados), personagens, monstros, spawns e fórmulas.
+- **shared/**: leitura dos mapas do Tiled, personagens, monstros, itens e fórmulas.
+- **client/public/maps/**: os mapas (`karakura.tmj`, `hueco.tmj`), feitos para abrir e editar no [Tiled](https://www.mapeditor.org/). Cliente e servidor leem os mesmos arquivos.
 - **art/**: pipeline de sprites (Codex `image_gen` → `art/process.py` → `client/public/assets/sprites/`). Veja `art/RELATORIO.md`.
 - Save em SQLite (`server/bleach-idle.sqlite`, via `node:sqlite`, modo WAL): contas, sessões e personagens. Save a cada 10 s, em transação, e também ao entrar e ao sair.
 
@@ -23,7 +24,9 @@ O servidor sobe em `ws://localhost:2567` e o cliente em http://localhost:5173. A
 - **Personagens:** até 5 por conta, nome único no servidor, criação com escolha entre Ichigo, Rukia e Renji, exclusão (bloqueada enquanto ele caça offline). A lista mostra quem está "caçando offline".
 - **Entrada no mundo** só com ingresso de uso único (60 s) emitido pelo lobby para um personagem da própria conta. Se o mesmo personagem entra de outra janela, a nova assume e a antiga é desconectada.
 - **Hunt offline sobrevive a reinício e a queda:** cada personagem tem a marca `in_world` no banco; ao subir, o servidor recoloca no mundo, caçando offline, todos que estavam com Auto Hunt, inclusive quem estava online quando o servidor caiu. O relatório na volta soma o que foi ganho antes e depois da queda (o tempo em que o servidor ficou fora não rende XP).
-- Mapa de Karakura (64x48): cidade com praça central (zona de proteção e renascer, com o baú do depot e a loja do Kisuke), rio com ponte e hunts a leste e ao sul.
+- **Dois mapas, feitos no Tiled, com tiles CC0 da Kenney:**
+  - **Karakura** (64x48): cidade com prédios, ruas e praça central (zona de proteção, templo, depot, loja do Kisuke e o portal Senkaimon), rio com ponte e hunts de Hollows a leste e ao sul. Copas de árvore passam por cima dos personagens.
+  - **Hueco Mundo** (48x40): deserto de areia pálida, árvores secas brancas e ruínas de colunas. Chega-se pela Senkaimon (nível 22+, 200 kan) na Garganta, que tem uma pequena zona segura e leva de volta à praça. Monstros novos, gerados pelo Codex: **Adjuchas**, **Arrancar** e **Menos Grande (Gillian)**, este um chefe gigante.
 - 3 personagens (Ichigo, Rukia, Renji), sprites 48x48 sobre tiles de 32, andar em 4 direções.
 - Shikai/Bankai (tecla T, a partir do nível 10): mais dano, mais velocidade e dreno de reiatsu; sem reiatsu, o Bankai se desfaz.
 - 10 monstros (um sprite de Hollow com variação de cor e tamanho), aggro, perseguição, leash e respawn; o Grand Fisher é o chefe.
@@ -44,6 +47,14 @@ O servidor sobe em `ws://localhost:2567` e o cliente em http://localhost:5173. A
 
 Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra conta sem apagar o login lembrado).
 
+## Editar os mapas no Tiled
+Abra `client/public/maps/karakura.tmj` ou `hueco.tmj` no Tiled (1.10+), edite e salve no mesmo formato (.tmj, tileset embutido). Recarregue o cliente e reinicie o servidor.
+- **Camadas de tiles:** `chao` (piso), `objetos` (prédios, árvores, rochas) e `acima` (copas e topos de coluna, desenhados por cima dos personagens e sem colisão).
+- **Colisão:** tile com a propriedade booleana `solido = true` no tileset bloqueia a passagem.
+- **Camada de objetos `logica`**, pelo tipo (classe) do objeto: `templo` (ponto onde se renasce; obrigatório em Karakura), `pz` (retângulo da zona de proteção), `depot`, `loja` (o nome do objeto aparece sobre o NPC), `portal` (abre a janela de viagem), `chegada` (o nome é o id do destino em `shared/src/social.ts`) e `spawn` (propriedades `monstro`, `raio`, `quantidade`).
+- **Mapa novo:** acrescente o id em `MAP_IDS` (`shared/src/map.ts`), crie o `.tmj` com essas camadas e um destino em `TRAVEL`.
+- `art/maps/build_maps.py` gera a **primeira versão** dos dois mapas a partir dos pacotes da Kenney em `art/maps/kenney/`. Depois de editar no Tiled, não rode o script de novo, porque ele sobrescreve os arquivos.
+
 ## Testes rápidos (com o servidor rodando)
 Os scripts criam contas `bot_<nome>` sozinhos (senha de teste em `server/scripts/lib.ts`).
 ```bash
@@ -57,13 +68,17 @@ cd server && npx tsx scripts/items.ts    # kit, loja, depot, loot da hunt e vend
 cd server && npx tsx scripts/death.ts    # morte com/sem Amuleto, perda de itens, morte na hunt offline
 cd server && npx tsx scripts/social.ts   # party e divisão de XP, PvP, revide, bloqueio de viagem/praça, Senkaimon, voltar à cidade
 cd server && npx tsx scripts/partner.ts 120000 # bot na praça que aceita convites (para testar a party à mão)
+cd server && npx tsx scripts/spawncount.ts  # 2 bots caçando por 40 s; o total de monstros nunca passa o dos spawns
 cd server && npx tsx scripts/outfit.ts 60000  # 3 bots na praça com haori/máscara por 60 s; confere o campo look
 ```
+
+## Créditos
+Tiles: [Roguelike Modern City](https://kenney.nl/assets/roguelike-modern-city) e [Roguelike RPG Pack](https://kenney.nl/assets/roguelike-rpg-pack), da Kenney (CC0; licenças em `art/maps/kenney/`).
 
 ## Limitações conhecidas (protótipo)
 - Sem e-mail, recuperação de senha nem troca de senha. Sem HTTPS/WSS: em produção o WebSocket precisa ir atrás de TLS, senão a senha trafega aberta.
 - Ingressos e limite de tentativas ficam na memória do processo (um servidor só); com vários servidores, mover para Redis.
-- Tiles desenhados em código (placeholder); o plano é trocar por pacotes CC0.
+- Os mapas usam pacotes "roguelike" da Kenney (16 px ampliados para 32): o estilo é mais simples que o dos personagens. Não há interiores de prédios nem andares.
 - Rukia e Renji usam o mesmo sprite no Bankai, só com tint; os monstros são todos o mesmo Hollow recolorido.
 - Itens perdidos na morte somem: ainda não existe corpo/loot no chão para alguém pegar.
 - Só haori e máscara mudam o visual; armas, bandana e o resto não aparecem no sprite (cada combinação nova é uma folha inteira a mais, o que não escala; o caminho para muitos itens seria sprites em camadas).

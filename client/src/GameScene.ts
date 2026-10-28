@@ -2,8 +2,7 @@
 // Nada de simulação aqui: posições, dano e XP vêm todos do servidor.
 import Phaser from "phaser";
 import type { Room } from "colyseus.js";
-import { generateMap, MAP_W, MAP_H, TILE, SPRITES, CHARS, MONSTERS, DEPOT, SHOP_NPC, SENKAIMON, spriteKey } from "../../shared/src";
-import { makeTileset } from "./tiles";
+import { TILE, SPRITES, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, type GameMap } from "../../shared/src";
 
 const VIEW_W = 15;
 const VIEW_H = 11;
@@ -35,6 +34,10 @@ export class GameScene extends Phaser.Scene {
   private nextStepSend = 0;
   private onMe: (p: any) => void = () => {};
   private onPlayerClick: (id: string, x: number, y: number) => void = () => {};
+  private maps: Record<string, GameMap> = {};
+  /** mapa desenhado agora (o do meu personagem) e o que pertence só a ele */
+  private mapId = "";
+  private mapObjects: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super("game");
@@ -50,21 +53,24 @@ export class GameScene extends Phaser.Scene {
   preload() {
     for (const [key, def] of Object.entries(SPRITES))
       this.load.spritesheet(key, `/assets/sprites/${key}.png`, { frameWidth: def.frame, frameHeight: def.frame });
-    this.load.image(SHOP_NPC.sprite, `/assets/sprites/${SHOP_NPC.sprite}.png`);
+    this.load.image(SHOP_SPRITE, `/assets/sprites/${SHOP_SPRITE}.png`);
+    // mapas do Tiled: o tileset é embutido no .tmj e a imagem fica ao lado
+    for (const id of MAP_IDS) {
+      this.load.tilemapTiledJSON(`map_${id}`, `/maps/${id}.tmj`);
+      this.load.image(`tiles_${id}`, `/maps/${id}_tiles.png`);
+    }
   }
 
   create() {
-    makeTileset(this, "tiles");
-    const map = this.make.tilemap({ data: generateMap(), tileWidth: TILE, tileHeight: TILE });
-    map.createLayer(0, map.addTilesetImage("tiles")!, 0, 0);
-    this.cameras.main.setBounds(0, 0, MAP_W * TILE, MAP_H * TILE).setRoundPixels(true);
+    for (const id of MAP_IDS) this.maps[id] = parseMap(id, this.cache.tilemap.get(`map_${id}`).data);
+    this.cameras.main.setRoundPixels(true);
+    this.showMap(this.room.state.players.get(this.myId)?.map ?? HOME_MAP);
 
     for (const key of Object.keys(SPRITES).filter((k) => this.textures.exists(k)))
       for (let d = 0; d < 4; d++)
         this.anims.create({ key: `${key}-${d}`, frames: this.anims.generateFrameNumbers(key, { start: d * 4, end: d * 4 + 3 }), repeat: -1 });
 
     this.targetBox = this.add.graphics().setDepth(1e6);
-    this.addNpc();
 
     const s = this.room.state;
     s.players.onAdd((p: any, id: string) => this.addView(id, p, false));
@@ -82,7 +88,7 @@ export class GameScene extends Phaser.Scene {
   private spriteFor(e: any, isMonster: boolean): { key: string; tint?: number; scale: number } {
     if (isMonster) {
       const def = MONSTERS[e.kind];
-      return { key: "hollow", tint: def.tint, scale: def.scale };
+      return { key: def.sprite, tint: def.tint, scale: def.scale };
     }
     const form = CHARS[e.charId].forms[e.form];
     // visual do equipamento; sem a folha da combinação, tenta as partes ("haori_mask" -> "haori") e depois a base
@@ -185,7 +191,8 @@ export class GameScene extends Phaser.Scene {
         if (v && fx.v) { v.spr.setTintFill(0xffffff); this.time.delayedCall(70, () => this.restoreTint(v)); }
         break;
       case "tp":
-        if (v) { v.c.setAlpha(0.2); this.tweens.add({ targets: v.c, alpha: 1, duration: 400 }); }
+        // no sprite, e não no container: o moveView do teleporte mata os tweens do container
+        if (v) { v.spr.setAlpha(0.2); this.tweens.add({ targets: v.spr, alpha: 1, duration: 400 }); }
         break;
       case "loot":
         this.float(v, "loot!", "#ffd84a", 10);
@@ -229,31 +236,53 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setFollowOffset(open ? -110 : 0, 0);
   }
 
-  private addNpc() {
-    const x = px(SHOP_NPC.x), y = py(SHOP_NPC.y);
-    this.add.ellipse(x, y - 3, 26, 8, 0x000000, 0.3).setDepth(y - 1);
-    const spr = this.add.image(x, y, SHOP_NPC.sprite).setOrigin(0.5, 1).setDepth(y);
-    this.add.text(x, y - spr.displayHeight - 2, SHOP_NPC.name, {
-      fontFamily: "system-ui, sans-serif", fontSize: "10px", color: "#ffe08a", stroke: "#000000", strokeThickness: 3, resolution: 2,
-    }).setOrigin(0.5, 1).setDepth(y);
+  /** Desenha o mapa do Tiled (troca ao viajar entre mapas). */
+  private showMap(id: string) {
+    if (id === this.mapId || !this.maps[id]) return;
+    for (const o of this.mapObjects) o.destroy();
+    this.mapObjects = [];
+    this.mapId = id;
+    const tm = this.make.tilemap({ key: `map_${id}` });
+    const tiles = tm.addTilesetImage(tm.tilesets[0].name, `tiles_${id}`)!;
+    for (const layer of tm.layers) {
+      const l = tm.createLayer(layer.name, tiles, 0, 0)!;
+      // "acima" (copas, topos de coluna) fica por cima dos personagens
+      l.setDepth(layer.name === "acima" ? 1e5 : -1);
+      this.mapObjects.push(l);
+    }
+    this.mapObjects.push(tm as unknown as Phaser.GameObjects.GameObject);
+    this.cameras.main.setBounds(0, 0, tm.widthInPixels, tm.heightInPixels);
+    this.cameras.main.setBackgroundColor(id === "hueco" ? "#0b0b12" : "#000000");
+    const shop = this.maps[id].shop;
+    if (shop) {
+      const x = px(shop.x), y = py(shop.y);
+      const spr = this.add.image(x, y, SHOP_SPRITE).setOrigin(0.5, 1).setDepth(y);
+      this.mapObjects.push(
+        this.add.ellipse(x, y - 3, 26, 8, 0x000000, 0.3).setDepth(y - 1), spr,
+        this.add.text(x, y - spr.displayHeight - 2, shop.name, {
+          fontFamily: "system-ui, sans-serif", fontSize: "10px", color: "#ffe08a", stroke: "#000000", strokeThickness: 3, resolution: 2,
+        }).setOrigin(0.5, 1).setDepth(y),
+      );
+    }
   }
 
   private onClick(ptr: Phaser.Input.Pointer) {
     const tx = Math.floor(ptr.worldX / TILE), ty = Math.floor(ptr.worldY / TILE);
-    // NPC da loja (o desenho ocupa o tile dele e o de cima) e baú do depot
-    if (tx === SHOP_NPC.x && (ty === SHOP_NPC.y || ty === SHOP_NPC.y - 1)) return this.room.send("interact", { kind: "shop" });
-    if (tx === DEPOT.x && ty === DEPOT.y) return this.room.send("interact", { kind: "depot" });
-    if (tx === SENKAIMON.x && ty === SENKAIMON.y) return this.room.send("interact", { kind: "travel" });
+    const m = this.maps[this.mapId];
+    // NPC da loja (o desenho ocupa o tile dele e o de cima), baú do depot e portal
+    if (m.shop && tx === m.shop.x && (ty === m.shop.y || ty === m.shop.y - 1)) return this.room.send("interact", { kind: "shop" });
+    if (m.depot && tx === m.depot.x && ty === m.depot.y) return this.room.send("interact", { kind: "depot" });
+    if (m.gate && tx === m.gate.x && ty === m.gate.y) return this.room.send("interact", { kind: "travel" });
     // outro jogador: abre o menu (party / atacar) na posição do clique
     for (const v of this.views.values()) {
-      if (!v.isMonster && v.id !== this.myId && v.spr.getBounds().contains(ptr.worldX, ptr.worldY)) {
+      if (!v.isMonster && v.id !== this.myId && v.c.visible && v.spr.getBounds().contains(ptr.worldX, ptr.worldY)) {
         const ev = ptr.event as MouseEvent;
         return this.onPlayerClick(v.id, ev.clientX, ev.clientY);
       }
     }
     // monstro clicado (o sprite é maior que o tile, então testa os limites do desenho)
     for (const v of this.views.values()) {
-      if (v.isMonster && v.spr.getBounds().contains(ptr.worldX, ptr.worldY)) {
+      if (v.isMonster && v.c.visible && v.spr.getBounds().contains(ptr.worldX, ptr.worldY)) {
         this.room.send("target", { id: v.id });
         return;
       }
@@ -305,6 +334,12 @@ export class GameScene extends Phaser.Scene {
   update(time: number) {
     this.tryStep(time);
     const me = this.room.state.players.get(this.myId);
+    if (me && me.map !== this.mapId) this.showMap(me.map);
+    // só aparece quem está no mesmo mapa que eu
+    for (const v of this.views.values()) {
+      const e = v.isMonster ? this.room.state.monsters.get(v.id) : this.room.state.players.get(v.id);
+      v.c.setVisible(!!e && e.map === this.mapId);
+    }
     // volta ao quadro parado quando a entidade deixa de andar
     for (const v of this.views.values())
       if (v.spr.anims.isPlaying && time - v.lastMoveAt > v.stepMs + 80) {

@@ -20,9 +20,13 @@ export const PVP_LOCK_MS = 3 * 60_000;
 export const RECALL_COMBAT_MS = 10_000;
 export const RECALL_COOLDOWN_MS = 60_000;
 
-export interface TravelDest { id: string; name: string; x: number; y: number; minLevel: number; cost: number }
+/** Destinos dos portais (Senkaimon em Karakura, Garganta em Hueco Mundo). O ponto de
+ * chegada é o objeto "chegada" com o mesmo nome (id) no mapa indicado. */
+export interface TravelDest { id: string; name: string; map: string; minLevel: number; cost: number }
 export const TRAVEL: TravelDest[] = [
-  { id: "leste", name: "Floresta Leste", x: 36, y: 10, minLevel: 8, cost: 30 },
-  { id: "rio", name: "Além do Rio", x: 17, y: 40, minLevel: 12, cost: 60 },
-  { id: "toca", name: "Toca do Grand Fisher", x: 54, y: 40, minLevel: 20, cost: 120 },
+  { id: "karakura", name: "Karakura (praça)", map: "karakura", minLevel: 1, cost: 0 },
+  { id: "leste", name: "Floresta Leste", map: "karakura", minLevel: 8, cost: 30 },
+  { id: "rio", name: "Além do Rio", map: "karakura", minLevel: 12, cost: 60 },
+  { id: "toca", name: "Toca do Grand Fisher", map: "karakura", minLevel: 20, cost: 120 },
+  { id: "hueco", name: "Hueco Mundo (Garganta)", map: "hueco", minLevel: 22, cost: 200 },
 ];

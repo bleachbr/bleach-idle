@@ -2,10 +2,11 @@
 //  1. com Amuleto da Alma: não perde XP, itens nem dinheiro; o amuleto some
 //  2. sem amuleto, inventário cheio: perde 8% XP, 10% do dinheiro e ~10% dos itens; depot intacto
 //  3. morrendo durante a hunt offline: o relatório da volta traz a morte
-import { expForLevel, generateMap, walkable, INV_SIZE } from "../../shared/src";
+import { expForLevel, walkable, INV_SIZE } from "../../shared/src";
+import { HOME } from "../src/maps";
 import { play, patchSave, sleep } from "./lib";
 
-const map = generateMap();
+const map = HOME;
 const spot = [[45, 39], [44, 40], [46, 40], [43, 41], [47, 41], [45, 43]].find(([x, y]) => walkable(map, x, y))!;
 const ok = (label: string, cond: boolean) => console.log(`${cond ? "OK    " : "FALHOU"} ${label}`);
 const EQUIP = { head: "bandana", armor: "haori", legs: "hakama", boots: "waraji", weapon: "zanpakuto", ring: "anel_rei" };

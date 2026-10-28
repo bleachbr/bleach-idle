@@ -18,6 +18,9 @@ export const SPRITES: Record<string, SpriteDef> = {
   rukia: { frame: 48 },
   renji: { frame: 48 },
   hollow: { frame: 96 },
+  adjuchas: { frame: 96 },
+  gillian: { frame: 96 },
+  arrancar: { frame: 48 },
 };
 
 // Variantes de visual por equipamento (folha inteira por combinação: <base>__<look>).
@@ -110,12 +113,15 @@ export interface MonsterDef {
   stepMs: number;
   attackMs: number;
   respawnMs: number;
+  /** folha de sprite em client/public/assets/sprites/ */
+  sprite: string;
 }
 
-const m = (id: string, name: string, hp: number, atk: number, def: number, exp: number, scale: number, tint: number, stepMs = 420, respawnMs = 20000): MonsterDef =>
-  ({ id, name, hp, atk, def, exp, scale, tint, stepMs, attackMs: 1400, respawnMs });
+const m = (id: string, name: string, hp: number, atk: number, def: number, exp: number, scale: number, tint: number, stepMs = 420, respawnMs = 20000, sprite = "hollow"): MonsterDef =>
+  ({ id, name, hp, atk, def, exp, scale, tint, stepMs, attackMs: 1400, respawnMs, sprite });
 
-// 10 monstros: um só sprite de Hollow, variando tamanho e cor (placeholder até haver arte própria)
+// Karakura: um sprite de Hollow variando tamanho e cor. Hueco Mundo: sprites próprios.
+// Onde cada um nasce fica no mapa (objetos "spawn" na camada "logica" do Tiled).
 export const MONSTERS: Record<string, MonsterDef> = Object.fromEntries([
   m("hollow_menor", "Hollow Menor", 45, 7, 0, 60, 0.55, 0xffffff, 450),
   m("hollow_rastejante", "Hollow Rastejante", 80, 10, 1, 110, 0.62, 0xb8ffb0),
@@ -127,26 +133,7 @@ export const MONSTERS: Record<string, MonsterDef> = Object.fromEntries([
   m("hollow_devorador", "Hollow Devorador", 480, 30, 6, 720, 0.97, 0xffffff),
   m("fishbone", "Fishbone D", 700, 36, 8, 1100, 1.05, 0xd2a8ff),
   m("grand_fisher", "Grand Fisher", 2600, 48, 12, 6000, 1.3, 0xffe27a, 380, 180000),
+  m("adjuchas", "Adjuchas", 950, 42, 10, 1500, 1, 0xffffff, 330, 25000, "adjuchas"),
+  m("arrancar", "Arrancar", 1400, 50, 14, 2300, 1, 0xffffff, 300, 30000, "arrancar"),
+  m("gillian", "Menos Grande (Gillian)", 5200, 62, 16, 9000, 1, 0xffffff, 650, 120000, "gillian"),
 ].map((d) => [d.id, d]));
-
-export interface SpawnDef {
-  kind: string;
-  x: number;
-  y: number;
-  radius: number;
-  count: number;
-}
-
-// hunts por faixa de nível: leste perto da cidade é fácil, sul além do rio é difícil
-export const SPAWNS: SpawnDef[] = [
-  { kind: "hollow_menor", x: 38, y: 6, radius: 4, count: 6 },
-  { kind: "hollow_rastejante", x: 40, y: 15, radius: 4, count: 5 },
-  { kind: "hollow_sombrio", x: 49, y: 7, radius: 4, count: 5 },
-  { kind: "hollow_uivante", x: 52, y: 17, radius: 4, count: 4 },
-  { kind: "hollow_faminto", x: 44, y: 25, radius: 4, count: 4 },
-  { kind: "hollow_acido", x: 57, y: 27, radius: 3, count: 3 },
-  { kind: "hollow_encouracado", x: 8, y: 41, radius: 4, count: 4 },
-  { kind: "hollow_devorador", x: 28, y: 42, radius: 4, count: 3 },
-  { kind: "fishbone", x: 45, y: 41, radius: 4, count: 3 },
-  { kind: "grand_fisher", x: 58, y: 42, radius: 1, count: 1 },
-];

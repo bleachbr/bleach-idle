@@ -81,6 +81,9 @@ export const LOOT: Record<string, LootTable> = {
   hollow_encouracado: { gold: [22, 50], items: [{ item: "garra", chance: 0.4, max: 2 }, { item: "nucleo", chance: 0.09 }, { item: "mascara", chance: 0.025 }] },
   hollow_devorador: { gold: [30, 65], items: [{ item: "nucleo", chance: 0.12 }, { item: "mascara", chance: 0.03 }, { item: "lamina_garra", chance: 0.012 }] },
   fishbone: { gold: [45, 90], items: [{ item: "nucleo", chance: 0.18, max: 2 }, { item: "lamina_garra", chance: 0.02 }, { item: "haori", chance: 0.02 }] },
+  adjuchas: { gold: [60, 120], items: [{ item: "nucleo", chance: 0.22 }, { item: "garra", chance: 0.5, max: 3 }, { item: "mascara", chance: 0.04 }, { item: "lamina_garra", chance: 0.03 }] },
+  arrancar: { gold: [90, 180], items: [{ item: "nucleo", chance: 0.28 }, { item: "haori", chance: 0.03 }, { item: "lamina_garra", chance: 0.05 }, { item: "pocao_rei", chance: 0.15 }] },
+  gillian: { gold: [500, 1000], items: [{ item: "nucleo", chance: 1, min: 3, max: 6 }, { item: "haori", chance: 0.25 }, { item: "mascara", chance: 0.5 }, { item: "lamina_garra", chance: 0.3 }] },
   grand_fisher: { gold: [400, 800], items: [{ item: "nucleo", chance: 1, min: 3, max: 6 }, { item: "lamina_garra", chance: 0.4 }, { item: "haori", chance: 0.3 }, { item: "mascara", chance: 0.5 }] },
 };
 
