@@ -141,8 +141,6 @@ export class GameScene extends Phaser.Scene {
           if (look2.tint) v.spr.setTint(look2.tint); else v.spr.clearTint();
         }
         v.label.setAlpha(e.online ? 1 : 0.55); // offline caçando aparece meio apagado
-        const label = e.guildTag ? `${e.name} [${e.guildTag}]` : e.name;
-        if (v.label.text !== label) v.label.setText(label);
         if (id === this.myId) this.onMe(e);
       }
     });
@@ -452,7 +450,11 @@ export class GameScene extends Phaser.Scene {
       if (v.isMonster) continue;
       const p = this.room.state.players.get(v.id);
       if (!p) continue;
-      const color = p.pvpUntil > now ? "#ff6a5a" : me?.partyId && p.partyId === me.partyId && v.id !== this.myId ? "#7dff8a" : "#ffffff";
+      // ☠ vermelho escuro = assassino; vermelho = marcado (atacou alguém há pouco); verde = minha party
+      const skull = p.skullUntil > now;
+      const color = skull ? "#ff2020" : p.pvpUntil > now ? "#ff6a5a" : me?.partyId && p.partyId === me.partyId && v.id !== this.myId ? "#7dff8a" : "#ffffff";
+      const text = `${skull ? "☠ " : ""}${p.name}${p.guildTag ? ` [${p.guildTag}]` : ""}`;
+      if (v.label.text !== text) v.label.setText(text);
       if (v.label.style.color !== color) v.label.setColor(color);
     }
     this.targetBox.clear();

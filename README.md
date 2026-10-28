@@ -51,7 +51,8 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 
 **Social**
 - **Party:** até 4, com XP dividida (+10% por membro, regra de 2/3 do nível). Sobrevive a um reinício do servidor.
-- **PvP em mundo aberto:** a partir do nível 10, fora da zona segura, com dano pela metade. Quem ataca fica 3 min sem viajar nem entrar na zona segura. O Auto Helper revida.
+- **PvP em mundo aberto:** a partir do nível 10, fora da zona segura, com dano pela metade. Quem ataca fica **marcado** por 3 min, sem viajar nem entrar na zona segura. O Auto Helper revida.
+- **Caveira (☠):** matar quem não atacou ninguém vira **assassino** por 15 min (somando até 2 h). O assassino não pode viajar, e qualquer um pode atacá-lo sem ser marcado. Se morrer, perde 50% de chance por item e 30% do dinheiro, e o Amuleto da Alma não protege. Atacar ou matar quem está marcado ou é assassino é defesa e não pune.
 - **Guildas:** `/guilda criar Nome` (500 kan, nível 10+), convites, banco, líder e tag no nome.
 - **Chat:** `/pm Nome, msg`, `/p` (party), `/g` (guilda) e `/ajuda`.
 - **Ranking:** nível, abates em PvP e guildas.
@@ -91,7 +92,7 @@ Cenários em `server/scripts/`:
 - **Combate e personagem:** `bankai`, `outfit`, `death`, `training`, `spawncount`.
 - **Itens, missões e economia:** `items`, `quests`, `bags` (corpos e sacolas), `market` (mercado).
 - **Robustez:** `robust` (lixo em todas as mensagens, rajada de 500, mensagem acima de 4 KB). O runner também conta como falha qualquer exceção registrada pelo servidor.
-- **Social:** `social` (party, PvP, viagem) e `social2` (chat, guildas, ranking).
+- **Social:** `social` (party, PvP, viagem), `social2` (chat, guildas, ranking) e `skull` (caveira).
 - **Offline e queda:** `bot` (hunt offline) e `restart` (queda do servidor com hunts e party).
 
 Avulsos (com o servidor rodando): `partner.ts` (um bot que aceita convites de party) e `peek.ts` (lista os jogadores no mundo).
@@ -105,6 +106,5 @@ Tiles de Karakura e Hueco Mundo: [Roguelike Modern City](https://kenney.nl/asset
 - **Arte:** Karakura e Hueco Mundo usam tiles da Kenney, mais simples que os personagens; a Soul Society já tem arte própria. Não há interiores de prédios nem andares.
 - **Sprites:** alguns Hollows de Karakura (Sombrio, Uivante, Faminto, Encouraçado, Devorador) ainda são um sprite recolorido. Só haori e máscara mudam o visual.
 - **Corpos e sacolas** ficam só na memória: somem se o servidor reiniciar.
-- **PvP:** não há "caveira" (punição por matar sem motivo).
 - **Mercado:** anúncios não expiram, e não há troca direta entre jogadores.
 - **Servidor:** limite de 40 mensagens/s por cliente e de 4 KB por mensagem; mensagens acima disso derrubam só a conexão de quem mandou.

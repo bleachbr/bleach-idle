@@ -262,9 +262,11 @@ function bindParty(room: Room<any>, myId: string) {
     const me = room.state.players.get(myId);
     if (!me) return;
     const left = Math.ceil((me.pvpUntil - serverNow()) / 1000);
+    const skull = Math.ceil((me.skullUntil - serverNow()) / 60000);
     const lock = $("#pvp-lock");
-    lock.hidden = left <= 0;
-    if (left > 0) lock.textContent = `Atacou um jogador: viagem e praça bloqueadas por ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+    lock.hidden = left <= 0 && skull <= 0;
+    if (skull > 0) lock.textContent = `☠ Assassino por mais ${skull} min: sem viagem, qualquer um pode atacá-lo e, se morrer, perde muito mais.`;
+    else if (left > 0) lock.textContent = `Atacou um jogador: viagem e praça bloqueadas por ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
     const members = me.partyId ? [...room.state.players.values()].filter((p: any) => p.partyId === me.partyId) : [];
     $("#party-leave").hidden = !members.length;
     const list = $("#party-list");

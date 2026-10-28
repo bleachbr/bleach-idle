@@ -34,6 +34,7 @@ export class Player extends Schema {
   reiPct = 0;
   partyLead = false;
   pvpUntil = 0; // ms epoch: até quando está bloqueado depois de atacar um jogador
+  skullUntil = 0; // ms epoch: caveira de assassino (abates injustos)
 
   // só no servidor (não sincronizado)
   path: { x: number; y: number }[] = [];
@@ -78,7 +79,7 @@ defineTypes(Player, {
   hp: "int32", maxHp: "int32", rei: "number", maxRei: "int32",
   level: "uint16", exp: "number", targetId: "string",
   online: "boolean", autoTarget: "boolean", autoHunt: "boolean", autoHeal: "uint8", look: "string", map: "string",
-  partyId: "string", partyLead: "boolean", pvpUntil: "number", guildTag: "string",
+  partyId: "string", partyLead: "boolean", pvpUntil: "number", skullUntil: "number", guildTag: "string",
   autoTrain: "boolean", zanjutsu: "uint8", zanPct: "uint8", reiryoku: "uint8", reiPct: "uint8",
 });
 

@@ -16,6 +16,13 @@ export const PVP_DAMAGE = 0.5;
 /** depois de atacar um jogador: sem viajar, sem "voltar à cidade" e sem entrar na zona de proteção */
 export const PVP_LOCK_MS = 3 * 60_000;
 
+/** Caveira de assassino: matar quem não atacou ninguém. Cada abate injusto soma tempo. */
+export const SKULL_PER_KILL_MS = 15 * 60_000;
+export const SKULL_MAX_MS = 2 * 3600_000;
+/** assassino morrendo: chance de perder cada item e fração do dinheiro (o Amuleto da Alma não protege) */
+export const SKULL_ITEM_LOSS = 0.5;
+export const SKULL_GOLD_LOSS = 0.3;
+
 /** "Voltar à cidade": bloqueado em combate recente e por PvP */
 export const RECALL_COMBAT_MS = 10_000;
 export const RECALL_COOLDOWN_MS = 60_000;

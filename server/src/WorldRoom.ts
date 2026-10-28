@@ -8,7 +8,7 @@ import { WorldState, Player, Monster, Bag, type DeathReport, type Interact } fro
 import {
   walkable, nearestWalkable, inPZ, type GameMap,
   PARTY_MAX, PARTY_SHARE_RANGE, PARTY_SHARE_BONUS, PARTY_LEVEL_RATIO, PARTY_INVITE_MS,
-  PVP_MIN_LEVEL, PVP_DAMAGE, PVP_LOCK_MS, RECALL_COMBAT_MS, RECALL_COOLDOWN_MS, TRAVEL,
+  PVP_MIN_LEVEL, PVP_DAMAGE, PVP_LOCK_MS, SKULL_PER_KILL_MS, SKULL_MAX_MS, SKULL_ITEM_LOSS, SKULL_GOLD_LOSS, RECALL_COMBAT_MS, RECALL_COOLDOWN_MS, TRAVEL,
   CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir,
   expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
@@ -249,6 +249,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.autoHunt = !!saved.autoHunt;
     p.autoHeal = saved.autoHeal ?? 0;
     p.frags = saved.frags ?? 0;
+    p.skullUntil = saved.skullUntil ?? 0;
     p.autoTrain = !!saved.autoTrain;
     p.zanjutsu = saved.zanjutsu ?? 0;
     p.zanTries = saved.zanTries ?? 0;
@@ -582,7 +583,9 @@ export class WorldRoom extends GameRoom<WorldState> {
     const deathAt = { map: p.map, x: p.x, y: p.y };
     const dropped: Slot[] = [];
     // Amuleto da Alma (o "Band of Loss" daqui): protege XP, itens e dinheiro, e se desfaz
-    const prot = p.equip.amulet === "amuleto_alma";
+    const skulled = p.skullUntil > Date.now();
+    const prot = !skulled && p.equip.amulet === "amuleto_alma";
+    const itemLoss = skulled ? SKULL_ITEM_LOSS : DEATH_ITEM_LOSS;
     if (prot) delete p.equip.amulet;
     const loss = prot ? 0 : Math.floor(p.exp * DEATH_EXP_LOSS);
     const items: string[] = [];
@@ -591,12 +594,12 @@ export class WorldRoom extends GameRoom<WorldState> {
       // estilo Tibia: cada peça e cada espaço rola a perda; o depot fica intacto
       for (const slot of EQUIP_SLOTS) {
         const id = p.equip[slot];
-        if (id && Math.random() < DEATH_ITEM_LOSS) { items.push(ITEMS[id].name); dropped.push({ id, qty: 1 }); delete p.equip[slot]; }
+        if (id && Math.random() < itemLoss) { items.push(ITEMS[id].name); dropped.push({ id, qty: 1 }); delete p.equip[slot]; }
       }
       p.inv.forEach((sl, i) => {
-        if (sl && Math.random() < DEATH_ITEM_LOSS) { items.push(`${sl.qty}x ${ITEMS[sl.id].name}`); dropped.push({ ...sl }); p.inv[i] = null; }
+        if (sl && Math.random() < itemLoss) { items.push(`${sl.qty}x ${ITEMS[sl.id].name}`); dropped.push({ ...sl }); p.inv[i] = null; }
       });
-      goldLost = Math.floor(p.gold * DEATH_GOLD_LOSS);
+      goldLost = Math.floor(p.gold * (skulled ? SKULL_GOLD_LOSS : DEATH_GOLD_LOSS));
       p.gold -= goldLost;
       // estilo Tibia: o que se perde fica no corpo; em PvP, quem matou tem prioridade
       if (dropped.length || goldLost)
@@ -941,6 +944,10 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private travelBlocked(p: Player, now: number): string | undefined {
+    if (p.skullUntil > now) {
+      const m = Math.ceil((p.skullUntil - now) / 60000);
+      return `Assassinos (☠) não podem viajar: faltam ${m} min de caveira.`;
+    }
     if (p.pvpUntil <= now) return undefined;
     const s = Math.ceil((p.pvpUntil - now) / 1000);
     return `Você atacou um jogador: viagem bloqueada por ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}.`;
@@ -988,13 +995,23 @@ export class WorldRoom extends GameRoom<WorldState> {
     v.lastCombatAt = p.lastCombatAt = now;
     v.lastAttackerId = p.id;
     v.lastAttackedAt = now;
-    if (p.pvpUntil <= now) this.log(p, `Você atacou ${v.name}: viagem e zona de proteção bloqueadas por ${PVP_LOCK_MS / 60000} min.`);
-    p.pvpUntil = now + PVP_LOCK_MS;
+    // atacar um assassino (☠) ou quem atacou alguém há pouco (marcado) é defesa: não marca quem ataca
+    const justified = v.skullUntil > now || v.pvpUntil > now;
+    if (!justified) {
+      if (p.pvpUntil <= now) this.log(p, `Você atacou ${v.name}: viagem e zona de proteção bloqueadas por ${PVP_LOCK_MS / 60000} min.`);
+      p.pvpUntil = now + PVP_LOCK_MS;
+    }
     this.broadcast("fx", { t: "dmg", id: v.id, v: dmg });
     if (v.hp <= 0) {
       p.targetId = "";
       this.broadcast("chat", { from: "", text: `${v.name} foi derrotado por ${p.name}.` });
       p.frags++;
+      // abate injusto: a vítima não tinha atacado ninguém (não estava marcada) nem era assassina
+      if (!justified) {
+        p.skullUntil = Math.min(Math.max(p.skullUntil, now) + SKULL_PER_KILL_MS, now + SKULL_MAX_MS);
+        this.log(p, `Abate injusto: você é um assassino (☠) por ${Math.ceil((p.skullUntil - now) / 60000)} min. Não pode viajar, qualquer um pode atacá-lo sem punição e, se morrer, perde muito mais.`);
+        this.broadcast("chat", { from: "", text: `☠ ${p.name} agora é um assassino.`, ch: "sys" });
+      }
       this.killPlayer(v, `${p.name} (jogador)`, p.id);
     }
   }
@@ -1489,7 +1506,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     return {
       name: p.name, charId: p.charId, level: p.level, exp: p.exp, hp: p.hp, rei: Math.round(p.rei), map: p.map, x: p.x, y: p.y,
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
-      autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests,
+      autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil,
       autoTrain: p.autoTrain, zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
       offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, zanAtLeave: p.zanAtLeave, reiAtLeave: p.reiAtLeave, deaths: p.offlineDeaths },
     };

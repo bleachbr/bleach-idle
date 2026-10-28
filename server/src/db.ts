@@ -20,6 +20,7 @@ export interface SaveData {
   depot?: (Slot | null)[];
   equip?: Partial<Record<EquipSlot, string>>;
   frags?: number;
+  skullUntil?: number;
   autoTrain?: boolean;
   zanjutsu?: number;
   zanTries?: number;
