@@ -182,8 +182,10 @@ function start(room: Room<any>, myId: string) {
   });
   bindGuild(room);
   room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log"));
-  room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[] }) => {
-    chatLine(`Hunt offline: ${m.minutes} min, ${m.exp >= 0 ? "+" : ""}${m.exp} XP, ${m.gold >= 0 ? "+" : ""}${m.gold} kan. Você está no nível ${m.level}.`, "log");
+  room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[]; zanGain?: number; reiGain?: number; zanjutsu?: number; reiryoku?: number }) => {
+    const sign = (n: number) => (n >= 0 ? "+" : "") + n;
+    const skills = [m.zanGain ? `Zanjutsu ${sign(m.zanGain)} (agora ${m.zanjutsu})` : "", m.reiGain ? `Reiryoku ${sign(m.reiGain)} (agora ${m.reiryoku})` : ""].filter(Boolean).join(", ");
+    chatLine(`Tempo offline: ${m.minutes} min, ${sign(m.exp)} XP, ${sign(m.gold)} kan${skills ? `, ${skills}` : ""}. Você está no nível ${m.level}.`, "log");
     if (m.deaths?.length) showDeath(m.deaths, true);
   });
   room.onMessage("death", (d: DeathReport) => showDeath([d], false));
@@ -339,6 +341,8 @@ function renderStats(p: any) {
   // o servidor pode desligar o Auto Hunt (ex.: ao morrer): espelha nos controles
   $<HTMLInputElement>("#auto-target").checked = p.autoTarget;
   $<HTMLInputElement>("#auto-hunt").checked = p.autoHunt;
+  $<HTMLInputElement>("#auto-train").checked = p.autoTrain;
+  $("#pskills").textContent = `Zanjutsu ${p.zanjutsu} (${p.zanPct}%) · Reiryoku ${p.reiryoku} (${p.reiPct}%)`;
   $<HTMLInputElement>("#auto-heal-on").checked = p.autoHeal > 0;
 }
 
@@ -350,6 +354,8 @@ function bindAuto(room: Room<any>) {
   const sendHeal = () => room.send("auto", { autoHeal: healOn.checked ? Number(heal.value) || 50 : 0 });
   target.onchange = () => room.send("auto", { autoTarget: target.checked });
   hunt.onchange = () => room.send("auto", { autoHunt: hunt.checked });
+  const train = $<HTMLInputElement>("#auto-train");
+  train.onchange = () => room.send("auto", { autoTrain: train.checked });
   healOn.onchange = sendHeal;
   heal.onchange = sendHeal;
 }

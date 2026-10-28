@@ -35,6 +35,9 @@ export class GameScene extends Phaser.Scene {
   private nextStepSend = 0;
   private onMe: (p: any) => void = () => {};
   private onPlayerClick: (id: string, x: number, y: number) => void = () => {};
+  private bags = new Map<string, { img: Phaser.GameObjects.Image; map: string; x: number; y: number }>();
+  /** sacola clicada de longe: abre quando o personagem chegar do lado */
+  private pendingBag = "";
   private maps: Record<string, GameMap> = {};
   /** mapa desenhado agora (o do meu personagem) e o que pertence só a ele */
   private mapId = "";
@@ -55,6 +58,7 @@ export class GameScene extends Phaser.Scene {
     for (const [key, def] of Object.entries(SPRITES))
       this.load.spritesheet(key, `/assets/sprites/${key}.png`, { frameWidth: def.frame, frameHeight: def.frame });
     this.load.image(SHOP_SPRITE, `/assets/sprites/${SHOP_SPRITE}.png`);
+    this.load.spritesheet("items", "/assets/items.png", { frameWidth: 32, frameHeight: 32 });
     // mapas do Tiled: o tileset é embutido no .tmj e a imagem fica ao lado
     for (const id of MAP_IDS) {
       this.load.tilemapTiledJSON(`map_${id}`, `/maps/${id}.tmj`);
@@ -78,6 +82,12 @@ export class GameScene extends Phaser.Scene {
     s.players.onRemove((_p: any, id: string) => this.removeView(id));
     s.monsters.onAdd((m: any, id: string) => this.addView(id, m, true));
     s.monsters.onRemove((_m: any, id: string) => this.removeView(id, true));
+    // corpos (caveira) e sacolas (moedas) no chão
+    s.bags.onAdd((b: any, id: string) => {
+      const img = this.add.image(px(b.x), py(b.y) - 4, "items", b.kind === "corpo" ? 6 : 15).setOrigin(0.5, 1).setDepth(py(b.y) - 2);
+      this.bags.set(id, { img, map: b.map, x: b.x, y: b.y });
+    });
+    s.bags.onRemove((_b: any, id: string) => { this.bags.get(id)?.img.destroy(); this.bags.delete(id); });
 
     this.room.onMessage("fx", (fx) => this.onFx(fx));
     this.input.on("pointerdown", (ptr: Phaser.Input.Pointer) => this.onClick(ptr));
@@ -279,6 +289,12 @@ export class GameScene extends Phaser.Scene {
   private onClick(ptr: Phaser.Input.Pointer) {
     const tx = Math.floor(ptr.worldX / TILE), ty = Math.floor(ptr.worldY / TILE);
     const m = this.maps[this.mapId];
+    for (const [id, b] of this.bags) {
+      if (b.map === this.mapId && b.x === tx && b.y === ty) {
+        this.pendingBag = id;
+        return this.room.send("bagOpen", { id });
+      }
+    }
     // NPC da loja (o desenho ocupa o tile dele e o de cima), baú do depot e portal
     if (m.shop && tx === m.shop.x && (ty === m.shop.y || ty === m.shop.y - 1)) return this.room.send("interact", { kind: "shop" });
     if (m.depot && tx === m.depot.x && ty === m.depot.y) return this.room.send("interact", { kind: "depot" });
@@ -345,6 +361,13 @@ export class GameScene extends Phaser.Scene {
     this.tryStep(time);
     const me = this.room.state.players.get(this.myId);
     if (me && me.map !== this.mapId) this.showMap(me.map);
+    for (const b of this.bags.values()) b.img.setVisible(b.map === this.mapId);
+    const pb = this.pendingBag ? this.bags.get(this.pendingBag) : undefined;
+    if (!pb) this.pendingBag = "";
+    else if (me && pb.map === me.map && Math.max(Math.abs(pb.x - me.x), Math.abs(pb.y - me.y)) <= 1) {
+      this.room.send("bagOpen", { id: this.pendingBag });
+      this.pendingBag = "";
+    }
     // só aparece quem está no mesmo mapa que eu
     for (const v of this.views.values()) {
       const e = v.isMonster ? this.room.state.monsters.get(v.id) : this.room.state.players.get(v.id);

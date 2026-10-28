@@ -37,17 +37,21 @@ room.send("auto", { autoHunt: true, autoHeal: 50 });
 await sleep(25000);
 room.send("auto", { autoHunt: false });
 ok(`hunt rende loot (+${inv.gold - g0} kan)`, inv.gold > g0 && inv.inv.some((s: any) => s?.id === "fragmento" || s?.id === "garra"));
-// volta à praça por "voltar à cidade", tentando até sair de combate
-const me = () => room.state.players.get(name.toLowerCase());
-for (let i = 0; i < 12 && !(me().x === TEMPLE.x && me().y === TEMPLE.y); i++) {
-  room.send("recall");
-  await sleep(2500);
-}
-room.send("interact", { kind: "shop" });
-await sleep(3000);
-ok("loja abre de novo na volta", opened.at(-1) === "shop");
-room.send("sellLoot");
-await sleep(400);
-ok("vender todo o loot esvazia o loot", !inv.inv.some((s: any) => s?.id === "fragmento" || s?.id === "garra"));
+// volta à praça: com Hollows ainda batendo o "voltar à cidade" é recusado (correto),
+// então sai do jogo (Auto Hunt desligado tira do mundo) e volta já na praça
 await room.leave();
+await sleep(500);
+const room2 = await play(name, "ichigo", (id) => patchSave(id, { map: "karakura", x: TEMPLE.x, y: TEMPLE.y + 1 }));
+const opened2: string[] = [];
+let inv2: any;
+room2.onMessage("open", (m) => opened2.push(m.kind));
+room2.onMessage("inv", (m) => (inv2 = m));
+await sleep(400);
+room2.send("interact", { kind: "shop" });
+await sleep(3000);
+ok("loja abre de novo na volta", opened2.at(-1) === "shop");
+room2.send("sellLoot");
+await sleep(400);
+ok("vender todo o loot esvazia o loot", !inv2.inv.some((s: any) => s?.id === "fragmento" || s?.id === "garra"));
+await room2.leave();
 done();

@@ -16,7 +16,7 @@ from PIL import Image
 ROOT = Path(__file__).parent
 RAW = ROOT / "raw"
 OUTLINE = (0x1A, 0x18, 0x22)
-MAX_COLORS = 32
+MAX_COLORS = 48  # paleta compartilhada; com mais de 20 folhas, 32 cores fundiam o verde do Hollow Ácido no marrom
 
 # nome -> (arquivo raw, linhas, colunas, altura relativa, célula em tiles)
 SPRITES = {
@@ -50,6 +50,14 @@ GAME_SPRITES = {
     "adjuchas": ("23_adjuchas_walk.png", 4, 4, 1.15, 2),
     "gillian": ("24_gillian_walk.png", 4, 4, 2.0, 2),
     "arrancar": ("25_arrancar_walk.png", 4, 4, 1.0, 1),
+    # sprites próprios no lugar do Hollow recolorido
+    "grand_fisher": ("30_grand_fisher_walk.png", 4, 4, 1.75, 2),
+    "fishbone": ("31_fishbone_walk.png", 4, 4, 1.3, 2),
+    "rukia_bankai": ("32_rukia_bankai_walk.png", 4, 4, 0.86, 1),
+    "renji_bankai": ("33_renji_bankai_walk.png", 4, 4, 1.04, 1),
+    "hollow_menor": ("34_hollow_menor_walk.png", 4, 4, 0.8, 2),
+    "hollow_rastejante": ("35_hollow_rastejante_walk.png", 4, 4, 0.85, 2),
+    "hollow_acido": ("36_hollow_acido_walk.png", 4, 4, 1.15, 2),
 }
 
 
@@ -236,8 +244,13 @@ def lift_darks(colors):
     out = [colors[0]]
     for c in colors[1:]:
         lum = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]
+        sat = max(c) - min(c)
+        if sat > 40:
+            # escuro com cor de verdade (verde do sapo, vermelho do forro): mantém a cor
+            out.append(tuple(c))
+            continue
         t = 0.75 if lum < 35 else 0.4 if lum < 60 else 0
-        # dessatura antes: o preto do gerador puxa para o marrom
+        # quase neutro: dessatura antes, porque o preto do gerador puxa para o marrom
         gray = (lum, lum, lum * 1.15)
         base = gray if t else c
         out.append(tuple(round(v + (k - v) * t) for v, k in zip(base, (50, 48, 68))))
@@ -292,6 +305,13 @@ def export_game():
     npc, _ = process({"npc_shop": ("13_npc_shopkeeper_front.png", 1, 1, 1.06, 1)}, 48, 45, lift=True)
     if "npc_shop" in npc:
         npc["npc_shop"][0].save(GAME_OUT / "npc_shop.png")
+    # boneco de treino: um quadro só, repetido nas 16 células (o jogo espera folhas 4x4)
+    dummy, _ = process({"boneco": ("29_dummy.png", 1, 1, 0.95, 1)}, 48, 45)
+    if "boneco" in dummy:
+        sheet = Image.new("RGBA", (48 * 4, 48 * 4))
+        for i in range(16):
+            sheet.paste(dummy["boneco"][0], ((i % 4) * 48, (i // 4) * 48))
+        sheet.save(GAME_OUT / "boneco.png")
     sheets, colors = process(GAME_SPRITES, 48, 45, lift=True)
     GAME_OUT.mkdir(parents=True, exist_ok=True)
     for name, frames in sheets.items():

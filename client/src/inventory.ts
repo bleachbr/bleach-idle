@@ -39,7 +39,8 @@ function tooltip(d: ItemDef) {
 export function initInventory(room: Room<any>, onPanel: (open: boolean) => void, myLevel: () => number) {
   let quests: QuestState = { active: {}, done: [] };
   let state: InvMsg | null = null;
-  let open: "" | "depot" | "shop" | "travel" = "";
+  let open: "" | "depot" | "shop" | "travel" | "bag" = "";
+  let bag: { id: string; label: string; gold: number; items: Slot[]; locked: boolean; until: number } | null = null;
   let openedAt: { x: number; y: number } | null = null;
   let lastPos = { x: 0, y: 0 };
 
@@ -61,6 +62,15 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
     state = m;
     render();
   });
+  room.onMessage("bag", (b: typeof bag) => {
+    bag = b;
+    open = "bag";
+    openedAt = { ...lastPos };
+    $("#modal").hidden = false;
+    onPanel(true);
+    render();
+  });
+  room.state.bags.onRemove((_b: any, id: string) => { if (open === "bag" && bag?.id === id) close(); });
   room.onMessage("open", (m: { kind: "depot" | "shop" | "travel" }) => {
     open = m.kind;
     openedAt = { ...lastPos };
@@ -116,6 +126,44 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
     if (!open) return;
     $("#modal-title").textContent = open === "depot" ? "Depot" : open === "shop" ? "Loja do Kisuke" : "Portal";
     const body = $("#modal-body");
+    if (open === "bag" && bag) {
+      const b = bag;
+      $("#modal-title").textContent = b.label;
+      const list = document.createElement("div");
+      list.className = "shop-list";
+      if (b.gold) {
+        const row = document.createElement("div");
+        row.className = "shop-row";
+        row.innerHTML = `<span class="slot static">${iconHtml(GOLD_ICON)}</span><span class="name">${b.gold} ${CURRENCY}</span>`;
+        list.append(row);
+      }
+      b.items.forEach((s, index) => {
+        const d = ITEMS[s.id];
+        const row = document.createElement("div");
+        row.className = "shop-row";
+        row.innerHTML = `<span class="slot static">${iconHtml(d.icon, s.qty)}</span><span class="name">${d.name}</span>`;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = "Pegar";
+        btn.disabled = b.locked;
+        btn.onclick = () => room.send("bagTake", { id: b.id, index });
+        row.append(btn);
+        list.append(row);
+      });
+      const all = document.createElement("button");
+      all.type = "button";
+      all.className = "primary";
+      all.textContent = b.items.length ? "Pegar tudo" : "Pegar o dinheiro";
+      all.disabled = b.locked;
+      all.onclick = () => room.send("bagTake", { id: b.id });
+      const hint = document.createElement("p");
+      hint.className = "hint";
+      hint.textContent = b.locked
+        ? `Reservado a quem matou por mais ${Math.max(0, Math.ceil((b.until - Date.now()) / 1000))} s.`
+        : "Corpos e sacolas somem 5 minutos depois de cair.";
+      body.replaceChildren(all, list, hint);
+      return;
+    }
     if (open === "travel") {
       const list = document.createElement("div");
       list.className = "shop-list";

@@ -475,6 +475,9 @@ def soul():
         ("hollow_devorador", 12, 36, 3, 3), ("fishbone", 37, 23, 3, 3),
     ]:
         m.point("spawn", *m.nearest_free(x, y), kind, {"monstro": kind, "raio": r, "quantidade": n})
+    # campo de treino: bonecos na rua leste da Seireitei (fora da zona segura)
+    for x in (38, 41, 44):
+        m.point("spawn", *m.nearest_free(x, 9), "boneco", {"monstro": "boneco", "raio": 0, "quantidade": 1})
     m.save()
 
 

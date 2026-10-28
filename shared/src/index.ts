@@ -4,3 +4,4 @@ export * from "./formulas";
 export * from "./items";
 export * from "./social";
 export * from "./quests";
+export * from "./training";

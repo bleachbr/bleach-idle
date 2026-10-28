@@ -99,7 +99,7 @@ export class LobbyRoom extends Room {
     const { accountId } = c.userData as Auth;
     c.send("chars", db.listChars(accountId).map((r) => ({
       id: r.id, name: r.data.name, charId: r.data.charId, level: r.data.level,
-      hunting: r.inWorld && !!r.data.autoHunt,
+      hunting: r.inWorld && (!!r.data.autoHunt || !!r.data.autoTrain),
     })));
   }
 }

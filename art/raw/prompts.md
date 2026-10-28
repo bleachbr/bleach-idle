@@ -180,3 +180,47 @@ A humanoid warrior with REALISTIC adult proportions (same height and proportions
 Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT (left side view), row 3 walking RIGHT (right side view), row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle with a clear stride. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge.
 Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
 ```
+
+# Rodada 6: Soul Society
+
+Script `work/gen_soul.sh` (referência de estilo: 01). Os três saíram na 1ª tentativa. O chão é uma folha 2x2 de texturas; cada quarto vira um bloco 4x4 de tiles em `art/maps/build_maps.py`.
+
+## p_26_ss_ground
+
+```text
+Make the image SQUARE. A 2x2 sheet of four SEAMLESS, TILEABLE ground textures for a top-down RPG, each filling its whole quarter edge to edge (no borders, no gaps, no objects): top-left: light grey stone paving slabs in an irregular Japanese courtyard pattern; top-right: packed light-brown dirt road with small pebbles; bottom-left: short green grass; bottom-right: raked white gravel of a zen garden with parallel lines. Flat top-down view, even lighting, no shadows from objects. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs.
+```
+
+## p_27_ss_building
+
+```text
+A single top-down 3/4 view pixel-art building for an RPG map: a traditional Japanese barracks hall of the Soul Society (Seireitei), wide rectangular footprint about 2:1.6, white plaster walls with dark wooden beams and a dark wooden sliding door in the middle of the front wall, a large dark blue-grey tiled roof with curved eaves covering most of the image (we see the roof from above at an angle and only the front wall below it). Centered, filling about 85% of the canvas. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no shadow, no text, no labels, no border, no grid lines.
+```
+
+## p_28_ss_props
+
+```text
+Make the image SQUARE. A 2x2 sheet of four separate top-down 3/4 view pixel-art map props, each centered in its own quarter with generous magenta padding, nothing crossing the quarter edges: top-left: a cherry blossom (sakura) tree with a full pink canopy and a dark trunk (tree about twice as tall as wide); top-right: a grey stone Japanese lantern (toro); bottom-left: a dark green pine tree; bottom-right: a long white Seireitei wall segment with a small dark tiled roof cap on top, seen from the front-top, filling the width of its quarter. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no shadow, no text, no labels, no border, no grid lines.
+```
+
+# Rodada 7: boneco de treino, Grand Fisher e Fishbone D
+
+Script `work/gen_round7.sh`. Boneco com referência 01; Grand Fisher e Fishbone com a folha do Hollow (09). Os três na 1ª tentativa.
+
+## p_29_dummy
+
+```text
+A single top-down 3/4 view pixel-art map object: a Japanese wooden training dummy for sword practice (a wooden post with crossed arms, a straw-wrapped torso tied with rope, a round straw head), standing upright, full object, centered, filling about 70% of the canvas height. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_30_grand_fisher_walk
+
+```text
+A monster: a huge, hunched, gorilla-like spirit beast with black fur and a white bone skull mask with a wide toothy grin; from the top of its head grows a long thin stalk ending in a small human-like doll lure, like an anglerfish. Long heavy arms with claws, round hole through the chest. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT (left side view), row 3 walking RIGHT (right side view), row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_31_fishbone_walk
+
+```text
+A monster: a tall, thin fish-like humanoid spirit with dark blue-grey skin, a white bone mask shaped like a fish skeleton head with a long jaw full of needle teeth, fin-like spikes along its back and forearms, long webbed claws, and a round hole through the chest. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT (left side view), row 3 walking RIGHT (right side view), row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```

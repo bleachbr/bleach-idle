@@ -20,12 +20,17 @@ export interface SaveData {
   depot?: (Slot | null)[];
   equip?: Partial<Record<EquipSlot, string>>;
   frags?: number;
+  autoTrain?: boolean;
+  zanjutsu?: number;
+  zanTries?: number;
+  reiryoku?: number;
+  reiTries?: number;
   quests?: QuestState;
   autoTarget?: boolean;
   autoHunt?: boolean;
   autoHeal?: number;
   /** presente enquanto o personagem caça offline (para o relatório e o limite de 12 h) */
-  offline?: { since: number; expAtLeave: number; goldAtLeave: number; deaths?: import("./schema").DeathReport[] };
+  offline?: { since: number; expAtLeave: number; goldAtLeave: number; zanAtLeave?: number; reiAtLeave?: number; deaths?: import("./schema").DeathReport[] };
 }
 
 export interface CharRow {

@@ -41,7 +41,9 @@ export function consumeTicket(id: unknown): Ticket | undefined {
 
 const WINDOW_MS = 60_000;
 const MAX_FAILS = 5; // por login
-const MAX_FAILS_IP = 30; // por IP: mais folgado, várias pessoas podem dividir o mesmo IP
+// por IP: mais folgado, várias pessoas podem dividir o mesmo IP (os testes usam um valor alto,
+// porque todos os bots entram do mesmo endereço)
+const MAX_FAILS_IP = Number(process.env.LOGIN_MAX_FAILS_IP ?? 30);
 const fails = new Map<string, { n: number; since: number }>();
 
 export function blocked(key: string): boolean {

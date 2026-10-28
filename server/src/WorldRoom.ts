@@ -3,15 +3,16 @@
 // Como o personagem é uma entidade do servidor, a hunt offline é só não removê-lo
 // quando o socket cai: o mesmo Auto Helper continua rodando.
 import { Room, Client, ServerError } from "@colyseus/core";
-import { WorldState, Player, Monster, type DeathReport, type Interact } from "./schema";
+import { WorldState, Player, Monster, Bag, type DeathReport, type Interact } from "./schema";
 import {
   walkable, nearestWalkable, inPZ, type GameMap,
   PARTY_MAX, PARTY_SHARE_RANGE, PARTY_SHARE_BONUS, PARTY_LEVEL_RATIO, PARTY_INVITE_MS,
   PVP_MIN_LEVEL, PVP_DAMAGE, PVP_LOCK_MS, RECALL_COMBAT_MS, RECALL_COOLDOWN_MS, TRAVEL,
   CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir,
   expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
-  ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot,
+  ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
+  zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, removeItem, spaceFor, countItem, equipBonus,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
@@ -38,6 +39,8 @@ const LEASH = 10;
 const VIEW = 8;
 const HUNT_RADIUS = 30;
 const REGEN_MS = 2000;
+const BAG_OWNER_MS = 60_000; // prioridade de quem matou
+const BAG_TTL_MS = 5 * 60_000; // tempo até o corpo/sacola sumir
 
 const mapOf = (e: { map: string }): GameMap => MAPS[e.map] ?? HOME;
 const sameMap = (a: { map: string }, b: { map: string }) => a.map === b.map;
@@ -121,6 +124,7 @@ export class WorldRoom extends Room<WorldState> {
     this.registerItemMessages();
     this.registerSocialMessages();
     this.registerQuestMessages();
+    this.registerBagMessages();
     // relógio: o cliente pergunta a hora do servidor para contar o bloqueio de PvP certo
     this.onMessage("time", (c) => c.send("time", { now: Date.now() }));
     this.onMessage("transform", (c) => {
@@ -132,11 +136,12 @@ export class WorldRoom extends Room<WorldState> {
       if (p.rei < p.maxRei * 0.3) return this.log(p, "Reiatsu insuficiente para o Bankai.");
       this.setForm(p, 1);
     });
-    this.onMessage("auto", (c, m: { autoTarget?: boolean; autoHunt?: boolean; autoHeal?: number }) => {
+    this.onMessage("auto", (c, m: { autoTarget?: boolean; autoHunt?: boolean; autoTrain?: boolean; autoHeal?: number }) => {
       const p = this.me(c);
       if (!p) return;
       if (typeof m?.autoTarget === "boolean") p.autoTarget = m.autoTarget;
       if (typeof m?.autoHunt === "boolean") p.autoHunt = m.autoHunt;
+      if (typeof m?.autoTrain === "boolean") p.autoTrain = m.autoTrain;
       if (typeof m?.autoHeal === "number") p.autoHeal = Math.max(0, Math.min(90, Math.round(m.autoHeal)));
     });
     this.onMessage("chat", (c, m: { text: string }) => {
@@ -201,11 +206,13 @@ export class WorldRoom extends Room<WorldState> {
     this.sessions.delete(client.sessionId);
     const p = id ? this.state.players.get(id) : undefined;
     if (!p) return;
-    if (p.autoHunt) {
+    if (p.autoHunt || p.autoTrain) {
       p.online = false;
       p.offlineSince = Date.now();
       p.expAtLeave = p.exp;
       p.goldAtLeave = p.gold;
+      p.zanAtLeave = p.zanjutsu;
+      p.reiAtLeave = p.reiryoku;
       db.save(p.id, this.toSave(p), true);
     } else {
       db.save(p.id, this.toSave(p), false);
@@ -236,6 +243,12 @@ export class WorldRoom extends Room<WorldState> {
     p.autoHunt = !!saved.autoHunt;
     p.autoHeal = saved.autoHeal ?? 0;
     p.frags = saved.frags ?? 0;
+    p.autoTrain = !!saved.autoTrain;
+    p.zanjutsu = saved.zanjutsu ?? 0;
+    p.zanTries = saved.zanTries ?? 0;
+    p.reiryoku = saved.reiryoku ?? 0;
+    p.reiTries = saved.reiTries ?? 0;
+    this.train(p, 0, 0);
     p.quests = saved.quests ?? { active: {}, done: [] };
     const g = guilds.guildOf(id);
     p.guildId = g?.id ?? 0;
@@ -256,7 +269,7 @@ export class WorldRoom extends Room<WorldState> {
     let n = 0;
     for (const row of db.loadInWorld()) {
       const since = row.data.offline?.since ?? row.updatedAt;
-      if (!row.data.autoHunt || Date.now() - since > OFFLINE_MAX_MS) {
+      if (!(row.data.autoHunt || row.data.autoTrain) || Date.now() - since > OFFLINE_MAX_MS) {
         db.setInWorld(row.id, false);
         continue;
       }
@@ -265,6 +278,8 @@ export class WorldRoom extends Room<WorldState> {
       p.offlineSince = since;
       p.expAtLeave = row.data.offline?.expAtLeave ?? p.exp;
       p.goldAtLeave = row.data.offline?.goldAtLeave ?? p.gold;
+      p.zanAtLeave = row.data.offline?.zanAtLeave ?? p.zanjutsu;
+      p.reiAtLeave = row.data.offline?.reiAtLeave ?? p.reiryoku;
       this.state.players.set(p.id, p);
       n++;
     }
@@ -298,7 +313,7 @@ export class WorldRoom extends Room<WorldState> {
     for (const p of this.state.players.values()) this.playerAt.set(tileKey(p.map, p.x, p.y), 1);
 
     for (const p of [...this.state.players.values()]) {
-      if (!p.online && (!p.autoHunt || now - p.offlineSince > OFFLINE_MAX_MS)) {
+      if (!p.online && (!(p.autoHunt || p.autoTrain) || now - p.offlineSince > OFFLINE_MAX_MS)) {
         p.autoHunt = false;
         db.save(p.id, this.toSave(p), false);
         this.state.players.delete(p.id);
@@ -380,6 +395,10 @@ export class WorldRoom extends Room<WorldState> {
 
   private updateMonster(m: Monster, now: number) {
     const def = MONSTERS[m.kind];
+    if (def.dummy) {
+      if (now >= m.nextAttackAt) { m.nextAttackAt = now + 3000; m.hp = m.maxHp; } // cura total a cada 3 s
+      return;
+    }
     const sp = SPAWNS[m.spawnIndex];
     let t = m.targetId ? this.state.players.get(m.targetId) : undefined;
     if (t && (t.hp <= 0 || !sameMap(m, t) || inPZ(mapOf(t), t.x, t.y) || chebyshev(m.x, m.y, sp.x, sp.y) > LEASH + sp.radius)) {
@@ -457,7 +476,9 @@ export class WorldRoom extends Room<WorldState> {
     e.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : dy > 0 ? 0 : 3;
   }
 
-  private hit(p: Player, t: Player | Monster, mult: number, now: number) {
+  private hit(p: Player, t: Player | Monster, mult: number, now: number, skill = false) {
+    mult *= skill ? reiMult(p.reiryoku) : zanMult(p.zanjutsu);
+    if (!skill) this.train(p, 1, 0);
     if (isPlayer(t)) return this.pvpHit(p, t, mult, now);
     // no mesmo tick a habilidade pode matar e o golpe corpo a corpo acertar o mesmo alvo:
     // monstro já morto não apanha (antes contava 2 mortes: XP e loot em dobro e 2 respawns)
@@ -467,10 +488,13 @@ export class WorldRoom extends Room<WorldState> {
     const dmg = rollDamage(playerAtk(ch.atk, p.level) + equipBonus(p.equip).atk, ch.forms[p.form].dmgMult * mult, def.def);
     t.hp -= dmg;
     t.lastHitBy = p.id;
-    if (!t.targetId) t.targetId = p.id;
+    if (!t.targetId && !def.dummy) t.targetId = p.id;
     p.lastCombatAt = now;
     this.broadcast("fx", { t: "dmg", id: t.id, v: dmg });
-    if (t.hp <= 0) this.killMonster(t, p);
+    if (t.hp <= 0) {
+      if (def.dummy) t.hp = t.maxHp; // boneco não morre
+      else this.killMonster(t, p);
+    }
   }
 
   private trySkill(p: Player, t: Player | Monster, now: number, auto: boolean): boolean {
@@ -480,10 +504,11 @@ export class WorldRoom extends Room<WorldState> {
     if (chebyshev(p.x, p.y, t.x, t.y) > sk.range) return false;
     if (isPlayer(t) && this.cantAttack(p, t)) return false;
     p.rei -= sk.cost;
+    this.train(p, 0, sk.cost);
     p.skillReadyAt = now + sk.cdMs;
     this.face(p, t);
     this.broadcast("fx", { t: "skill", from: p.id, to: t.id, color: sk.color, name: sk.name });
-    this.hit(p, t, sk.mult, now);
+    this.hit(p, t, sk.mult, now, true);
     return true;
   }
 
@@ -511,6 +536,29 @@ export class WorldRoom extends Room<WorldState> {
     const fight = now - p.lastCombatAt < 6000;
     p.hp = Math.min(p.maxHp, p.hp + Math.round(p.maxHp * (fight ? 0.01 : 0.04)));
     if (!CHARS[p.charId].forms[p.form].reiDrain) p.rei = Math.min(p.maxRei, p.rei + p.maxRei * (fight ? 0.02 : 0.06));
+    // Auto Treino ("Auto Power Down" do DBO): reiatsu parado vira Reiryoku
+    if (p.autoTrain && !fight && !CHARS[p.charId].forms[p.form].reiDrain) {
+      const burn = Math.min(p.rei, p.maxRei * AUTO_TRAIN_BURN);
+      if (burn >= 1) { p.rei -= burn; this.train(p, 0, burn); }
+    }
+  }
+
+  /** Soma treino de Zanjutsu (golpes) e Reiryoku (reiatsu gasto) e sobe de nível. */
+  private train(p: Player, zan: number, rei: number) {
+    p.zanTries += zan;
+    p.reiTries += rei;
+    while (p.zanTries >= zanNext(p.zanjutsu) && p.zanjutsu < 255) {
+      p.zanTries -= zanNext(p.zanjutsu);
+      p.zanjutsu++;
+      this.log(p, `Zanjutsu subiu para ${p.zanjutsu}! (+2% de dano corpo a corpo por nível)`);
+    }
+    while (p.reiTries >= reiNext(p.reiryoku) && p.reiryoku < 255) {
+      p.reiTries -= reiNext(p.reiryoku);
+      p.reiryoku++;
+      this.log(p, `Reiryoku subiu para ${p.reiryoku}! (+3% de dano das habilidades por nível)`);
+    }
+    p.zanPct = Math.floor((p.zanTries * 100) / zanNext(p.zanjutsu));
+    p.reiPct = Math.floor((p.reiTries * 100) / reiNext(p.reiryoku));
   }
 
   private killMonster(m: Monster, killer: Player) {
@@ -521,10 +569,12 @@ export class WorldRoom extends Room<WorldState> {
     this.monsterAt.delete(tileKey(m.map, m.x, m.y));
     this.clock.setTimeout(() => this.spawnMonster(m.spawnIndex), def.respawnMs);
     this.shareExp(killer, m, def.exp, def.name);
-    this.giveLoot(killer, m.kind);
+    this.giveLoot(killer, m.kind, m);
   }
 
-  private killPlayer(p: Player, by: string) {
+  private killPlayer(p: Player, by: string, killerId = "") {
+    const deathAt = { map: p.map, x: p.x, y: p.y };
+    const dropped: Slot[] = [];
     // Amuleto da Alma (o "Band of Loss" daqui): protege XP, itens e dinheiro, e se desfaz
     const prot = p.equip.amulet === "amuleto_alma";
     if (prot) delete p.equip.amulet;
@@ -535,13 +585,16 @@ export class WorldRoom extends Room<WorldState> {
       // estilo Tibia: cada peça e cada espaço rola a perda; o depot fica intacto
       for (const slot of EQUIP_SLOTS) {
         const id = p.equip[slot];
-        if (id && Math.random() < DEATH_ITEM_LOSS) { items.push(ITEMS[id].name); delete p.equip[slot]; }
+        if (id && Math.random() < DEATH_ITEM_LOSS) { items.push(ITEMS[id].name); dropped.push({ id, qty: 1 }); delete p.equip[slot]; }
       }
       p.inv.forEach((sl, i) => {
-        if (sl && Math.random() < DEATH_ITEM_LOSS) { items.push(`${sl.qty}x ${ITEMS[sl.id].name}`); p.inv[i] = null; }
+        if (sl && Math.random() < DEATH_ITEM_LOSS) { items.push(`${sl.qty}x ${ITEMS[sl.id].name}`); dropped.push({ ...sl }); p.inv[i] = null; }
       });
       goldLost = Math.floor(p.gold * DEATH_GOLD_LOSS);
       p.gold -= goldLost;
+      // estilo Tibia: o que se perde fica no corpo; em PvP, quem matou tem prioridade
+      if (dropped.length || goldLost)
+        this.dropBag(deathAt, "corpo", `Corpo de ${p.name}`, dropped, goldLost, killerId ? this.partyOf(killerId) : []);
     }
     this.broadcast("fx", { t: "die", id: p.id });
     p.exp -= loss;
@@ -572,6 +625,7 @@ export class WorldRoom extends Room<WorldState> {
     client.send("offline", {
       minutes: Math.round((Date.now() - p.offlineSince) / 60000),
       exp: p.exp - p.expAtLeave, gold: p.gold - p.goldAtLeave, level: p.level, deaths: p.offlineDeaths,
+      zanjutsu: p.zanjutsu, zanGain: p.zanjutsu - p.zanAtLeave, reiryoku: p.reiryoku, reiGain: p.reiryoku - p.reiAtLeave,
     });
     p.offlineSince = 0;
     p.offlineDeaths = [];
@@ -624,7 +678,7 @@ export class WorldRoom extends Room<WorldState> {
     let best: Monster | undefined;
     let bd = range + 1;
     for (const m of this.state.monsters.values()) {
-      if (!sameMap(p, m) || (only && !only.has(m.kind))) continue;
+      if (!sameMap(p, m) || (only && !only.has(m.kind)) || MONSTERS[m.kind].dummy) continue;
       const d = chebyshev(p.x, p.y, m.x, m.y);
       if (d < bd) { best = m; bd = d; }
     }
@@ -756,14 +810,19 @@ export class WorldRoom extends Room<WorldState> {
   }
 
   /** Loot vai direto para o inventário de quem matou: funciona igual na hunt offline. */
-  private giveLoot(p: Player, kind: string) {
+  private giveLoot(p: Player, kind: string, at: { map: string; x: number; y: number }) {
     const loot = rollLoot(kind);
     p.gold += loot.gold;
     const got: string[] = [];
+    const overflow: Slot[] = [];
     for (const s of loot.items) {
       const n = addItem(p.inv, s.id, s.qty);
       if (n) got.push(`${n}x ${ITEMS[s.id].name}`);
-      if (n < s.qty) this.log(p, `Inventário cheio: ${ITEMS[s.id].name} perdido.`);
+      if (n < s.qty) overflow.push({ id: s.id, qty: s.qty - n });
+    }
+    if (overflow.length) {
+      this.dropBag(at, "sacola", "Loot", overflow, 0, this.partyOf(p.id));
+      this.log(p, "Inventário cheio: o loot que não coube ficou numa sacola no chão (reservada a você por 1 min).");
     }
     this.log(p, `Loot: ${loot.gold} kan${got.length ? ", " + got.join(", ") : ""}.`);
     if (got.length) this.broadcast("fx", { t: "loot", id: p.id, v: got.length });
@@ -930,7 +989,7 @@ export class WorldRoom extends Room<WorldState> {
       p.targetId = "";
       this.broadcast("chat", { from: "", text: `${v.name} foi derrotado por ${p.name}.` });
       p.frags++;
-      this.killPlayer(v, `${p.name} (jogador)`);
+      this.killPlayer(v, `${p.name} (jogador)`, p.id);
     }
   }
 
@@ -1257,6 +1316,79 @@ export class WorldRoom extends Room<WorldState> {
     this.sendTo(p, "quests", { active: p.quests.active, done: p.quests.done });
   }
 
+  // ---------- corpos e sacolas no chão ----------
+
+  private bagSeq = 0;
+
+  /** quem pode pegar com prioridade: o jogador e a party dele */
+  private partyOf(id: string): string[] {
+    const p = this.state.players.get(id);
+    const party = p ? this.parties.get(p.partyId) : undefined;
+    return party ? [...party.members] : [id];
+  }
+
+  private dropBag(at: { map: string; x: number; y: number }, kind: "corpo" | "sacola", label: string, items: Slot[], gold: number, owners: string[]) {
+    const b = new Bag();
+    b.id = `b${++this.bagSeq}`;
+    b.map = at.map;
+    b.x = at.x;
+    b.y = at.y;
+    b.kind = kind;
+    b.label = label;
+    b.items = items;
+    b.gold = gold;
+    b.owners = owners;
+    b.ownerUntil = owners.length ? Date.now() + BAG_OWNER_MS : 0;
+    b.expires = Date.now() + BAG_TTL_MS;
+    this.state.bags.set(b.id, b);
+  }
+
+  private registerBagMessages() {
+    const canTake = (p: Player, b: Bag) => !b.owners.length || Date.now() >= b.ownerUntil || b.owners.includes(p.id);
+    const nearBag = (p: Player, b: Bag) => b.map === p.map && chebyshev(p.x, p.y, b.x, b.y) <= 1;
+    const show = (p: Player, b: Bag) =>
+      this.sendTo(p, "bag", { id: b.id, label: b.label, gold: b.gold, items: b.items, locked: !canTake(p, b), until: b.ownerUntil });
+    this.onMessage("bagOpen", (c, m: { id: string }) => {
+      const p = this.me(c);
+      const b = this.state.bags.get(String(m?.id ?? ""));
+      if (!p || !b) return;
+      if (!nearBag(p, b)) {
+        // anda até ficar do lado e o cliente pede de novo ao chegar
+        p.follow = false;
+        p.path = findPath(p.x, p.y, (x, y) => chebyshev(x, y, b.x, b.y) <= 1, (x, y) => !walkable(mapOf(p), x, y));
+        return;
+      }
+      show(p, b);
+    });
+    this.onMessage("bagTake", (c, m: { id: string; index?: number }) => {
+      const p = this.me(c);
+      const b = this.state.bags.get(String(m?.id ?? ""));
+      if (!p || !b || !nearBag(p, b)) return;
+      if (!canTake(p, b)) return this.log(p, `Ainda reservado a quem matou (${Math.ceil((b.ownerUntil - Date.now()) / 1000)} s).`);
+      const idx = typeof m.index === "number" ? [m.index] : b.items.map((_, i) => i);
+      p.gold += b.gold;
+      b.gold = 0;
+      let full = false;
+      for (const i of idx) {
+        const sl = b.items[i];
+        if (!sl) continue;
+        const n = addItem(p.inv, sl.id, sl.qty);
+        sl.qty -= n;
+        if (sl.qty > 0) full = true;
+      }
+      b.items = b.items.filter((sl) => sl.qty > 0);
+      if (full) this.log(p, "Inventário cheio: parte ficou no chão.");
+      this.sendInv(p);
+      if (!b.items.length && !b.gold) this.state.bags.delete(b.id);
+      else show(p, b);
+    });
+    // corpos e sacolas somem com o tempo
+    this.clock.setInterval(() => {
+      const now = Date.now();
+      for (const b of [...this.state.bags.values()]) if (now >= b.expires) this.state.bags.delete(b.id);
+    }, 5000);
+  }
+
   // ---------- utilidades ----------
 
   private me(c: Client) {
@@ -1273,7 +1405,8 @@ export class WorldRoom extends Room<WorldState> {
       name: p.name, charId: p.charId, level: p.level, exp: p.exp, hp: p.hp, rei: Math.round(p.rei), map: p.map, x: p.x, y: p.y,
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
       autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests,
-      offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, deaths: p.offlineDeaths },
+      autoTrain: p.autoTrain, zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
+      offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, zanAtLeave: p.zanAtLeave, reiAtLeave: p.reiAtLeave, deaths: p.offlineDeaths },
     };
   }
 

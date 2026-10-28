@@ -21,6 +21,14 @@ export const SPRITES: Record<string, SpriteDef> = {
   adjuchas: { frame: 96 },
   gillian: { frame: 96 },
   arrancar: { frame: 48 },
+  boneco: { frame: 48 },
+  fishbone: { frame: 96 },
+  rukia_bankai: { frame: 48 },
+  renji_bankai: { frame: 48 },
+  hollow_menor: { frame: 96 },
+  hollow_rastejante: { frame: 96 },
+  hollow_acido: { frame: 96 },
+  grand_fisher: { frame: 96 },
 };
 
 // Variantes de visual por equipamento (folha inteira por combinação: <base>__<look>).
@@ -83,7 +91,7 @@ export const CHARS: Record<string, CharDef> = {
     def: 3,
     forms: [
       { id: "shikai", label: "Shikai: Sode no Shirayuki", sprite: "rukia", dmgMult: 1, stepMs: 250, attackMs: 950, reiDrain: 0, minLevel: 1 },
-      { id: "bankai", label: "Bankai: Hakka no Togame", sprite: "rukia", tint: 0xd8f0ff, dmgMult: 1.6, stepMs: 190, attackMs: 700, reiDrain: 2.5, minLevel: 10 },
+      { id: "bankai", label: "Bankai: Hakka no Togame", sprite: "rukia_bankai", dmgMult: 1.6, stepMs: 190, attackMs: 700, reiDrain: 2.5, minLevel: 10 },
     ],
     // mais alcance e mais dano de habilidade, menos corpo a corpo
     skill: { name: "Tsugi no Mai: Hakuren", range: 6, cost: 22, mult: 3.0, cdMs: 3000, color: 0xe6fbff },
@@ -95,7 +103,7 @@ export const CHARS: Record<string, CharDef> = {
     def: 5,
     forms: [
       { id: "shikai", label: "Shikai: Zabimaru", sprite: "renji", dmgMult: 1, stepMs: 270, attackMs: 1050, reiDrain: 0, minLevel: 1 },
-      { id: "bankai", label: "Bankai: Hihiō Zabimaru", sprite: "renji", tint: 0xffc8b0, dmgMult: 1.8, stepMs: 200, attackMs: 750, reiDrain: 2.5, minLevel: 10 },
+      { id: "bankai", label: "Bankai: Hihiō Zabimaru", sprite: "renji_bankai", dmgMult: 1.8, stepMs: 200, attackMs: 750, reiDrain: 2.5, minLevel: 10 },
     ],
     skill: { name: "Higa Zekkō", range: 3, cost: 18, mult: 2.4, cdMs: 2500, color: 0xff6a4a },
   },
@@ -115,25 +123,29 @@ export interface MonsterDef {
   respawnMs: number;
   /** folha de sprite em client/public/assets/sprites/ */
   sprite: string;
+  /** boneco de treino: não anda, não ataca, não morre, não dá XP nem loot */
+  dummy?: boolean;
 }
 
 const m = (id: string, name: string, hp: number, atk: number, def: number, exp: number, scale: number, tint: number, stepMs = 420, respawnMs = 20000, sprite = "hollow"): MonsterDef =>
   ({ id, name, hp, atk, def, exp, scale, tint, stepMs, attackMs: 1400, respawnMs, sprite });
 
-// Karakura: um sprite de Hollow variando tamanho e cor. Hueco Mundo: sprites próprios.
+// Hollows comuns de Karakura: um sprite variando tamanho e cor. Fishbone D, Grand Fisher,
+// os de Hueco Mundo e o boneco de treino têm sprites próprios.
 // Onde cada um nasce fica no mapa (objetos "spawn" na camada "logica" do Tiled).
 export const MONSTERS: Record<string, MonsterDef> = Object.fromEntries([
-  m("hollow_menor", "Hollow Menor", 45, 7, 0, 60, 0.55, 0xffffff, 450),
-  m("hollow_rastejante", "Hollow Rastejante", 80, 10, 1, 110, 0.62, 0xb8ffb0),
+  m("hollow_menor", "Hollow Menor", 45, 7, 0, 60, 1, 0xffffff, 450, 20000, "hollow_menor"),
+  m("hollow_rastejante", "Hollow Rastejante", 80, 10, 1, 110, 1, 0xffffff, 420, 20000, "hollow_rastejante"),
   m("hollow_sombrio", "Hollow Sombrio", 120, 13, 2, 170, 0.68, 0x8a8aa0),
   m("hollow_uivante", "Hollow Uivante", 160, 16, 2, 240, 0.74, 0xffd6a0, 360),
   m("hollow_faminto", "Hollow Faminto", 220, 19, 3, 330, 0.8, 0xffb0b0),
-  m("hollow_acido", "Hollow Ácido", 280, 22, 4, 420, 0.84, 0xe4ff8a),
+  m("hollow_acido", "Hollow Ácido", 280, 22, 4, 420, 1, 0xffffff, 420, 20000, "hollow_acido"),
   m("hollow_encouracado", "Hollow Encouraçado", 380, 24, 8, 560, 0.9, 0xa8c4ff, 520),
   m("hollow_devorador", "Hollow Devorador", 480, 30, 6, 720, 0.97, 0xffffff),
-  m("fishbone", "Fishbone D", 700, 36, 8, 1100, 1.05, 0xd2a8ff),
-  m("grand_fisher", "Grand Fisher", 2600, 48, 12, 6000, 1.3, 0xffe27a, 380, 180000),
+  m("fishbone", "Fishbone D", 700, 36, 8, 1100, 1, 0xffffff, 420, 20000, "fishbone"),
+  m("grand_fisher", "Grand Fisher", 2600, 48, 12, 6000, 1, 0xffffff, 380, 180000, "grand_fisher"),
   m("adjuchas", "Adjuchas", 950, 42, 10, 1500, 1, 0xffffff, 330, 25000, "adjuchas"),
   m("arrancar", "Arrancar", 1400, 50, 14, 2300, 1, 0xffffff, 300, 30000, "arrancar"),
   m("gillian", "Menos Grande (Gillian)", 5200, 62, 16, 9000, 1, 0xffffff, 650, 120000, "gillian"),
+  { ...m("boneco", "Boneco de Treino", 3000, 0, 0, 0, 1, 0xffffff, 1000, 5000, "boneco"), dummy: true },
 ].map((d) => [d.id, d]));

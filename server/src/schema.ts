@@ -27,6 +27,11 @@ export class Player extends Schema {
   look = ""; // visual do equipamento (lookOf); todos veem
   partyId = ""; // party atual ("" = sem party); membros se veem em verde
   guildTag = ""; // tag da guilda, mostrada no nome
+  autoTrain = false; // Auto Treino: queima reiatsu parado (Reiryoku) e segue treinando offline
+  zanjutsu = 0; // nível de esgrima
+  zanPct = 0; // % para o próximo nível
+  reiryoku = 0; // nível de reiryoku (o "magic level")
+  reiPct = 0;
   partyLead = false;
   pvpUntil = 0; // ms epoch: até quando está bloqueado depois de atacar um jogador
 
@@ -54,6 +59,10 @@ export class Player extends Schema {
   pzWarnAt = 0;
   guildId = 0;
   frags = 0; // jogadores derrotados em PvP (ranking)
+  zanTries = 0;
+  reiTries = 0;
+  zanAtLeave = 0;
+  reiAtLeave = 0;
   quests: QuestState = { active: {}, done: [] };
   reiPotionReadyAt = 0;
   /** mortes enquanto caçava offline, para o relatório da volta */
@@ -70,6 +79,7 @@ defineTypes(Player, {
   level: "uint16", exp: "number", targetId: "string",
   online: "boolean", autoTarget: "boolean", autoHunt: "boolean", autoHeal: "uint8", look: "string", map: "string",
   partyId: "string", partyLead: "boolean", pvpUntil: "number", guildTag: "string",
+  autoTrain: "boolean", zanjutsu: "uint8", zanPct: "uint8", reiryoku: "uint8", reiPct: "uint8",
 });
 
 export class Monster extends Schema {
@@ -96,8 +106,26 @@ defineTypes(Monster, {
   hp: "int32", maxHp: "int32", targetId: "string",
 });
 
+/** Corpo ou sacola no chão com itens e kan. O conteúdo só vai a quem abre (mensagem "bag"). */
+export class Bag extends Schema {
+  id = "";
+  map = "karakura";
+  x = 0;
+  y = 0;
+  kind: "corpo" | "sacola" = "sacola";
+  label = "";
+  // só no servidor
+  owners: string[] = []; // quem pode pegar durante a prioridade ([] = qualquer um)
+  ownerUntil = 0;
+  expires = 0;
+  gold = 0;
+  items: Slot[] = [];
+}
+defineTypes(Bag, { id: "string", map: "string", x: "int16", y: "int16", kind: "string", label: "string" });
+
 export class WorldState extends Schema {
   players = new MapSchema<Player>();
   monsters = new MapSchema<Monster>();
+  bags = new MapSchema<Bag>();
 }
-defineTypes(WorldState, { players: { map: Player }, monsters: { map: Monster } });
+defineTypes(WorldState, { players: { map: Player }, monsters: { map: Monster }, bags: { map: Bag } });
