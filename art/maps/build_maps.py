@@ -3,7 +3,7 @@ dos pacotes CC0 da Kenney em art/maps/kenney/.
 
 Saída em client/public/maps/:
   karakura.tmj + karakura_tiles.png   (arte própria, gerada pelo Codex: art/raw/44 a 46; sem elas, Kenney)
-  hueco.tmj    + hueco_tiles.png
+  hueco.tmj    + hueco_tiles.png      (arte própria, gerada pelo Codex: art/raw/47 e 48; sem elas, Kenney)
   soul.tmj     + soul_tiles.png   (arte própria, gerada pelo Codex: art/raw/26 a 28)
 
 Camadas de cada mapa:
@@ -409,20 +409,26 @@ def karakura_layout(ts, own_building):
 
 def hueco():
     ts = Tileset("hueco")
-    WHITE = (192, 198, 216)  # areia cinza-azulada (noite eterna), contrasta com roupas brancas
-    BONE = (236, 236, 244)
-    ts.add("areia", recolor(rpg(8, 0), WHITE))
-    ts.add("areia2", recolor(rpg(8, 1), WHITE))
-    ts.add("arvore", recolor(rpg(27, 11), BONE), True)
-    ts.add("galhos", recolor(rpg(27, 10), BONE))
-    for i, c in enumerate((54, 55, 56)):
-        ts.add(f"rocha{i}", recolor(rpg(c, 21), (150, 156, 178)), True)
-    ts.add("coluna", recolor(rpg(20, 20), BONE), True)
-    ts.add("coluna_topo", recolor(rpg(20, 19), BONE))
-    ts.add("coluna_quebrada", recolor(rpg(21, 20), BONE), True)
-    ts.add("garganta", Image.alpha_composite(recolor(rpg(8, 0), WHITE), rpg(36, 2)), True)
+    own = all((RAW / f).exists() for f in ("47_hm_ground.png", "48_hm_props.png"))
+    if own:
+        hueco_own_tiles(ts)
+    else:
+        WHITE = (192, 198, 216)  # areia cinza-azulada (noite eterna), contrasta com roupas brancas
+        BONE = (236, 236, 244)
+        ts.add("areia", recolor(rpg(8, 0), WHITE))
+        ts.add("areia2", recolor(rpg(8, 1), WHITE))
+        ts.add("arvore", recolor(rpg(27, 11), BONE), True)
+        ts.add("galhos", recolor(rpg(27, 10), BONE))
+        for i, c in enumerate((54, 55, 56)):
+            ts.add(f"rocha{i}", recolor(rpg(c, 21), (150, 156, 178)), True)
+        ts.add("coluna", recolor(rpg(20, 20), BONE), True)
+        ts.add("coluna_topo", recolor(rpg(20, 19), BONE))
+        ts.add("coluna_quebrada", recolor(rpg(21, 20), BONE), True)
+        ts.add("garganta", Image.alpha_composite(recolor(rpg(8, 0), WHITE), rpg(36, 2)), True)
 
     m = Map("hueco", "Hueco Mundo", 48, 40, ts)
+    if own:
+        m.tex = {"areia": "areia", "areia2": "areia", "duna": "duna", "ruina": "ruina", "ossos": "ossos"}
     rnd = random.Random(7)
     for y in range(m.h):
         for x in range(m.w):
@@ -452,6 +458,21 @@ def hueco():
                     m.set("objetos", x, y, "coluna")
                     m.set("acima", x, y - 1, "coluna_topo")
     m.set("objetos", 6, 4, "garganta")
+    if own:
+        # só o visual muda (o traçado e a colisão continuam os mesmos): ruínas na zona segura,
+        # dunas e ossadas por regiões, crânios no lugar de parte das rochas do meio do deserto
+        m.set("acima", 6, 3, "garganta_topo")
+        for y in range(m.h):
+            for x in range(m.w):
+                if PZ[0] <= x <= PZ[2] and PZ[1] <= y <= PZ[3]:
+                    m.set("chao", x, y, "ruina")
+                elif math.sin(x / 6) + math.cos(y / 5) > 1.1:
+                    m.set("chao", x, y, "duna")
+                elif math.sin((x + 40) / 7) * math.cos((y + 9) / 6) > 0.6:
+                    m.set("chao", x, y, "ossos")
+                inner = 2 <= x < m.w - 2 and 2 <= y < m.h - 2
+                if inner and (m.keys["objetos"][y * m.w + x] or "").startswith("rocha") and (x * 7 + y * 13) % 10 < 3:
+                    m.set("objetos", x, y, "cranio" if (x + y) % 2 else "arvore_peq")
 
     m.rect("pz", *PZ)
     m.point("portal", 6, 4, "Garganta")
@@ -462,6 +483,33 @@ def hueco():
     ]:
         m.point("spawn", x, y, kind, {"monstro": kind, "raio": r, "quantidade": n})
     m.save()
+
+
+def hueco_own_tiles(ts):
+    """Arte própria de Hueco Mundo (Codex, art/raw/47 e 48), com as chaves do traçado da Kenney."""
+    P = pixel_tools()
+    ground = Image.open(RAW / "47_hm_ground.png").convert("RGBA")
+    q = ground.width // 2
+    for name, (qx, qy) in {"areia": (0, 0), "duna": (1, 0), "ruina": (0, 1), "ossos": (1, 1)}.items():
+        tex = P["crisp"](ground.crop((qx * q + 6, qy * q + 6, qx * q + q - 6, qy * q + q - 6)).resize((4 * T, 4 * T), Image.BOX), 10)
+        for y, row in enumerate(P["tiles_of"](tex)):
+            for x, t in enumerate(row):
+                ts.add(f"{name}{x}{y}", t)
+    props = P["split"](Image.open(RAW / "48_hm_props.png").convert("RGBA"), 3, 3)
+    (top,), (bottom,) = P["tiles_of"](P["prop"](props[0], 1, 2))
+    ts.add("arvore", bottom, True)
+    ts.add("galhos", top)
+    for i, k in enumerate((1, 2, 3)):
+        ts.add(f"rocha{i}", P["prop"](props[k], 1, 1), True)
+    (top,), (bottom,) = P["tiles_of"](P["prop"](props[4], 1, 2))
+    ts.add("coluna", bottom, True)
+    ts.add("coluna_topo", top)
+    ts.add("coluna_quebrada", P["prop"](props[5], 1, 1), True)
+    (top,), (bottom,) = P["tiles_of"](P["prop"](props[6], 1, 2))
+    ts.add("garganta", bottom, True)
+    ts.add("garganta_topo", top)
+    ts.add("cranio", P["prop"](props[7], 1, 1), True)
+    ts.add("arvore_peq", P["prop"](props[8], 1, 1), True)
 
 
 # ------------------------------------------------------------------ Soul Society (arte do Codex)

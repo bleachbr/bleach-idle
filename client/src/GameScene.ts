@@ -1,6 +1,7 @@
 // Cena principal: desenha o mapa, espelha o estado do servidor e envia intenções.
 // Nada de simulação aqui: posições, dano e XP vêm todos do servidor.
 import Phaser from "phaser";
+import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
 import { TILE, SPRITES, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, type GameMap } from "../../shared/src";
 import { serverNow } from "./clock";
@@ -196,17 +197,27 @@ export class GameScene extends Phaser.Scene {
 
   private onFx(fx: { t: string; id?: string; v?: number; from?: string; to?: string; color?: number; name?: string; text?: string }) {
     const v = fx.id ? this.views.get(fx.id) : undefined;
+    // som só do que envolve você: o próprio personagem ou o seu alvo
+    const mine = fx.id === this.myId;
+    const myTarget = fx.id !== undefined && fx.id === this.room.state.players.get(this.myId)?.targetId;
     switch (fx.t) {
+      case "die":
+        if (myTarget) sfx.die();
+        break;
       case "book":
+        sfx.chime();
         this.float(this.views.get(this.myId), fx.text!, "#ffcf5a", 12);
         break;
       case "event":
         this.float(this.views.get(this.myId), fx.text!, "#ff6a4a", 16);
         this.cameras.main.shake(300, 0.003);
+        sfx.event();
         break;
       case "dmg":
         this.float(v, fx.v ? String(fx.v) : "errou", v?.isMonster ? "#ffffff" : "#ff5a4a");
         if (v && fx.v) { v.spr.setTintFill(0xffffff); this.time.delayedCall(70, () => this.restoreTint(v)); }
+        if (mine && fx.v) sfx.hurt();
+        else if (myTarget && fx.v) sfx.hit();
         break;
       case "tp":
         // no sprite, e não no container: o moveView do teleporte mata os tweens do container
@@ -214,22 +225,27 @@ export class GameScene extends Phaser.Scene {
         break;
       case "loot":
         this.float(v, "loot!", "#ffd84a", 10);
+        if (mine) sfx.loot();
         break;
       case "heal":
         this.float(v, `+${fx.v}`, "#6dff7a");
+        if (mine) sfx.heal();
         break;
       case "level":
         this.float(v, `NÍVEL ${fx.v}!`, "#ffd84a", 14);
+        if (mine) sfx.level();
         break;
       case "form":
         this.float(v, fx.v ? "BANKAI!" : "Shikai", fx.v ? "#ff6a3a" : "#cfd8ff", 14);
         if (v && fx.v) this.cameras.main.shake(200, 0.004);
+        if (mine && fx.v) sfx.bankai();
         break;
       case "skill": {
         const a = this.views.get(fx.from!);
         const b = this.views.get(fx.to!);
         if (!a || !b) break;
         this.float(a, fx.name!, "#bfe9ff", 11);
+        if (fx.from === this.myId) sfx.skill();
         const orb = this.add.ellipse(a.c.x, a.c.y - 20, 22, 10, fx.color, 0.9).setDepth(1e6);
         orb.rotation = Phaser.Math.Angle.Between(a.c.x, a.c.y, b.c.x, b.c.y);
         this.tweens.add({ targets: orb, x: b.c.x, y: b.c.y - 20, duration: 180, onComplete: () => orb.destroy() });

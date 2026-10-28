@@ -209,6 +209,8 @@ export class WorldRoom extends GameRoom<WorldState> {
         p.expAtLeave = row.data.offline.expAtLeave;
         p.goldAtLeave = row.data.offline.goldAtLeave;
         p.offlineDeaths = row.data.offline.deaths ?? [];
+        p.offKills = row.data.offline.kills ?? 0;
+        p.offItems = row.data.offline.items ?? {};
         this.sendOfflineReport(client, p);
       }
       p.online = true;
@@ -235,6 +237,8 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.goldAtLeave = p.gold;
       p.zanAtLeave = p.zanjutsu;
       p.reiAtLeave = p.reiryoku;
+      p.offKills = 0;
+      p.offItems = {};
       db.save(p.id, this.toSave(p), true);
     } else {
       db.save(p.id, this.toSave(p), false);
@@ -308,6 +312,8 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.goldAtLeave = row.data.offline?.goldAtLeave ?? p.gold;
       p.zanAtLeave = row.data.offline?.zanAtLeave ?? p.zanjutsu;
       p.reiAtLeave = row.data.offline?.reiAtLeave ?? p.reiryoku;
+      p.offKills = row.data.offline?.kills ?? 0;
+      p.offItems = row.data.offline?.items ?? {};
       this.state.players.set(p.id, p);
       n++;
     }
@@ -675,9 +681,13 @@ export class WorldRoom extends GameRoom<WorldState> {
       minutes: Math.round((Date.now() - p.offlineSince) / 60000),
       exp: p.exp - p.expAtLeave, gold: p.gold - p.goldAtLeave, level: p.level, deaths: p.offlineDeaths,
       zanjutsu: p.zanjutsu, zanGain: p.zanjutsu - p.zanAtLeave, reiryoku: p.reiryoku, reiGain: p.reiryoku - p.reiAtLeave,
+      kills: p.offKills,
+      items: Object.entries(p.offItems).sort((a, b) => b[1] - a[1]).map(([id, n]) => `${n}x ${ITEMS[id]?.name ?? id}`),
     });
     p.offlineSince = 0;
     p.offlineDeaths = [];
+    p.offKills = 0;
+    p.offItems = {};
   }
 
   private sendTo(p: Player, type: string, msg: unknown) {
@@ -867,6 +877,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     let overflow: Slot[] = [];
     for (const s of loot.items) {
       p.hunt.items[s.id] = (p.hunt.items[s.id] ?? 0) + s.qty;
+      if (!p.online) p.offItems[s.id] = (p.offItems[s.id] ?? 0) + s.qty;
       const n = addItem(p.inv, s.id, s.qty);
       if (n) got.push(`${n}x ${ITEMS[s.id].name}`);
       if (n < s.qty) overflow.push({ id: s.id, qty: s.qty - n });
@@ -1599,6 +1610,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     pr.bestiary[kind] = before + 1;
     pr.kills++;
     p.hunt.kills++;
+    if (!p.online) p.offKills++;
     if (BOSSES.has(kind)) pr.bossKills++;
     const st = bestiaryStage(kind, before + 1);
     if (st > bestiaryStage(kind, before)) {
@@ -1798,7 +1810,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
       autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil, prog: p.prog, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
       autoTrain: p.autoTrain, autoSell: p.autoSell, zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
-      offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, zanAtLeave: p.zanAtLeave, reiAtLeave: p.reiAtLeave, deaths: p.offlineDeaths },
+      offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, zanAtLeave: p.zanAtLeave, reiAtLeave: p.reiAtLeave, deaths: p.offlineDeaths, kills: p.offKills, items: p.offItems },
     };
   }
 

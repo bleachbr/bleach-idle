@@ -75,6 +75,9 @@ export class Player extends Schema {
   reiPotionReadyAt = 0;
   /** mortes enquanto caçava offline, para o relatório da volta */
   offlineDeaths: DeathReport[] = [];
+  /** abates e loot da caçada offline, para o relatório da volta */
+  offKills = 0;
+  offItems: Record<string, number> = {};
 }
 
 export type Interact = "depot" | "shop" | "travel";

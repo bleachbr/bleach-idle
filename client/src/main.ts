@@ -6,6 +6,7 @@ import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
+import { sfx } from "./sfx";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 // em produção o servidor entrega a página e o WebSocket no mesmo endereço (wss atrás do HTTPS);
@@ -183,11 +184,16 @@ function start(room: Room<any>, myId: string) {
   });
   bindGuild(room);
   bindBook(room);
+  const mute = $("#mute-btn");
+  const showMute = () => { mute.textContent = sfx.isMuted() ? "sem som" : "som"; };
+  showMute();
+  mute.onclick = () => { sfx.setMuted(!sfx.isMuted()); showMute(); };
   room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log"));
-  room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[]; zanGain?: number; reiGain?: number; zanjutsu?: number; reiryoku?: number }) => {
+  room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[]; zanGain?: number; reiGain?: number; zanjutsu?: number; reiryoku?: number; kills?: number; items?: string[] }) => {
     const sign = (n: number) => (n >= 0 ? "+" : "") + n;
     const skills = [m.zanGain ? `Zanjutsu ${sign(m.zanGain)} (agora ${m.zanjutsu})` : "", m.reiGain ? `Reiryoku ${sign(m.reiGain)} (agora ${m.reiryoku})` : ""].filter(Boolean).join(", ");
-    chatLine(`Tempo offline: ${m.minutes} min, ${sign(m.exp)} XP, ${sign(m.gold)} kan${skills ? `, ${skills}` : ""}. Você está no nível ${m.level}.`, "log");
+    chatLine(`Tempo offline: ${m.minutes} min, ${m.kills ?? 0} abates, ${sign(m.exp)} XP, ${sign(m.gold)} kan${skills ? `, ${skills}` : ""}. Você está no nível ${m.level}.`, "log");
+    if (m.items?.length) chatLine(`Loot offline: ${m.items.slice(0, 8).join(", ")}${m.items.length > 8 ? ` e mais ${m.items.length - 8} tipos` : ""}.`, "log");
     if (m.deaths?.length) showDeath(m.deaths, true);
   });
   room.onMessage("death", (d: DeathReport) => showDeath([d], false));

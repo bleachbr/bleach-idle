@@ -71,3 +71,45 @@ Resultado da última bateria completa: veja o fim deste arquivo.
 
 ## Resultado da última bateria completa
 `npm test`: **136 verificações OK** nos 18 cenários, e nenhuma exceção no servidor. As 2 verificações novas da expiração do mercado entraram no meio da rodada (o servidor de teste ainda tinha o código antigo). Rodadas de novo isoladas com `npx tsx scripts/test.ts market`: 11 de 11 OK.
+
+---
+
+# Manhã de 28/10: depois do "não pare"
+
+Pesquisei o que os idles e o Tibia têm em comum que ainda faltava aqui: bestiário, conquistas, recompensa diária, analisador de caçada, venda automática de loot e eventos. Fiz tudo isso, mais forja, itens novos, um chefe e arte própria para os três mapas.
+
+## Mecânicas novas
+- **Livro** (botão "livro" ao lado do nome), com quatro abas:
+  - **Bestiário:** 3 estágios por monstro (25/150/500 abates; chefes 1/5/15). Cada estágio dá +4% de dano contra ele e revela vida, XP e depois o loot. O último também dá +20% de chance de loot.
+  - **Conquistas:** 19, com recompensa automática. As grandes são anunciadas no chat.
+  - **Diário:** ciclo de 7 dias (o 7º dá Amuleto da Alma). Perder um dia zera a sequência. Um ponto vermelho no botão avisa quando a recompensa está esperando.
+  - **Caçada:** XP, kan e abates por hora, e o loot coletado.
+- **Forja do Kisuke** (aba nova na loja): fortalece o **espaço** de equipamento até +10 com Pedras de Reishi e kan. A chance cai a cada nível e, a partir de +5, falhar desce um nível. Trocar de item não perde a forja, e a morte não leva.
+- **14 itens novos:**
+  - 6 equipamentos;
+  - Poções Grandes e Onigiri: o Auto Heal e os atalhos escolhem a menor poção que resolve;
+  - **Pergaminho de Treino** (+50% de XP) e **Incenso da Sorte** (+30% de loot): 1 h cada, somando até 6 h, e contam offline;
+  - **Caixa do Kisuke**, com prêmio surpresa.
+- **Metastacia**, chefe novo no sul do Rukongai, e 3 missões novas (12 no total).
+- **Auto Venda** no Auto Helper: o loot que não cabe no inventário vira kan na hora.
+- **Invasão de Hollows:** de 3 em 3 horas, 12 Hollows e um Fishbone D cercam a praça de Karakura por 15 min, com +50% de XP e Caixas do Kisuke. O Auto Hunt prioriza os invasores.
+- **Relatório da volta:** agora mostra também os abates e o loot da caçada offline.
+- **Sons:** sintetizados no navegador, sem arquivos, com botão para silenciar.
+
+## Arte nova (Codex, tudo na 1ª tentativa)
+- **Metastacia** (folha 4x4).
+- **Segunda folha de ícones:** 16 ícones (dois ficaram reservados).
+- **Karakura com arte própria:** chão, quatro tipos de prédio (casa, prédio, loja, casa de madeira), árvores, bancos, máquina de bebidas, baú do depot e portão.
+- **Hueco Mundo com arte própria:** areia, dunas, ruínas, ossadas, árvores de quartzo, rochas, colunas, crânio e a Garganta.
+- **Traçado e colisão:** os dois mapas mantêm o traçado e a colisão de antes; conferi tile a tile. A única diferença são 3 enfeites novos na praça de Karakura.
+
+## Encontrado no caminho
+- **PR do Waldir:** entrou na `main` ([rafael2267/bleach-idle#1](https://github.com/rafael2267/bleach-idle/pull/1)) com Vitest e CI. Agora `npm test` roda os testes do Vitest, e a bateria de cenários virou `npm run test:scripts`. Os 76 testes dele passam com as mudanças.
+- **Conquistas mudando as contas dos testes:** elas pagavam kan ao entrar, o que quebrava as contas de dinheiro de `bags` e `skull`. Os bots de teste agora nascem com as conquistas feitas.
+- **Esperas fixas nos testes:** `items` e `quests` falhavam de vez em quando. Agora esperam até a condição acontecer.
+- **Invasão atrapalhando outros cenários:** o teste deixava invasores vivos que atrapalhavam os cenários seguintes. Ele agora encerra o evento ao sair.
+
+## Testes
+Cenários novos: `progress`, `forge`, `hunt` e `invasion`; o `robust` passou a cobrir as mensagens novas.
+## Resultado
+`npm test` (Vitest): 76 de 76. `npm run test:scripts`: 180 de 180, sem exceção no servidor. CI do GitHub verde.

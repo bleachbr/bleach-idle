@@ -25,6 +25,7 @@ await sleep(10000);
 room = await play(name);
 const rep: any = await new Promise((r) => room.onMessage("offline", r));
 ok(`relatório da hunt offline (+${rep.exp} XP, +${rep.gold} kan)`, rep.exp > 0);
+ok(`relatório conta abates e loot offline (${rep.kills} abates; ${rep.items?.join(", ") || "sem itens"})`, rep.kills > 0 && Array.isArray(rep.items));
 room.send("auto", { autoHunt: false });
 await room.leave();
 done();

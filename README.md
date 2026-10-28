@@ -33,7 +33,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 **Mundo**
 - **Karakura** (arte própria, gerada pelo Codex): cidade japonesa com casas, prédios e lojas, praça central (zona segura, depot, loja do Kisuke, portal Senkaimon) e Hollows a leste e ao sul.
 - **Soul Society** (arte própria, gerada pelo Codex): Seireitei com quartéis, muro, jardim zen, cerejeiras e campo de treino; Rukongai com Hollows de nível médio. Nível 14+, 120 kan.
-- **Hueco Mundo** (Kenney CC0, recolorido): deserto com Adjuchas, Arrancar e Menos Grande (Gillian). Nível 22+, 200 kan, chegando pela Garganta.
+- **Hueco Mundo** (arte própria, gerada pelo Codex): deserto branco com ruínas, árvores de quartzo e ossadas; lá vivem Adjuchas, Arrancar e o Menos Grande (Gillian). Nível 22+, 200 kan, chegando pela Garganta.
 - **Invasão de Hollows:** de 3 em 3 horas, 12 Hollows e um Fishbone D cercam a praça de Karakura por 15 min, com +50% de XP e chance de Caixa do Kisuke (o líder sempre dá uma). Eles não renascem; o chat anuncia quem mais abateu.
 - **Viagem:** pelos portais. "Voltar à cidade" (tecla R) leva ao templo de Karakura.
 
@@ -70,10 +70,11 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 **Automação (Auto Helper)**
 - Auto Target, Auto Hunt, Auto Heal (%), Auto Treino e **Auto Venda** (o loot puro que não cabe no inventário vira kan na hora, em vez de cair numa sacola).
 - **Analisador de caçada** (livro → Caçada): XP, kan e abates no total e por hora, e o loot coletado. Conta também a caçada offline.
-- Com Auto Hunt ou Auto Treino, fechar o jogo não tira o personagem do mundo (até 12 h). Na volta chega um relatório de tempo, XP, kan, habilidades e mortes.
+- Com Auto Hunt ou Auto Treino, fechar o jogo não tira o personagem do mundo (até 12 h). Na volta chega um relatório de tempo, abates, XP, kan, loot, habilidades e mortes.
 - Isso sobrevive a reinício e queda do servidor.
 
 **Interface**
+- **Sons** sintetizados no navegador (golpe, dano, habilidade, loot, nível, Bankai, eventos), com botão "som" para silenciar.
 - Minimapa no canto (você, party, outros jogadores e monstros); clique nele para andar até lá.
 
 **Celular**
@@ -119,12 +120,12 @@ Cenários em `server/scripts/`:
 Avulsos (com o servidor rodando): `partner.ts` (um bot que aceita convites de party) e `peek.ts` (lista os jogadores no mundo).
 
 ## Créditos
-Tiles de Hueco Mundo: [Roguelike Modern City](https://kenney.nl/assets/roguelike-modern-city) e [Roguelike RPG Pack](https://kenney.nl/assets/roguelike-rpg-pack), da Kenney (CC0; licenças em `art/maps/kenney/`). O resto da arte foi gerado pelo Codex para este projeto.
+Toda a arte do jogo foi gerada pelo Codex para este projeto. Os pacotes CC0 da Kenney ([Roguelike Modern City](https://kenney.nl/assets/roguelike-modern-city) e [Roguelike RPG Pack](https://kenney.nl/assets/roguelike-rpg-pack); licenças em `art/maps/kenney/`) seguem no repositório porque o `build_maps.py` volta a usá-los se a arte própria faltar.
 
 ## Limitações conhecidas
 - **Contas:** sem e-mail nem recuperação ou troca de senha. Sem moderação de chat.
 - **Servidor:** ingressos e limite de tentativas ficam na memória do processo (um servidor só). Numa queda brusca se perdem até ~10 s de progresso.
-- **Arte:** Hueco Mundo ainda usa tiles da Kenney, mais simples que os personagens; Karakura e a Soul Society já têm arte própria. Não há interiores de prédios nem andares.
+- **Arte:** não há interiores de prédios nem andares.
 - **Sprites:** só haori e máscara mudam o visual do personagem.
 - **Corpos e sacolas** ficam só na memória: somem se o servidor reiniciar.
 - **Mercado:** não há troca direta entre jogadores.

@@ -330,3 +330,19 @@ Make the image SQUARE. A 2x2 sheet of four separate top-down 3/4 view pixel-art 
 ```text
 Make the image SQUARE. A 3x3 sheet of nine separate top-down 3/4 view pixel-art map props for a modern Japanese town, each centered in its own cell with generous magenta padding, nothing crossing the cell edges: 1 a round leafy green street tree (zelkova) with a brown trunk, taller than wide; 2 a round dark green bush; 3 a red drink vending machine; 4 a dark green tree with a slightly different round canopy; 5 a small wooden treasure chest with iron bands (storage chest); 6 a tall traditional Japanese gate (Senkaimon) made of white paper sliding doors framed in dark wood with a small tiled roof; 7 a light green tree with a lighter canopy; 8 a grey metal trash can; 9 a wooden park bench. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no shadow, no text, no labels, no border, no grid lines.
 ```
+
+# Rodada 12: Hueco Mundo com arte própria
+
+Script `work/gen_hueco2.sh`, com as peças da Soul Society (26 e 28) como referência. As duas na 1ª tentativa.
+
+## p_47_hm_ground
+
+```text
+Make the image SQUARE. A 2x2 sheet of four SEAMLESS, TILEABLE ground textures for a top-down RPG set in an endless white desert under a dark night sky (moonlit, cool blue-grey tint), each filling its whole quarter edge to edge (no borders, no gaps, no objects): top-left: smooth pale grey-white sand; top-right: pale grey-white sand with soft wind ripples; bottom-left: cracked pale stone ruins floor; bottom-right: pale sand with scattered small white bone fragments. Flat top-down view, even cool moonlight lighting. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs.
+```
+
+## p_48_hm_props
+
+```text
+Make the image SQUARE. A 3x3 sheet of nine separate top-down 3/4 view pixel-art map props for a white desert of the spirit world under moonlight (pale, cool colors), each centered in its own cell with generous magenta padding, nothing crossing the cell edges: 1 a dead tree made of white quartz crystal with bare branching limbs, taller than wide; 2 a large pale grey boulder; 3 a cluster of two pale grey rocks; 4 a small flat pale grey rock; 5 a tall white stone ruin pillar, intact, taller than wide; 6 a broken white stone ruin pillar, only the lower half standing with rubble; 7 a vertical black rift tearing open in the air with jagged edges and a faint purple glow inside (a dimensional portal), taller than wide; 8 a large white animal skull half buried in sand; 9 a dead white crystal tree, smaller and twisted. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no shadow, no text, no labels, no border, no grid lines.
+```
