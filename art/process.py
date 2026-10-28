@@ -63,6 +63,8 @@ GAME_SPRITES = {
     "hollow_faminto": ("39_hollow_faminto_walk.png", 4, 4, 1.15, 2),
     "hollow_encouracado": ("40_hollow_encouracado_walk.png", 4, 4, 1.25, 2),
     "hollow_devorador": ("41_hollow_devorador_walk.png", 4, 4, 1.35, 2),
+    # chefe da Soul Society
+    "metastacia": ("42_metastacia_walk.png", 4, 4, 1.6, 2),
 }
 
 
@@ -287,14 +289,21 @@ def process(sprites, tile, body_h, lift=False):
     return out, colors
 
 
+ICON_SHEETS = ["12_item_icons_4x4.png", "43_item_icons2_4x4.png"]
+
+
 def export_icons():
-    """Ícones de item: folha 4x4 -> 16 ícones de 32x32 em client/public/assets/items.png.
-    Cada ícone tem escala própria (cabe numa caixa de 28 px), cores próprias e contorno."""
-    path = RAW / "12_item_icons_4x4.png"
-    if not path.exists():
-        return print("faltando:", path.name)
-    out = Image.new("RGBA", (128, 128))
-    for i, cell in enumerate(split_cells(remove_bg(Image.open(path)), 4, 4)):
+    """Ícones de item: cada folha 4x4 vira 16 ícones de 32x32 em client/public/assets/items.png
+    (4 colunas; a 2ª folha começa no ícone 16). Cada ícone tem escala própria (cabe numa
+    caixa de 28 px), cores próprias e contorno."""
+    cells = []
+    for name in ICON_SHEETS:
+        path = RAW / name
+        if not path.exists():
+            return print("faltando:", path.name)
+        cells += split_cells(remove_bg(Image.open(path)), 4, 4)
+    out = Image.new("RGBA", (128, 32 * (len(cells) // 4)))
+    for i, cell in enumerate(cells):
         img, _ = keep_main(cell)
         small = downscale(img, min(28 / img.width, 28 / img.height))
         local = [c for c, _ in kmeans_colors([p[:3] for p in small.get_flattened_data() if p[3]], 10)]

@@ -17,7 +17,7 @@ const max: Record<string, number> = {};
 for (let i = 0; i < 40; i++) {
   await sleep(1000);
   const c: Record<string, number> = {};
-  for (const m of bots[0].state.monsters.values()) c[m.map] = (c[m.map] ?? 0) + 1;
+  for (const m of bots[0].state.monsters.values()) if (!m.id.startsWith("inv")) c[m.map] = (c[m.map] ?? 0) + 1;
   for (const k in c) max[k] = Math.max(max[k] ?? 0, c[k]);
 }
 console.log("esperado:", expected, "| máximo visto em 40 s:", max);

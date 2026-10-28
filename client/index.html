@@ -45,7 +45,7 @@
       <button type="button" id="menu-btn" aria-label="Abrir menu">☰</button>
       <aside id="side">
         <section id="stats">
-          <div class="who"><b id="pname"></b> <span id="plevel"></span><button type="button" id="exit-btn" class="link" title="Voltar à lista de personagens">trocar</button><button type="button" id="ranking-btn" class="link">ranking</button></div>
+          <div class="who"><b id="pname"></b> <span id="plevel"></span><button type="button" id="exit-btn" class="link" title="Voltar à lista de personagens">trocar</button><button type="button" id="ranking-btn" class="link">ranking</button><button type="button" id="book-btn" class="link" title="Bestiário, conquistas e recompensa diária">livro</button></div>
           <div class="bar hp"><i></i><span></span></div>
           <div class="bar rei"><i></i><span></span></div>
           <div class="bar exp"><i></i><span></span></div>
@@ -90,6 +90,7 @@
           <label><input type="checkbox" id="auto-target" /> Auto Target</label>
           <label><input type="checkbox" id="auto-hunt" /> Auto Hunt (continua offline)</label>
           <label title="Fora de combate, gasta o reiatsu parado para subir o Reiryoku. Também mantém o personagem no mundo treinando quando você sai (ataque um Boneco de Treino na Soul Society para treinar Zanjutsu)."><input type="checkbox" id="auto-train" /> Auto Treino (continua offline)</label>
+          <label title="O loot puro que não couber no inventário é vendido na hora, pelo preço da loja (equipamentos continuam caindo numa sacola)."><input type="checkbox" id="auto-sell" /> Auto Venda do loot</label>
           <label><input type="checkbox" id="auto-heal-on" /> Auto Heal abaixo de <input type="number" id="auto-heal" min="10" max="90" step="5" value="50" />%</label>
         </section>
       </aside>
@@ -102,6 +103,12 @@
             <span class="tabs"><button type="button" data-tab="nivel" aria-pressed="true">Nível</button><button type="button" data-tab="abates">Abates (PvP)</button><button type="button" data-tab="guildas">Guildas</button></span>
             <button type="button" id="ranking-close" aria-label="Fechar">✕</button></header>
           <div id="ranking-body"></div>
+        </div>
+        <div id="book" class="window" hidden>
+          <header><b>Livro</b>
+            <span class="tabs"><button type="button" data-tab="bestiario" aria-pressed="true">Bestiário</button><button type="button" data-tab="conquistas">Conquistas</button><button type="button" data-tab="diario">Diário</button><button type="button" data-tab="cacada">Caçada</button></span>
+            <button type="button" id="book-close" aria-label="Fechar">✕</button></header>
+          <div id="book-body"></div>
         </div>
         <div id="death" hidden>
           <h2>Você morreu</h2>

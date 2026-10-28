@@ -4,7 +4,7 @@
 import type { Room } from "colyseus.js";
 import {
   ITEMS, SHOP, EQUIP_SLOTS, SLOT_LABEL, GOLD_ICON, CURRENCY, TRAVEL, INTERACT_RANGE, chebyshev,
-  QUESTS, QUEST_BY_ID, type QuestState,
+  QUESTS, QUEST_BY_ID, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, forgeBonus, type QuestState,
   type ItemDef, type Slot, type EquipSlot,
 } from "../../shared/src";
 
@@ -15,6 +15,9 @@ interface InvMsg {
   equip: Partial<Record<EquipSlot, string>>;
   atk: number;
   def: number;
+  forge: Partial<Record<EquipSlot, number>>;
+  expBoostUntil: number;
+  lootBoostUntil: number;
 }
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
@@ -38,7 +41,7 @@ function tooltip(d: ItemDef) {
 
 export function initInventory(room: Room<any>, onPanel: (open: boolean) => void, myLevel: () => number, myPos: () => { x: number; y: number } | undefined) {
   let quests: QuestState = { active: {}, done: [] };
-  let shopTab: "missoes" | "loja" | "mercado" = "loja";
+  let shopTab: "missoes" | "loja" | "mercado" | "forja" = "loja";
   let marketData: { listings: { id: number; seller: string; sellerName: string; item: string; qty: number; price: number }[]; me: string; fee: number } | null = null;
   room.onMessage("market", (m: typeof marketData) => { marketData = m; render(); });
   let state: InvMsg | null = null;
@@ -105,10 +108,14 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
     if (!state) return;
     const st = state;
     $("#gold").innerHTML = `${iconHtml(GOLD_ICON)} ${st.gold} ${CURRENCY}`;
-    $("#atkdef").textContent = `Ataque ${st.atk} · Defesa ${st.def}`;
+    // bônus de pergaminho e incenso: mostra até que horas valem
+    const until = (ms: number) => new Date(ms).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const now = Date.now();
+    const boosts = [st.expBoostUntil > now ? `XP +50% até ${until(st.expBoostUntil)}` : "", st.lootBoostUntil > now ? `loot +30% até ${until(st.lootBoostUntil)}` : ""].filter(Boolean);
+    $("#atkdef").textContent = `Ataque ${st.atk} · Defesa ${st.def}${boosts.length ? ` · ${boosts.join(" · ")}` : ""}`;
     const count = (id: string) => st.inv.reduce((n, s) => n + (s?.id === id ? s.qty : 0), 0);
-    $("#potions").textContent = String(count("pocao_vida"));
-    $("#rei-potions").textContent = String(count("pocao_rei"));
+    $("#potions").textContent = String(count("onigiri") + count("pocao_vida") + count("pocao_grande"));
+    $("#rei-potions").textContent = String(count("pocao_rei") + count("pocao_rei_grande"));
     renderTracker(count);
 
     // equipamento: clicar desequipa
@@ -117,6 +124,8 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
       const id = st.equip[slot];
       const b = slotButton(id ? { id, qty: 1 } : null, () => room.send("unequip", { slot }));
       b.dataset.label = SLOT_LABEL[slot];
+      const lv = st.forge?.[slot] ?? 0;
+      if (lv && id) { b.dataset.forge = `+${lv}`; b.title += ` · Forja +${lv}`; }
       b.classList.add("equip-slot");
       if (!id) b.title = SLOT_LABEL[slot];
       return b;
@@ -128,7 +137,7 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
       const d = ITEMS[s!.id];
       if (open === "depot") room.send("depot", { op: "put", index });
       else if (d.slot) room.send("equip", { index });
-      else if (d.heal || d.restoreRei) room.send("useItem", { index });
+      else if (d.heal || d.restoreRei || d.boost || d.box) room.send("useItem", { index });
     }, hint)));
 
     if (!open) return;
@@ -245,7 +254,7 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
       // abas: com tudo empilhado, o mercado ficava escondido no fim da janela
       const tabs = document.createElement("div");
       tabs.className = "tabs shop-tabs";
-      for (const [id, label] of [["missoes", "Missões"], ["loja", "Loja"], ["mercado", "Mercado"]] as const) {
+      for (const [id, label] of [["missoes", "Missões"], ["loja", "Loja"], ["forja", "Forja"], ["mercado", "Mercado"]] as const) {
         const t = document.createElement("button");
         t.type = "button";
         t.textContent = label;
@@ -255,9 +264,41 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
       }
       const content = shopTab === "missoes" ? [questList(count)]
         : shopTab === "loja" ? [h1, buy, h2, sellLoot, sell]
+        : shopTab === "forja" ? [forgeSection(st, count)]
         : [marketSection(st)];
       body.replaceChildren(tabs, ...content);
     }
+  }
+
+  /** Forja: fortalece o espaço de equipamento (o nível fica no espaço, não no item). */
+  function forgeSection(st: InvMsg, count: (id: string) => number) {
+    const box = document.createElement("div");
+    const stones = count("pedra_reishi");
+    box.innerHTML = `<p class="hint">O nível fica no espaço: trocar de item não perde a forja e a morte não leva. Arma: +2 de ataque por nível; anel e amuleto: +10 de vida; o resto: +1 de defesa. A partir de +${FORGE_SAFE}, falhar desce um nível.</p>
+      <p class="hint">Pedras de Reishi no inventário: <b>${stones}</b> (caem dos Hollows mais fortes e dos chefes).</p>`;
+    for (const slot of EQUIP_SLOTS) {
+      const lv = st.forge?.[slot] ?? 0;
+      const id = st.equip[slot];
+      const row = document.createElement("div");
+      row.className = "row forge-row";
+      const bonus = forgeBonus(slot, 1);
+      const per = bonus.atk ? `+${bonus.atk} atq` : bonus.hp ? `+${bonus.hp} vida` : `+${bonus.def} def`;
+      if (lv >= FORGE_MAX) {
+        row.innerHTML = `<span class="name">${SLOT_LABEL[slot]} <b>+${lv}</b><small>${id ? ITEMS[id].name : "vazio"} · nível máximo</small></span>`;
+      } else {
+        const c = forgeCost(lv);
+        row.innerHTML = `<span class="name">${SLOT_LABEL[slot]} <b>+${lv}</b><small>${id ? ITEMS[id].name : "vazio (a forja só vale com item)"} · próximo: ${per} · ${Math.round(FORGE_CHANCE[lv] * 100)}% de chance</small></span>
+          <span class="price">${c.stones} ${c.stones === 1 ? "pedra" : "pedras"} + ${c.gold} ${CURRENCY}</span>`;
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = "Forjar";
+        b.disabled = stones < c.stones || st.gold < c.gold;
+        b.onclick = () => room.send("forge", { slot });
+        row.append(b);
+      }
+      box.append(row);
+    }
+    return box;
   }
 
   function marketSection(st: InvMsg) {

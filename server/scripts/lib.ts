@@ -2,6 +2,7 @@
 // criado se preciso, ingresso pelo lobby e entrada no mundo.
 import { DatabaseSync } from "node:sqlite";
 import { Client, type Room } from "colyseus.js";
+import { ACHIEVEMENTS, newProgress } from "../../shared/src";
 
 // o runner (scripts/test.ts) aponta para um servidor e um banco de teste por estas variáveis
 export const URL = process.env.BI_URL ?? "ws://localhost:2567";
@@ -42,8 +43,9 @@ export async function openLobby(login: string, password = PASSWORD) {
   return { client: c, room };
 }
 
-/** Garante conta e personagem; `before` roda com o personagem já criado e fora do mundo. */
-export async function play(name: string, charId = "ichigo", before?: (id: string) => void): Promise<Room<any>> {
+/** Garante conta e personagem; `before` roda com o personagem já criado e fora do mundo;
+ * `setup` registra handlers logo ao entrar (para não perder as mensagens iniciais). */
+export async function play(name: string, charId = "ichigo", before?: (id: string) => void, setup?: (r: Room<any>) => void): Promise<Room<any>> {
   const { client, room } = await openLobby(loginOf(name));
   let chars = await once<any[]>(room, "chars");
   if (!chars.some((c) => c.id === name.toLowerCase())) {
@@ -56,6 +58,7 @@ export async function play(name: string, charId = "ichigo", before?: (id: string
   await room.leave();
   const world = await client.join("world", { ticket });
   world.onMessage("*", () => {});
+  setup?.(world);
   return world;
 }
 
@@ -63,6 +66,10 @@ export async function play(name: string, charId = "ichigo", before?: (id: string
 export function patchSave(id: string, fields: Record<string, unknown>) {
   const db = new DatabaseSync(DB_FILE);
   const row = db.prepare("SELECT data FROM players WHERE id = ?").get(id) as { data: string };
-  db.prepare("UPDATE players SET data = ? WHERE id = ?").run(JSON.stringify({ ...JSON.parse(row.data), ...fields }), id);
+  const data = { ...JSON.parse(row.data), ...fields };
+  // conquistas pagam kan e itens ao entrar: sem isso as contas de dinheiro dos cenários mudam.
+  // Quem testa conquistas passa o próprio `prog`.
+  if (!("prog" in fields)) data.prog = { ...newProgress(), ...data.prog, ach: ACHIEVEMENTS.map((a) => a.id) };
+  db.prepare("UPDATE players SET data = ? WHERE id = ?").run(JSON.stringify(data), id);
   db.close();
 }

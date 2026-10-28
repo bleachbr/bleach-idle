@@ -1,9 +1,9 @@
 // Login, conexão com o servidor e HUD em DOM ao redor do canvas do Phaser.
 import Phaser from "phaser";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, expForLevel, PVP_MIN_LEVEL } from "../../shared/src";
+import { CHARS, ITEMS, expForLevel, PVP_MIN_LEVEL } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
-import { initInventory } from "./inventory";
+import { initInventory, iconHtml } from "./inventory";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 
@@ -182,6 +182,7 @@ function start(room: Room<any>, myId: string) {
     chatLine(m.from ? `${prefix}${m.from}: ${m.text}` : `${prefix}${m.text}`, m.ch && m.ch !== "sys" ? m.ch : m.from ? "" : "sys");
   });
   bindGuild(room);
+  bindBook(room);
   room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log"));
   room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[]; zanGain?: number; reiGain?: number; zanjutsu?: number; reiryoku?: number }) => {
     const sign = (n: number) => (n >= 0 ? "+" : "") + n;
@@ -280,6 +281,71 @@ function bindParty(room: Room<any>, myId: string) {
   room.onLeave(() => clearInterval(partyTimer));
 }
 
+// ---------- livro: bestiário, conquistas e recompensa diária ----------
+
+function bindBook(room: Room<any>) {
+  const panel = $("#book");
+  let data: any = null;
+  let tab = "bestiario";
+  const reward = (r: { gold: number; items?: { id: string; qty: number }[] }) =>
+    [r.gold ? `${r.gold} kan` : "", ...(r.items ?? []).map((i) => `${i.qty}x ${ITEMS[i.id]?.name ?? i.id}`)].filter(Boolean).join(" + ");
+  const bar = (have: number, need: number) => `<div class="bar"><i style="width:${Math.min(100, (have / need) * 100)}%"></i></div>`;
+  const render = () => {
+    panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === tab)));
+    if (!data) return;
+    const body = $("#book-body");
+    if (tab === "bestiario") {
+      const done = data.bestiary.filter((b: any) => b.stage >= 3).length;
+      body.innerHTML = `<p class="hint">Cada estágio dá +4% de dano contra o monstro; o 3º também dá +20% de chance de loot. ${done}/${data.bestiary.length} completos.</p>` +
+        data.bestiary.map((b: any) => {
+          const next = b.stages.find((n: number) => b.kills < n);
+          return `<div class="beast${b.kills ? "" : " unknown"}">
+            <div class="pic" style="background-image:url(assets/sprites/${b.sprite}.png);background-size:400% 400%"></div>
+            <div><b>${b.kills ? escHtml(b.name) : "???"}</b>${b.boss ? ` <small>chefe</small>` : ""} <span class="stars">${"★".repeat(b.stage)}</span><span class="hint">${"☆".repeat(3 - b.stage)}</span>
+            <div class="hint">${b.kills} abates${next ? ` · próximo estágio em ${next}` : " · completo"}${b.hp ? ` · ${b.hp} de vida · ${b.exp} XP` : ""}</div>
+            ${next ? bar(b.kills, next) : ""}
+            ${b.loot ? `<div class="hint">Loot: ${b.loot.map((l: any) => `${escHtml(l.name)} ${l.chance >= 1 ? "sempre" : `${+(l.chance * 100).toFixed(1)}%`}`).join(" · ")}</div>` : ""}</div>
+          </div>`;
+        }).join("");
+    } else if (tab === "conquistas") {
+      const n = data.ach.filter((a: any) => a.done).length;
+      body.innerHTML = `<p class="hint">${n}/${data.ach.length} conquistas. A recompensa chega sozinha.</p>` + data.ach
+        .sort((a: any, b: any) => Number(a.done) - Number(b.done) || b.have / b.need - a.have / a.need)
+        .map((a: any) => `<div class="ach${a.done ? " done" : ""}"><b>${escHtml(a.name)}</b> <span class="hint">${escHtml(a.desc)}</span>
+          <div class="hint">${a.done ? "Feita" : `${a.have}/${a.need}`} · ${reward(a.reward)}</div>${a.done ? "" : bar(a.have, a.need)}</div>`).join("");
+    } else if (tab === "cacada") {
+      const h = data.hunt;
+      const hours = Math.max((h.now - h.since) / 3600_000, 1 / 60);
+      const per = (v: number) => Math.round(v / hours).toLocaleString("pt-BR");
+      const dur = Math.floor((h.now - h.since) / 60000);
+      body.innerHTML = `<p class="hint">Desde ${dur >= 60 ? `${Math.floor(dur / 60)} h ${dur % 60} min` : `${dur} min`} atrás (conta também a caçada offline).</p>
+        <table><tr><td></td><td>Total</td><td>Por hora</td></tr>
+        <tr><td>XP</td><td>${h.exp.toLocaleString("pt-BR")}</td><td>${per(h.exp)}</td></tr>
+        <tr><td>Kan</td><td>${h.gold.toLocaleString("pt-BR")}</td><td>${per(h.gold)}</td></tr>
+        <tr><td>Abates</td><td>${h.kills}</td><td>${per(h.kills)}</td></tr></table>
+        <p class="hint">Loot (kan acima conta o dinheiro do loot e a Auto Venda):</p>
+        <div class="loot-list">${h.items.map((i: any) => `<span class="slot static" title="${escHtml(i.name)}">${iconHtml(i.icon, i.n)}</span>`).join("") || `<span class="hint">nada ainda</span>`}</div>
+        <button type="button" class="claim">Zerar contagem</button>`;
+      body.querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("huntReset");
+    } else {
+      const d = data.daily;
+      body.innerHTML = `<p class="hint">Pegue uma vez por dia (o dia vira à meia-noite de Brasília). Perder um dia zera a sequência.</p>
+        <div><b>Sequência: ${d.streak} ${d.streak === 1 ? "dia" : "dias"}</b></div>
+        <div class="days">${d.rewards.map((r: any, i: number) => `<div class="${i < d.index || (d.claimed && i === d.index) ? "got" : ""}${i === d.index ? " today" : ""}"><b>Dia ${i + 1}</b><br>${reward(r)}</div>`).join("")}</div>
+        <button type="button" class="claim" ${d.claimed ? "disabled" : ""}>${d.claimed ? "Já pegou hoje" : "Pegar a recompensa de hoje"}</button>`;
+      body.querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("daily");
+    }
+  };
+  room.onMessage("book", (d: any) => { data = d; panel.hidden = false; render(); });
+  room.onMessage("dailyReady", (m: { ready: boolean }) => $("#book-btn").classList.toggle("ping", m.ready));
+  $("#book-btn").onclick = () => room.send("book");
+  // a aba Caçada muda sozinha: atualiza enquanto estiver aberta
+  const timer = window.setInterval(() => { if (!panel.hidden && tab === "cacada") room.send("book"); }, 5000);
+  room.onLeave(() => window.clearInterval(timer));
+  $("#book-close").onclick = () => (panel.hidden = true);
+  panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab!; render(); }));
+}
+
 // ---------- guilda e ranking ----------
 
 function bindGuild(room: Room<any>) {
@@ -346,6 +412,7 @@ function renderStats(p: any) {
   $<HTMLInputElement>("#auto-target").checked = p.autoTarget;
   $<HTMLInputElement>("#auto-hunt").checked = p.autoHunt;
   $<HTMLInputElement>("#auto-train").checked = p.autoTrain;
+  $<HTMLInputElement>("#auto-sell").checked = p.autoSell;
   $("#pskills").textContent = `Zanjutsu ${p.zanjutsu} (${p.zanPct}%) · Reiryoku ${p.reiryoku} (${p.reiPct}%)`;
   $<HTMLInputElement>("#auto-heal-on").checked = p.autoHeal > 0;
 }
@@ -360,6 +427,8 @@ function bindAuto(room: Room<any>) {
   hunt.onchange = () => room.send("auto", { autoHunt: hunt.checked });
   const train = $<HTMLInputElement>("#auto-train");
   train.onchange = () => room.send("auto", { autoTrain: train.checked });
+  const sell = $<HTMLInputElement>("#auto-sell");
+  sell.onchange = () => room.send("auto", { autoSell: sell.checked });
   healOn.onchange = sendHeal;
   heal.onchange = sendHeal;
 }

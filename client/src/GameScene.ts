@@ -194,9 +194,16 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({ targets: t, y: t.y - 22, alpha: 0, duration: 900, onComplete: () => t.destroy() });
   }
 
-  private onFx(fx: { t: string; id?: string; v?: number; from?: string; to?: string; color?: number; name?: string }) {
+  private onFx(fx: { t: string; id?: string; v?: number; from?: string; to?: string; color?: number; name?: string; text?: string }) {
     const v = fx.id ? this.views.get(fx.id) : undefined;
     switch (fx.t) {
+      case "book":
+        this.float(this.views.get(this.myId), fx.text!, "#ffcf5a", 12);
+        break;
+      case "event":
+        this.float(this.views.get(this.myId), fx.text!, "#ff6a4a", 16);
+        this.cameras.main.shake(300, 0.003);
+        break;
       case "dmg":
         this.float(v, fx.v ? String(fx.v) : "errou", v?.isMonster ? "#ffffff" : "#ff5a4a");
         if (v && fx.v) { v.spr.setTintFill(0xffffff); this.time.delayedCall(70, () => this.restoreTint(v)); }

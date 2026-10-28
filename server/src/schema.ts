@@ -1,7 +1,7 @@
 // Estado sincronizado com os clientes. defineTypes em vez de decorators para
 // não depender de configuração de decorators no tsx/esbuild.
 import { Schema, MapSchema, defineTypes } from "@colyseus/schema";
-import { INV_SIZE, DEPOT_SIZE, type Slot, type EquipSlot, type QuestState } from "../../shared/src";
+import { INV_SIZE, DEPOT_SIZE, newProgress, type Slot, type EquipSlot, type QuestState, type Progress } from "../../shared/src";
 
 export class Player extends Schema {
   id = "";
@@ -27,6 +27,7 @@ export class Player extends Schema {
   look = ""; // visual do equipamento (lookOf); todos veem
   partyId = ""; // party atual ("" = sem party); membros se veem em verde
   guildTag = ""; // tag da guilda, mostrada no nome
+  autoSell = false; // Auto Venda: loot puro que não cabe no inventário vira kan na hora
   autoTrain = false; // Auto Treino: queima reiatsu parado (Reiryoku) e segue treinando offline
   zanjutsu = 0; // nível de esgrima
   zanPct = 0; // % para o próximo nível
@@ -65,6 +66,12 @@ export class Player extends Schema {
   zanAtLeave = 0;
   reiAtLeave = 0;
   quests: QuestState = { active: {}, done: [] };
+  prog: Progress = newProgress(); // bestiário, conquistas e recompensa diária
+  forge: Partial<Record<EquipSlot, number>> = {}; // nível da forja por espaço
+  expBoostUntil = 0;
+  lootBoostUntil = 0;
+  /** analisador de caçada: desde quando e quanto rendeu (zera ao entrar no mundo ou no botão) */
+  hunt = { since: Date.now(), exp: 0, gold: 0, kills: 0, items: {} as Record<string, number> };
   reiPotionReadyAt = 0;
   /** mortes enquanto caçava offline, para o relatório da volta */
   offlineDeaths: DeathReport[] = [];
@@ -80,7 +87,7 @@ defineTypes(Player, {
   level: "uint16", exp: "number", targetId: "string",
   online: "boolean", autoTarget: "boolean", autoHunt: "boolean", autoHeal: "uint8", look: "string", map: "string",
   partyId: "string", partyLead: "boolean", pvpUntil: "number", skullUntil: "number", guildTag: "string",
-  autoTrain: "boolean", zanjutsu: "uint8", zanPct: "uint8", reiryoku: "uint8", reiPct: "uint8",
+  autoTrain: "boolean", autoSell: "boolean", zanjutsu: "uint8", zanPct: "uint8", reiryoku: "uint8", reiPct: "uint8",
 });
 
 export class Monster extends Schema {
@@ -96,6 +103,10 @@ export class Monster extends Schema {
   targetId = "";
 
   spawnIndex = 0;
+  /** monstro de invasão: não renasce e volta para a própria casa (não para um spawn do mapa) */
+  invader = false;
+  homeX = 0;
+  homeY = 0;
   path: { x: number; y: number }[] = [];
   nextStepAt = 0;
   nextAttackAt = 0;

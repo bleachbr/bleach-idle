@@ -1,5 +1,5 @@
 // Itens, equipamentos, loot dos Hollows, loja e kit inicial.
-// O ícone de cada item é a célula `icon` (0-15) de client/public/assets/items.png (folha 4x4).
+// O ícone de cada item é a célula `icon` (0-31) de client/public/assets/items.png (4 colunas x 8 linhas).
 
 export type EquipSlot = "head" | "armor" | "legs" | "boots" | "weapon" | "ring" | "amulet";
 export const EQUIP_SLOTS: EquipSlot[] = ["head", "armor", "legs", "boots", "weapon", "ring", "amulet"];
@@ -25,6 +25,12 @@ export interface ItemDef {
   /** consumível: fração de HP ou reiatsu restaurada */
   heal?: number;
   restoreRei?: number;
+  /** consumível: bônus temporário (1 h por uso, soma até 6 h) */
+  boost?: "exp" | "loot";
+  /** consumível: abre e sorteia um prêmio */
+  box?: boolean;
+  /** material: fica fora do "Vender todo o loot" */
+  keep?: boolean;
   desc?: string;
 }
 
@@ -44,6 +50,21 @@ const items: ItemDef[] = [
   { id: "lamina_garra", name: "Lâmina de Garra", icon: 12, sell: 900, stack: false, slot: "weapon", atk: 9, minLevel: 14 },
   { id: "anel_rei", name: "Anel de Reiatsu", icon: 13, buy: 500, sell: 125, stack: false, slot: "ring", rei: 30 },
   { id: "amuleto_alma", name: "Amuleto da Alma", icon: 14, buy: 250, sell: 60, stack: false, slot: "amulet", desc: "Se morrer usando, não perde XP. Some ao proteger." },
+  // segunda folha (rodada 10 de arte)
+  { id: "pedra_reishi", name: "Pedra de Reishi", icon: 16, sell: 40, stack: true, keep: true, desc: "Material da forja do Kisuke." },
+  { id: "tentaculo", name: "Tentáculo de Metastacia", icon: 17, sell: 250, stack: true, desc: "Loot de chefe. Vende na loja." },
+  { id: "elmo_osso", name: "Elmo de Osso", icon: 18, sell: 900, stack: false, slot: "head", def: 8, hp: 30, minLevel: 24 },
+  { id: "botas_shunpo", name: "Botas de Shunpo", icon: 19, sell: 500, stack: false, slot: "boots", def: 4, minLevel: 18 },
+  { id: "hakama_capitao", name: "Hakama de Capitão", icon: 20, sell: 800, stack: false, slot: "legs", def: 7, minLevel: 22 },
+  { id: "lua_negra", name: "Zanpakutō Lua Negra", icon: 21, sell: 2500, stack: false, slot: "weapon", atk: 14, minLevel: 26 },
+  { id: "anel_espiritual", name: "Anel Espiritual", icon: 22, sell: 1200, stack: false, slot: "ring", hp: 60, rei: 30, minLevel: 20 },
+  { id: "talisma_kido", name: "Talismã de Kidō", icon: 23, sell: 700, stack: false, slot: "amulet", def: 2, rei: 40, minLevel: 16, desc: "Não protege na morte." },
+  { id: "pocao_grande", name: "Poção Grande de Cura", icon: 24, buy: 140, sell: 25, stack: true, heal: 0.7, desc: "Recupera 70% do HP." },
+  { id: "pocao_rei_grande", name: "Poção Grande de Reiatsu", icon: 25, buy: 160, sell: 30, stack: true, restoreRei: 0.8, desc: "Recupera 80% do reiatsu." },
+  { id: "pergaminho_xp", name: "Pergaminho de Treino", icon: 26, buy: 800, sell: 100, stack: true, boost: "exp", desc: "+50% de XP dos monstros por 1 h (conta offline)." },
+  { id: "incenso", name: "Incenso da Sorte", icon: 27, buy: 600, sell: 80, stack: true, boost: "loot", desc: "+30% de chance de loot por 1 h (conta offline)." },
+  { id: "caixa_kisuke", name: "Caixa do Kisuke", icon: 28, sell: 50, stack: true, box: true, desc: "Abra para ganhar um prêmio surpresa." },
+  { id: "onigiri", name: "Onigiri", icon: 30, buy: 20, sell: 4, stack: true, heal: 0.2, desc: "Recupera 20% do HP." },
 ];
 export const ITEMS: Record<string, ItemDef> = Object.fromEntries(items.map((i) => [i.id, i]));
 export const GOLD_ICON = 15;
@@ -62,7 +83,7 @@ export const STACK_MAX = 100;
 export const INTERACT_RANGE = 2;
 
 export const SHOP: string[] = [
-  "pocao_vida", "pocao_rei", "amuleto_alma", "zanpakuto", "anel_rei", "bandana", "shihakusho", "hakama", "waraji",
+  "onigiri", "pocao_vida", "pocao_grande", "pocao_rei", "pocao_rei_grande", "pergaminho_xp", "incenso", "amuleto_alma", "zanpakuto", "anel_rei", "bandana", "shihakusho", "hakama", "waraji",
 ];
 
 export interface Slot { id: string; qty: number }
@@ -77,15 +98,58 @@ export const LOOT: Record<string, LootTable> = {
   hollow_sombrio: { gold: [8, 20], items: [{ item: "fragmento", chance: 0.45 }, { item: "garra", chance: 0.18 }, { item: "pocao_vida", chance: 0.05 }] },
   hollow_uivante: { gold: [10, 28], items: [{ item: "fragmento", chance: 0.5, max: 2 }, { item: "garra", chance: 0.2 }, { item: "nucleo", chance: 0.04 }] },
   hollow_faminto: { gold: [14, 35], items: [{ item: "garra", chance: 0.3 }, { item: "nucleo", chance: 0.06 }, { item: "mascara", chance: 0.015 }] },
-  hollow_acido: { gold: [18, 42], items: [{ item: "garra", chance: 0.35 }, { item: "nucleo", chance: 0.08 }, { item: "pocao_rei", chance: 0.08 }, { item: "mascara", chance: 0.02 }] },
-  hollow_encouracado: { gold: [22, 50], items: [{ item: "garra", chance: 0.4, max: 2 }, { item: "nucleo", chance: 0.09 }, { item: "mascara", chance: 0.025 }] },
-  hollow_devorador: { gold: [30, 65], items: [{ item: "nucleo", chance: 0.12 }, { item: "mascara", chance: 0.03 }, { item: "lamina_garra", chance: 0.012 }] },
-  fishbone: { gold: [45, 90], items: [{ item: "nucleo", chance: 0.18, max: 2 }, { item: "lamina_garra", chance: 0.02 }, { item: "haori", chance: 0.02 }] },
-  adjuchas: { gold: [60, 120], items: [{ item: "nucleo", chance: 0.22 }, { item: "garra", chance: 0.5, max: 3 }, { item: "mascara", chance: 0.04 }, { item: "lamina_garra", chance: 0.03 }] },
-  arrancar: { gold: [90, 180], items: [{ item: "nucleo", chance: 0.28 }, { item: "haori", chance: 0.03 }, { item: "lamina_garra", chance: 0.05 }, { item: "pocao_rei", chance: 0.15 }] },
-  gillian: { gold: [500, 1000], items: [{ item: "nucleo", chance: 1, min: 3, max: 6 }, { item: "haori", chance: 0.25 }, { item: "mascara", chance: 0.5 }, { item: "lamina_garra", chance: 0.3 }] },
-  grand_fisher: { gold: [400, 800], items: [{ item: "nucleo", chance: 1, min: 3, max: 6 }, { item: "lamina_garra", chance: 0.4 }, { item: "haori", chance: 0.3 }, { item: "mascara", chance: 0.5 }] },
+  hollow_acido: { gold: [18, 42], items: [{ item: "pedra_reishi", chance: 0.06 }, { item: "talisma_kido", chance: 0.006 }, { item: "garra", chance: 0.35 }, { item: "nucleo", chance: 0.08 }, { item: "pocao_rei", chance: 0.08 }, { item: "mascara", chance: 0.02 }] },
+  hollow_encouracado: { gold: [22, 50], items: [{ item: "pedra_reishi", chance: 0.08 }, { item: "garra", chance: 0.4, max: 2 }, { item: "nucleo", chance: 0.09 }, { item: "mascara", chance: 0.025 }] },
+  hollow_devorador: { gold: [30, 65], items: [{ item: "pedra_reishi", chance: 0.1 }, { item: "botas_shunpo", chance: 0.01 }, { item: "nucleo", chance: 0.12 }, { item: "mascara", chance: 0.03 }, { item: "lamina_garra", chance: 0.012 }] },
+  fishbone: { gold: [45, 90], items: [{ item: "pedra_reishi", chance: 0.12 }, { item: "botas_shunpo", chance: 0.015 }, { item: "talisma_kido", chance: 0.012 }, { item: "nucleo", chance: 0.18, max: 2 }, { item: "lamina_garra", chance: 0.02 }, { item: "haori", chance: 0.02 }] },
+  adjuchas: { gold: [60, 120], items: [{ item: "pedra_reishi", chance: 0.15 }, { item: "elmo_osso", chance: 0.012 }, { item: "nucleo", chance: 0.22 }, { item: "garra", chance: 0.5, max: 3 }, { item: "mascara", chance: 0.04 }, { item: "lamina_garra", chance: 0.03 }] },
+  arrancar: { gold: [90, 180], items: [{ item: "pedra_reishi", chance: 0.2 }, { item: "hakama_capitao", chance: 0.015 }, { item: "caixa_kisuke", chance: 0.02 }, { item: "nucleo", chance: 0.28 }, { item: "haori", chance: 0.03 }, { item: "lamina_garra", chance: 0.05 }, { item: "pocao_rei", chance: 0.15 }] },
+  gillian: { gold: [500, 1000], items: [{ item: "pedra_reishi", chance: 1, min: 3, max: 6 }, { item: "lua_negra", chance: 0.08 }, { item: "caixa_kisuke", chance: 0.5 }, { item: "nucleo", chance: 1, min: 3, max: 6 }, { item: "haori", chance: 0.25 }, { item: "mascara", chance: 0.5 }, { item: "lamina_garra", chance: 0.3 }] },
+  grand_fisher: { gold: [400, 800], items: [{ item: "pedra_reishi", chance: 1, min: 2, max: 4 }, { item: "caixa_kisuke", chance: 0.4 }, { item: "nucleo", chance: 1, min: 3, max: 6 }, { item: "lamina_garra", chance: 0.4 }, { item: "haori", chance: 0.3 }, { item: "mascara", chance: 0.5 }] },
+  metastacia: { gold: [450, 900], items: [
+    { item: "tentaculo", chance: 1, min: 1, max: 3 }, { item: "pedra_reishi", chance: 1, min: 2, max: 5 }, { item: "nucleo", chance: 1, min: 2, max: 4 },
+    { item: "lua_negra", chance: 0.1 }, { item: "anel_espiritual", chance: 0.2 }, { item: "hakama_capitao", chance: 0.15 }, { item: "caixa_kisuke", chance: 0.5 },
+  ] },
 };
+
+/** Prêmios da Caixa do Kisuke (peso relativo). */
+export const BOX_PRIZES: { id: string; qty: number; weight: number }[] = [
+  { id: "pocao_grande", qty: 5, weight: 25 },
+  { id: "pocao_rei_grande", qty: 5, weight: 20 },
+  { id: "pedra_reishi", qty: 4, weight: 25 },
+  { id: "pergaminho_xp", qty: 1, weight: 10 },
+  { id: "incenso", qty: 1, weight: 10 },
+  { id: "amuleto_alma", qty: 1, weight: 6 },
+  { id: "botas_shunpo", qty: 1, weight: 2 },
+  { id: "talisma_kido", qty: 1, weight: 2 },
+];
+
+export function rollBox(): { id: string; qty: number } {
+  let r = Math.random() * BOX_PRIZES.reduce((s, p) => s + p.weight, 0);
+  for (const p of BOX_PRIZES) if ((r -= p.weight) < 0) return { id: p.id, qty: p.qty };
+  return BOX_PRIZES[0];
+}
+
+export const BOOST_MS = 3600_000;
+export const BOOST_MAX_MS = 6 * 3600_000;
+export const BOOST_EXP = 1.5;
+export const BOOST_LOOT = 1.3;
+
+// ---------- forja do Kisuke: fortalece o espaço de equipamento (não o item) ----------
+// O nível fica no espaço: trocar de arma não perde a forja, e a morte não leva.
+
+export const FORGE_MAX = 10;
+/** chance de sucesso para ir do nível n para n+1 */
+export const FORGE_CHANCE = [1, 0.95, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2];
+/** a partir deste nível, falhar desce um nível */
+export const FORGE_SAFE = 5;
+export const forgeCost = (lv: number) => ({ stones: lv + 1, gold: 200 * (lv + 1) ** 2 });
+/** bônus por nível: arma +2 de ataque; anel e amuleto +10 de vida; o resto +1 de defesa */
+export function forgeBonus(slot: EquipSlot, lv: number) {
+  if (slot === "weapon") return { atk: 2 * lv, def: 0, hp: 0, rei: 0 };
+  if (slot === "ring" || slot === "amulet") return { atk: 0, def: 0, hp: 10 * lv, rei: 0 };
+  return { atk: 0, def: lv, hp: 0, rei: 0 };
+}
 
 /** kit de quem nasce (no estilo do DBO Idle: equipamento básico, 2 proteções, poções e dinheiro) */
 export const START_KIT = {
@@ -99,13 +163,14 @@ export const START_KIT = {
   ] as Slot[],
 };
 
-export function rollLoot(kind: string): { gold: number; items: Slot[] } {
+/** `chanceMult`: bônus do bestiário (multiplica a chance de cada item) */
+export function rollLoot(kind: string, chanceMult = 1): { gold: number; items: Slot[] } {
   const t = LOOT[kind];
   if (!t) return { gold: 0, items: [] };
   const gold = t.gold[0] + Math.floor(Math.random() * (t.gold[1] - t.gold[0] + 1));
   const out: Slot[] = [];
   for (const e of t.items) {
-    if (Math.random() >= e.chance) continue;
+    if (Math.random() >= e.chance * chanceMult) continue;
     const lo = e.min ?? 1, hi = e.max ?? lo;
     out.push({ id: e.item, qty: lo + Math.floor(Math.random() * (hi - lo + 1)) });
   }
@@ -165,6 +230,11 @@ export function countItem(slots: (Slot | null)[], id: string): number {
   return slots.reduce((n, s) => n + (s && s.id === id ? s.qty : 0), 0);
 }
 
+/** Loot puro: o que a loja compra no "Vender todo o loot" e a Auto Venda transforma em kan. */
+export function isPureLoot(d: ItemDef): boolean {
+  return !d.slot && !d.heal && !d.restoreRei && !d.boost && !d.box && !d.keep;
+}
+
 /** Visual do personagem conforme o equipamento: "", "haori", "mask" ou "haori_mask". */
 export function lookOf(equip: Partial<Record<EquipSlot, string>>): string {
   const parts = [];
@@ -173,16 +243,17 @@ export function lookOf(equip: Partial<Record<EquipSlot, string>>): string {
   return parts.join("_");
 }
 
-/** Bônus somados do equipamento. */
-export function equipBonus(equip: Partial<Record<EquipSlot, string>>) {
+/** Bônus somados do equipamento e da forja (a forja só vale com item no espaço). */
+export function equipBonus(equip: Partial<Record<EquipSlot, string>>, forge: Partial<Record<EquipSlot, number>> = {}) {
   const b = { atk: 0, def: 0, hp: 0, rei: 0 };
-  for (const id of Object.values(equip)) {
-    const d = id ? ITEMS[id] : undefined;
+  for (const slot of EQUIP_SLOTS) {
+    const d = equip[slot] ? ITEMS[equip[slot]!] : undefined;
     if (!d) continue;
-    b.atk += d.atk ?? 0;
-    b.def += d.def ?? 0;
-    b.hp += d.hp ?? 0;
-    b.rei += d.rei ?? 0;
+    const f = forgeBonus(slot, forge[slot] ?? 0);
+    b.atk += (d.atk ?? 0) + f.atk;
+    b.def += (d.def ?? 0) + f.def;
+    b.hp += (d.hp ?? 0) + f.hp;
+    b.rei += (d.rei ?? 0) + f.rei;
   }
   return b;
 }

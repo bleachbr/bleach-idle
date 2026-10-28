@@ -16,6 +16,18 @@ export const PVP_DAMAGE = 0.5;
 /** depois de atacar um jogador: sem viajar, sem "voltar à cidade" e sem entrar na zona de proteção */
 export const PVP_LOCK_MS = 3 * 60_000;
 
+/** Invasão de Hollows em Karakura, perto da praça: de tempos em tempos, por 15 min. */
+export const INVASION = {
+  everyMs: 3 * 3600_000,
+  firstMs: 30 * 60_000,
+  durationMs: 15 * 60_000,
+  kinds: ["hollow_sombrio", "hollow_uivante", "hollow_faminto"],
+  count: 12,
+  leader: "fishbone",
+  expMult: 1.5,
+  boxChance: 0.08,
+};
+
 /** Caveira de assassino: matar quem não atacou ninguém. Cada abate injusto soma tempo. */
 export const SKULL_PER_KILL_MS = 15 * 60_000;
 export const SKULL_MAX_MS = 2 * 3600_000;

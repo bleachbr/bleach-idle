@@ -34,7 +34,9 @@ ok("depot guarda e devolve", inv.inv.some((s: any) => s?.id === "pocao_rei"));
 
 const g0 = inv.gold;
 room.send("auto", { autoHunt: true, autoHeal: 50 });
-await sleep(25000);
+// caça até ter kan e algum item de loot (35% por Hollow Menor: com tempo fixo às vezes não caía nada)
+const looted = () => inv.gold > g0 && inv.inv.some((s: any) => s?.id === "fragmento" || s?.id === "garra");
+for (let t = 0; t < 120 && !looted(); t++) await sleep(500);
 room.send("auto", { autoHunt: false });
 ok(`hunt rende loot (+${inv.gold - g0} kan)`, inv.gold > g0 && inv.inv.some((s: any) => s?.id === "fragmento" || s?.id === "garra"));
 // volta à praça: com Hollows ainda batendo o "voltar à cidade" é recusado (correto),

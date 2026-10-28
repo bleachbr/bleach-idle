@@ -8,13 +8,14 @@ import { WorldState, Player, Monster, Bag, type DeathReport, type Interact } fro
 import {
   walkable, nearestWalkable, inPZ, type GameMap,
   PARTY_MAX, PARTY_SHARE_RANGE, PARTY_SHARE_BONUS, PARTY_LEVEL_RATIO, PARTY_INVITE_MS,
-  PVP_MIN_LEVEL, PVP_DAMAGE, PVP_LOCK_MS, SKULL_PER_KILL_MS, SKULL_MAX_MS, SKULL_ITEM_LOSS, SKULL_GOLD_LOSS, RECALL_COMBAT_MS, RECALL_COOLDOWN_MS, TRAVEL,
+  INVASION, PVP_MIN_LEVEL, PVP_DAMAGE, PVP_LOCK_MS, SKULL_PER_KILL_MS, SKULL_MAX_MS, SKULL_ITEM_LOSS, SKULL_GOLD_LOSS, RECALL_COMBAT_MS, RECALL_COOLDOWN_MS, TRAVEL,
   CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir,
   expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
-  rollLoot, addItem, removeItem, spaceFor, countItem, equipBonus,
+  rollLoot, addItem, isPureLoot, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
+  ACHIEVEMENTS, DAILY, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, equipBonus,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -50,6 +51,10 @@ const isPlayer = (e: Player | Monster): e is Player => e instanceof Player;
 
 interface Party { id: string; leader: string; members: string[]; warnedAt: number }
 
+// da mais fraca para a mais forte
+const HP_POTIONS = ["onigiri", "pocao_vida", "pocao_grande"];
+const REI_POTIONS = ["pocao_rei", "pocao_rei_grande"];
+
 export class WorldRoom extends GameRoom<WorldState> {
   maxClients = 200;
 
@@ -71,6 +76,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.setSimulationInterval(() => this.tick(), TICK_MS);
     // save frequente e em transação: numa queda se perdem no máximo ~10 s
     this.clock.setInterval(() => this.saveAll(), 10_000);
+    this.scheduleInvasion(Number(process.env.INVASION_FIRST_MS) || INVASION.firstMs);
+    this.clock.setInterval(() => { for (const p of this.state.players.values()) this.checkAchievements(p); }, 5000);
 
     this.handle("move", (c, m: { x: number; y: number }) => {
       const p = this.me(c);
@@ -122,8 +129,9 @@ export class WorldRoom extends GameRoom<WorldState> {
         if (!t) return this.log(p, "Nenhum alvo ao alcance.");
         if (!this.trySkill(p, t, now, false)) this.log(p, "Habilidade indisponível (recarga, reiatsu ou alcance).");
       } else if (m?.slot === 2 || m?.slot === 3) {
-        const id = m.slot === 2 ? "pocao_vida" : "pocao_rei";
-        if (!this.useConsumable(p, id, now)) this.log(p, `Não dá para usar ${ITEMS[id].name} agora.`);
+        const id = this.bestPotion(p, m.slot === 2 ? "hp" : "rei");
+        if (!id) this.log(p, m.slot === 2 ? "Sem poções de cura." : "Sem poções de reiatsu.");
+        else if (!this.useConsumable(p, id, now)) this.log(p, `Não dá para usar ${ITEMS[id].name} agora.`);
       }
     });
     this.registerItemMessages();
@@ -131,6 +139,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.registerQuestMessages();
     this.registerBagMessages();
     this.registerMarketMessages();
+    this.registerBookMessages();
+    this.registerForgeMessages();
     // relógio: o cliente pergunta a hora do servidor para contar o bloqueio de PvP certo
     this.handle("time", (c) => c.send("time", { now: Date.now() }));
     this.handle("transform", (c) => {
@@ -142,12 +152,13 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (p.rei < p.maxRei * 0.3) return this.log(p, "Reiatsu insuficiente para o Bankai.");
       this.setForm(p, 1);
     });
-    this.handle("auto", (c, m: { autoTarget?: boolean; autoHunt?: boolean; autoTrain?: boolean; autoHeal?: number }) => {
+    this.handle("auto", (c, m: { autoTarget?: boolean; autoHunt?: boolean; autoTrain?: boolean; autoSell?: boolean; autoHeal?: number }) => {
       const p = this.me(c);
       if (!p) return;
       if (typeof m?.autoTarget === "boolean") p.autoTarget = m.autoTarget;
       if (typeof m?.autoHunt === "boolean") p.autoHunt = m.autoHunt;
       if (typeof m?.autoTrain === "boolean") p.autoTrain = m.autoTrain;
+      if (typeof m?.autoSell === "boolean") p.autoSell = m.autoSell;
       if (typeof m?.autoHeal === "number") p.autoHeal = Math.max(0, Math.min(90, Math.round(m.autoHeal)));
     });
     this.handle("chat", (c, m: { text: string }) => {
@@ -158,6 +169,10 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.broadcast("chat", { from: this.display(p), text });
     });
     this.handle("ranking", (c) => c.send("ranking", this.ranking()));
+    if (process.env.BI_DEBUG) {
+      this.handle("debugInvasion", () => this.startInvasion());
+      this.handle("debugInvasionEnd", () => this.endInvasion(false));
+    }
   }
 
   /** Só entra quem traz um ingresso emitido pelo lobby (conta logada + personagem dela). */
@@ -204,6 +219,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.sendInv(p);
     this.sendGuild(p);
     this.sendQuests(p);
+    client.send("dailyReady", { ready: p.prog.daily.last !== dayKey(Date.now()) });
     this.broadcast("chat", { from: "", text: `${p.name} entrou no mundo.` });
   }
 
@@ -251,12 +267,17 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.frags = saved.frags ?? 0;
     p.skullUntil = saved.skullUntil ?? 0;
     p.autoTrain = !!saved.autoTrain;
+    p.autoSell = !!saved.autoSell;
     p.zanjutsu = saved.zanjutsu ?? 0;
     p.zanTries = saved.zanTries ?? 0;
     p.reiryoku = saved.reiryoku ?? 0;
     p.reiTries = saved.reiTries ?? 0;
     this.train(p, 0, 0);
     p.quests = saved.quests ?? { active: {}, done: [] };
+    p.prog = { ...newProgress(), ...saved.prog };
+    p.forge = saved.forge ?? {};
+    p.expBoostUntil = saved.expBoostUntil ?? 0;
+    p.lootBoostUntil = saved.lootBoostUntil ?? 0;
     const g = guilds.guildOf(id);
     p.guildId = g?.id ?? 0;
     p.guildTag = g?.tag ?? "";
@@ -345,7 +366,10 @@ export class WorldRoom extends GameRoom<WorldState> {
         this.log(p, "O reiatsu acabou: Bankai desfeito.");
       }
     }
-    if (p.autoHeal && (p.hp * 100) / p.maxHp < p.autoHeal) this.useConsumable(p, "pocao_vida", now);
+    if (p.autoHeal && (p.hp * 100) / p.maxHp < p.autoHeal) {
+      const id = this.bestPotion(p, "hp");
+      if (id) this.useConsumable(p, id, now);
+    }
     if (p.pendingInteract && !p.path.length) {
       // chegou (ou desistiu) do caminho até o depot ou a loja
       if (this.near(p, p.pendingInteract)) this.open(p, p.pendingInteract);
@@ -362,9 +386,10 @@ export class WorldRoom extends GameRoom<WorldState> {
     }
     // Auto Helper: Auto Target pega o mais próximo à vista; Auto Hunt procura longe e vai até ele
     if (!t && (p.autoTarget || p.autoHunt)) {
-      // Auto Hunt prefere os monstros das missões de caça ativas, se houver algum no raio
+      // Auto Hunt prefere os invasores (durante a invasão) e depois os monstros das missões de caça ativas
       const kinds = p.autoHunt ? this.questKinds(p) : undefined;
-      t = (kinds && this.nearestMonster(p, HUNT_RADIUS, kinds)) || this.nearestMonster(p, p.autoHunt ? HUNT_RADIUS : VIEW);
+      t = (p.autoHunt && this.invasion && this.nearestMonster(p, HUNT_RADIUS, undefined, true))
+        || (kinds && this.nearestMonster(p, HUNT_RADIUS, kinds)) || this.nearestMonster(p, p.autoHunt ? HUNT_RADIUS : VIEW);
       if (t) { p.targetId = t.id; p.follow = true; }
     }
     if (t && p.autoHunt) this.trySkill(p, t, now, true);
@@ -406,7 +431,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (now >= m.nextAttackAt) { m.nextAttackAt = now + 3000; m.hp = m.maxHp; } // cura total a cada 3 s
       return;
     }
-    const sp = SPAWNS[m.spawnIndex];
+    const sp = m.invader ? { x: m.homeX, y: m.homeY, radius: 3 } : SPAWNS[m.spawnIndex];
     let t = m.targetId ? this.state.players.get(m.targetId) : undefined;
     if (t && (t.hp <= 0 || !sameMap(m, t) || inPZ(mapOf(t), t.x, t.y) || chebyshev(m.x, m.y, sp.x, sp.y) > LEASH + sp.radius)) {
       t = undefined;
@@ -435,7 +460,7 @@ export class WorldRoom extends GameRoom<WorldState> {
           m.nextAttackAt = now + def.attackMs;
           this.face(m, t);
           const ch = CHARS[t.charId];
-          const dmg = rollDamage(def.atk, 1, playerDef(ch.def, t.level) + equipBonus(t.equip).def);
+          const dmg = rollDamage(def.atk, 1, playerDef(ch.def, t.level) + equipBonus(t.equip, t.forge).def);
           t.hp -= dmg;
           t.lastCombatAt = now;
           this.broadcast("fx", { t: "dmg", id: t.id, v: dmg });
@@ -492,7 +517,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     if (t.hp <= 0 || !this.state.monsters.has(t.id)) return;
     const ch = CHARS[p.charId];
     const def = MONSTERS[t.kind];
-    const dmg = rollDamage(playerAtk(ch.atk, p.level) + equipBonus(p.equip).atk, ch.forms[p.form].dmgMult * mult, def.def);
+    mult *= bestiaryDmgMult(t.kind, p.prog.bestiary[t.kind] ?? 0);
+    const dmg = rollDamage(playerAtk(ch.atk, p.level) + equipBonus(p.equip, p.forge).atk, ch.forms[p.form].dmgMult * mult, def.def);
     t.hp -= dmg;
     t.lastHitBy = p.id;
     if (!t.targetId && !def.dummy) t.targetId = p.id;
@@ -532,6 +558,19 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (now < p.reiPotionReadyAt || p.rei >= p.maxRei) return false;
       p.rei = Math.min(p.maxRei, p.rei + p.maxRei * def.restoreRei);
       p.reiPotionReadyAt = now + 1000;
+    } else if (def.boost) {
+      const key = def.boost === "exp" ? "expBoostUntil" : "lootBoostUntil";
+      if (p[key] - now > BOOST_MAX_MS - BOOST_MS) return this.log(p, "Já tem o máximo de 6 h desse bônus."), false;
+      p[key] = Math.max(p[key], now) + BOOST_MS;
+      this.log(p, `${def.name}: ${def.boost === "exp" ? "+50% de XP" : "+30% de chance de loot"} por mais 1 h (restam ${Math.ceil((p[key] - now) / 60000)} min).`);
+    } else if (def.box) {
+      const prize = rollBox();
+      removeItem(p.inv, id, 1);
+      const n = addItem(p.inv, prize.id, prize.qty);
+      if (n < prize.qty) { addItem(p.inv, id, 1); removeItem(p.inv, prize.id, n); this.sendInv(p); return this.log(p, "Inventário sem espaço para o prêmio."), false; }
+      this.log(p, `Caixa do Kisuke: ${prize.qty}x ${ITEMS[prize.id].name}!`);
+      this.sendInv(p);
+      return true;
     } else return false;
     removeItem(p.inv, id, 1);
     this.sendInv(p);
@@ -574,6 +613,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.broadcast("fx", { t: "die", id: m.id });
     this.state.monsters.delete(m.id);
     this.monsterAt.delete(tileKey(m.map, m.x, m.y));
+    if (m.invader) return this.invaderKilled(m, killer);
     this.clock.setTimeout(() => this.spawnMonster(m.spawnIndex), def.respawnMs);
     this.shareExp(killer, m, def.exp, def.name);
     this.giveLoot(killer, m.kind, m);
@@ -664,7 +704,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private recompute(p: Player) {
-    const b = equipBonus(p.equip);
+    const b = equipBonus(p.equip, p.forge);
     p.maxHp = maxHp(p.level) + b.hp;
     p.maxRei = maxRei(p.level) + b.rei;
     p.hp = Math.min(p.hp, p.maxHp);
@@ -683,11 +723,11 @@ export class WorldRoom extends GameRoom<WorldState> {
     return kinds.size ? kinds : undefined;
   }
 
-  private nearestMonster(p: Player, range: number, only?: Set<string>): Monster | undefined {
+  private nearestMonster(p: Player, range: number, only?: Set<string>, invaders = false): Monster | undefined {
     let best: Monster | undefined;
     let bd = range + 1;
     for (const m of this.state.monsters.values()) {
-      if (!sameMap(p, m) || (only && !only.has(m.kind)) || MONSTERS[m.kind].dummy) continue;
+      if (!sameMap(p, m) || (only && !only.has(m.kind)) || (invaders && !m.invader) || MONSTERS[m.kind].dummy) continue;
       const d = chebyshev(p.x, p.y, m.x, m.y);
       if (d < bd) { best = m; bd = d; }
     }
@@ -807,7 +847,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       let gain = 0, n = 0;
       p.inv.forEach((s, i) => {
         const d = s ? ITEMS[s.id] : undefined;
-        if (!s || !d || d.slot || d.heal || d.restoreRei) return; // só loot puro
+        if (!s || !d || !isPureLoot(d)) return;
         gain += d.sell * s.qty;
         n += s.qty;
         p.inv[i] = null;
@@ -820,14 +860,24 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   /** Loot vai direto para o inventário de quem matou: funciona igual na hunt offline. */
   private giveLoot(p: Player, kind: string, at: { map: string; x: number; y: number }) {
-    const loot = rollLoot(kind);
+    const loot = rollLoot(kind, bestiaryLootMult(kind, p.prog.bestiary[kind] ?? 0) * (p.lootBoostUntil > Date.now() ? BOOST_LOOT : 1));
     p.gold += loot.gold;
+    p.hunt.gold += loot.gold;
     const got: string[] = [];
-    const overflow: Slot[] = [];
+    let overflow: Slot[] = [];
     for (const s of loot.items) {
+      p.hunt.items[s.id] = (p.hunt.items[s.id] ?? 0) + s.qty;
       const n = addItem(p.inv, s.id, s.qty);
       if (n) got.push(`${n}x ${ITEMS[s.id].name}`);
       if (n < s.qty) overflow.push({ id: s.id, qty: s.qty - n });
+    }
+    if (overflow.length && p.autoSell) {
+      // Auto Venda: loot puro que não coube vira kan (preço da loja); equipamento e consumível seguem para a sacola
+      let sold = 0;
+      for (const s of overflow) if (isPureLoot(ITEMS[s.id])) { sold += ITEMS[s.id].sell * s.qty; got.push(`${s.qty}x ${ITEMS[s.id].name} (vendido)`); }
+      overflow = overflow.filter((s) => !isPureLoot(ITEMS[s.id]));
+      p.gold += sold;
+      p.hunt.gold += sold;
     }
     if (overflow.length) {
       this.dropBag(at, "sacola", "Loot", overflow, 0, this.partyOf(p.id));
@@ -853,10 +903,10 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private sendInv(p: Player) {
-    const b = equipBonus(p.equip);
+    const b = equipBonus(p.equip, p.forge);
     const ch = CHARS[p.charId];
     const msg = {
-      gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
+      gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
       atk: Math.round(playerAtk(ch.atk, p.level) + b.atk), def: Math.round(playerDef(ch.def, p.level) + b.def),
     };
     for (const c of this.clients) if (this.sessions.get(c.sessionId) === p.id) c.send("inv", msg);
@@ -988,8 +1038,8 @@ export class WorldRoom extends GameRoom<WorldState> {
   private pvpHit(p: Player, v: Player, mult: number, now: number) {
     if (this.cantAttack(p, v)) { p.targetId = ""; return; }
     const ch = CHARS[p.charId];
-    const raw = rollDamage(playerAtk(ch.atk, p.level) + equipBonus(p.equip).atk, ch.forms[p.form].dmgMult * mult,
-      playerDef(CHARS[v.charId].def, v.level) + equipBonus(v.equip).def);
+    const raw = rollDamage(playerAtk(ch.atk, p.level) + equipBonus(p.equip, p.forge).atk, ch.forms[p.form].dmgMult * mult,
+      playerDef(CHARS[v.charId].def, v.level) + equipBonus(v.equip, v.forge).def);
     const dmg = Math.max(1, Math.round(raw * PVP_DAMAGE));
     v.hp -= dmg;
     v.lastCombatAt = p.lastCombatAt = now;
@@ -1032,12 +1082,14 @@ export class WorldRoom extends GameRoom<WorldState> {
         this.partyLog(party, "XP não dividida: o menor nível precisa ser pelo menos 2/3 do maior.");
       }
       this.questKill(killer, m.kind);
-      return this.gainExp(killer, exp, from);
+      this.bestiaryKill(killer, m.kind);
+      return this.monsterExp(killer, exp, from);
     }
     const each = Math.round((exp * (1 + PARTY_SHARE_BONUS * (near.length - 1))) / near.length);
     for (const x of near) {
       this.questKill(x, m.kind);
-      this.gainExp(x, each, `${from} (party, ${near.length})`);
+      this.bestiaryKill(x, m.kind);
+      this.monsterExp(x, each, `${from} (party, ${near.length})`);
     }
   }
 
@@ -1421,6 +1473,227 @@ export class WorldRoom extends GameRoom<WorldState> {
     }, 5000);
   }
 
+  /** A menor poção que cobre o que falta; se nenhuma cobre, a maior que houver. */
+  private bestPotion(p: Player, kind: "hp" | "rei"): string | undefined {
+    const ids = (kind === "hp" ? HP_POTIONS : REI_POTIONS).filter((id) => countItem(p.inv, id) > 0);
+    const power = (id: string) => (kind === "hp" ? ITEMS[id].heal! * p.maxHp : ITEMS[id].restoreRei! * p.maxRei);
+    const missing = kind === "hp" ? p.maxHp - p.hp : p.maxRei - p.rei;
+    return ids.find((id) => power(id) >= missing) ?? ids[ids.length - 1];
+  }
+
+  /** XP de monstro: aplica o Pergaminho de Treino e soma no analisador de caçada */
+  private monsterExp(p: Player, exp: number, from: string) {
+    const v = p.expBoostUntil > Date.now() ? Math.round(exp * BOOST_EXP) : exp;
+    p.hunt.exp += v;
+    this.gainExp(p, v, from);
+  }
+
+  // ---------- invasão de Hollows ----------
+
+  private invasion: { until: number; kills: Map<string, number>; left: number } | null = null;
+
+  private scheduleInvasion(ms: number) {
+    this.clock.setTimeout(() => {
+      this.startInvasion();
+      this.scheduleInvasion(Number(process.env.INVASION_EVERY_MS) || INVASION.everyMs);
+    }, ms);
+  }
+
+  /** Hollows aparecem em volta da praça de Karakura (fora da zona segura). */
+  startInvasion() {
+    if (this.invasion) return;
+    const map = HOME;
+    const spots: { x: number; y: number }[] = [];
+    for (let tries = 0; tries < 2000 && spots.length < INVASION.count + 1; tries++) {
+      const a = Math.random() * Math.PI * 2, r = 7 + Math.random() * 6;
+      const x = Math.round(TEMPLE.x + Math.cos(a) * r), y = Math.round(TEMPLE.y + Math.sin(a) * r);
+      if (!walkable(map, x, y) || inPZ(map, x, y) || this.blockedForMonster("karakura", x, y)) continue;
+      if (spots.some((s) => chebyshev(s.x, s.y, x, y) < 2)) continue;
+      spots.push({ x, y });
+    }
+    if (!spots.length) return;
+    this.invasion = { until: Date.now() + INVASION.durationMs, kills: new Map(), left: spots.length };
+    spots.forEach((s, i) => {
+      const kind = i === 0 ? INVASION.leader : INVASION.kinds[i % INVASION.kinds.length];
+      const def = MONSTERS[kind];
+      const m = new Monster();
+      m.id = `inv${++this.monsterSeq}`;
+      m.kind = kind;
+      m.map = "karakura";
+      m.x = m.homeX = s.x;
+      m.y = m.homeY = s.y;
+      m.hp = m.maxHp = def.hp;
+      m.stepMs = def.stepMs;
+      m.invader = true;
+      this.state.monsters.set(m.id, m);
+      this.monsterAt.add(tileKey("karakura", s.x, s.y));
+    });
+    this.broadcast("chat", { from: "", ch: "sys", text: `⚠ Invasão! ${spots.length} Hollows cercam a praça de Karakura, liderados por um ${MONSTERS[INVASION.leader].name}. XP +50% e Caixas do Kisuke por 15 min. Quem for fraco, fique na zona segura.` });
+    this.broadcast("fx", { t: "event", text: "Invasão de Hollows!" });
+    this.clock.setTimeout(() => this.endInvasion(false), INVASION.durationMs);
+  }
+
+  private invaderKilled(m: Monster, killer: Player) {
+    const def = MONSTERS[m.kind];
+    this.shareExp(killer, m, Math.round(def.exp * INVASION.expMult), `${def.name} (invasão)`);
+    this.giveLoot(killer, m.kind, m);
+    if (m.kind === INVASION.leader || Math.random() < INVASION.boxChance) {
+      const n = addItem(killer.inv, "caixa_kisuke", 1);
+      if (n) { this.log(killer, "Invasão: você ganhou uma Caixa do Kisuke!"); this.sendInv(killer); }
+    }
+    const inv = this.invasion;
+    if (!inv) return;
+    inv.kills.set(killer.id, (inv.kills.get(killer.id) ?? 0) + 1);
+    if (--inv.left <= 0) this.endInvasion(true);
+  }
+
+  private endInvasion(won: boolean) {
+    const inv = this.invasion;
+    if (!inv) return;
+    this.invasion = null;
+    for (const m of [...this.state.monsters.values()]) {
+      if (!m.invader) continue;
+      this.state.monsters.delete(m.id);
+      this.monsterAt.delete(tileKey(m.map, m.x, m.y));
+    }
+    const top = [...inv.kills.entries()].sort((a, b) => b[1] - a[1])[0];
+    const name = top ? this.state.players.get(top[0])?.name ?? top[0] : "";
+    this.broadcast("chat", { from: "", ch: "sys", text: won
+      ? `✔ Invasão repelida!${top ? ` Mais abates: ${name} (${top[1]}).` : ""}`
+      : `A invasão terminou: os Hollows que sobraram voltaram para Hueco Mundo.${top ? ` Mais abates: ${name} (${top[1]}).` : ""}` });
+  }
+
+  // ---------- forja do Kisuke ----------
+
+  private registerForgeMessages() {
+    this.handle("forge", (c, m: { slot: string }) => {
+      const p = this.me(c);
+      const slot = m?.slot as EquipSlot;
+      if (!p || !EQUIP_SLOTS.includes(slot)) return;
+      if (!this.near(p, "shop")) return this.log(p, "A forja fica no Kisuke.");
+      const lv = p.forge[slot] ?? 0;
+      if (lv >= FORGE_MAX) return this.log(p, `${SLOT_LABEL[slot]} já está no nível máximo (+${FORGE_MAX}).`);
+      const cost = forgeCost(lv);
+      if (countItem(p.inv, "pedra_reishi") < cost.stones) return this.log(p, `Precisa de ${cost.stones} Pedras de Reishi no inventário.`);
+      if (p.gold < cost.gold) return this.log(p, `Faltam ${cost.gold - p.gold} kan.`);
+      removeItem(p.inv, "pedra_reishi", cost.stones);
+      p.gold -= cost.gold;
+      if (Math.random() < FORGE_CHANCE[lv]) {
+        p.forge[slot] = lv + 1;
+        this.log(p, `Forja: ${SLOT_LABEL[slot]} subiu para +${lv + 1}!`);
+        this.sendTo(p, "fx", { t: "book", text: `${SLOT_LABEL[slot]} +${lv + 1}` });
+      } else if (lv >= FORGE_SAFE) {
+        p.forge[slot] = lv - 1;
+        this.log(p, `Forja falhou: ${SLOT_LABEL[slot]} caiu para +${lv - 1}.`);
+      } else this.log(p, `Forja falhou: ${SLOT_LABEL[slot]} continua +${lv}.`);
+      this.recompute(p);
+      this.sendInv(p);
+    });
+  }
+
+  // ---------- bestiário, conquistas e recompensa diária ----------
+
+  private bestiaryKill(p: Player, kind: string) {
+    const pr = p.prog;
+    const before = pr.bestiary[kind] ?? 0;
+    pr.bestiary[kind] = before + 1;
+    pr.kills++;
+    p.hunt.kills++;
+    if (BOSSES.has(kind)) pr.bossKills++;
+    const st = bestiaryStage(kind, before + 1);
+    if (st > bestiaryStage(kind, before)) {
+      const name = MONSTERS[kind].name;
+      this.log(p, st >= 3
+        ? `Bestiário: ${name} completo! +${st * 4}% de dano e +20% de chance de loot contra ele.`
+        : `Bestiário: ${name} no estágio ${st}/3. +${st * 4}% de dano contra ele.`);
+      this.sendTo(p, "fx", { t: "book", text: `Bestiário: ${name} ${st}/3` });
+    }
+  }
+
+  private stats(p: Player): Stats {
+    return {
+      level: p.level, kills: p.prog.kills, bossKills: p.prog.bossKills, stages: stagesSum(p.prog.bestiary), frags: p.frags,
+      quests: p.quests.done.length, zanjutsu: p.zanjutsu, reiryoku: p.reiryoku, streak: p.prog.daily.streak,
+    };
+  }
+
+  /** Entrega recompensa: itens no inventário primeiro, o que não couber vai para o depot. */
+  private grant(p: Player, reward: { gold: number; items?: { id: string; qty: number }[] }): string {
+    p.gold += reward.gold;
+    const parts = reward.gold ? [`${reward.gold} kan`] : [];
+    let toDepot = false;
+    for (const it of reward.items ?? []) {
+      const n = addItem(p.inv, it.id, it.qty);
+      if (n < it.qty) { addItem(p.depot, it.id, it.qty - n); toDepot = true; }
+      parts.push(`${it.qty}x ${ITEMS[it.id].name}`);
+    }
+    this.sendInv(p);
+    return parts.join(", ") + (toDepot ? " (o que não coube foi para o depot)" : "");
+  }
+
+  private checkAchievements(p: Player) {
+    const s = this.stats(p);
+    for (const a of ACHIEVEMENTS) {
+      if (p.prog.ach.includes(a.id) || s[a.stat] < a.need) continue;
+      p.prog.ach.push(a.id);
+      const got = this.grant(p, a.reward);
+      this.log(p, `Conquista: ${a.name}! Recompensa: ${got}.`);
+      this.sendTo(p, "fx", { t: "book", text: `Conquista: ${a.name}` });
+      if (a.need >= 25 || a.stat === "level") this.broadcast("chat", { from: "", text: `🏆 ${p.name} conquistou "${a.name}".`, ch: "sys" });
+    }
+  }
+
+  private registerBookMessages() {
+    const show = (p: Player) => {
+      const s = this.stats(p);
+      const today = dayKey(Date.now());
+      const d = p.prog.daily;
+      const alive = d.last === today || d.last === prevDay(today);
+      this.sendTo(p, "book", {
+        bestiary: BESTIARY_KINDS().map((kind) => {
+          const kills = p.prog.bestiary[kind] ?? 0, stage = bestiaryStage(kind, kills), def = MONSTERS[kind];
+          return {
+            kind, name: def.name, sprite: def.sprite, kills, stage, stages: bestiaryStages(kind), boss: BOSSES.has(kind),
+            // o estágio 1 revela os números; o 2 revela o loot
+            hp: stage >= 1 ? def.hp : 0, exp: stage >= 1 ? def.exp : 0,
+            loot: stage >= 2 ? (LOOT[kind]?.items ?? []).map((e) => ({ name: ITEMS[e.item].name, chance: e.chance })) : null,
+          };
+        }),
+        hunt: { ...p.hunt, now: Date.now(), items: Object.entries(p.hunt.items).map(([id, n]) => ({ name: ITEMS[id].name, icon: ITEMS[id].icon, n })).sort((a, b) => b.n - a.n) },
+        ach: ACHIEVEMENTS.map((a) => ({ name: a.name, desc: a.desc, done: p.prog.ach.includes(a.id), have: Math.min(s[a.stat], a.need), need: a.need, reward: a.reward })),
+        daily: {
+          claimed: d.last === today,
+          streak: alive ? d.streak : 0,
+          rewards: DAILY,
+          // posição no ciclo de 7 do resgate de hoje (já feito ou não)
+          index: d.last === today ? (d.streak - 1) % DAILY.length : (alive ? d.streak : 0) % DAILY.length,
+        },
+      });
+    };
+    this.handle("book", (c) => { const p = this.me(c); if (p) show(p); });
+    this.handle("huntReset", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      p.hunt = { since: Date.now(), exp: 0, gold: 0, kills: 0, items: {} };
+      show(p);
+    });
+    this.handle("daily", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      const today = dayKey(Date.now());
+      const d = p.prog.daily;
+      if (d.last === today) return this.log(p, "Você já pegou a recompensa de hoje. Volte amanhã.");
+      d.streak = d.last === prevDay(today) ? d.streak + 1 : 1;
+      d.last = today;
+      const got = this.grant(p, DAILY[(d.streak - 1) % DAILY.length]);
+      this.log(p, `Recompensa diária (${d.streak}º dia seguido): ${got}.`);
+      this.sendTo(p, "dailyReady", { ready: false });
+      this.checkAchievements(p);
+      show(p);
+    });
+  }
+
+
   // ---------- mercado entre jogadores (no Kisuke) ----------
 
   private registerMarketMessages() {
@@ -1523,8 +1796,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     return {
       name: p.name, charId: p.charId, level: p.level, exp: p.exp, hp: p.hp, rei: Math.round(p.rei), map: p.map, x: p.x, y: p.y,
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
-      autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil,
-      autoTrain: p.autoTrain, zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
+      autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil, prog: p.prog, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
+      autoTrain: p.autoTrain, autoSell: p.autoSell, zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
       offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, zanAtLeave: p.zanAtLeave, reiAtLeave: p.reiAtLeave, deaths: p.offlineDeaths },
     };
   }

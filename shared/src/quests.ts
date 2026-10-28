@@ -56,6 +56,21 @@ export const QUESTS: QuestDef[] = [
     goal: { type: "kill", monsters: ["grand_fisher"], count: 1 }, reward: { exp: 15000, gold: 1000, items: [{ id: "mascara", qty: 1 }] },
   },
   {
+    id: "rukongai", name: "Rukongai em Perigo", minLevel: 16,
+    desc: "Os Hollows invadem o Rukongai. Derrote 15 Hollows Ácidos ou Devoradores na Soul Society.",
+    goal: { type: "kill", monsters: ["hollow_acido", "hollow_devorador"], count: 15 }, reward: { exp: 9000, gold: 600, items: [{ id: "pedra_reishi", qty: 5 }] },
+  },
+  {
+    id: "metastacia", name: "A Sombra de Metastacia", minLevel: 22,
+    desc: "Um Hollow que devora reiatsu ronda o sul do Rukongai. Derrote o Metastacia.",
+    goal: { type: "kill", monsters: ["metastacia"], count: 1 }, reward: { exp: 20000, gold: 1500, items: [{ id: "caixa_kisuke", qty: 2 }] },
+  },
+  {
+    id: "reishi", name: "Pedras para a Forja", minLevel: 14, repeatable: true,
+    desc: "Traga 3 Tentáculos de Metastacia. O Kisuke paga em Pedras de Reishi.",
+    goal: { type: "collect", item: "tentaculo", count: 3 }, reward: { exp: 3000, gold: 0, items: [{ id: "pedra_reishi", qty: 8 }] },
+  },
+  {
     id: "adjuchas", name: "Expedição a Hueco Mundo", minLevel: 24,
     desc: "Atravesse a Garganta e derrote 10 Adjuchas.",
     goal: { type: "kill", monsters: ["adjuchas"], count: 10 }, reward: { exp: 26000, gold: 1500 },

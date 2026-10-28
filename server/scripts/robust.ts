@@ -9,6 +9,7 @@ const TYPES = [
   "useItem", "equip", "unequip", "interact", "depot", "buy", "sell", "sellLoot",
   "partyInvite", "partyAnswer", "partyLeave", "partyKick", "recall", "travel",
   "quests", "questAccept", "questAbandon", "questTurnIn", "bagOpen", "bagTake",
+  "marketList", "marketSell", "marketBuy", "marketCancel", "book", "daily", "huntReset", "forge",
 ];
 const JUNK: unknown[] = [
   null, undefined, 0, -1, 1e309, "", "x".repeat(1500), [], [1, 2], { id: null }, { id: { a: 1 } },

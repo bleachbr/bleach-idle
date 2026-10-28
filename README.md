@@ -31,22 +31,31 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Entrada no mundo:** por ingresso de uso único. Se o mesmo personagem abre em outra janela, a nova assume.
 
 **Mundo**
-- **Karakura** (Kenney CC0): cidade com praça central (zona segura, depot, loja do Kisuke, portal Senkaimon) e Hollows a leste e ao sul.
+- **Karakura** (arte própria, gerada pelo Codex): cidade japonesa com casas, prédios e lojas, praça central (zona segura, depot, loja do Kisuke, portal Senkaimon) e Hollows a leste e ao sul.
 - **Soul Society** (arte própria, gerada pelo Codex): Seireitei com quartéis, muro, jardim zen, cerejeiras e campo de treino; Rukongai com Hollows de nível médio. Nível 14+, 120 kan.
 - **Hueco Mundo** (Kenney CC0, recolorido): deserto com Adjuchas, Arrancar e Menos Grande (Gillian). Nível 22+, 200 kan, chegando pela Garganta.
+- **Invasão de Hollows:** de 3 em 3 horas, 12 Hollows e um Fishbone D cercam a praça de Karakura por 15 min, com +50% de XP e chance de Caixa do Kisuke (o líder sempre dá uma). Eles não renascem; o chat anuncia quem mais abateu.
 - **Viagem:** pelos portais. "Voltar à cidade" (tecla R) leva ao templo de Karakura.
 
 **Combate e progressão**
 - **Níveis:** fórmula do Tibia, começando no nível 8. Shikai/Bankai na tecla T (nível 10+), com mais dano e velocidade, mas gastando reiatsu.
-- **Monstros:** 13 tipos, mais o boneco de treino; os chefes são o Grand Fisher e o Gillian. Grand Fisher, Fishbone D e os de Hueco Mundo têm sprites próprios.
+- **Monstros:** 14 tipos, mais o boneco de treino, todos com sprite próprio. Chefes: Grand Fisher (Karakura), **Metastacia** (sul do Rukongai) e Gillian (Hueco Mundo).
 - **Treino:** **Zanjutsu** sobe com golpes e aumenta o dano corpo a corpo (+2%/nível). **Reiryoku** sobe com o reiatsu gasto e aumenta o dano das habilidades (+3%/nível). O **Auto Treino** queima o reiatsu parado, e os **bonecos de treino** da Soul Society não morrem. Os dois continuam offline.
 - **Morte (estilo Tibia):** perde 8% de XP, 10% do dinheiro carregado e cada item tem 10% de chance de cair. O que cai fica num **corpo no chão** por 5 minutos; em PvP, quem matou (e a party dele) tem prioridade por 1 minuto. O **Amuleto da Alma** protege tudo, e o depot nunca perde nada.
-- **Missões do Kisuke:** 9, de caçar ou entregar itens, com XP, kan e itens de recompensa. O progresso de caça conta para a party, e o Auto Hunt prioriza os monstros das missões.
+- **Missões do Kisuke:** 12, de caçar ou entregar itens, com XP, kan e itens de recompensa. O progresso de caça conta para a party, e o Auto Hunt prioriza os monstros das missões.
+
+**Progresso de longo prazo** (botão "livro" ao lado do nome)
+- **Bestiário:** cada monstro tem 3 estágios (25/150/500 abates; chefes 1/5/15). Cada estágio dá +4% de dano contra ele, revela vida, XP e loot, e o último dá +20% de chance de loot. Abates da party contam para todos.
+- **Conquistas:** 19 (nível, abates, chefes, bestiário, missões, treino, PvP, dias seguidos), com recompensa automática. As grandes são anunciadas no chat.
+- **Recompensa diária:** o botão "livro" ganha um ponto vermelho quando ela está esperando. Ciclo de 7 dias (o 7º dá Amuleto da Alma). Perder um dia zera a sequência; o dia vira à meia-noite de Brasília.
 
 **Itens**
-- **Itens:** 15, mais o kan. 7 espaços de equipamento e 20 de inventário.
+- **Itens:** 29, mais o kan. 7 espaços de equipamento e 20 de inventário.
 - **Loot:** vai direto para o inventário, o que funciona também offline. O que não couber vira uma **sacola no chão**, reservada a quem matou por 1 minuto.
 - **Praça:** depot de 60 espaços e loja com "Vender todo o loot".
+- **Forja do Kisuke:** fortalece o **espaço** de equipamento até +10 com Pedras de Reishi e kan (arma +2 de ataque por nível, anel e amuleto +10 de vida, o resto +1 de defesa). A chance cai a cada nível e, a partir de +5, falhar desce um nível. Trocar de item não perde a forja e a morte não leva.
+- **Consumíveis novos:** Onigiri, Poção Grande de Cura e de Reiatsu (o Auto Heal e os atalhos escolhem a menor poção que resolve), **Pergaminho de Treino** (+50% de XP por 1 h), **Incenso da Sorte** (+30% de loot por 1 h; os dois somam até 6 h e contam offline) e **Caixa do Kisuke** (prêmio surpresa).
+- **Equipamentos novos:** Elmo de Osso, Botas de Shunpo, Hakama de Capitão, Zanpakutō Lua Negra, Anel Espiritual e Talismã de Kidō, dos Hollows mais fortes e dos chefes.
 - **Visual:** Haori de Capitão e Máscara de Osso mudam o sprite, e todos veem. Rukia e Renji têm sprite próprio no Bankai.
 - **Mercado entre jogadores** (aba no Kisuke): anuncie itens do inventário com preço por unidade; o item fica guardado até alguém comprar ou você cancelar. Taxa de 5% na venda, e o vendedor recebe mesmo fora do jogo. Anúncio sem comprador por 7 dias volta para o depot.
 
@@ -59,7 +68,8 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Ranking:** nível, abates em PvP e guildas.
 
 **Automação (Auto Helper)**
-- Auto Target, Auto Hunt, Auto Heal (%) e Auto Treino.
+- Auto Target, Auto Hunt, Auto Heal (%), Auto Treino e **Auto Venda** (o loot puro que não cabe no inventário vira kan na hora, em vez de cair numa sacola).
+- **Analisador de caçada** (livro → Caçada): XP, kan e abates no total e por hora, e o loot coletado. Conta também a caçada offline.
 - Com Auto Hunt ou Auto Treino, fechar o jogo não tira o personagem do mundo (até 12 h). Na volta chega um relatório de tempo, XP, kan, habilidades e mortes.
 - Isso sobrevive a reinício e queda do servidor.
 
@@ -100,7 +110,8 @@ Cenários em `server/scripts/`:
 - **Mapas:** `mapcheck`.
 - **Contas:** `accounts`.
 - **Combate e personagem:** `bankai`, `outfit`, `death`, `training`, `spawncount`.
-- **Itens, missões e economia:** `items`, `quests`, `bags` (corpos e sacolas), `market` (mercado).
+- **Itens, missões e economia:** `items`, `quests`, `bags` (corpos e sacolas), `market` (mercado), `forge` (forja, pergaminho, caixa e escolha da poção).
+- **Progresso:** `progress` (bestiário, conquistas e recompensa diária), `hunt` (Auto Venda, analisador, aviso da diária) e `invasion` (evento).
 - **Robustez:** `robust` (lixo em todas as mensagens, rajada de 500, mensagem acima de 4 KB). O runner também conta como falha qualquer exceção registrada pelo servidor.
 - **Social:** `social` (party, PvP, viagem), `social2` (chat, guildas, ranking) e `skull` (caveira).
 - **Offline e queda:** `bot` (hunt offline) e `restart` (queda do servidor com hunts e party).
@@ -108,12 +119,12 @@ Cenários em `server/scripts/`:
 Avulsos (com o servidor rodando): `partner.ts` (um bot que aceita convites de party) e `peek.ts` (lista os jogadores no mundo).
 
 ## Créditos
-Tiles de Karakura e Hueco Mundo: [Roguelike Modern City](https://kenney.nl/assets/roguelike-modern-city) e [Roguelike RPG Pack](https://kenney.nl/assets/roguelike-rpg-pack), da Kenney (CC0; licenças em `art/maps/kenney/`). O resto da arte foi gerado pelo Codex para este projeto.
+Tiles de Hueco Mundo: [Roguelike Modern City](https://kenney.nl/assets/roguelike-modern-city) e [Roguelike RPG Pack](https://kenney.nl/assets/roguelike-rpg-pack), da Kenney (CC0; licenças em `art/maps/kenney/`). O resto da arte foi gerado pelo Codex para este projeto.
 
 ## Limitações conhecidas
 - **Contas:** sem e-mail nem recuperação ou troca de senha. Sem moderação de chat.
 - **Servidor:** ingressos e limite de tentativas ficam na memória do processo (um servidor só). Numa queda brusca se perdem até ~10 s de progresso.
-- **Arte:** Karakura e Hueco Mundo usam tiles da Kenney, mais simples que os personagens; a Soul Society já tem arte própria. Não há interiores de prédios nem andares.
+- **Arte:** Hueco Mundo ainda usa tiles da Kenney, mais simples que os personagens; Karakura e a Soul Society já têm arte própria. Não há interiores de prédios nem andares.
 - **Sprites:** só haori e máscara mudam o visual do personagem.
 - **Corpos e sacolas** ficam só na memória: somem se o servidor reiniciar.
 - **Mercado:** não há troca direta entre jogadores.

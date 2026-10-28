@@ -2,7 +2,7 @@
 dos pacotes CC0 da Kenney em art/maps/kenney/.
 
 Saída em client/public/maps/:
-  karakura.tmj + karakura_tiles.png
+  karakura.tmj + karakura_tiles.png   (arte própria, gerada pelo Codex: art/raw/44 a 46; sem elas, Kenney)
   hueco.tmj    + hueco_tiles.png
   soul.tmj     + soul_tiles.png   (arte própria, gerada pelo Codex: art/raw/26 a 28)
 
@@ -30,6 +30,7 @@ T = 32  # tamanho do tile no jogo (os da Kenney são 16, ampliados 2x)
 
 CITY = Image.open(KENNEY / "roguelike-modern-city" / "tilemap_packed.png").convert("RGBA")  # 37x28, sem espaçamento
 RPG = Image.open(KENNEY / "roguelike-rpg-pack" / "roguelikeSheet_transparent.png").convert("RGBA")  # 57x31, 1 px entre tiles
+RAW = Path(__file__).resolve().parents[1] / "raw"
 
 
 def city(c, r):
@@ -88,10 +89,16 @@ class Map:
     def __init__(self, name, title, w, h, ts):
         self.name, self.title, self.w, self.h, self.ts = name, title, w, h, ts
         self.layers = {k: [0] * (w * h) for k in ("chao", "objetos", "acima")}
+        self.keys = {k: [None] * (w * h) for k in ("chao", "objetos", "acima")}
         self.objects = []
+        # chão com textura: chave -> prefixo dos tiles "<prefixo><x%4><y%4>" (arte própria)
+        self.tex = {}
 
     def set(self, layer, x, y, key):
         if 0 <= x < self.w and 0 <= y < self.h:
+            self.keys[layer][y * self.w + x] = key
+            if layer == "chao" and key in self.tex:
+                key = f"{self.tex[key]}{x % 4}{y % 4}"
             self.layers[layer][y * self.w + x] = self.ts.gid(key) if key else 0
 
     def get(self, layer, x, y):
@@ -152,7 +159,10 @@ class Map:
 # ------------------------------------------------------------------ Karakura
 
 def karakura():
+    own = all((RAW / f).exists() for f in ("44_kk_ground.png", "45_kk_buildings.png", "46_kk_props.png"))
     ts = Tileset("karakura")
+    if own:
+        return karakura_layout(ts, karakura_own_tiles(ts))
     ts.add("grama", city(0, 24))
     ts.add("grama2", city(1, 24))
     ts.add("asfalto", city(10, 24))  # asfalto liso (o 16,22 tem linhas de vaga)
@@ -180,8 +190,95 @@ def karakura():
             ts.add(f"porta_{s}_{ci}", Image.alpha_composite(city(cc, 5), city(25, 21)), True)
     ts.add("depot", Image.alpha_composite(city(4, 20), rpg(38, 9)), True)
     ts.add("senkaimon", Image.alpha_composite(city(4, 20), rpg(33, 1)), True)
+    return karakura_layout(ts, None)
 
+
+def karakura_own_tiles(ts):
+    """Arte própria (Codex, art/raw/44 a 46) com as mesmas chaves do traçado da Kenney.
+    Devolve a função que desenha um prédio, porque cada prédio vira uma imagem inteira."""
+    P = pixel_tools()
+    ground = Image.open(RAW / "44_kk_ground.png").convert("RGBA")
+    q = ground.width // 2
+    texs = {}
+    for name, (qx, qy) in {"grama": (0, 0), "asfalto": (1, 0), "calcada": (0, 1), "agua": (1, 1)}.items():
+        crop = ground.crop((qx * q + 6, qy * q + 6, qx * q + q - 6, qy * q + q - 6)).resize((4 * T, 4 * T), Image.BOX)
+        if name == "asfalto":
+            # o asfalto gerado vem granulado demais (parece cascalho): suaviza e usa poucas cores
+            from PIL import ImageFilter
+            crop = crop.filter(ImageFilter.GaussianBlur(1.6))
+        texs[name] = P["crisp"](crop, 5 if name == "asfalto" else 12)
+    # praça: a calçada num tom quente, para a zona segura se destacar
+    texs["praca"] = recolor(texs["calcada"], (232, 206, 160))
+    for name, tex in texs.items():
+        for y, row in enumerate(P["tiles_of"](tex)):
+            for x, t in enumerate(row):
+                ts.add(f"{name}{x}{y}", t, solid=name == "agua")
+    props = P["split"](Image.open(RAW / "46_kk_props.png").convert("RGBA"), 3, 3)
+    praca = texs["praca"].crop((0, 0, T, T))
+    for i, cell in enumerate((props[0], props[3], props[6])):
+        (top,), (bottom,) = P["tiles_of"](P["prop"](cell, 1, 2))
+        ts.add(f"arvore{i}", bottom, True)
+        ts.add(f"copa{i}", top)
+    ts.add("arbusto", P["prop"](props[1], 1, 1), True)
+    ts.add("lixeira", Image.alpha_composite(praca, P["prop"](props[7], 1, 1)), True)
+    ts.add("maquina", Image.alpha_composite(praca, P["prop"](props[2], 1, 1)), True)
+    ts.add("banco", Image.alpha_composite(praca, P["prop"](props[8], 1, 1)), True)
+    ts.add("depot", Image.alpha_composite(praca, P["prop"](props[4], 1, 1)), True)
+    (top,), (bottom,) = P["tiles_of"](P["prop"](props[5], 1, 2))
+    ts.add("senkaimon", Image.alpha_composite(praca, bottom), True)
+    ts.add("senkaimon_topo", top)
+    houses = P["split"](Image.open(RAW / "45_kk_buildings.png").convert("RGBA"), 2, 2)
+    made = set()
+
+    def building(m, x0, y0, w, h, style):
+        # vermelho: casa; cinza: prédio; bege: loja; parte das casas vira a casa de madeira
+        k = {"vermelho": 0, "cinza": 1, "bege": 2}[style]
+        if k == 0 and (x0 + y0) % 3 == 0:
+            k = 3
+        if (k, w, h) not in made:
+            made.add((k, w, h))
+            for dy, row in enumerate(P["tiles_of"](P["prop"](houses[k], w, h))):
+                for dx, t in enumerate(row):
+                    # o terreno inteiro do prédio bloqueia, como no traçado original
+                    ts.add(f"casa{k}_{w}x{h}_{dx}{dy}", Image.alpha_composite(texs["calcada"].crop((0, 0, T, T)), t), True)
+        for dy in range(h):
+            for dx in range(w):
+                m.set("objetos", x0 + dx, y0 + dy, f"casa{k}_{w}x{h}_{dx}{dy}")
+    return building
+
+
+def pixel_tools():
+    """As mesmas ferramentas de pixel art usadas na Soul Society."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    import process as P
+
+    def crisp(img, colors=16):
+        local = [c for c, _ in P.kmeans_colors([p[:3] for p in img.get_flattened_data() if p[3]], colors)]
+        return P.apply_palette(img, local)
+
+    def prop(img, w_tiles, h_tiles, outline=True):
+        body, _ = P.keep_main(P.remove_bg(img))
+        k = min((w_tiles * T - 2) / body.width, (h_tiles * T - 2) / body.height)
+        small = crisp(P.downscale(body, k))
+        if outline:
+            small = P.add_outline(small)
+        canvas = Image.new("RGBA", (w_tiles * T, h_tiles * T))
+        canvas.alpha_composite(small, ((canvas.width - small.width) // 2, canvas.height - small.height))
+        return canvas
+
+    def tiles_of(canvas):
+        return [[canvas.crop((x * T, y * T, x * T + T, y * T + T)) for x in range(canvas.width // T)] for y in range(canvas.height // T)]
+
+    return {"crisp": crisp, "prop": prop, "tiles_of": tiles_of, "split": lambda img, rows, cols: P.split_cells(img, rows, cols)}
+
+
+def karakura_layout(ts, own_building):
     m = Map("karakura", "Karakura", 64, 48, ts)
+    if own_building:
+        m.tex = {"grama": "grama", "grama2": "grama", "asfalto": "asfalto", "calcada": "calcada", "praca": "praca",
+                 "agua_topo": "agua", "agua": "agua", "agua_base": "agua"}
+    styles = ("vermelho", "cinza", "bege")
     rnd = random.Random(42)
     for y in range(m.h):
         for x in range(m.w):
@@ -194,6 +291,8 @@ def karakura():
             m.set("acima", x, y - 1, f"copa{i}")
 
     def building(x0, y0, w, h, style):
+        if own_building:
+            return own_building(m, x0, y0, w, h, style)
         for dy in range(h):
             for dx in range(w):
                 ci = 0 if dx == 0 else 2 if dx == w - 1 else 1
@@ -250,6 +349,10 @@ def karakura():
     m.set("objetos", 16, 11, "senkaimon")
     for x, y in ((13, 17), (19, 17)):
         m.set("objetos", x, y, "lixeira")
+    if own_building:
+        m.set("acima", 16, 10, "senkaimon_topo")
+        for x, y, k in ((13, 15, "banco"), (19, 15, "banco"), (19, 11, "maquina")):
+            m.set("objetos", x, y, k)
 
     # estradas para as hunts
     for x in range(town[2], m.w - 2):
@@ -274,8 +377,7 @@ def karakura():
         for x in range(m.w):
             in_town = x <= town[2] + 1 and y <= town[3] + 1
             edge = x < 2 or y < 2 or x >= m.w - 2 or y >= m.h - 2
-            base = m.get("chao", x, y)
-            free = base in (ts.gid("grama"), ts.gid("grama2")) and not m.get("objetos", x, y)
+            free = m.keys["chao"][y * m.w + x] in ("grama", "grama2") and not m.get("objetos", x, y)
             if edge and (x in (0, m.w - 1) or y in (0, m.h - 1) or not in_town):
                 m.set("objetos", x, y, f"arvore{rnd.randrange(3)}")
             elif free and not in_town and rnd.random() < 0.09:
@@ -478,6 +580,8 @@ def soul():
     # campo de treino: bonecos na rua leste da Seireitei (fora da zona segura)
     for x in (38, 41, 44):
         m.point("spawn", *m.nearest_free(x, 9), "boneco", {"monstro": "boneco", "raio": 0, "quantidade": 1})
+    # chefe: Metastacia, no sul do Rukongai
+    m.point("spawn", *m.nearest_free(24, 36), "metastacia", {"monstro": "metastacia", "raio": 2, "quantidade": 1})
     m.save()
 
 

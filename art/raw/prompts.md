@@ -292,3 +292,41 @@ A monster: a heavy armored spirit like a giant armadillo-beetle standing on two 
 ```text
 A monster: a hulking, obese spirit with dark crimson-black skin, a gigantic mouth across its belly lined with teeth, a small white bone mask on its head with three eye holes, stubby legs and long arms, and a hole through its upper chest. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
 ```
+
+# Rodada 10: Metastacia e a segunda folha de ícones
+
+Script `work/gen_round10.sh`. Metastacia com a folha do Hollow (09); ícones com a primeira folha de ícones (12). Os dois na 1ª tentativa. Os ícones 29 e 31 (medalha e bandeira) ficaram reservados para itens futuros.
+
+## p_42_metastacia_walk
+
+```text
+A monster: a large insect-like spirit with a dark purple-black segmented body like a giant centipede standing upright, several long thin whip-like tentacles growing from its back and swaying, a white bone mask with a pointed beak-like face and two small red eyes, crab-like jointed legs, and a round hole through the chest. Menacing boss creature. Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of ONE creature walking, same layout as the reference: row 1 walking DOWN toward the camera (front view), row 2 walking LEFT, row 3 walking RIGHT, row 4 walking UP away from the camera (back view). Each row is a 4-frame walk cycle. In every cell the creature is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 16 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+## p_43_item_icons2_4x4
+
+```text
+Make the image SQUARE. A 4x4 grid (4 rows, 4 columns, 16 equal square cells) of SIXTEEN different game item icons, one item per cell, each centered and fully inside its cell with magenta padding, same layout and scale as the reference icon sheet. In order, left to right, top to bottom: 1 a glowing pale-blue crystal shard; 2 a curled dark purple tentacle with suckers; 3 a white bone helmet with horns; 4 a pair of black ninja boots with white wraps; 5 a pair of dark navy wide hakama trousers with a white belt; 6 a katana with a black blade and a crescent-moon guard; 7 a silver ring with a glowing cyan gem; 8 a pendant necklace with a blue spiral talisman; 9 a large red potion bottle with a gold cap; 10 a large blue potion bottle with a gold cap; 11 a rolled paper scroll with a red seal; 12 a small bronze incense burner with green smoke; 13 a small wooden treasure box with a gold lock; 14 a gold medal with a red ribbon; 15 a white rice ball wrapped in seaweed; 16 a black flag with a white skull. Style: match the attached reference sprite sheet EXACTLY in art style: same pixel-art rendering, same 3/4 top-down camera angle, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no ground shadow, no text, no labels, no border, no UI, no grid lines.
+```
+
+# Rodada 11: Karakura com arte própria
+
+Script `work/gen_karakura.sh`. Cada imagem usa a peça equivalente da Soul Society (26, 27 e 28) como referência. As três na 1ª tentativa. O asfalto veio granulado demais e é suavizado no `build_maps.py`.
+
+## p_44_kk_ground
+
+```text
+Make the image SQUARE. A 2x2 sheet of four SEAMLESS, TILEABLE ground textures for a top-down RPG set in a modern Japanese town, each filling its whole quarter edge to edge (no borders, no gaps, no objects, no road markings): top-left: short green grass; top-right: dark grey asphalt; bottom-left: light grey square concrete sidewalk tiles; bottom-right: blue river water with small light ripples. Flat top-down view, even lighting. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs.
+```
+
+## p_45_kk_buildings
+
+```text
+Make the image SQUARE. A 2x2 sheet of four separate top-down 3/4 view pixel-art buildings of a modern Japanese suburban town, each centered in its own quarter with magenta padding, nothing crossing the quarter edges; in each we see a large roof from above at an angle and the front wall below it: top-left: a two-story Japanese family house with a red-brown tiled gable roof, cream walls, a front door and two windows; top-right: a small grey concrete apartment block with a flat grey roof with an AC unit, rows of windows and a glass entrance door; bottom-left: a small corner shop with a beige wall, a striped awning over a glass front and a flat roof; bottom-right: a traditional wooden Japanese house with a dark blue-grey tiled roof and sliding shoji doors. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no shadow, no text, no labels, no border, no grid lines.
+```
+
+## p_46_kk_props
+
+```text
+Make the image SQUARE. A 3x3 sheet of nine separate top-down 3/4 view pixel-art map props for a modern Japanese town, each centered in its own cell with generous magenta padding, nothing crossing the cell edges: 1 a round leafy green street tree (zelkova) with a brown trunk, taller than wide; 2 a round dark green bush; 3 a red drink vending machine; 4 a dark green tree with a slightly different round canopy; 5 a small wooden treasure chest with iron bands (storage chest); 6 a tall traditional Japanese gate (Senkaimon) made of white paper sliding doors framed in dark wood with a small tiled roof; 7 a light green tree with a lighter canopy; 8 a grey metal trash can; 9 a wooden park bench. Style: clean pixel art matching the attached reference image (same pixel density, crisp dark outline #1a1822 around objects, one-shade shading with light from the top-left, no gradients, no anti-aliasing, no dithering), seen from a 3/4 top-down RPG camera angle like classic top-down MMORPGs. Background: 100% solid flat magenta #FF00FF, no gradient, no floor, no shadow, no text, no labels, no border, no grid lines.
+```

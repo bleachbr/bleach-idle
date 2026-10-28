@@ -55,7 +55,7 @@ ok(`o parceiro de party também conta (${b.q().active.patrulha}/10)`, b.q().acti
 a.room.send("auto", { autoHunt: false });
 for (let i = 0; i < 16 && !(a.me().x === TEMPLE.x && a.me().y === TEMPLE.y); i++) { a.room.send("recall"); await sleep(2000); }
 a.room.send("move", { x: nearShop.x, y: nearShop.y });
-await sleep(2500);
+for (let i = 0; i < 50 && !(a.me().x === nearShop.x && a.me().y === nearShop.y); i++) await sleep(200);
 const exp0 = a.me().exp;
 a.room.send("questTurnIn", { id: "patrulha" });
 await sleep(300);

@@ -78,9 +78,9 @@ main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 }
 
 /* ---------- itens ---------- */
-.icon { display: inline-block; width: 32px; height: 32px; vertical-align: middle; background-image: url(/assets/items.png); background-size: 128px 128px; image-rendering: pixelated; }
+.icon { display: inline-block; width: 32px; height: 32px; vertical-align: middle; background-image: url(/assets/items.png); background-size: 128px 256px; image-rendering: pixelated; }
 #gold { float: right; text-transform: none; letter-spacing: 0; color: var(--exp); font-weight: 600; }
-#gold .icon { width: 16px; height: 16px; background-size: 64px 64px; background-position: -48px -48px !important; }
+#gold .icon { width: 16px; height: 16px; background-size: 64px 128px; background-position: -48px -48px !important; }
 #atkdef { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
 .grid { display: grid; grid-template-columns: repeat(5, 40px); gap: 4px; margin-bottom: 10px; }
 .grid.depot { grid-template-columns: repeat(10, 40px); }
@@ -137,16 +137,16 @@ code { background: var(--line); border-radius: 3px; padding: 0 4px; font-size: 1
 .tag { color: #7fd6ff; }
 .member.off { opacity: .5; }
 .who button.link + button.link { margin-right: 8px; }
-#ranking { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: min(520px, calc(100% - 24px)); max-height: calc(100% - 180px); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 30px #0008; z-index: 15; }
-#ranking header { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
-#ranking header > button { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; }
-#ranking .tabs { display: flex; gap: 4px; }
-#ranking .tabs button { padding: 3px 8px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; font-size: 12px; }
-#ranking .tabs button[aria-pressed="true"] { color: var(--text); border-color: var(--accent); }
-#ranking-body { overflow-y: auto; padding: 8px 12px; }
-#ranking table { width: 100%; border-collapse: collapse; font-size: 13px; }
-#ranking td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
-#ranking td:first-child { color: var(--muted); width: 2em; }
+#ranking, #book { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: min(520px, calc(100% - 24px)); max-height: calc(100% - 180px); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 30px #0008; z-index: 15; }
+#ranking header, #book header { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+#ranking header > button, #book header > button { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; }
+#ranking .tabs, #book .tabs { display: flex; gap: 4px; }
+#ranking .tabs button, #book .tabs button { padding: 3px 8px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; font-size: 12px; }
+#ranking .tabs button[aria-pressed="true"], #book .tabs button[aria-pressed="true"] { color: var(--text); border-color: var(--accent); }
+#ranking-body, #book-body { overflow-y: auto; padding: 8px 12px; }
+#ranking table, #book table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#ranking td, #book td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+#ranking td:first-child, #book td:first-child { color: var(--muted); width: 2em; }
 
 /* ---------- missões ---------- */
 .quest { margin-bottom: 6px; display: flex; flex-direction: column; font-size: 13px; }
@@ -186,3 +186,29 @@ body.touch #touch { bottom: 120px; }
 .shop-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
 .shop-tabs button { flex: 1; padding: 5px 8px !important; background: var(--bg) !important; color: var(--muted) !important; border: 1px solid var(--line) !important; border-radius: 4px; cursor: pointer; }
 .shop-tabs button[aria-pressed="true"] { color: var(--text) !important; border-color: var(--accent) !important; }
+
+/* livro: bestiário, conquistas e diário */
+#book .beast { display: grid; grid-template-columns: 52px 1fr; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+#book .beast .pic { width: 48px; height: 48px; background-repeat: no-repeat; image-rendering: pixelated; }
+#book .beast.unknown .pic { filter: brightness(0); opacity: .55; }
+#book .stars { color: var(--accent); letter-spacing: 1px; }
+#book .bar { height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; margin-top: 3px; }
+#book .bar i { display: block; height: 100%; background: var(--accent); }
+#book .ach { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+#book .ach.done b::before { content: "🏆 "; }
+#book .ach:not(.done) { opacity: .8; }
+#book .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 8px 0; }
+#book .days div { border: 1px solid var(--line); border-radius: 6px; padding: 6px 2px; text-align: center; font-size: 11px; min-height: 64px; }
+#book .days div.got { opacity: .5; }
+#book .days div.today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+#book .claim { display: block; margin: 8px auto; padding: 8px 18px; }
+
+/* forja: nível no canto do espaço de equipamento */
+.equip-slot[data-forge]::after { content: attr(data-forge); position: absolute; right: 2px; top: 1px; font-size: 10px; font-weight: bold; color: #ffcf5a; text-shadow: 0 1px 0 #000; }
+.forge-row .name b { color: #ffcf5a; }
+
+/* recompensa diária esperando */
+#book-btn.ping { color: #ffcf5a; }
+#book-btn.ping::after { content: " ●"; color: #ff5a4a; }
+#book .loot-list { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+#book .loot-list .slot { cursor: default; }

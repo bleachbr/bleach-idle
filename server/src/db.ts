@@ -22,11 +22,16 @@ export interface SaveData {
   frags?: number;
   skullUntil?: number;
   autoTrain?: boolean;
+  autoSell?: boolean;
   zanjutsu?: number;
   zanTries?: number;
   reiryoku?: number;
   reiTries?: number;
   quests?: QuestState;
+  prog?: import("../../shared/src").Progress;
+  forge?: Partial<Record<EquipSlot, number>>;
+  expBoostUntil?: number;
+  lootBoostUntil?: number;
   autoTarget?: boolean;
   autoHunt?: boolean;
   autoHeal?: number;
