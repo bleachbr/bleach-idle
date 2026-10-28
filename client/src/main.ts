@@ -5,6 +5,7 @@ import { CHARS, expForLevel, PVP_MIN_LEVEL } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory } from "./inventory";
 import { serverNow, syncClock } from "./clock";
+import { initTouch, registerPWA } from "./touch";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const SERVER = import.meta.env.VITE_SERVER ?? `ws://${location.hostname}:2567`;
@@ -141,6 +142,7 @@ $("#logout-btn").onclick = () => {
 // "/?login" abre direto o login (para entrar com outra conta sem apagar o login lembrado)
 if (new URLSearchParams(location.search).has("login")) show("login");
 else backToStart();
+registerPWA();
 
 // ---------- jogo ----------
 
@@ -159,6 +161,9 @@ function start(room: Room<any>, myId: string) {
   };
   const game = new Phaser.Game(gameConfig("game"));
   game.scene.add("game", GameScene, true, { room, myId, onMe, onPlayerClick: (id: string, x: number, y: number) => playerMenu(room, myId, id, x, y) });
+  initTouch(room, (dir) => (game.scene.getScene("game") as GameScene | null)?.setTouchDir(dir));
+  // girar o celular, abrir o teclado ou o menu muda o tamanho: reajusta o canvas na hora
+  new ResizeObserver(() => game.scale.refresh()).observe($("#game"));
   // depuração no navegador (só em dev): window.__bi.room.state, window.__bi.sent
   if (import.meta.env.DEV) {
     const sent: unknown[] = [];

@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Bleach Idle</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f0e14" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
@@ -37,6 +42,7 @@
     </div>
 
     <div id="app" hidden>
+      <button type="button" id="menu-btn" aria-label="Abrir menu">☰</button>
       <aside id="side">
         <section id="stats">
           <div class="who"><b id="pname"></b> <span id="plevel"></span><button type="button" id="exit-btn" class="link" title="Voltar à lista de personagens">trocar</button><button type="button" id="ranking-btn" class="link">ranking</button></div>
@@ -106,6 +112,17 @@
         <div id="chat">
           <div id="chatlog"></div>
           <input id="chatin" maxlength="200" placeholder="Enter para conversar · /ajuda para comandos" autocomplete="off" />
+        </div>
+        <div id="touch" hidden>
+          <div id="stick"><div id="knob"></div></div>
+          <div id="actions">
+            <button type="button" data-act="target" title="Próximo alvo (Tab)">🎯</button>
+            <button type="button" data-act="skill" title="Habilidade (1)">⚔</button>
+            <button type="button" data-act="hp" title="Poção de Cura (2)">❤</button>
+            <button type="button" data-act="rei" title="Poção de Reiatsu (3)">✦</button>
+            <button type="button" data-act="form" title="Shikai/Bankai (T)">卍</button>
+            <button type="button" data-act="recall" title="Voltar à cidade (R)">⌂</button>
+          </div>
         </div>
       </main>
     </div>

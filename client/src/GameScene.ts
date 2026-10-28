@@ -235,6 +235,13 @@ export class GameScene extends Phaser.Scene {
 
   /** Com a janela de depot/loja aberta (à direita), empurra a câmera para o
    * personagem aparecer no lado livre da tela. */
+  /** Joystick de toque: a direção segurada funciona como uma tecla de seta. */
+  setTouchDir(dir: number | null) {
+    const had = this.held.length;
+    this.held = dir === null ? [] : [dir];
+    if (dir !== null && !had) this.tryStep(this.time.now);
+  }
+
   setPanelOpen(open: boolean) {
     this.cameras.main.setFollowOffset(open ? -110 : 0, 0);
   }

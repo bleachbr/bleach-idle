@@ -4,6 +4,7 @@ dos pacotes CC0 da Kenney em art/maps/kenney/.
 Saída em client/public/maps/:
   karakura.tmj + karakura_tiles.png
   hueco.tmj    + hueco_tiles.png
+  soul.tmj     + soul_tiles.png   (arte própria, gerada pelo Codex: art/raw/26 a 28)
 
 Camadas de cada mapa:
   chao     piso (grama, asfalto, areia...)
@@ -361,7 +362,124 @@ def hueco():
     m.save()
 
 
+# ------------------------------------------------------------------ Soul Society (arte do Codex)
+
+def soul():
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    import process as P  # remoção do magenta, redução e paleta das folhas de sprite
+
+    raw = Path(__file__).resolve().parents[1] / "raw"
+
+    def crisp(img, colors=16):
+        """Reduz para pixel art limpa: paleta própria, sem anti-aliasing."""
+        local = [c for c, _ in P.kmeans_colors([p[:3] for p in img.get_flattened_data() if p[3]], colors)]
+        return P.apply_palette(img, local)
+
+    def prop(img, w_tiles, h_tiles, outline=True):
+        """Imagem com fundo magenta -> objeto em pixel art numa grade w x h de tiles (apoiado embaixo)."""
+        body, _ = P.keep_main(P.remove_bg(img))
+        k = min((w_tiles * T - 2) / body.width, (h_tiles * T - 2) / body.height)
+        small = crisp(P.downscale(body, k))
+        if outline:
+            small = P.add_outline(small)
+        canvas = Image.new("RGBA", (w_tiles * T, h_tiles * T))
+        canvas.alpha_composite(small, ((canvas.width - small.width) // 2, canvas.height - small.height))
+        return canvas
+
+    def tiles_of(canvas):
+        return [[canvas.crop((x * T, y * T, x * T + T, y * T + T)) for x in range(canvas.width // T)] for y in range(canvas.height // T)]
+
+    ts = Tileset("soul")
+    # chão: cada textura (um quarto da imagem) vira um bloco 4x4 de tiles, escolhido pela posição
+    ground = Image.open(raw / "26_ss_ground.png").convert("RGBA")
+    q = ground.width // 2
+    for name, (qx, qy) in {"pedra": (0, 0), "terra": (1, 0), "grama": (0, 1), "cascalho": (1, 1)}.items():
+        tex = crisp(ground.crop((qx * q + 6, qy * q + 6, qx * q + q - 6, qy * q + q - 6)).resize((4 * T, 4 * T), Image.BOX), 12)
+        for y, row in enumerate(tiles_of(tex)):
+            for x, t in enumerate(row):
+                ts.add(f"{name}{x}{y}", t)
+    building = tiles_of(prop(Image.open(raw / "27_ss_building.png"), 8, 7))
+    for y, row in enumerate(building):
+        for x, t in enumerate(row):
+            ts.add(f"quartel{x}{y}", t, solid=bool(t.getbbox()))
+    props = P.split_cells(Image.open(raw / "28_ss_props.png").convert("RGBA"), 2, 2)
+    for name, cell, (w, h) in (("sakura", props[0], (2, 3)), ("pinheiro", props[2], (2, 3)), ("lanterna", props[1], (1, 2)), ("muro", props[3], (4, 2))):
+        grid = tiles_of(prop(cell, w, h))
+        for y, row in enumerate(grid):
+            for x, t in enumerate(row):
+                # só a linha de baixo bloqueia (tronco, base); o resto passa por cima dos personagens
+                ts.add(f"{name}{x}{y}", t, solid=(name == "muro" or y == h - 1) and bool(t.getbbox()))
+    ts.add("garganta_ss", Image.alpha_composite(Image.new("RGBA", (16, 16)), rpg(33, 1)), True)
+
+    m = Map("soul", "Soul Society", 48, 40, ts)
+    rnd = random.Random(13)
+
+    def floor(x0, y0, x1, y1, kind):
+        for y in range(y0, y1 + 1):
+            for x in range(x0, x1 + 1):
+                m.set("chao", x, y, f"{kind}{x % 4}{y % 4}")
+
+    def stamp(name, x0, y0, w, h):
+        """Objeto de várias células: linhas de cima em "acima" (exceto prédio e muro), a de baixo em "objetos"."""
+        for dy in range(h):
+            for dx in range(w):
+                key = f"{name}{dx}{dy}"
+                if not ts.tiles[ts.ids[key]][0].getbbox():
+                    continue
+                layer = "objetos" if name in ("quartel", "muro") or dy == h - 1 else "acima"
+                m.set(layer, x0 + dx, y0 + dy, key)
+
+    floor(0, 0, 47, 39, "grama")
+    # Seireitei (norte): ruas de pedra, quartéis, pátio central com jardim zen
+    floor(1, 1, 46, 18, "pedra")
+    for bx in (3, 13, 27, 37):
+        for by in (2, 10):
+            if bx in (13, 27) and by == 10:
+                continue  # lugar do pátio
+            stamp("quartel", bx, by, 8, 7)
+    floor(14, 10, 33, 18, "pedra")
+    floor(18, 12, 29, 15, "cascalho")  # jardim zen no centro do pátio
+    for x, y in ((15, 10), (31, 10)):
+        stamp("sakura", x, y, 2, 3)
+    for x, y in ((17, 16), (30, 16), (17, 11), (30, 11)):
+        stamp("lanterna", x, y, 1, 2)
+    # muro da Seireitei com o portão aberto no meio
+    for x in range(0, 48, 4):
+        if 20 <= x <= 26:
+            continue
+        stamp("muro", x, 18, 4, 2)
+    # Rukongai (sul): estradas de terra, pinheiros e cerejeiras
+    floor(22, 20, 25, 39, "terra")
+    floor(1, 27, 46, 28, "terra")
+    for _ in range(46):
+        x, y = rnd.randrange(1, 45), rnd.randrange(21, 37)
+        if 20 <= x <= 27 or 25 <= y <= 30:
+            continue
+        stamp(rnd.choice(("pinheiro", "pinheiro", "sakura")), x, y, 2, 3)
+    # borda fechada
+    for x in range(48):
+        for y in (0, 39):
+            m.set("objetos", x, y, "muro10")
+    for y in range(40):
+        for x in (0, 47):
+            m.set("objetos", x, y, "muro10")
+    m.set("objetos", 24, 13, None)
+    m.set("objetos", 23, 11, "garganta_ss")  # Senkaimon da Soul Society
+
+    m.rect("pz", 14, 10, 33, 17)
+    m.point("portal", 23, 11, "Senkaimon")
+    m.point("chegada", *m.nearest_free(23, 14), "soul")
+    for kind, x, y, r, n in [
+        ("hollow_faminto", 10, 31, 4, 5), ("hollow_acido", 36, 32, 4, 4),
+        ("hollow_devorador", 12, 36, 3, 3), ("fishbone", 37, 23, 3, 3),
+    ]:
+        m.point("spawn", *m.nearest_free(x, y), kind, {"monstro": kind, "raio": r, "quantidade": n})
+    m.save()
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     karakura()
     hueco()
+    soul()

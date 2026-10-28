@@ -28,5 +28,6 @@ export const TRAVEL: TravelDest[] = [
   { id: "leste", name: "Floresta Leste", map: "karakura", minLevel: 8, cost: 30 },
   { id: "rio", name: "Além do Rio", map: "karakura", minLevel: 12, cost: 60 },
   { id: "toca", name: "Toca do Grand Fisher", map: "karakura", minLevel: 20, cost: 120 },
+  { id: "soul", name: "Soul Society (Seireitei)", map: "soul", minLevel: 14, cost: 120 },
   { id: "hueco", name: "Hueco Mundo (Garganta)", map: "hueco", minLevel: 22, cost: 200 },
 ];

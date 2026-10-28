@@ -153,3 +153,23 @@ code { background: var(--line); border-radius: 3px; padding: 0 4px; font-size: 1
 .quest small { color: var(--muted); }
 .quest.ready small { color: #9fd18b; }
 .quest-row .name small + small { color: var(--exp); }
+
+/* ---------- celular ---------- */
+#menu-btn { display: none; }
+#touch { position: absolute; left: 0; right: 0; bottom: 160px; height: 0; z-index: 12; pointer-events: none; }
+#stick { position: absolute; left: 18px; bottom: 0; width: 120px; height: 120px; border-radius: 50%; background: #ffffff14; border: 2px solid #ffffff30; pointer-events: auto; touch-action: none; }
+#knob { position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border-radius: 50%; background: #ffffff55; border: 2px solid #ffffff90; }
+#actions { position: absolute; right: 14px; bottom: 0; display: grid; grid-template-columns: repeat(3, 52px); gap: 8px; pointer-events: auto; }
+#actions button { width: 52px; height: 52px; border-radius: 50%; border: 2px solid #ffffff40; background: #1a1822cc; color: var(--text); font-size: 20px; touch-action: none; }
+#actions button:active { background: var(--accent); color: #1a1822; }
+body.touch #chat { height: 110px; }
+body.touch #touch { bottom: 120px; }
+@media (max-width: 720px) {
+  #app { flex-direction: column; }
+  #menu-btn { display: block; position: fixed; top: 8px; left: 8px; z-index: 40; width: 40px; height: 40px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-size: 18px; }
+  #side { position: fixed; inset: 0 30% 0 0; z-index: 35; display: block; transform: translateX(-105%); transition: transform .2s; overflow-y: auto; border-right: 1px solid var(--line); padding-top: 56px; }
+  #side.open { transform: none; }
+  #side section { min-width: 0; margin-bottom: 14px; }
+  #skills { display: block; }
+  main { height: 100%; }
+}
