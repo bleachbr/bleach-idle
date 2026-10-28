@@ -3,7 +3,7 @@ import Phaser from "phaser";
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus } from "../../shared/src";
+import { CHARS, ITEMS, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { serverNow, syncClock } from "./clock";
@@ -35,7 +35,7 @@ for (const ch of Object.values(CHARS)) {
   b.type = "button";
   b.className = "char";
   b.setAttribute("aria-pressed", String(ch.id === charId));
-  b.innerHTML = `<div class="portrait" style="background-image:url(/assets/sprites/${ch.forms[0].sprite}.png)"></div>${ch.name}`;
+  b.innerHTML = `<div class="portrait" style="background-image:url(/assets/sprites/${ch.forms[0].sprite}.png);${portraitCss(ch.forms[0].sprite)}"></div>${ch.name}`;
   b.onclick = () => {
     charId = ch.id;
     chars.querySelectorAll(".char").forEach((el) => el.setAttribute("aria-pressed", String(el === b)));
@@ -81,7 +81,7 @@ function renderChars(list: { id: string; name: string; charId: string; level: nu
     const row = document.createElement("div");
     row.className = "char-row";
     const sprite = CHARS[c.charId]?.forms[0].sprite ?? "ichigo_shikai";
-    row.innerHTML = `<div class="portrait" style="background-image:url(/assets/sprites/${sprite}.png)"></div>
+    row.innerHTML = `<div class="portrait" style="background-image:url(/assets/sprites/${sprite}.png);${portraitCss(sprite)}"></div>
       <div class="info"><b></b><small>${CHARS[c.charId]?.name ?? c.charId} · nível ${c.level}</small>${c.hunting ? `<span class="badge">caçando offline</span>` : ""}</div>`;
     row.querySelector("b")!.textContent = c.name;
     const play = document.createElement("button");
@@ -327,7 +327,7 @@ function bindBook(room: Room<any>) {
         data.bestiary.map((b: any) => {
           const next = b.stages.find((n: number) => b.kills < n);
           return `<div class="beast${b.kills ? "" : " unknown"}">
-            <div class="pic" style="background-image:url(assets/sprites/${b.sprite}.png);background-size:400% 400%"></div>
+            <div class="pic" style="background-image:url(assets/sprites/${b.sprite}.png);${portraitCss(b.sprite)}"></div>
             <div><b>${b.kills ? escHtml(b.name) : "???"}</b>${b.boss ? ` <small>chefe</small>` : ""} <span class="stars">${"★".repeat(b.stage)}</span><span class="hint">${"☆".repeat(3 - b.stage)}</span>
             <div class="hint">${b.kills} abates${next ? ` · próximo estágio em ${next}` : " · completo"}${b.hp ? ` · ${b.hp} de vida · ${b.exp} XP` : ""}</div>
             ${next ? bar(b.kills, next) : ""}

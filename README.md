@@ -91,6 +91,8 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 **Interface**
 - **Sons** sintetizados no navegador (golpe, dano, habilidade, loot, nível, Bankai, eventos), com botão "som" para silenciar.
 - **Movimento fluido:** o personagem desliza em velocidade constante no ritmo real do servidor (passos de 100 ms), sem o "anda e trava". Parado, ele respira.
+- **Andar com 8 quadros por direção** para todos os personagens e para 15 dos 18 inimigos (o resto segue com 4). O jogo descobre quantos quadros cada folha tem pela largura da imagem.
+- **Ataques dos inimigos com efeito próprio:** garra, mordida, cuspe ácido do Hollow Ácido e cero do Gillian e dos Arrancar. A liberação (Bankai, Letzt Stil, Diablo) tem uma explosão na cor de cada personagem.
 - **Efeitos animados** (art/fx.py): corte e impacto nos golpes, quem bate avança um pouco, a habilidade de cada personagem tem efeito próprio (Getsuga Tenshō, gelo, Zabimaru, flecha, soco), fumaça com ossos quando o Hollow morre, coluna de luz no nível, brilho na cura e aura de reiatsu enquanto o Bankai estiver ativo.
 - Minimapa no canto (você, party, outros jogadores e monstros); clique nele para andar até lá.
 

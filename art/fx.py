@@ -17,6 +17,8 @@ SHEETS = {
     "63_fx_skills.png": ("skills", 64),
     "64_fx_aura.png": ("aura", 96),
     "69_fx_skills2.png": ("skills2", 64),
+    "70_fx_mobs.png": ("mobs", 64),
+    "71_fx_release.png": ("release", 96),
 }
 
 
@@ -28,6 +30,9 @@ def crisp(img, colors=32):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for raw, (name, cell) in SHEETS.items():
+        if not (RAW / raw).exists():
+            print("faltando:", raw)
+            continue
         src = Image.open(RAW / raw).convert("RGBA")
         cells = P.split_cells(src, 4, 4)
         sheet = Image.new("RGBA", (cell * 4, cell * 4))

@@ -222,3 +222,17 @@ Os menus pareciam um site genérico escuro. Gerei no Codex um kit de interface e
 - **Conferido no navegador:** aura, gelo, impactos e fumaça em combate real, e a tela de criação com os 5 personagens. O Ishida foi criado e caçou; as animações dele carregam, mas o painel do navegador estava escondido nessa hora e não deu para fotografar.
 
 Resultado: `npm test` 76 de 76 e `npm run test:scripts` 229 de 229.
+
+## Inimigos "sumidos", andar com 8 quadros e ataques dos inimigos
+- **Os inimigos não tinham sumido:** a minha personagem de teste (Kuchiki, nível 50, com Bankai) ficou caçando offline na Floresta Leste do servidor local, que é o mesmo em que você joga, e matava cada Hollow assim que renascia. Desliguei e tirei ela do mundo, e guardei como regra não deixar personagem de teste caçando ali.
+- **O andar "com 2 ações" valia para todos:** as folhas 4x4 tinham, na prática, duas poses alternando. Refiz os ciclos com 8 quadros por direção (contato, apoio, passagem e elevação, para cada perna):
+  - todos os personagens nas duas formas;
+  - 15 dos 18 inimigos.
+
+  O lado direito sai espelhado do esquerdo. Algumas vistas tiveram de ser refeitas porque a arma ou o braço trocava de lado no meio do ciclo.
+- **Faltou:** Gillian, Fracción e Privaron, porque o Codex atingiu o limite de uso da sua conta. Não comprei créditos, então eles seguem com 4 quadros. Também seguem com 4 as variações de visual por equipamento (haori e máscara): um Ichigo de haori ainda usa a folha antiga.
+- **Ataques dos inimigos** (folha nova do Codex): garra, mordida, cuspe ácido e cero, cada inimigo com o seu. Cuspe e cero voam até o alvo.
+- **Liberação:** Bankai, Letzt Stil e Diablo ganharam uma explosão na cor de cada personagem.
+- **Conferido no navegador:** quadros e posição medidos com o Ichigo andando (passa pelos 8 quadros e avança suave) e os 38 inimigos de Karakura visíveis, cada um com o número certo de quadros.
+
+Resultado: `npm test` 76 de 76 e `npm run test:scripts` 229 de 229.

@@ -9,38 +9,40 @@ export type Dir = 0 | 1 | 2 | 3;
 export const DIR_VEC: Record<Dir, [number, number]> = { 0: [0, 1], 1: [-1, 0], 2: [1, 0], 3: [0, -1] };
 
 export interface SpriteDef {
-  /** arquivo em client/public/assets/sprites/<key>.png, folha 4x4 */
+  /** arquivo em client/public/assets/sprites/<key>.png: 4 linhas (baixo, esquerda, direita, cima) */
   frame: number;
+  /** quadros de andar por direção: 4 (padrão) ou 8 (ciclo completo, art/walk8.py) */
+  cols?: number;
 }
 export const SPRITES: Record<string, SpriteDef> = {
-  ichigo_shikai: { frame: 48 },
-  ichigo_bankai: { frame: 48 },
-  rukia: { frame: 48 },
-  renji: { frame: 48 },
+  ichigo_shikai: { frame: 48, cols: 8 },
+  ichigo_bankai: { frame: 48, cols: 8 },
+  rukia: { frame: 48, cols: 8 },
+  renji: { frame: 48, cols: 8 },
   hollow: { frame: 96 },
-  adjuchas: { frame: 96 },
+  adjuchas: { frame: 96, cols: 8 },
   gillian: { frame: 96 },
-  arrancar: { frame: 48 },
+  arrancar: { frame: 48, cols: 8 },
   boneco: { frame: 48 },
-  fishbone: { frame: 96 },
-  rukia_bankai: { frame: 48 },
-  renji_bankai: { frame: 48 },
-  ishida: { frame: 48 },
-  ishida_power: { frame: 48 },
-  sado: { frame: 48 },
-  sado_power: { frame: 48 },
-  hollow_menor: { frame: 96 },
-  hollow_rastejante: { frame: 96 },
-  hollow_acido: { frame: 96 },
-  hollow_sombrio: { frame: 96 },
-  hollow_uivante: { frame: 96 },
-  hollow_faminto: { frame: 96 },
-  hollow_encouracado: { frame: 96 },
-  hollow_devorador: { frame: 96 },
-  grand_fisher: { frame: 96 },
-  metastacia: { frame: 96 },
-  arrancar_numeros: { frame: 48 },
-  exequias: { frame: 48 },
+  fishbone: { frame: 96, cols: 8 },
+  rukia_bankai: { frame: 48, cols: 8 },
+  renji_bankai: { frame: 48, cols: 8 },
+  ishida: { frame: 48, cols: 8 },
+  ishida_power: { frame: 48, cols: 8 },
+  sado: { frame: 48, cols: 8 },
+  sado_power: { frame: 48, cols: 8 },
+  hollow_menor: { frame: 96, cols: 8 },
+  hollow_rastejante: { frame: 96, cols: 8 },
+  hollow_acido: { frame: 96, cols: 8 },
+  hollow_sombrio: { frame: 96, cols: 8 },
+  hollow_uivante: { frame: 96, cols: 8 },
+  hollow_faminto: { frame: 96, cols: 8 },
+  hollow_encouracado: { frame: 96, cols: 8 },
+  hollow_devorador: { frame: 96, cols: 8 },
+  grand_fisher: { frame: 96, cols: 8 },
+  metastacia: { frame: 96, cols: 8 },
+  arrancar_numeros: { frame: 48, cols: 8 },
+  exequias: { frame: 48, cols: 8 },
   fraccion: { frame: 96 },
   privaron: { frame: 96 },
 };
@@ -50,6 +52,15 @@ export const SPRITES: Record<string, SpriteDef> = {
 export const OUTFIT_BASES = ["ichigo_shikai", "rukia", "renji"];
 export const OUTFIT_LOOKS = ["haori", "mask", "haori_mask"];
 for (const b of OUTFIT_BASES) for (const l of OUTFIT_LOOKS) SPRITES[`${b}__${l}`] = { frame: 48 };
+
+export const spriteCols = (key: string) => SPRITES[key]?.cols ?? 4;
+/** quadro "parado" de uma direção: o de passagem, com as pernas juntas */
+export const standFrame = (key: string, dir: number) => dir * spriteCols(key) + (spriteCols(key) === 8 ? 2 : 1);
+/** posição CSS do quadro parado olhando para baixo (retratos do lobby e do livro) */
+export const portraitCss = (key: string) => {
+  const cols = spriteCols(key);
+  return `background-size:${cols * 100}% 400%;background-position:${((cols === 8 ? 2 : 1) / (cols - 1)) * 100}% 0`;
+};
 
 export function spriteKey(base: string, look: string): string {
   return look && OUTFIT_BASES.includes(base) ? `${base}__${look}` : base;

@@ -357,24 +357,33 @@ def export_game():
         for i in range(16):
             sheet.paste(dummy["boneco"][0], ((i % 4) * 48, (i // 4) * 48))
         sheet.save(GAME_OUT / "boneco.png")
-    sheets, colors = process(GAME_SPRITES, 48, 45, lift=True)
+    # ciclos de andar de 8 quadros (art/walk8.py) substituem a folha 4x4 de quem já tem
+    import walk8
+    sprites = dict(GAME_SPRITES)
+    for id_ in walk8.available():
+        if id_ in sprites:
+            _, _, _, rel, tiles = sprites[id_]
+            sprites[id_] = (f"walk8/{id_}_sheet.png", 4, 8, rel, tiles)
+    sheets, colors = process(sprites, 48, 45, lift=True)
     GAME_OUT.mkdir(parents=True, exist_ok=True)
     for name, frames in sheets.items():
         cell = frames[0].width
-        sheet = Image.new("RGBA", (cell * 4, cell * 4))
+        cols = len(frames) // 4  # 4 direções; 4 ou 8 quadros por direção
+        sheet = Image.new("RGBA", (cell * cols, cell * 4))
         for i, f in enumerate(frames):
-            sheet.paste(f, ((i % 4) * cell, (i // 4) * cell))
+            sheet.paste(f, ((i % cols) * cell, (i // cols) * cell))
         sheet.save(GAME_OUT / f"{name}.png")
     # prévia das folhas do jogo sobre grama, 4x
-    W = sum(f[0].width * 4 for f in sheets.values())
+    W = sum(f[0].width * (len(f) // 4) for f in sheets.values())
     H = max(f[0].width * 4 for f in sheets.values())
     bg = grass(W, H, 32)
     x = 0
     for frames in sheets.values():
         cell = frames[0].width
+        cols = len(frames) // 4
         for i, f in enumerate(frames):
-            bg.alpha_composite(f, (x + (i % 4) * cell, (i // 4) * cell))
-        x += cell * 4
+            bg.alpha_composite(f, (x + (i % cols) * cell, (i // cols) * cell))
+        x += cell * cols
     zoom(bg, 4).save(ROOT / "preview_game.png")
     print("jogo:", ", ".join(sheets), "| cores:", len(colors))
 

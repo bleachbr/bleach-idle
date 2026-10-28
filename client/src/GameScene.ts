@@ -34,7 +34,17 @@ const FX = {
   skills: { cell: 64, rows: ["getsuga", "ice", "fang", "heal"] },
   aura: { cell: 96, rows: ["aura_ichigo", "aura_rukia", "aura_renji", "aura_blue"] },
   skills2: { cell: 64, rows: ["arrow", "arrowrain", "punch", "blast"] },
+  mobs: { cell: 64, rows: ["claw", "bite", "acid", "cero"] },
+  release: { cell: 96, rows: ["rel_ichigo", "rel_rukia", "rel_renji", "rel_blue"] },
 } as const;
+/** ataque de cada inimigo (o resto usa garra); cuspe e cero voam até o alvo */
+const MOB_FX: Record<string, string> = {
+  hollow_uivante: "bite", hollow_faminto: "bite", hollow_devorador: "bite", metastacia: "bite",
+  hollow_acido: "acid",
+  gillian: "cero", arrancar: "cero", arrancar_numeros: "cero", privaron: "cero",
+};
+/** explosão da liberação (Bankai e afins) de cada personagem */
+const RELEASE: Record<string, string> = { ichigo: "rel_ichigo", rukia: "rel_rukia", renji: "rel_renji", ishida: "rel_blue", sado: "rel_renji" };
 /** aura do Bankai (ou forma liberada) de cada personagem */
 const AURA: Record<string, string> = { ichigo: "aura_ichigo", rukia: "aura_rukia", renji: "aura_renji", ishida: "aura_blue", sado: "aura_renji" };
 /** habilidade de cada personagem: projétil que voa até o alvo, ou explosão no alvo */
@@ -54,6 +64,18 @@ const px = (x: number) => x * TILE + TILE / 2;
 const py = (y: number) => y * TILE + TILE;
 
 export class GameScene extends Phaser.Scene {
+  /** quadros de andar por direção (4 ou 8), pela largura da folha carregada: nunca diverge da imagem */
+  private cols(key: string) {
+    const img = this.textures.exists(key) ? (this.textures.get(key).getSourceImage() as HTMLImageElement) : undefined;
+    return img && SPRITES[key] ? Math.max(1, Math.round(img.width / SPRITES[key].frame)) : 4;
+  }
+
+  /** quadro parado de uma direção (o de passagem, com as pernas juntas) */
+  private stand(key: string, dir: number) {
+    const c = this.cols(key);
+    return dir * c + (c === 8 ? 2 : 1);
+  }
+
   private room!: Room<any>;
   private myId = "";
   private views = new Map<string, View>();
@@ -108,7 +130,7 @@ export class GameScene extends Phaser.Scene {
     }
     for (const key of Object.keys(SPRITES).filter((k) => this.textures.exists(k)))
       for (let d = 0; d < 4; d++)
-        this.anims.create({ key: `${key}-${d}`, frames: this.anims.generateFrameNumbers(key, { start: d * 4, end: d * 4 + 3 }), repeat: -1 });
+        this.anims.create({ key: `${key}-${d}`, frames: this.anims.generateFrameNumbers(key, { start: d * this.cols(key), end: d * this.cols(key) + this.cols(key) - 1 }), repeat: -1 });
 
     this.targetBox = this.add.graphics().setDepth(1e6);
 
@@ -146,7 +168,7 @@ export class GameScene extends Phaser.Scene {
   private addView(id: string, e: any, isMonster: boolean) {
     const look = this.spriteFor(e, isMonster);
     const shadow = this.add.ellipse(0, -3, 22 * look.scale + 4, 8, 0x000000, 0.3);
-    const spr = this.add.sprite(0, 0, look.key, e.dir * 4 + 1).setOrigin(0.5, 1).setScale(look.scale);
+    const spr = this.add.sprite(0, 0, look.key, this.stand(look.key, e.dir)).setOrigin(0.5, 1).setScale(look.scale);
     if (look.tint) spr.setTint(look.tint);
     const top = -spr.displayHeight + (isMonster ? 4 : 2);
     const name = isMonster ? MONSTERS[e.kind].name : e.guildTag ? `${e.name} [${e.guildTag}]` : e.name;
@@ -167,14 +189,14 @@ export class GameScene extends Phaser.Scene {
     e.onChange(() => {
       v.stepMs = e.stepMs;
       if (e.x !== v.tx || e.y !== v.ty) this.moveView(v, e.x, e.y, e.dir);
-      else if (e.dir !== v.dir && !v.spr.anims.isPlaying) { v.dir = e.dir; v.spr.setFrame(e.dir * 4 + 1); }
+      else if (e.dir !== v.dir && !v.spr.anims.isPlaying) { v.dir = e.dir; v.spr.setFrame(this.stand(v.sprite, e.dir)); }
       v.dir = e.dir;
       this.drawBar(v, e.hp, e.maxHp);
       if (!isMonster) {
         const look2 = this.spriteFor(e, false);
         if (look2.key !== v.sprite || (look2.tint ?? 0xffffff) !== v.spr.tintTopLeft) {
           v.sprite = look2.key;
-          v.spr.setTexture(look2.key, e.dir * 4 + 1);
+          v.spr.setTexture(look2.key, this.stand(look2.key, e.dir));
           if (look2.tint) v.spr.setTint(look2.tint); else v.spr.clearTint();
         }
         v.label.setAlpha(e.online ? 1 : 0.55); // offline caçando aparece meio apagado
@@ -200,9 +222,9 @@ export class GameScene extends Phaser.Scene {
     }
     this.setIdle(v, false);
     const key = `${v.sprite}-${dir}`;
-    // 4 frames = 2 passos, no ritmo real do servidor
+    // o ciclo inteiro (4 ou 8 quadros) dura 2 passos, no ritmo real do servidor
     if (v.spr.anims.currentAnim?.key !== key || !v.spr.anims.isPlaying)
-      v.spr.anims.play({ key, frameRate: 2000 / realStep(v.stepMs), startFrame: v.spr.anims.isPlaying ? undefined : 0 });
+      v.spr.anims.play({ key, frameRate: (this.cols(v.sprite) * 500) / realStep(v.stepMs), startFrame: v.spr.anims.isPlaying ? undefined : 0 });
   }
 
   /** Leva cada personagem até o tile do servidor em velocidade constante (um tile por passo real).
@@ -317,7 +339,18 @@ export class GameScene extends Phaser.Scene {
           const a = fx.from ? this.views.get(fx.from) : undefined;
           if (a && v && !fx.skill) {
             this.lunge(a, v);
-            if (!a.isMonster) this.playFx("slash", v.c.x, v.c.y - v.spr.displayHeight / 2, { rotation: Phaser.Math.Angle.Between(a.c.x, a.c.y, v.c.x, v.c.y) });
+            const ang = Phaser.Math.Angle.Between(a.c.x, a.c.y, v.c.x, v.c.y);
+            const ty = v.c.y - v.spr.displayHeight / 2;
+            if (!a.isMonster) this.playFx("slash", v.c.x, ty, { rotation: ang });
+            else {
+              const kind = this.room.state.monsters.get(a.id)?.kind ?? "";
+              const anim = MOB_FX[kind] ?? "claw";
+              if (anim === "acid" || anim === "cero") {
+                // cuspe e cero saem do monstro e voam até o alvo
+                const shot = this.playFx(anim, a.c.x, a.c.y - a.spr.displayHeight / 2, { rotation: ang, scale: anim === "cero" ? 1.2 : 0.8 });
+                if (shot) this.tweens.add({ targets: shot, x: v.c.x, y: ty, duration: 200 });
+              } else this.playFx(anim, v.c.x, ty, { scale: anim === "bite" ? 0.7 : 0.8 });
+            }
           }
           if (v && fx.v) this.playFx("hit", v.c.x + Phaser.Math.Between(-6, 6), v.c.y - v.spr.displayHeight / 2 + Phaser.Math.Between(-6, 6), { scale: 0.6 });
         }
@@ -348,6 +381,7 @@ export class GameScene extends Phaser.Scene {
           const cid = fx.id ? this.room.state.players.get(fx.id)?.charId : "";
           const up = ({ ishida: "LETZT STIL!", sado: "DIABLO!" } as Record<string, string>)[cid ?? ""] ?? "BANKAI!";
           this.float(v, fx.v ? up : "Forma normal", fx.v ? "#ff6a3a" : "#cfd8ff", 14);
+          if (v && fx.v) this.playFx(RELEASE[cid ?? ""] ?? "rel_ichigo", v.c.x, v.c.y - 26, { scale: 1.2 }); // o anel da explosão cai nos pés
         }
         if (v && fx.v) this.cameras.main.shake(200, 0.004);
         if (mine && fx.v) sfx.bankai();
@@ -591,7 +625,7 @@ export class GameScene extends Phaser.Scene {
     for (const v of this.views.values())
       if (v.spr.anims.isPlaying && time - v.lastMoveAt > realStep(v.stepMs) + 120) {
         v.spr.anims.stop();
-        v.spr.setFrame(v.dir * 4 + 1);
+        v.spr.setFrame(this.stand(v.sprite, v.dir));
         this.setIdle(v, true);
       }
     // cor do nome: verde = minha party, vermelho = atacou um jogador há pouco (bloqueado)

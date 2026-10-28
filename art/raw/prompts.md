@@ -496,3 +496,32 @@ The same very tall, broad and muscular young man with dark brown skin and wavy h
 ```text
 Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of animated visual effects: each ROW is ONE effect animated over 4 frames from left to right (start, grow, peak, fade). In every cell the effect is centered and fully inside the cell with magenta padding; no characters, no ground. Row 1: a thin glowing light-blue spirit-energy arrow flying to the right with a sparkling trail. Row 2: a rain of many small light-blue energy arrows falling in a burst, then fading. Row 3: a huge black and red armored fist punch shockwave expanding to the right, with a white impact ring. Row 4: a big round blast of white light with a red core exploding outward, then fading into sparks. Style: crisp pixel art matching the reference, bright glowing colors, no anti-aliasing. Background: 100% solid flat magenta #FF00FF, no text.
 ```
+
+# Rodada 19: andar com 8 quadros, ataques dos inimigos e liberação
+
+Ciclos de 8 quadros por direção: uma imagem 4x2 para frente, lado esquerdo e costas (o lado direito é espelhado). `work/gen_walk8.sh` faz os personagens e `gen_walk8_mobs.py` faz os inimigos, com a descrição original de cada um. `walk8.py` monta a folha 8x4 que `process.py` usa no lugar da 4x4. Os prompts de cada um ficam em `work/p_w8_*.txt`.
+
+**Refeitas:**
+- **Ichigo e Ichigo Bankai, de frente:** a espada trocava de mão ou aparecia duplicada; o pedido passou a exigir que a arma fique no mesmo lugar.
+- **Rukia de lado:** a espada trocava de lado.
+- **Sado Diablo de lado:** os braços trocavam.
+
+**Faltaram,** porque o Codex atingiu o limite de uso: Gillian (a vista de frente), Fracción e Privaron. Seguem com 4 quadros.
+
+## exemplo: p_w8_ichigo_shikai_down
+
+```text
+The character: Ichigo, a young swordsman with spiky orange hair in a black shinigami kimono (shihakusho) with a white sash, carrying a huge cleaver-like zanpakuto with a white blade strapped diagonally on his back (the hilt over his right shoulder). Walking DOWN toward the camera (front view). Make the image SQUARE. A 4x2 grid (4 columns, 2 rows, 8 equal square cells) showing ONE smooth 8-frame walk cycle, read left to right on row 1 then left to right on row 2: frame 1 right foot forward touching the ground (contact), frame 2 weight on the right foot with the body slightly lower, frame 3 passing pose with the left leg lifted and moving forward, frame 4 left leg reaching forward with the body slightly higher, frame 5 left foot forward touching the ground (contact), frame 6 weight on the left foot with the body slightly lower, frame 7 passing pose with the right leg lifted and moving forward, frame 8 right leg reaching forward with the body slightly higher. Arms swing opposite to the legs. Every frame must be clearly different. Weapons, capes and accessories stay on the SAME side and in the same hand in ALL 8 frames (never switch hands, never duplicate the weapon). In every cell the character is centered, fully inside the central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 8 cells; nothing crosses a cell edge. Style: match the attached reference sprite sheet EXACTLY in character design, colors and art style: same pixel-art rendering, same 3/4 top-down camera angle, same realistic (not chibi) proportions, same outline thickness and dark outline color #1a1822, same one-shade shading with light from the top-left, same pixel density. No gradients, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no floor, no shadow, no text, no labels, no grid lines.
+```
+
+## p_70_fx_mobs
+
+```text
+Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of animated visual effects: each ROW is ONE effect animated over 4 frames from left to right (start, grow, peak, fade). In every cell the effect is centered and fully inside the cell with magenta padding; no characters, no ground. Row 1: three parallel claw scratch marks slashing diagonally, dark red with white edges, appearing then fading. Row 2: a monster bite: two rows of white sharp fangs snapping shut with a small dark red splash. Row 3: a glob of bright green acid spit flying to the right and splashing into droplets. Row 4: a powerful red energy beam (cero) shooting horizontally to the right from a glowing red orb, thick at the peak, then fading. Style: crisp pixel art matching the reference, bright glowing colors, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no text.
+```
+
+## p_71_fx_release
+
+```text
+Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of animated visual effects: each ROW is ONE effect animated over 4 frames from left to right (start, grow, peak, fade). In every cell the effect is centered and fully inside the cell with magenta padding; no characters, no ground. Row 1: a huge explosion of black and crimson spirit energy bursting outward in a ring with a tall column in the middle (a powerful transformation release). Row 2: the same release in white and pale cyan with ice shards. Row 3: the same release in crimson red and orange flames. Row 4: the same release in bright light-blue energy. Style: crisp pixel art matching the reference, bright glowing colors, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no text.
+```
