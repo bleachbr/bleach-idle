@@ -242,3 +242,10 @@ Resultado: `npm test` 76 de 76 e `npm run test:scripts` 229 de 229.
 - **Nomes sobre os personagens:** na fonte pixel.
 - **Barras de vida em cima de cada um:** moldura escura com borda clara e faixa de brilho em cima.
 - **Câmera:** segue o personagem com leve amortecimento, e pula direto no teleporte (morte, viagem, voltar à cidade) para não atravessar o mapa deslizando.
+- **Clima de cada mapa** (partículas desenhadas na hora, sem arquivo):
+  - Karakura: vaga-lumes;
+  - Soul Society: pétalas de cerejeira caindo;
+  - Hueco Mundo: areia ao vento;
+  - Las Noches: reishi azul subindo;
+  - Dangai: fagulhas roxas.
+- **Peso nos passos e golpes:** poeira nos pés a cada passo, e o inimigo recua um pouco quando apanha.

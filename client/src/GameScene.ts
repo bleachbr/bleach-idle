@@ -60,6 +60,20 @@ const SKILL_FX: Record<string, { anim: string; fly: boolean }> = {
  * O cliente usa esse ritmo real; com o valor nominal ele deslizava rápido e parava a cada passo. */
 const realStep = (stepMs: number) => Math.ceil(stepMs / TICK_MS) * TICK_MS;
 
+/** Partículas de ambiente de cada mapa (texturas desenhadas na hora, sem arquivo). */
+const AMBIENT: Record<string, { tex: string; color: number[]; count: number; speedX: [number, number]; speedY: [number, number]; scale: [number, number]; alpha: [number, number]; life: number; blend?: boolean; spin?: boolean }> = {
+  // vaga-lumes e folhas soltas
+  karakura: { tex: "amb_dot", color: [0xfff3a0, 0xc8ff8a], count: 26, speedX: [-8, 8], speedY: [-10, -2], scale: [0.6, 1.2], alpha: [0.9, 0], life: 5000, blend: true },
+  // pétalas de cerejeira caindo
+  soul: { tex: "amb_petal", color: [0xffc0d8, 0xffe0ec, 0xff9fc4], count: 34, speedX: [10, 30], speedY: [18, 40], scale: [0.7, 1.2], alpha: [1, 0.2], life: 7000, spin: true },
+  // areia branca ao vento
+  hueco: { tex: "amb_dot", color: [0xe8ecf6, 0xc9d0e0], count: 44, speedX: [40, 90], speedY: [-6, 6], scale: [0.4, 0.9], alpha: [0.8, 0], life: 4000 },
+  // reishi azul subindo no palácio
+  lasnoches: { tex: "amb_dot", color: [0x9fd6ff, 0xdff2ff], count: 22, speedX: [-5, 5], speedY: [-20, -8], scale: [0.5, 1], alpha: [0.8, 0], life: 5000, blend: true },
+  // fagulhas roxas do corredor entre mundos
+  dangai: { tex: "amb_dot", color: [0xc08aff, 0x8a5cff, 0xffffff], count: 40, speedX: [-25, 25], speedY: [-25, 25], scale: [0.5, 1.1], alpha: [0.9, 0], life: 3500, blend: true },
+};
+
 /** fonte pixel do jogo (carregada pelo @fontsource no main.ts) para nomes e números */
 const PIXEL_FONT = '"Pixelify Sans", system-ui, sans-serif';
 
@@ -230,6 +244,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.setIdle(v, false);
+    if (this.textures.exists("amb_dust")) this.dust(v);
     const key = `${v.sprite}-${dir}`;
     // o ciclo inteiro (4 ou 8 quadros) dura 2 passos, no ritmo real do servidor
     if (v.spr.anims.currentAnim?.key !== key || !v.spr.anims.isPlaying)
@@ -259,6 +274,13 @@ export class GameScene extends Phaser.Scene {
     fx.play(`fx-${anim}`);
     fx.once("animationcomplete", () => fx.destroy());
     return fx;
+  }
+
+  /** O alvo recua um pouco na direção do golpe e volta. */
+  private knockback(a: View, b: View) {
+    const ang = Phaser.Math.Angle.Between(a.c.x, a.c.y, b.c.x, b.c.y);
+    this.tweens.add({ targets: b.spr, x: Math.cos(ang) * 4, y: Math.sin(ang) * 3, duration: 60, yoyo: true, ease: "Quad.easeOut",
+      onComplete: () => b.spr.setPosition(0, 0) });
   }
 
   /** Atacante avança um pouco na direção do alvo e volta (dá peso ao golpe). */
@@ -361,6 +383,7 @@ export class GameScene extends Phaser.Scene {
           const a = fx.from ? this.views.get(fx.from) : undefined;
           if (a && v && !fx.skill) {
             this.lunge(a, v);
+            if (fx.v) this.time.delayedCall(70, () => this.knockback(a, v));
             const ang = Phaser.Math.Angle.Between(a.c.x, a.c.y, v.c.x, v.c.y);
             const ty = v.c.y - v.spr.displayHeight / 2;
             if (!a.isMonster) this.playFx("slash", v.c.x, ty, { rotation: ang });
@@ -459,6 +482,51 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Desenha o mapa do Tiled (troca ao viajar entre mapas). */
+  /** Texturas pequenas das partículas (um ponto de luz e uma pétala), desenhadas uma vez. */
+  private makeParticleTextures() {
+    if (!this.textures.exists("amb_dot")) {
+      const g = this.make.graphics({}, false);
+      g.fillStyle(0xffffff, 0.35).fillCircle(4, 4, 4);
+      g.fillStyle(0xffffff, 1).fillCircle(4, 4, 2);
+      g.generateTexture("amb_dot", 8, 8);
+      g.clear();
+      g.fillStyle(0xffffff, 1).fillEllipse(4, 3, 7, 4);
+      g.generateTexture("amb_petal", 8, 6);
+      g.clear();
+      g.fillStyle(0xd8cfc0, 0.9).fillCircle(3, 3, 3);
+      g.generateTexture("amb_dust", 6, 6);
+      g.destroy();
+    }
+  }
+
+  private ambient?: Phaser.GameObjects.Particles.ParticleEmitter;
+
+  /** Partículas do clima do mapa: presas à câmera (cobrem só a tela) e por trás da interface. */
+  private startAmbient(id: string) {
+    this.ambient?.destroy();
+    this.ambient = undefined;
+    const a = AMBIENT[id];
+    if (!a) return;
+    const cam = this.cameras.main;
+    this.ambient = this.add.particles(0, 0, a.tex, {
+      x: { min: -40, max: cam.width + 40 }, y: { min: -40, max: cam.height + 40 },
+      lifespan: a.life, frequency: a.life / a.count, quantity: 1,
+      speedX: { min: a.speedX[0], max: a.speedX[1] }, speedY: { min: a.speedY[0], max: a.speedY[1] },
+      scale: { start: a.scale[1], end: a.scale[0] }, alpha: { start: a.alpha[0], end: a.alpha[1] },
+      tint: a.color, rotate: a.spin ? { min: 0, max: 360 } : 0,
+      blendMode: a.blend ? Phaser.BlendModes.ADD : Phaser.BlendModes.NORMAL,
+    }).setScrollFactor(0).setDepth(2e5);
+    // já começa com o céu "cheio", sem esperar as primeiras partículas nascerem
+    this.ambient.fastForward(a.life);
+  }
+
+  /** Poeira nos pés a cada passo (só quem está na tela). */
+  private dust(v: View) {
+    if (!this.cameras.main.worldView.contains(v.c.x, v.c.y)) return;
+    const d = this.add.image(v.c.x + Phaser.Math.Between(-4, 4), v.c.y - 2, "amb_dust").setDepth(v.c.y - 1).setAlpha(0.55);
+    this.tweens.add({ targets: d, alpha: 0, scale: 2.2, y: d.y - 4, duration: 380, onComplete: () => d.destroy() });
+  }
+
   private showMap(id: string) {
     if (id === this.mapId || !this.maps[id]) return;
     for (const o of this.mapObjects) o.destroy();
@@ -476,6 +544,8 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, tm.widthInPixels, tm.heightInPixels);
     this.cameras.main.setBackgroundColor(id === "hueco" ? "#0b0b12" : "#000000");
     this.buildMinimap(id);
+    this.makeParticleTextures();
+    this.startAmbient(id);
     const shop = this.maps[id].shop;
     if (shop) {
       const x = px(shop.x), y = py(shop.y);
@@ -483,7 +553,7 @@ export class GameScene extends Phaser.Scene {
       this.mapObjects.push(
         this.add.ellipse(x, y - 3, 26, 8, 0x000000, 0.3).setDepth(y - 1), spr,
         this.add.text(x, y - spr.displayHeight - 2, shop.name, {
-          fontFamily: "system-ui, sans-serif", fontSize: "10px", color: "#ffe08a", stroke: "#000000", strokeThickness: 3, resolution: 2,
+          fontFamily: PIXEL_FONT, fontSize: "11px", color: "#ffe08a", stroke: "#000000", strokeThickness: 3, resolution: 2,
         }).setOrigin(0.5, 1).setDepth(y),
       );
     }
