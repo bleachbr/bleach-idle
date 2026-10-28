@@ -1,0 +1,5 @@
+# O Caddy pede e renova o certificado HTTPS sozinho e repassa HTTP e WebSocket ao jogo.
+{$DOMINIO} {
+	encode gzip
+	reverse_proxy jogo:2567
+}

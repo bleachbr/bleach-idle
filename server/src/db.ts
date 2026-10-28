@@ -172,3 +172,8 @@ export function loadInWorld(): CharRow[] {
 export function setInWorld(id: string, inWorld: boolean) {
   db.prepare("UPDATE players SET in_world = ? WHERE id = ?").run(inWorld ? 1 : 0, id);
 }
+
+/** Cópia consistente do banco (funciona com o jogo rodando). */
+export function backup(file: string) {
+  db.exec(`VACUUM INTO '${file.replace(/'/g, "''")}'`);
+}

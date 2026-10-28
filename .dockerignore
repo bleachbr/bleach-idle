@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+client/dist
+**/*.sqlite
+**/*.sqlite-*
+art/raw
+art/work
+art/sprites
+art/sprites48
+art/*.png
+art/*.gif
+.git
+.claude

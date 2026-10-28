@@ -8,7 +8,10 @@ import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
-const SERVER = import.meta.env.VITE_SERVER ?? `ws://${location.hostname}:2567`;
+// em produção o servidor entrega a página e o WebSocket no mesmo endereço (wss atrás do HTTPS);
+// em desenvolvimento o Vite roda na 5173 e o servidor na 2567
+const SERVER = import.meta.env.VITE_SERVER
+  ?? (import.meta.env.PROD ? `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}` : `ws://${location.hostname}:2567`);
 
 // ---------- conta e personagens ----------
 
