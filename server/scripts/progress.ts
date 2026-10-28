@@ -36,7 +36,7 @@ a.room.send("daily");
 await sleep(300);
 ok("segundo resgate no mesmo dia é recusado", a.inv().gold === 100 && a.logs.some((l) => l.includes("já pegou")));
 
-const b = await bot("Livro Beto", { prog: { bestiary: { hollow_menor: 24 }, ach: [], daily: { last: prevDay(today), streak: 6 }, kills: 99, bossKills: 0, dm: { day: today, list: [], bonus: true } } });
+const b = await bot("Livro Beto", { prog: { bestiary: { hollow_menor: 24 }, ach: [], daily: { last: prevDay(today), streak: 6 }, kills: 99, bossKills: 0, dm: { day: today, list: [], bonus: true } }, quests: { active: { patrulha: 0 }, done: [] } });
 b.room.send("daily");
 await sleep(300);
 ok("sequência continua: 7º dia dá o Amuleto da Alma", b.book().daily.streak === 7 && countItem(b.inv().inv, "amuleto_alma") === 1);
@@ -50,7 +50,7 @@ ok("perder um dia zera a sequência", c.book().daily.streak === 1);
 b.room.send("travel", { dest: "leste" });
 await sleep(400);
 b.room.send("auto", { autoHunt: true, autoHeal: 40 });
-// espera as duas coisas: o 1º abate pode ser de outro Hollow da floresta
+// a missão da patrulha faz o Auto Hunt ir atrás dos Hollows Menores primeiro
 const both = () => b.logs.some((l) => l.includes("Conquista: Purificador")) && b.logs.some((l) => l.includes("Bestiário: Hollow Menor no estágio 1"));
 for (let i = 0; i < 180 && !both(); i++) await sleep(500);
 b.room.send("auto", { autoHunt: false });
