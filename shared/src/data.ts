@@ -21,7 +21,7 @@ export const SPRITES: Record<string, SpriteDef> = {
   renji: { frame: 48, cols: 8 },
   hollow: { frame: 96 },
   adjuchas: { frame: 96, cols: 8 },
-  gillian: { frame: 96 },
+  gillian: { frame: 96, cols: 8 },
   arrancar: { frame: 48, cols: 8 },
   boneco: { frame: 48 },
   fishbone: { frame: 96, cols: 8 },
@@ -43,8 +43,8 @@ export const SPRITES: Record<string, SpriteDef> = {
   metastacia: { frame: 96, cols: 8 },
   arrancar_numeros: { frame: 48, cols: 8 },
   exequias: { frame: 48, cols: 8 },
-  fraccion: { frame: 96 },
-  privaron: { frame: 96 },
+  fraccion: { frame: 96, cols: 8 },
+  privaron: { frame: 96, cols: 8 },
 };
 
 // Variantes de visual por equipamento (folha inteira por combinação: <base>__<look>).
