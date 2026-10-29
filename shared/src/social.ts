@@ -51,4 +51,6 @@ export const TRAVEL: TravelDest[] = [
   { id: "hueco", name: "Hueco Mundo (Garganta)", map: "hueco", minLevel: 22, cost: 200 },
   { id: "lasnoches", name: "Las Noches (palácio)", map: "lasnoches", minLevel: 45, cost: 400 },
   { id: "dangai", name: "Dangai (desafio sem fim)", map: "dangai", minLevel: 20, cost: 0 },
+  { id: "falsa", name: "Karakura Falsa (exército de Aizen)", map: "falsa", minLevel: 60, cost: 600 },
+  { id: "wandenreich", name: "Wandenreich (Seireitei tomada)", map: "wandenreich", minLevel: 95, cost: 1000 },
 ];

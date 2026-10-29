@@ -82,6 +82,11 @@ GAME_SPRITES = {
         ("hitsugaya", 0.80), ("hitsugaya_bankai", 0.84), ("hitsugaya_hyakkaso", 0.84),
         ("hitsugaya_adulto", 1.02), ("hitsugaya_shiten", 1.02),
     ) if (Path(__file__).parent / "raw" / "walk8" / f"{id_}_down.png").exists()},
+    # níveis 60–150: Karakura Falsa e Wandenreich
+    **{id_: (f"walk8/{id_}_sheet.png", 4, 8, rel, tiles) for id_, rel, tiles in (
+        ("fraccion_espada", 1.02, 1), ("arrancar_resurreccion", 1.35, 2), ("vasto_lorde", 1.3, 2), ("ayon", 2.0, 2),
+        ("soldado_wandenreich", 1.0, 1), ("sternritter", 1.04, 1), ("sternritter_vollstandig", 1.35, 2), ("yhwach", 1.4, 2),
+    ) if (Path(__file__).parent / "raw" / "walk8" / f"{id_}_down.png").exists()},
 }
 
 
@@ -351,7 +356,7 @@ def process(sprites, tile, body_h, lift=False):
     return out, colors
 
 
-ICON_SHEETS = ["12_item_icons_4x4.png", "43_item_icons2_4x4.png"]
+ICON_SHEETS = ["12_item_icons_4x4.png", "43_item_icons2_4x4.png", "69_item_icons3_4x4.png"]
 
 
 def export_icons():

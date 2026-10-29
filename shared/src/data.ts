@@ -64,6 +64,15 @@ export const SPRITES: Record<string, SpriteDef> = {
   hitsugaya_shiten: { frame: 48, cols: 8 },
   renji_final: { frame: 48, cols: 8 },
   sado_final: { frame: 48, cols: 8 },
+  // níveis 60–150: Karakura Falsa e Wandenreich
+  fraccion_espada: { frame: 48, cols: 8 },
+  arrancar_resurreccion: { frame: 96, cols: 8 },
+  vasto_lorde: { frame: 96, cols: 8 },
+  ayon: { frame: 96, cols: 8 },
+  soldado_wandenreich: { frame: 48, cols: 8 },
+  sternritter: { frame: 48, cols: 8 },
+  sternritter_vollstandig: { frame: 96, cols: 8 },
+  yhwach: { frame: 96, cols: 8 },
 };
 
 // Variantes de visual por equipamento (folha inteira por combinação: <base>__<look>), só onde a lore permite:
@@ -326,6 +335,16 @@ export const MONSTERS: Record<string, MonsterDef> = Object.fromEntries([
   m("exequias", "Exequias", 3200, 68, 20, 7000, 1, 0xffffff, 330, 30000, "exequias"),
   m("fraccion", "Fracción", 4300, 78, 24, 9800, 1, 0xffffff, 360, 35000, "fraccion"),
   m("privaron", "Privaron Espada", 18000, 92, 28, 42000, 1, 0xffffff, 300, 240000, "privaron"),
+  // Karakura Falsa (nível 60+): o exército de Aizen na réplica da cidade
+  m("fraccion_espada", "Fracción de Espada", 2600, 56, 18, 7000, 1, 0xffffff, 320, 25000, "fraccion_espada"),
+  m("arrancar_resurreccion", "Arrancar em Resurrección", 3400, 62, 20, 9500, 1, 0xffffff, 340, 25000, "arrancar_resurreccion"),
+  m("vasto_lorde", "Vasto Lorde", 4400, 68, 22, 13000, 1, 0xffffff, 300, 30000, "vasto_lorde"),
+  m("ayon", "Ayon", 40000, 110, 30, 160000, 1, 0xffffff, 380, 300000, "ayon"),
+  // Wandenreich (nível 95+): a Seireitei tomada pelos Quincy
+  m("soldado_wandenreich", "Soldado do Wandenreich", 5600, 74, 24, 17500, 1, 0xffffff, 320, 25000, "soldado_wandenreich"),
+  m("sternritter", "Sternritter", 7000, 80, 26, 23000, 1, 0xffffff, 300, 30000, "sternritter"),
+  m("sternritter_vollstandig", "Sternritter em Vollständig", 8800, 86, 28, 30000, 1, 0xffffff, 300, 35000, "sternritter_vollstandig"),
+  m("yhwach", "Yhwach", 120000, 150, 40, 600000, 1, 0xffffff, 340, 600000, "yhwach"),
   // chefe mundial (evento): um Gillian que viveu demais; a vida real cresce com quem está online
   m("menos_anciao", "Menos Ancião", 30000, 80, 18, 40000, 1.35, 0x9a6aff, 700, 0, "gillian"),
   { ...m("boneco", "Boneco de Treino", 3000, 0, 0, 0, 1, 0xffffff, 1000, 5000, "boneco"), dummy: true },

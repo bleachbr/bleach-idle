@@ -95,6 +95,47 @@ export const QUESTS: QuestDef[] = [
     desc: "Um Privaron Espada tomou a sala do trono. Derrote-o.",
     goal: { type: "kill", monsters: ["privaron"], count: 1 }, reward: { exp: 150000, gold: 5000, items: [{ id: "caixa_kisuke", qty: 3 }] },
   },
+  // níveis 60–150
+  {
+    id: "falsa", name: "A Cidade Falsa", minLevel: 60,
+    desc: "O Gotei 13 trocou Karakura por uma réplica. Viaje até a Karakura Falsa e derrote 20 Fracción de Espada.",
+    goal: { type: "kill", monsters: ["fraccion_espada"], count: 20 }, reward: { exp: 250000, gold: 6000, items: [{ id: "pedra_reishi", qty: 10 }] },
+  },
+  {
+    id: "resurreccion", name: "Resurrección", minLevel: 70,
+    desc: "Os Arrancar liberaram a forma verdadeira. Derrote 20 Arrancar em Resurrección.",
+    goal: { type: "kill", monsters: ["arrancar_resurreccion"], count: 20 }, reward: { exp: 450000, gold: 8000, items: [{ id: "pergaminho_xp", qty: 2 }] },
+  },
+  {
+    id: "vasto", name: "O Topo da Evolução Hollow", minLevel: 80,
+    desc: "Vasto Lorde: o Menos mais raro e mais forte. Derrote 15.",
+    goal: { type: "kill", monsters: ["vasto_lorde"], count: 15 }, reward: { exp: 800000, gold: 10000, items: [{ id: "caixa_kisuke", qty: 3 }] },
+  },
+  {
+    id: "ayon", name: "A Fera das Três", minLevel: 85,
+    desc: "As Fracción de Halibel invocaram Ayon no sul da cidade. Derrote-o.",
+    goal: { type: "kill", monsters: ["ayon"], count: 1 }, reward: { exp: 1200000, gold: 15000, items: [{ id: "mascara_vasto", qty: 1 }] },
+  },
+  {
+    id: "wandenreich", name: "A Invasão Quincy", minLevel: 95,
+    desc: "O Wandenreich tomou a Seireitei. Derrote 25 Soldados do Wandenreich.",
+    goal: { type: "kill", monsters: ["soldado_wandenreich"], count: 25 }, reward: { exp: 1500000, gold: 15000, items: [{ id: "pedra_reishi", qty: 15 }] },
+  },
+  {
+    id: "sternritter", name: "Os Cavaleiros Estelares", minLevel: 105,
+    desc: "Cada Sternritter carrega uma letra e um poder. Derrote 20 Sternritter.",
+    goal: { type: "kill", monsters: ["sternritter", "sternritter_vollstandig"], count: 20 }, reward: { exp: 2500000, gold: 20000, items: [{ id: "caixa_kisuke", qty: 5 }] },
+  },
+  {
+    id: "vollstandig", name: "Vollständig", minLevel: 120,
+    desc: "Asas de luz e espadas de reishi: derrote 20 Sternritter em Vollständig.",
+    goal: { type: "kill", monsters: ["sternritter_vollstandig"], count: 20 }, reward: { exp: 4000000, gold: 25000, items: [{ id: "pergaminho_xp", qty: 3 }] },
+  },
+  {
+    id: "yhwach", name: "O Rei Quincy", minLevel: 140,
+    desc: "Yhwach está no sul da Seireitei tomada. Derrote o pai dos Quincy.",
+    goal: { type: "kill", monsters: ["yhwach"], count: 1 }, reward: { exp: 8000000, gold: 50000, items: [{ id: "quepe_sternritter", qty: 1 }] },
+  },
 ];
 
 export const QUEST_BY_ID: Record<string, QuestDef> = Object.fromEntries(QUESTS.map((q) => [q.id, q]));

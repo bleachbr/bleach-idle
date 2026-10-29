@@ -64,8 +64,8 @@ type SavedBag = Pick<Bag, "id" | "map" | "x" | "y" | "kind" | "label" | "owners"
 const EXP_RATE = Number(process.env.EXP_RATE) || 1;
 
 // da mais fraca para a mais forte
-const HP_POTIONS = ["onigiri", "pocao_vida", "pocao_grande"];
-const REI_POTIONS = ["pocao_rei", "pocao_rei_grande"];
+const HP_POTIONS = ["onigiri", "pocao_vida", "pocao_grande", "pocao_suprema"];
+const REI_POTIONS = ["pocao_rei", "pocao_rei_grande", "pocao_rei_suprema"];
 
 export class WorldRoom extends GameRoom<WorldState> {
   maxClients = 200;

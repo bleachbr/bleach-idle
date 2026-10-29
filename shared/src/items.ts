@@ -65,6 +65,23 @@ const items: ItemDef[] = [
   { id: "incenso", name: "Incenso da Sorte", icon: 27, buy: 600, sell: 80, stack: true, boost: "loot", desc: "+30% de chance de loot por 1 h (conta offline)." },
   { id: "caixa_kisuke", name: "Caixa do Kisuke", icon: 28, sell: 50, stack: true, box: true, desc: "Abra para ganhar um prêmio surpresa." },
   { id: "onigiri", name: "Onigiri", icon: 30, buy: 20, sell: 4, stack: true, heal: 0.2, desc: "Recupera 20% do HP." },
+  // terceira folha: níveis 60–150 (Karakura Falsa e Wandenreich)
+  { id: "mascara_vasto", name: "Máscara de Vasto Lorde", icon: 32, sell: 3500, stack: false, slot: "head", def: 14, hp: 80, rei: 30, minLevel: 75 },
+  { id: "uniforme_espada", name: "Uniforme de Espada", icon: 33, sell: 2500, stack: false, slot: "armor", def: 15, hp: 120, minLevel: 62 },
+  { id: "hakama_espada", name: "Hakama de Espada", icon: 34, sell: 2000, stack: false, slot: "legs", def: 11, hp: 40, minLevel: 62 },
+  { id: "espada_arrancar", name: "Zanpakutō de Arrancar", icon: 35, sell: 4500, stack: false, slot: "weapon", atk: 22, minLevel: 68 },
+  { id: "osso_resurreccion", name: "Osso de Resurrección", icon: 36, sell: 180, stack: true, desc: "Loot. Vende na loja." },
+  { id: "chifre_ayon", name: "Chifre de Ayon", icon: 37, sell: 1500, stack: true, desc: "Loot de chefe. Vende na loja." },
+  { id: "botas_hirenkyaku", name: "Botas de Hirenkyaku", icon: 38, sell: 4000, stack: false, slot: "boots", def: 9, hp: 40, minLevel: 95 },
+  { id: "sabre_quincy", name: "Sabre Quincy", icon: 39, sell: 9000, stack: false, slot: "weapon", atk: 32, minLevel: 100 },
+  { id: "manto_sternritter", name: "Manto de Sternritter", icon: 40, sell: 8000, stack: false, slot: "armor", def: 22, hp: 220, minLevel: 105 },
+  { id: "medalhao_wandenreich", name: "Medalhão do Wandenreich", icon: 41, sell: 6000, stack: false, slot: "amulet", def: 4, hp: 60, rei: 80, minLevel: 100, desc: "Não protege na morte." },
+  { id: "cruz_quincy", name: "Cruz Quincy", icon: 42, sell: 260, stack: true, desc: "Loot. Vende na loja." },
+  { id: "olho_yhwach", name: "Olho de Yhwach", icon: 43, sell: 5000, stack: true, desc: "Loot de chefe. Vende na loja." },
+  { id: "quepe_sternritter", name: "Quepe de Sternritter", icon: 44, sell: 7000, stack: false, slot: "head", def: 16, hp: 100, minLevel: 110 },
+  { id: "anel_quincy", name: "Anel Quincy", icon: 45, sell: 6000, stack: false, slot: "ring", hp: 120, rei: 60, minLevel: 100 },
+  { id: "pocao_suprema", name: "Poção Suprema de Cura", icon: 46, buy: 400, sell: 70, stack: true, heal: 1, desc: "Recupera todo o HP." },
+  { id: "pocao_rei_suprema", name: "Poção Suprema de Reiatsu", icon: 47, buy: 450, sell: 80, stack: true, restoreRei: 1, desc: "Recupera todo o reiatsu." },
 ];
 export const ITEMS: Record<string, ItemDef> = Object.fromEntries(items.map((i) => [i.id, i]));
 export const GOLD_ICON = 15;
@@ -83,7 +100,7 @@ export const STACK_MAX = 100;
 export const INTERACT_RANGE = 2;
 
 export const SHOP: string[] = [
-  "onigiri", "pocao_vida", "pocao_grande", "pocao_rei", "pocao_rei_grande", "pergaminho_xp", "incenso", "amuleto_alma", "zanpakuto", "anel_rei", "bandana", "shihakusho", "hakama", "waraji",
+  "onigiri", "pocao_vida", "pocao_grande", "pocao_suprema", "pocao_rei", "pocao_rei_grande", "pocao_rei_suprema", "pergaminho_xp", "incenso", "amuleto_alma", "zanpakuto", "anel_rei", "bandana", "shihakusho", "hakama", "waraji",
 ];
 
 export interface Slot { id: string; qty: number }
@@ -112,6 +129,22 @@ export const LOOT: Record<string, LootTable> = {
   privaron: { gold: [1500, 3000], items: [
     { item: "pedra_reishi", chance: 1, min: 5, max: 10 }, { item: "nucleo", chance: 1, min: 5, max: 8 }, { item: "lua_negra", chance: 0.3 },
     { item: "anel_espiritual", chance: 0.3 }, { item: "haori", chance: 0.3 }, { item: "caixa_kisuke", chance: 1, min: 1, max: 2 },
+  ] },
+  // Karakura Falsa
+  fraccion_espada: { gold: [220, 400], items: [{ item: "pedra_reishi", chance: 0.3, max: 2 }, { item: "nucleo", chance: 0.35, max: 2 }, { item: "hakama_espada", chance: 0.012 }, { item: "uniforme_espada", chance: 0.008 }, { item: "pocao_suprema", chance: 0.06 }] },
+  arrancar_resurreccion: { gold: [280, 500], items: [{ item: "osso_resurreccion", chance: 0.5, max: 2 }, { item: "pedra_reishi", chance: 0.32, max: 2 }, { item: "espada_arrancar", chance: 0.01 }, { item: "uniforme_espada", chance: 0.012 }, { item: "caixa_kisuke", chance: 0.03 }] },
+  vasto_lorde: { gold: [350, 650], items: [{ item: "osso_resurreccion", chance: 0.6, max: 3 }, { item: "pedra_reishi", chance: 0.35, max: 3 }, { item: "mascara_vasto", chance: 0.012 }, { item: "espada_arrancar", chance: 0.012 }, { item: "pocao_rei_suprema", chance: 0.08 }, { item: "caixa_kisuke", chance: 0.04 }] },
+  ayon: { gold: [4000, 8000], items: [
+    { item: "chifre_ayon", chance: 1, min: 1, max: 3 }, { item: "pedra_reishi", chance: 1, min: 8, max: 14 }, { item: "mascara_vasto", chance: 0.3 },
+    { item: "espada_arrancar", chance: 0.3 }, { item: "uniforme_espada", chance: 0.3 }, { item: "caixa_kisuke", chance: 1, min: 2, max: 3 },
+  ] },
+  // Wandenreich
+  soldado_wandenreich: { gold: [450, 800], items: [{ item: "cruz_quincy", chance: 0.45, max: 2 }, { item: "pedra_reishi", chance: 0.38, max: 3 }, { item: "botas_hirenkyaku", chance: 0.01 }, { item: "pocao_suprema", chance: 0.08 }] },
+  sternritter: { gold: [600, 1000], items: [{ item: "cruz_quincy", chance: 0.55, max: 2 }, { item: "pedra_reishi", chance: 0.4, max: 3 }, { item: "sabre_quincy", chance: 0.008 }, { item: "anel_quincy", chance: 0.01 }, { item: "medalhao_wandenreich", chance: 0.008 }, { item: "caixa_kisuke", chance: 0.04 }] },
+  sternritter_vollstandig: { gold: [800, 1400], items: [{ item: "cruz_quincy", chance: 0.6, max: 3 }, { item: "pedra_reishi", chance: 0.45, max: 4 }, { item: "manto_sternritter", chance: 0.01 }, { item: "quepe_sternritter", chance: 0.01 }, { item: "sabre_quincy", chance: 0.01 }, { item: "pocao_rei_suprema", chance: 0.1 }, { item: "caixa_kisuke", chance: 0.05 }] },
+  yhwach: { gold: [15000, 30000], items: [
+    { item: "olho_yhwach", chance: 1, min: 1, max: 2 }, { item: "pedra_reishi", chance: 1, min: 15, max: 25 }, { item: "sabre_quincy", chance: 0.35 },
+    { item: "manto_sternritter", chance: 0.3 }, { item: "quepe_sternritter", chance: 0.3 }, { item: "medalhao_wandenreich", chance: 0.3 }, { item: "caixa_kisuke", chance: 1, min: 3, max: 5 },
   ] },
   metastacia: { gold: [450, 900], items: [
     { item: "tentaculo", chance: 1, min: 1, max: 3 }, { item: "pedra_reishi", chance: 1, min: 2, max: 5 }, { item: "nucleo", chance: 1, min: 2, max: 4 },
@@ -271,6 +304,14 @@ export const SETS: SetDef[] = [
   } },
   { id: "luanegra", name: "Lua Negra", pieces: ["lua_negra", "anel_espiritual"], bonus: {
     2: { dmg: 0.06, exp: 0.05, text: "+6% de dano e +5% de XP" },
+  } },
+  { id: "espada", name: "Exército de Aizen", pieces: ["mascara_vasto", "uniforme_espada", "hakama_espada", "espada_arrancar"], bonus: {
+    2: { def: 4, text: "+4 de defesa" },
+    4: { dmg: 0.1, hp: 100, text: "+10% de dano e +100 de vida" },
+  } },
+  { id: "sternritter", name: "Sternritter", pieces: ["quepe_sternritter", "manto_sternritter", "botas_hirenkyaku", "sabre_quincy", "medalhao_wandenreich"], bonus: {
+    3: { hp: 150, text: "+150 de vida" },
+    5: { dmg: 0.12, exp: 0.08, text: "+12% de dano e +8% de XP" },
   } },
 ];
 

@@ -36,6 +36,9 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Soul Society** (arte própria, gerada pelo Codex): Seireitei com quartéis, muro, jardim zen, cerejeiras e campo de treino; Rukongai com Hollows de nível médio. Nível 14+, 120 kan.
 - **Hueco Mundo** (arte própria, gerada pelo Codex): deserto branco com ruínas, árvores de quartzo e ossadas; lá vivem Adjuchas, Arrancar e o Menos Grande (Gillian). Nível 22+, 200 kan, chegando pela Garganta.
 - **Las Noches** (arte própria, gerada pelo Codex): o palácio em Hueco Mundo, para nível 45+ (400 kan). Tem saguão seguro, salão com pilares e alas com Arrancar Números, Exequias e Fracción; na sala do trono fica o chefe **Privaron Espada**.
+- **Karakura Falsa** (nível 60+, 600 kan): a réplica de Karakura onde o Gotei 13 enfrentou o exército de Aizen, com o mesmo traçado da cidade sob um céu de crepúsculo. Tem Fracción de Espada, Arrancar em Resurrección e Vasto Lorde; no sul fica o chefe **Ayon**.
+- **Wandenreich** (nível 95+, 1.000 kan): a Seireitei tomada pelos Quincy, toda branca e azul. Tem Soldados do Wandenreich, Sternritter e Sternritter em Vollständig; no sul fica o chefe **Yhwach**.
+- **Equipamento do 60 ao 150:** 10 peças novas em dois conjuntos (Exército de Aizen e Sternritter), mais poções supremas na loja e 8 missões novas do Kisuke. O mapa novo sai de `art/maps/build_endgame.py`, que deriva da cidade e da Soul Society.
 - **Dangai** (arte própria): o desafio sem fim, a partir do nível 20 e de graça.
   - **Andares:** cada um traz uma leva de monstros só sua, em 3 minutos. A cada 10 andares vem um chefe. Depois do Arrancar mais forte (andar 28), os monstros ficam 12% mais fortes a cada andar, sem teto.
   - **Recompensa:** cada andar paga, e o recorde paga em dobro, com Caixa do Kisuke a cada 5.
@@ -60,7 +63,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Passe de temporada (★, grátis):** uma temporada por mês, com 30 níveis de 150 pontos. Os pontos vêm de abates (5 a cada 10, até 150 por dia), chefes, missões diárias, recompensa diária e chefe mundial. Cada nível dá um prêmio (kan, poções, pergaminhos, caixas e cristais), e os níveis 10, 20 e 30 dão uma aura, um título e uma borboleta que não estão à venda. Depois do 30, cada nível a mais dá caixa e cristais.
 - **Chefe mundial:** a cada 2 horas o Menos Ancião aparece perto da praça de Karakura, com aviso 5 minutos antes. A vida cresce com quem está online. Todos que acertarem ganham kan, caixas, cristais, XP e pontos de passe, e os 3 que mais causaram dano levam mais. Se não morrer em 15 minutos, vai embora.
 - **Fim de semana de XP:** sábado e domingo (Brasília) os monstros dão XP em dobro, com aviso no painel.
-- **Monstros:** 18 tipos, mais o boneco de treino, todos com sprite próprio. Chefes: Grand Fisher (Karakura), Metastacia (sul do Rukongai), Gillian (Hueco Mundo) e Privaron Espada (Las Noches).
+- **Monstros:** 26 tipos, mais o boneco de treino, todos com sprite próprio. Chefes: Grand Fisher (Karakura), Metastacia (sul do Rukongai), Gillian (Hueco Mundo), Privaron Espada (Las Noches), Ayon (Karakura Falsa) e Yhwach (Wandenreich).
 - **Treino:** **Zanjutsu** sobe com golpes e aumenta o dano corpo a corpo (+2%/nível). **Reiryoku** sobe com o reiatsu gasto e aumenta o dano das habilidades (+3%/nível). O **Auto Treino** queima o reiatsu parado, e os **bonecos de treino** da Soul Society não morrem. Os dois continuam offline.
 - **Morte (estilo Tibia):** perde 8% de XP, 10% do dinheiro carregado e cada item tem 10% de chance de cair. O que cai fica num **corpo no chão** por 5 minutos (sobrevive a um reinício do servidor); em PvP, quem matou (e a party dele) tem prioridade por 1 minuto. O **Amuleto da Alma** protege tudo, e o depot nunca perde nada.
 - **Missões do Kisuke:** 15, de caçar ou entregar itens, com XP, kan e itens de recompensa. O progresso de caça conta para a party, e o Auto Hunt prioriza os monstros das missões (do Kisuke e a diária de caça).
@@ -107,7 +110,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 **Interface**
 - **Sons** sintetizados no navegador (golpe, dano, habilidade, loot, nível, Bankai, eventos), com botão "som" para silenciar.
 - **Alvo e chefes:** anel pulsante sob o alvo e barra de vida grande no topo da tela ao enfrentar um chefe.
-- **Clima de cada mapa:** vaga-lumes em Karakura, pétalas de cerejeira na Soul Society, areia ao vento em Hueco Mundo, reishi em Las Noches e fagulhas no Dangai. Há poeira nos passos, e o golpe empurra o alvo.
+- **Clima de cada mapa:** vaga-lumes em Karakura, pétalas de cerejeira na Soul Society, areia ao vento em Hueco Mundo, reishi em Las Noches, fagulhas no Dangai, cinzas na Karakura Falsa e reishi azul no Wandenreich. Há poeira nos passos, e o golpe empurra o alvo.
 - **Movimento fluido:** o personagem desliza em velocidade constante no ritmo real do servidor (passos de 100 ms), sem o "anda e trava". Parado, ele respira.
 - **Andar com 8 quadros por direção** para todos os personagens e para 15 dos 18 inimigos (o resto segue com 4). O jogo descobre quantos quadros cada folha tem pela largura da imagem.
 - **Ataques dos inimigos com efeito próprio:** garra, mordida, cuspe ácido do Hollow Ácido e cero do Gillian e dos Arrancar. A liberação (Bankai, Letzt Stil, Diablo) tem uma explosão na cor de cada personagem.

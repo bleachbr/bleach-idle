@@ -88,6 +88,10 @@ const AMBIENT: Record<string, { tex: string; color: number[]; count: number; spe
   lasnoches: { tex: "amb_dot", color: [0x9fd6ff, 0xdff2ff], count: 22, speedX: [-5, 5], speedY: [-20, -8], scale: [0.5, 1], alpha: [0.8, 0], life: 5000, blend: true },
   // fagulhas roxas do corredor entre mundos
   dangai: { tex: "amb_dot", color: [0xc08aff, 0x8a5cff, 0xffffff], count: 40, speedX: [-25, 25], speedY: [-25, 25], scale: [0.5, 1.1], alpha: [0.9, 0], life: 3500, blend: true },
+  // cinzas da batalha caindo na cidade falsa
+  falsa: { tex: "amb_dot", color: [0x9a8aa8, 0xd8c8e8, 0xff9a6a], count: 36, speedX: [-10, 10], speedY: [10, 30], scale: [0.4, 0.9], alpha: [0.9, 0], life: 6000 },
+  // partículas de reishi azul sendo absorvidas (Auswählen)
+  wandenreich: { tex: "amb_dot", color: [0x8ac8ff, 0xe8f4ff, 0x4a9aff], count: 40, speedX: [-6, 6], speedY: [-30, -12], scale: [0.4, 1], alpha: [0.9, 0], life: 4500, blend: true },
 };
 
 /** fonte pixel do jogo (carregada pelo @fontsource no main.ts) para nomes e números */
