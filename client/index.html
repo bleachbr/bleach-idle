@@ -55,12 +55,13 @@
       <button type="button" id="menu-btn" aria-label="Abrir menu">☰</button>
       <aside id="side">
         <section id="stats">
-          <div class="who"><b id="pname"></b> <span id="plevel"></span><span class="who-icons"><button type="button" id="travel-btn" class="link icon-btn" data-ico="portal" title="Viajar (de qualquer lugar)"></button><button type="button" id="exit-btn" class="link icon-btn" data-ico="swap" title="Trocar de personagem"></button><button type="button" id="ranking-btn" class="link icon-btn" data-ico="trophy" title="Ranking"></button><button type="button" id="shop-btn" class="link icon-btn crystal-btn" title="Loja de Cristais: auras, técnicas, títulos e crônicas">💎</button><button type="button" id="book-btn" class="link icon-btn" data-ico="book" title="Livro: bestiário, conquistas, diário e caçada"></button><button type="button" id="mute-btn" class="link icon-btn" data-ico="sound" title="Ligar ou desligar o som"></button></span></div>
+          <div class="who"><b id="pname"></b> <span id="plevel"></span><span class="who-icons"><button type="button" id="travel-btn" class="link icon-btn" data-ico="portal" title="Viajar (de qualquer lugar)"></button><button type="button" id="exit-btn" class="link icon-btn" data-ico="swap" title="Trocar de personagem"></button><button type="button" id="ranking-btn" class="link icon-btn" data-ico="trophy" title="Ranking"></button><button type="button" id="season-btn" class="link icon-btn" data-ico="star" title="Passe de temporada (grátis)"></button><button type="button" id="shop-btn" class="link icon-btn crystal-btn" title="Loja de Cristais: auras, técnicas, títulos e crônicas">💎</button><button type="button" id="book-btn" class="link icon-btn" data-ico="book" title="Livro: bestiário, conquistas, diário e caçada"></button><button type="button" id="mute-btn" class="link icon-btn" data-ico="sound" title="Ligar ou desligar o som"></button></span></div>
           <div class="bar hp"><i></i><span></span></div>
           <div class="bar rei"><i></i><span></span></div>
           <div class="bar exp"><i></i><span></span></div>
           <div id="pform"></div>
           <div id="ppower"></div>
+          <div id="event-line" hidden></div>
           <div id="pskills" class="hint"></div>
           <div id="pvp-lock" hidden></div>
           <button type="button" id="rebirth-btn" class="rebirth" hidden></button>
@@ -132,6 +133,12 @@
             <span class="tabs"><button type="button" data-tab="bestiario" data-ico="swords" aria-pressed="true">Bestiário</button><button type="button" data-tab="conquistas" data-ico="trophy">Conquistas</button><button type="button" data-tab="diario" data-ico="hourglass">Diário</button><button type="button" data-tab="cacada" data-ico="star">Caçada</button></span>
             <button type="button" id="book-close" aria-label="Fechar">✕</button></header>
           <div id="book-body"></div>
+        </div>
+        <div id="pass" class="window" hidden>
+          <header><b data-ico="star">Passe de temporada</b> <span id="pass-name" class="crystals"></span>
+            <button type="button" id="pass-close" aria-label="Fechar">✕</button></header>
+          <div id="pass-head"></div>
+          <div id="pass-body"></div>
         </div>
         <div id="shop" class="window" hidden>
           <header><b>💎 Loja de Cristais</b> <span id="shop-crystals" class="crystals"></span>

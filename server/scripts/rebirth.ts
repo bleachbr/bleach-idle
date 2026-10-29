@@ -27,10 +27,10 @@ await fraco.room.leave();
 
 const a = await bot("Renasce Ana", 62);
 const hp0 = a.me().maxHp;
-a.room.send("rebirth");
-await sleep(500);
+// com a bateria toda rodando, um monstro pode puxar combate na praça: tenta por alguns segundos
+for (let i = 0; i < 15 && a.me().rebirths === 0; i++) { a.room.send("rebirth"); await sleep(700); }
 const me = a.me();
-ok(`renasce: volta ao nível ${START_LEVEL} na praça`, me.rebirths === 1 && me.level === START_LEVEL && me.map === "karakura" && me.x === TEMPLE.x && me.y === TEMPLE.y);
+ok(`renasce: volta ao nível ${START_LEVEL} na praça${me.rebirths ? "" : ` (${a.logs.slice(-4).join(" / ")})`}`, me.rebirths === 1 && me.level === START_LEVEL && me.map === "karakura" && me.x === TEMPLE.x && me.y === TEMPLE.y);
 ok("guarda kan, itens, equipamento e forja", a.inv().gold === 12345 && a.inv().inv.some((s: any) => s?.id === "nucleo") && a.inv().equip.weapon === "lua_negra" && a.inv().forge.weapon === 3);
 ok(`vida máxima com +5% (${me.maxHp}; sem bônus seria ${maxHp(START_LEVEL)})`, me.maxHp === Math.round(maxHp(START_LEVEL) * 1.05) && me.maxHp < hp0);
 ok("o chat anuncia o renascimento", a.chat.some((t) => t.includes("renasceu pela 1ª vez")));

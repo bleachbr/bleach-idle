@@ -17,6 +17,8 @@ export interface Cosmetic {
   /** crônica: o texto que a compra libera para ler (e o título que vem junto) */
   text?: string[];
   title?: string;
+  /** prêmio do passe de temporada: não se compra */
+  season?: boolean;
 }
 
 export const COS_KINDS: { kind: CosKind; label: string; hint: string }[] = [
@@ -61,6 +63,10 @@ export const COSMETICS: Cosmetic[] = [
   c("pet_inferno", "pet", "Borboleta do Inferno", 150, 0x18101a, "A mensageira negra que guia as almas entre os mundos.", { color2: 0xff3050 }),
   c("pet_dourada", "pet", "Borboleta Dourada", 250, 0xffd34a, "Rara: dizem que só aparece para quem já chegou ao topo.", { color2: 0xfff2b0 }),
   c("pet_gelo", "pet", "Borboleta de Gelo", 200, 0x9ae8ff, "Feita de reiatsu congelado, nunca derrete.", { color2: 0xffffff }),
+  // prêmios do passe de temporada (não estão à venda)
+  c("aura_eclipse", "aura", "Aura do Eclipse", 0, 0x3a1a6a, "Prêmio do nível 10 do passe de temporada.", { color2: 0xffb04a, season: true }),
+  c("tit_temporada", "title", "Veterano da Temporada", 0, 0xffb04a, "Prêmio do nível 20 do passe de temporada.", { season: true }),
+  c("pet_eclipse", "pet", "Borboleta do Eclipse", 0, 0x3a1a6a, "Prêmio do nível 30 do passe de temporada.", { color2: 0xffb04a, season: true }),
   // crônicas
   c("lore_karakura", "lore", "Crônica: A Cidade Quieta", 40, 0xbfe9ff, "Por que tantos Hollows aparecem em Karakura.", {
     title: "Cronista de Karakura",

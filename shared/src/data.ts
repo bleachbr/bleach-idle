@@ -256,5 +256,7 @@ export const MONSTERS: Record<string, MonsterDef> = Object.fromEntries([
   m("exequias", "Exequias", 3200, 68, 20, 7000, 1, 0xffffff, 330, 30000, "exequias"),
   m("fraccion", "Fracción", 4300, 78, 24, 9800, 1, 0xffffff, 360, 35000, "fraccion"),
   m("privaron", "Privaron Espada", 18000, 92, 28, 42000, 1, 0xffffff, 300, 240000, "privaron"),
+  // chefe mundial (evento): um Gillian que viveu demais; a vida real cresce com quem está online
+  m("menos_anciao", "Menos Ancião", 30000, 80, 18, 40000, 1.35, 0x9a6aff, 700, 0, "gillian"),
   { ...m("boneco", "Boneco de Treino", 3000, 0, 0, 0, 1, 0xffffff, 1000, 5000, "boneco"), dummy: true },
 ].map((d) => [d.id, d]));

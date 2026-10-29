@@ -1,5 +1,5 @@
 // Auto Venda do loot, analisador de caçada e aviso de recompensa diária pendente.
-import { expForLevel, nearestWalkable, countItem, dailyMissions, dayKey } from "../../shared/src";
+import { expForLevel, nearestWalkable, countItem, dailyMissions, dayKey, BOOST_MAX_MS } from "../../shared/src";
 import { HOME } from "../src/maps";
 import { play, patchSave, sleep, ok, done } from "./lib";
 
@@ -9,6 +9,8 @@ const full = Array.from({ length: 20 }, () => ({ id: "bandana", qty: 1 }));
 let ready: boolean | undefined;
 const room = await play("Caca Ana", "ichigo", (id) => patchSave(id, {
   level: 14, exp: expForLevel(14), hp: 9999, rei: 9999, gold: 0, map: "karakura", ...pos, inv: full, autoSell: false,
+  // bônus de loot ligado: com a bateria toda rodando junto os abates são lentos, e sem loot o teste falhava por azar
+  lootBoostUntil: Date.now() + BOOST_MAX_MS,
   prog: { bestiary: {}, ach: ["k100", "lv15", "st5"], daily: { last: "", streak: 0 }, kills: 0, bossKills: 0 },
 }), (r) => r.onMessage("dailyReady", (m) => (ready = m.ready)));
 let book: any, inv: any;
@@ -25,7 +27,7 @@ ok("Auto Venda liga e aparece no estado", room.state.players.get("caca ana").aut
 room.send("travel", { dest: "leste" });
 await sleep(400);
 room.send("auto", { autoHunt: true, autoHeal: 40 });
-for (let i = 0; i < 160 && !logs.some((l) => l.includes("(vendido)")); i++) await sleep(500);
+for (let i = 0; i < 300 && !logs.some((l) => l.includes("(vendido)")); i++) await sleep(500);
 room.send("auto", { autoHunt: false });
 await sleep(300);
 ok("com o inventário cheio, o loot puro vira kan na hora", logs.some((l) => l.includes("(vendido)")));

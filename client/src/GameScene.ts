@@ -50,7 +50,7 @@ const FX = {
 const MOB_FX: Record<string, string> = {
   hollow_uivante: "bite", hollow_faminto: "bite", hollow_devorador: "bite", metastacia: "bite",
   hollow_acido: "acid",
-  gillian: "cero", arrancar: "cero", arrancar_numeros: "cero", privaron: "cero",
+  gillian: "cero", menos_anciao: "cero", arrancar: "cero", arrancar_numeros: "cero", privaron: "cero",
 };
 /** explosão da liberação (Bankai e afins) de cada personagem */
 const RELEASE: Record<string, string> = { ichigo: "rel_ichigo", rukia: "rel_rukia", renji: "rel_renji", ishida: "rel_blue", sado: "rel_renji" };

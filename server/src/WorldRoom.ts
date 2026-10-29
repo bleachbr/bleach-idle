@@ -15,6 +15,7 @@ import {
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
+  SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
   COSMETIC, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
@@ -86,6 +87,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     // save frequente e em transação: numa queda se perdem no máximo ~10 s
     this.clock.setInterval(() => this.saveAll(), 10_000);
     this.scheduleInvasion(Number(process.env.INVASION_FIRST_MS) || INVASION.firstMs);
+    this.scheduleWorldBoss(Number(process.env.WORLDBOSS_FIRST_MS) || WORLD_BOSS.firstMs);
     this.clock.setInterval(() => { for (const p of this.state.players.values()) this.checkAchievements(p); }, 5000);
 
     this.handle("move", (c, m: { x: number; y: number }) => {
@@ -164,6 +166,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.registerMarketMessages();
     this.registerBookMessages();
     this.registerShopMessages();
+    this.registerSeasonMessages();
     this.registerForgeMessages();
     this.registerRebirthMessages();
     this.registerDangaiMessages();
@@ -207,6 +210,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     if (process.env.BI_DEBUG) {
       this.handle("debugInvasion", () => this.startInvasion());
       this.handle("debugInvasionEnd", () => this.endInvasion(false));
+      this.handle("debugWorldBoss", () => this.spawnWorldBoss());
+      this.handle("debugSeasonPts", (c, m: { n?: number }) => { const p = this.me(c); if (p) this.seasonAdd(p, Number(m?.n) || 0, "teste"); });
     }
   }
 
@@ -258,6 +263,9 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.sendGuild(p);
     this.sendQuests(p);
     client.send("dailyReady", { ready: p.prog.daily.last !== dayKey(Date.now()) });
+    this.sendSeason(p, false);
+    if (xpWeekend(Date.now())) client.send("log", { text: "Fim de semana: XP em dobro dos monstros até domingo à meia-noite!" });
+    if (this.worldBoss) client.send("log", { text: `O chefe mundial ${MONSTERS[WORLD_BOSS.kind].name} está na praça de Karakura!` });
     this.sendTutorial(p);
     this.broadcast("chat", { from: "", text: `${p.name} entrou no mundo.` });
   }
@@ -604,6 +612,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     const dmg = rollDamage(playerAtk(ch.atk, p.level) + gearBonus(p.equip, p.forge).atk, ch.forms[p.form].dmgMult * mult, def.def * t.defMult);
     t.hp -= dmg;
     t.lastHitBy = p.id;
+    if (t.world && this.worldBoss) this.worldBoss.dmg.set(p.id, (this.worldBoss.dmg.get(p.id) ?? 0) + Math.min(dmg, dmg + t.hp));
     if (!t.targetId && !def.dummy) t.targetId = p.id;
     p.lastCombatAt = now;
     this.broadcast("fx", { t: "dmg", id: t.id, v: dmg, from: p.id, skill });
@@ -706,6 +715,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.broadcast("fx", { t: "die", id: m.id });
     this.state.monsters.delete(m.id);
     this.monsterAt.delete(tileKey(m.map, m.x, m.y));
+    if (m.world) return this.worldBossKilled(m, killer);
     if (m.invader) return this.invaderKilled(m, killer);
     if (m.owner) return this.dangaiKilled(m, killer);
     this.clock.setTimeout(() => this.spawnMonster(m.spawnIndex), def.respawnMs);
@@ -1643,7 +1653,7 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   /** XP de monstro: aplica o Pergaminho de Treino e soma no analisador de caçada */
   private monsterExp(p: Player, exp: number, from: string) {
-    const v = Math.max(1, Math.round(exp * EXP_RATE * rebirthBonus(p.rebirths).exp * setBonuses(p.equip).total.exp * (p.expBoostUntil > Date.now() ? BOOST_EXP : 1)));
+    const v = Math.max(1, Math.round(exp * EXP_RATE * rebirthBonus(p.rebirths).exp * setBonuses(p.equip).total.exp * (p.expBoostUntil > Date.now() ? BOOST_EXP : 1) * (xpWeekend(Date.now()) ? WEEKEND_EXP : 1)));
     p.hunt.exp += v;
     this.gainExp(p, v, from);
   }
@@ -1712,7 +1722,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     if (!inv) return;
     this.invasion = null;
     for (const m of [...this.state.monsters.values()]) {
-      if (!m.invader) continue;
+      if (!m.invader || m.world) continue;
       this.state.monsters.delete(m.id);
       this.monsterAt.delete(tileKey(m.map, m.x, m.y));
     }
@@ -1971,6 +1981,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     if (BOSSES.has(kind)) this.dailyStep(p, "boss");
     if (!p.online) p.offKills++;
     if (BOSSES.has(kind)) pr.bossKills++;
+    this.seasonKill(p, BOSSES.has(kind));
     const st = bestiaryStage(kind, before + 1);
     if (st > bestiaryStage(kind, before)) {
       const name = MONSTERS[kind].name;
@@ -2017,11 +2028,13 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.log(p, `Missão diária completa: ${dailyText(m, (id) => MONSTERS[id].name)}. +${r.gold} kan e +${exp} XP.`);
       this.sendTo(p, "fx", { t: "book", text: "Missão diária completa!" });
       this.gainExp(p, exp, "Missão diária");
+      this.seasonAdd(p, SEASON_PTS.mission, "missão diária");
       this.sendInv(p);
     }
     if (!dm.bonus && dm.list.every((m) => m.done)) {
       dm.bonus = true;
       this.log(p, `Todas as missões diárias feitas! Bônus: ${this.grant(p, { gold: 0, items: [{ id: "caixa_kisuke", qty: 1 }] })}.`);
+      this.seasonAdd(p, SEASON_PTS.missionsAll, "todas as missões");
     }
   }
 
@@ -2057,6 +2070,163 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.sendTo(p, "fx", { t: "book", text: `Conquista: ${a.name}` });
       if (a.need >= 25 || a.stat === "level") this.broadcast("chat", { from: "", text: `🏆 ${p.name} conquistou "${a.name}".`, ch: "sys" });
     }
+  }
+
+  // ---------- passe de temporada ----------
+
+  /** Estado do passe do personagem, recomeçado quando a temporada vira. */
+  private season(p: Player) {
+    const id = seasonId(Date.now());
+    if (p.prog.season?.id !== id) p.prog.season = newSeason(Date.now());
+    return p.prog.season;
+  }
+
+  private seasonKill(p: Player, boss: boolean) {
+    const s = this.season(p);
+    if (boss) this.seasonAdd(p, SEASON_PTS.boss, "chefe");
+    if (++s.kAcc < SEASON_PTS.killEvery) return;
+    s.kAcc = 0;
+    const today = dayKey(Date.now());
+    if (s.kDay !== today) { s.kDay = today; s.kPts = 0; }
+    const n = Math.min(SEASON_PTS.kill, SEASON_PTS.killDailyCap - s.kPts);
+    if (n <= 0) return;
+    s.kPts += n;
+    this.seasonAdd(p, n, "abates");
+  }
+
+  /** Soma pontos; a cada nível novo avisa e acende o aviso do botão. */
+  private seasonAdd(p: Player, n: number, _why: string) {
+    if (n <= 0) return;
+    const s = this.season(p);
+    const before = seasonTier(s.pts);
+    s.pts += n;
+    const after = seasonTier(s.pts);
+    if (after > before) {
+      this.log(p, `Passe de temporada: nível ${after}! Pegue o prêmio no botão ★.`);
+      this.sendTo(p, "fx", { t: "event", text: `Passe: nível ${after}!` });
+    }
+    this.sendSeason(p, false);
+  }
+
+  /** open: abre o painel; sem open, só atualiza (se já estiver aberto) e o aviso do botão. */
+  private sendSeason(p: Player, open: boolean) {
+    const s = this.season(p);
+    this.sendTo(p, "season", {
+      open, id: s.id, name: seasonName(s.id), endsAt: seasonEnds(s.id), pts: s.pts, perTier: SEASON.perTier, tiers: SEASON.tiers,
+      claimed: s.claimed, killPts: s.kDay === dayKey(Date.now()) ? s.kPts : 0, killCap: SEASON_PTS.killDailyCap,
+    });
+  }
+
+  private seasonGive(p: Player, r: SeasonReward): string {
+    const parts: string[] = [];
+    if (r.gold || r.items?.length) parts.push(this.grant(p, { gold: r.gold ?? 0, items: r.items }));
+    if (r.crystals) { this.giveCrystals(p, r.crystals, "passe"); parts.push(`${r.crystals} cristais`); }
+    if (r.cos && p.accountId) {
+      const w = db.wallet(p.accountId);
+      if (!w.owned.includes(r.cos)) { db.changeCrystals(p.accountId, 0, `passe ${r.cos}`, r.cos); this.equipCos(p, r.cos); }
+      parts.push(COSMETIC[r.cos].name);
+    }
+    return parts.join(", ");
+  }
+
+  private registerSeasonMessages() {
+    this.handle("seasonOpen", (c) => { const p = this.me(c); if (p) this.sendSeason(p, true); });
+    this.handle("seasonClaim", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      const s = this.season(p);
+      const tier = seasonTier(s.pts);
+      if (tier <= s.claimed) return this.log(p, "Nenhum prêmio novo do passe. Continue caçando!");
+      const got: string[] = [];
+      for (let t = s.claimed + 1; t <= tier; t++) got.push(this.seasonGive(p, seasonReward(t)));
+      const from = s.claimed + 1;
+      s.claimed = tier;
+      this.log(p, `Passe de temporada ${from === tier ? `nível ${tier}` : `níveis ${from} a ${tier}`}: ${got.join("; ")}.`);
+      this.sendTo(p, "fx", { t: "book", text: "Prêmios do passe!" });
+      this.sendSeason(p, true);
+    });
+  }
+
+  // ---------- chefe mundial ----------
+
+  private worldBoss: { id: string; dmg: Map<string, number> } | null = null;
+
+  private scheduleWorldBoss(ms: number) {
+    // aviso antes, para dar tempo de chegar
+    this.clock.setTimeout(() => {
+      this.broadcast("chat", { from: "", ch: "sys", text: `⚠ Em ${Math.round(WORLD_BOSS.warnMs / 60000)} minutos o ${MONSTERS[WORLD_BOSS.kind].name} vai aparecer perto da praça de Karakura. Juntem-se!` });
+      this.broadcast("fx", { t: "event", text: "Chefe mundial chegando!" });
+    }, Math.max(0, ms - WORLD_BOSS.warnMs));
+    this.clock.setTimeout(() => {
+      this.spawnWorldBoss();
+      this.scheduleWorldBoss(Number(process.env.WORLDBOSS_EVERY_MS) || WORLD_BOSS.everyMs);
+    }, ms);
+  }
+
+  /** Aparece fora da zona segura, perto do templo de Karakura; a vida cresce com quem está online. */
+  spawnWorldBoss() {
+    if (this.worldBoss) return;
+    const map = HOME;
+    let at: { x: number; y: number } | undefined;
+    for (let tries = 0; tries < 2000 && !at; tries++) {
+      const a = Math.random() * Math.PI * 2, r = 8 + Math.random() * 4;
+      const x = Math.round(TEMPLE.x + Math.cos(a) * r), y = Math.round(TEMPLE.y + Math.sin(a) * r);
+      if (walkable(map, x, y) && !inPZ(map, x, y) && !this.blockedForMonster("karakura", x, y)) at = { x, y };
+    }
+    if (!at) return;
+    const def = MONSTERS[WORLD_BOSS.kind];
+    const online = [...this.state.players.values()].filter((x) => x.online).length;
+    const m = new Monster();
+    m.id = `wb${++this.monsterSeq}`;
+    m.kind = WORLD_BOSS.kind;
+    m.map = "karakura";
+    m.x = m.homeX = at.x;
+    m.y = m.homeY = at.y;
+    m.hp = m.maxHp = Number(process.env.WORLDBOSS_HP) || WORLD_BOSS.hpBase + WORLD_BOSS.hpPerPlayer * Math.max(0, online - 1);
+    m.stepMs = def.stepMs;
+    m.invader = true; // anda perto de casa e não renasce
+    m.world = true;
+    this.state.monsters.set(m.id, m);
+    this.monsterAt.add(tileKey("karakura", at.x, at.y));
+    this.worldBoss = { id: m.id, dmg: new Map() };
+    this.broadcast("chat", { from: "", ch: "sys", text: `⚔ O ${def.name} apareceu perto da praça de Karakura com ${m.maxHp.toLocaleString("pt-BR")} de vida! Todos que acertarem ganham prêmio. Ele vai embora em 15 min.` });
+    this.broadcast("fx", { t: "event", text: `${def.name}!` });
+    this.clock.setTimeout(() => this.endWorldBoss(), WORLD_BOSS.durationMs);
+  }
+
+  private worldBossKilled(m: Monster, killer: Player) {
+    const wb = this.worldBoss;
+    this.worldBoss = null;
+    if (!wb) return;
+    const def = MONSTERS[m.kind];
+    const total = [...wb.dmg.values()].reduce((a, b) => a + b, 0) || 1;
+    const ranked = [...wb.dmg.entries()].sort((a, b) => b[1] - a[1]);
+    ranked.forEach(([id, d], i) => {
+      const p = this.state.players.get(id);
+      if (!p) return;
+      const share = d / total;
+      // todo mundo que acertou ganha o básico; a XP e o kan crescem com a parte do dano; os 3 primeiros levam mais
+      const boxes = i === 0 ? 3 : i < 3 ? 2 : 1;
+      const crystals = i === 0 ? 30 : i < 3 ? 20 : 10;
+      const got = this.grant(p, { gold: Math.round(500 + 20000 * share), items: [{ id: "caixa_kisuke", qty: boxes }, { id: "pedra_reishi", qty: 2 }] });
+      this.giveCrystals(p, crystals, "chefe mundial");
+      this.monsterExp(p, Math.round(def.exp * (0.3 + share * 3)), `${def.name} (chefe mundial)`);
+      this.bestiaryKill(p, m.kind);
+      this.seasonAdd(p, SEASON_PTS.worldBoss, "chefe mundial");
+      this.log(p, `Chefe mundial derrotado! Você fez ${Math.round(share * 100)}% do dano (${i + 1}º lugar): ${got} e ${crystals} cristais.`);
+    });
+    const top = ranked.slice(0, 3).map(([id, d], i) => `${i + 1}º ${this.state.players.get(id)?.name ?? id} (${Math.round((d / total) * 100)}%)`).join(", ");
+    this.broadcast("chat", { from: "", ch: "sys", text: `✔ ${killer.name} deu o golpe final no ${def.name}! ${ranked.length} guerreiros participaram. ${top}` });
+    this.broadcast("fx", { t: "event", text: `${def.name} derrotado!` });
+  }
+
+  private endWorldBoss() {
+    const wb = this.worldBoss;
+    if (!wb) return;
+    this.worldBoss = null;
+    const m = this.state.monsters.get(wb.id);
+    if (m) { this.state.monsters.delete(m.id); this.monsterAt.delete(tileKey(m.map, m.x, m.y)); }
+    this.broadcast("chat", { from: "", ch: "sys", text: `O ${MONSTERS[WORLD_BOSS.kind].name} cansou de esperar e voltou para Hueco Mundo. Fica para a próxima!` });
   }
 
   // ---------- Loja de Cristais ----------
@@ -2099,6 +2269,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const p = this.me(c);
       const item = COSMETIC[String(m?.id ?? "")];
       if (!p || !item || !p.accountId) return;
+      if (item.season) return this.log(p, `${item.name} só sai no passe de temporada.`);
       const w = db.wallet(p.accountId);
       if (w.owned.includes(item.id)) return this.log(p, `${item.name} já é seu.`);
       if (w.crystals < item.price) return this.log(p, `Faltam ${item.price - w.crystals} cristais para ${item.name}.`);
@@ -2189,6 +2360,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const cr = d.streak % DAILY.length === 0 ? FREE_CRYSTALS.daily7 : FREE_CRYSTALS.daily;
       this.giveCrystals(p, cr, "diária");
       this.log(p, `Recompensa diária (${d.streak}º dia seguido): ${got} e ${cr} cristais.`);
+      this.seasonAdd(p, SEASON_PTS.daily, "recompensa diária");
       this.sendTo(p, "dailyReady", { ready: false });
       this.tutorial(p, "daily");
       this.checkAchievements(p);

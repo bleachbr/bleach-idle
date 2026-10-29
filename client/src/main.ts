@@ -3,7 +3,7 @@ import Phaser from "phaser";
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind } from "../../shared/src";
+import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { serverNow, syncClock } from "./clock";
@@ -198,6 +198,7 @@ function start(room: Room<any>, myId: string) {
   bindGuild(room);
   bindBook(room);
   bindShop(room);
+  bindSeason(room);
   bindDangai(room, myId);
   $("#travel-btn").onclick = () => inventory.openTravel();
   $("#rebirth-btn").onclick = () => {
@@ -312,6 +313,59 @@ function bindParty(room: Room<any>, myId: string) {
 
 // ---------- livro: bestiário, conquistas e recompensa diária ----------
 
+// ---------- passe de temporada ----------
+
+function bindSeason(room: Room<any>) {
+  const panel = $("#pass");
+  type Season = { open: boolean; name: string; endsAt: number; pts: number; perTier: number; tiers: number; claimed: number; killPts: number; killCap: number };
+  let st: Season | null = null;
+  const prize = (t: number) => {
+    const r = seasonReward(t);
+    return [
+      r.cos ? `<b class="excl">${escHtml(COSMETIC[r.cos].name)}</b>` : "",
+      r.crystals ? `💎 ${r.crystals}` : "",
+      r.gold ? `${r.gold.toLocaleString("pt-BR")} kan` : "",
+      ...(r.items ?? []).map((i) => `${i.qty}x ${escHtml(ITEMS[i.id]?.name ?? i.id)}`),
+    ].filter(Boolean).join("<br>");
+  };
+  const render = () => {
+    if (!st) return;
+    const tier = Math.floor(st.pts / st.perTier);
+    $("#season-btn").classList.toggle("ping", tier > st.claimed);
+    if (panel.hidden) return;
+    const days = Math.max(0, Math.ceil((st.endsAt - serverNow()) / 86400_000));
+    $("#pass-name").textContent = st.name;
+    const into = st.pts % st.perTier;
+    $("#pass-head").innerHTML = `<div class="pass-top"><b>Nível ${tier}</b> <span class="hint">${into}/${st.perTier} pontos para o próximo · termina em ${days} ${days === 1 ? "dia" : "dias"}</span></div>
+      <div class="bar"><i style="width:${(into / st.perTier) * 100}%"></i></div>
+      <p class="hint">Pontos: a cada ${SEASON_PTS.killEvery} abates +${SEASON_PTS.kill} (hoje ${st.killPts}/${st.killCap}) · chefe +${SEASON_PTS.boss} · missão diária +${SEASON_PTS.mission} · recompensa diária +${SEASON_PTS.daily} · chefe mundial +${SEASON_PTS.worldBoss}</p>
+      <button type="button" class="claim" ${tier > st.claimed ? "" : "disabled"}>${tier > st.claimed ? `Pegar ${tier - st.claimed} ${tier - st.claimed === 1 ? "prêmio" : "prêmios"}` : "Tudo pego até agora"}</button>`;
+    $("#pass-head").querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("seasonClaim");
+    const cells: string[] = [];
+    for (let t = 1; t <= st.tiers; t++) {
+      const cls = t <= st.claimed ? "got" : t <= tier ? "ready" : "";
+      cells.push(`<div class="tier ${cls}${seasonReward(t).cos ? " big" : ""}"><small>${t}</small><div>${prize(t)}</div></div>`);
+    }
+    cells.push(`<div class="tier${tier > st.tiers ? " ready" : ""}"><small>${st.tiers}+</small><div>A cada nível a mais:<br>${prize(st.tiers + 1)}</div></div>`);
+    $("#pass-body").innerHTML = `<div class="tiers">${cells.join("")}</div>`;
+    // rola até o próximo prêmio
+    $("#pass-body").querySelector<HTMLElement>(".tier.ready:not(.got), .tier:not(.got)")?.scrollIntoView({ block: "nearest", inline: "center" });
+  };
+  room.onMessage("season", (m: Season) => { st = m; if (m.open) panel.hidden = false; render(); });
+  $("#season-btn").onclick = () => room.send("seasonOpen");
+  $("#pass-close").onclick = () => (panel.hidden = true);
+  // fim de semana de XP em dobro: aviso fixo no painel
+  const line = $("#event-line");
+  const tick = () => {
+    const on = xpWeekend(serverNow());
+    line.hidden = !on;
+    if (on) line.textContent = "★ Fim de semana: XP em dobro!";
+  };
+  tick();
+  const timer = window.setInterval(tick, 60_000);
+  room.onLeave(() => window.clearInterval(timer));
+}
+
 // ---------- Loja de Cristais ----------
 
 function bindShop(room: Room<any>) {
@@ -336,7 +390,7 @@ function bindShop(room: Room<any>) {
     const kind = COS_KINDS.find((k) => k.kind === tab)!;
     const slot = tab === "lore" ? "title" : tab;
     body.innerHTML = `<p class="hint">${escHtml(kind.hint)} Ganhe cristais na recompensa diária e nas conquistas; eles valem para todos os personagens da conta.</p>` +
-      COSMETICS.filter((x) => x.kind === tab).map((x) => {
+      COSMETICS.filter((x) => x.kind === tab && (!x.season || data!.owned.includes(x.id))).map((x) => {
         const own = data!.owned.includes(x.id);
         const on = data!.equip[slot] === x.id;
         const swatch = `<span class="swatch" style="background:${hex(x.color)};box-shadow:0 0 8px ${hex(x.color2 ?? x.color)}"></span>`;

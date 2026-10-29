@@ -6,7 +6,7 @@ import { MONSTERS } from "./data";
 // ---------- bestiário ----------
 
 /** chefes: poucos abates por estágio */
-export const BOSSES = new Set(["grand_fisher", "gillian", "metastacia", "privaron"]);
+export const BOSSES = new Set(["grand_fisher", "gillian", "metastacia", "privaron", "menos_anciao"]);
 
 /** abates para cada um dos 3 estágios */
 export function bestiaryStages(kind: string): [number, number, number] {
@@ -116,6 +116,8 @@ export interface Progress {
   peak?: number;
   /** melhor andar do Dangai */
   dgBest?: number;
+  /** passe de temporada */
+  season?: import("./season").SeasonState;
 }
 
 // ---------- desafio do Dangai (torre sem fim) ----------

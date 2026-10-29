@@ -136,6 +136,8 @@ export class Monster extends Schema {
   spawnIndex = 0;
   /** monstro de invasão: não renasce e volta para a própria casa (não para um spawn do mapa) */
   invader = false;
+  /** chefe mundial (evento): conta o dano de cada jogador para o prêmio */
+  world = false;
   /** monstro do Dangai: só o dono vê como alvo, ataca e é atacado por ele */
   owner = "";
   power = 1;

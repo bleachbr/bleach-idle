@@ -8,3 +8,4 @@ export * from "./training";
 export * from "./progress";
 export * from "./evolution";
 export * from "./shop";
+export * from "./season";
