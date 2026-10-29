@@ -199,6 +199,7 @@ function start(room: Room<any>, myId: string) {
   bindBook(room);
   bindShop(room);
   bindSeason(room);
+  bindDev(room, myId);
   bindDangai(room, myId);
   $("#travel-btn").onclick = () => inventory.openTravel();
   $("#rebirth-btn").onclick = () => {
@@ -391,6 +392,35 @@ function bindSeason(room: Room<any>) {
   tick();
   const timer = window.setInterval(tick, 60_000);
   room.onLeave(() => window.clearInterval(timer));
+}
+
+// ---------- modo Dev (o botão só aparece se o servidor estiver fora de produção) ----------
+
+function bindDev(room: Room<any>, myId: string) {
+  const panel = $("#dev");
+  const btn = $<HTMLButtonElement>("#dev-btn");
+  let god = false;
+  const acts: [string, string, number?][] = [
+    ["Nível +10", "level+"], ["Nível 30", "level", 30], ["Nível 60", "level", 60], ["Nível 100", "level", 100], ["Nível 150", "level", 150], ["Nível 1", "level", 1],
+    ["+1.000.000 kan", "gold"], ["+1.000 cristais", "crystals"], ["Melhor equipamento", "gear"], ["Poções, caixas e pedras", "items"],
+    ["+500 pontos do passe", "season"], ["Chamar chefe mundial", "boss"], ["Começar invasão", "invasion"],
+  ];
+  const render = () => {
+    const body = $("#dev-body");
+    body.innerHTML = `<p class="hint">Atalhos para testar. As formas e técnicas seguem o nível.</p>
+      <button type="button" class="dev-god${god ? " on" : ""}" data-a="god">${god ? "Imortal: ligado" : "Imortal: desligado"}</button>
+      <div class="dev-grid">${acts.map(([label], i) => `<button type="button" data-i="${i}">${label}</button>`).join("")}</div>`;
+    body.querySelector<HTMLButtonElement>("[data-a=god]")!.onclick = () => room.send("dev", { a: "god" });
+    body.querySelectorAll<HTMLButtonElement>("[data-i]").forEach((b) => (b.onclick = () => {
+      const [, a, n] = acts[Number(b.dataset.i)];
+      if (a === "level+") room.send("dev", { a: "level", n: (room.state.players.get(myId)?.level ?? 1) + 10 });
+      else room.send("dev", { a, n });
+    }));
+  };
+  room.onMessage("devMode", (m: { god: boolean }) => { god = m.god; btn.hidden = false; render(); });
+  btn.onclick = () => (panel.hidden = !panel.hidden);
+  $("#dev-close").onclick = () => (panel.hidden = true);
+  room.send("devHello");
 }
 
 // ---------- Loja de Cristais ----------

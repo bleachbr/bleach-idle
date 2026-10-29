@@ -223,10 +223,10 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 .tech.locked small::before { content: "🔒 "; }
 
 /* Loja de Cristais */
-#shop, #pass { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: min(560px, calc(100% - 24px)); max-height: calc(100% - 120px); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 30px #0008; z-index: 15; padding: 10px 12px; }
-#shop header, #pass header { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #ffffff1a; padding: 0 2px 8px; }
-#shop header > button, #pass header > button { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; }
-#shop .crystals, #pass .crystals { color: #9ae8ff; font-weight: 700; }
+#shop, #pass, #dev { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: min(560px, calc(100% - 24px)); max-height: calc(100% - 120px); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 30px #0008; z-index: 15; padding: 10px 12px; }
+#shop header, #pass header, #dev header { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #ffffff1a; padding: 0 2px 8px; }
+#shop header > button, #pass header > button, #dev header > button { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; }
+#shop .crystals, #pass .crystals, #dev .crystals { color: #9ae8ff; font-weight: 700; }
 #shop .tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 0 4px; }
 #shop .tabs button { padding: 3px 8px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; font-size: 12px; }
 #shop .tabs button[aria-pressed="true"] { color: var(--text); border-color: var(--accent); }
@@ -263,3 +263,10 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 /* botão do visual HD */
 .hd-btn { font: 700 10px/1 var(--title); letter-spacing: 0.5px; color: var(--muted); }
 .hd-btn.on { color: #ffd34a; text-shadow: 0 0 6px #ffb04a; }
+
+/* modo Dev */
+.dev-btn { font: 700 9px/1 var(--font-pixel, monospace); color: #7dff9a; }
+#dev-body .dev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; margin-top: 8px; }
+#dev-body .dev-god { width: 100%; }
+#dev-body .dev-god.on { color: #7dff9a; border-color: #7dff9a; }
+#dev-body { overflow-y: auto; padding: 6px 2px 0; }

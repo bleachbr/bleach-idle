@@ -26,6 +26,8 @@ import * as guilds from "./guilds";
 import * as market from "./market";
 
 const GUILD_COST = 500;
+/** Modo Dev (botão que libera tudo para testar): ligado fora de produção, ou forçado com BI_DEV=1 / BI_DEV=0 */
+const DEV_MODE = process.env.BI_DEV ? process.env.BI_DEV === "1" : process.env.NODE_ENV !== "production";
 const GUILD_MIN_LEVEL = 10;
 const GUILD_NAME_RE = /^[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ]{2,19}$/;
 const HELP = [
@@ -208,6 +210,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       for (const x of this.state.players.values()) if (!x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: this.display(p), text });
     });
     this.handle("ranking", (c) => c.send("ranking", this.ranking()));
+    if (DEV_MODE) this.registerDevMessages();
     if (process.env.BI_DEBUG) {
       this.handle("debugInvasion", () => this.startInvasion());
       this.handle("debugInvasionEnd", () => this.endInvasion(false));
@@ -420,6 +423,7 @@ export class WorldRoom extends GameRoom<WorldState> {
         this.state.players.delete(p.id);
         continue;
       }
+      if (p.devGod) { p.hp = p.maxHp; p.rei = p.maxRei; }
       this.updatePlayer(p, now);
     }
     for (const m of [...this.state.monsters.values()]) this.updateMonster(m, now);
@@ -725,6 +729,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private killPlayer(p: Player, by: string, killerId = "") {
+    if (p.devGod) { p.hp = p.maxHp; return; }
     if (p.map === "dangai") return this.dangaiDeath(p, by);
     const deathAt = { map: p.map, x: p.x, y: p.y };
     const dropped: Slot[] = [];
@@ -1860,6 +1865,76 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.teleport(p, "dangai", back);
     const run = this.dangai.get(p.id);
     this.dangaiEnd(p.id, `${by} derrubou você no andar ${run?.floor ?? "?"} (no Dangai não se perde nada).`);
+  }
+
+  // ---------- modo Dev ----------
+
+  private registerDevMessages() {
+    this.handle("devHello", (c) => {
+      const p = this.me(c);
+      if (p) c.send("devMode", { god: p.devGod });
+    });
+    this.handle("dev", (c, m: { a?: string; n?: number }) => {
+      const p = this.me(c);
+      if (!p) return;
+      switch (m?.a) {
+        case "level": this.devLevel(p, Number(m.n) || p.level); break;
+        case "gold":
+          p.gold += 1_000_000;
+          this.sendInv(p);
+          this.log(p, "Dev: +1.000.000 kan.");
+          break;
+        case "crystals":
+          this.giveCrystals(p, 1000, "dev");
+          this.log(p, "Dev: +1.000 cristais.");
+          break;
+        case "gear": {
+          // o melhor item de cada espaço do corpo, sem olhar o nível exigido
+          for (const slot of EQUIP_SLOTS) {
+            const best = Object.values(ITEMS).filter((it) => it.slot === slot).sort((a, b) => (b.atk ?? 0) + (b.def ?? 0) - (a.atk ?? 0) - (a.def ?? 0))[0];
+            if (best) p.equip[slot] = best.id;
+          }
+          this.recompute(p);
+          p.hp = p.maxHp;
+          p.rei = p.maxRei;
+          this.sendInv(p);
+          this.log(p, "Dev: melhor equipamento em todos os espaços.");
+          break;
+        }
+        case "items": {
+          const got = [["pocao_grande", 100], ["pocao_rei_grande", 100], ["caixa_kisuke", 20], ["pedra_reishi", 50]] as const;
+          const parts = got.map(([id, n]) => `${addItem(p.inv, id, n)}x ${ITEMS[id].name}`);
+          this.sendInv(p);
+          this.log(p, `Dev: ${parts.join(", ")}.`);
+          break;
+        }
+        case "god":
+          p.devGod = !p.devGod;
+          this.log(p, p.devGod ? "Dev: imortal e com reiatsu infinito." : "Dev: imortalidade desligada.");
+          break;
+        case "season":
+          this.seasonAdd(p, 500, "dev");
+          this.log(p, "Dev: +500 pontos do passe.");
+          break;
+        case "boss": this.spawnWorldBoss(); break;
+        case "invasion": this.startInvasion(); break;
+        default: return;
+      }
+      c.send("devMode", { god: p.devGod });
+    });
+  }
+
+  /** Leva o personagem direto a um nível (formas e técnicas seguem o nível; marcos de nível não são pagos). */
+  private devLevel(p: Player, target: number) {
+    const lv = Math.max(1, Math.min(300, Math.round(target)));
+    p.level = lv;
+    p.exp = expForLevel(lv);
+    if (p.form > maxForm(p.charId, lv)) this.setForm(p, 0);
+    this.recompute(p);
+    p.hp = p.maxHp;
+    p.rei = p.maxRei;
+    this.broadcast("fx", { t: "level", id: p.id, v: lv });
+    this.log(p, `Dev: nível ${lv}.`);
   }
 
   // ---------- renascimento ----------

@@ -104,6 +104,8 @@ export class Player extends Schema {
   skipUntil = 0;
   /** ids dos jogadores cujas mensagens não chegam a este (/ignorar) */
   ignore: string[] = [];
+  /** modo Dev: não morre e não gasta reiatsu */
+  devGod = false;
   offItems: Record<string, number> = {};
 }
 
