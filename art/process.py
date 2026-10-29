@@ -36,16 +36,12 @@ GAME_SPRITES = {
     "rukia": ("08_rukia_walk.png", 4, 4, 0.86, 1),
     "renji": ("11_renji_walk.png", 4, 4, 1.04, 1),
     "hollow": ("09_hollow_walk.png", 4, 4, 1.40, 2),
-    # visual por equipamento (edições das folhas base): <base>__haori, __mask, __haori_mask
+    # visual por equipamento, só onde a lore deixa: haori nos shinigami, máscara Hollow só no Ichigo (Visored)
     "ichigo_shikai__haori": ("14_ichigo_haori_walk.png", 4, 4, 1.00, 1),
     "rukia__haori": ("15_rukia_haori_walk.png", 4, 4, 0.86, 1),
     "renji__haori": ("16_renji_haori_walk.png", 4, 4, 1.04, 1),
     "ichigo_shikai__mask": ("17_ichigo_mask_walk.png", 4, 4, 1.00, 1),
-    "rukia__mask": ("18_rukia_mask_walk.png", 4, 4, 0.86, 1),
-    "renji__mask": ("19_renji_mask_walk.png", 4, 4, 1.04, 1),
     "ichigo_shikai__haori_mask": ("20_ichigo_haori_mask_walk.png", 4, 4, 1.00, 1),
-    "rukia__haori_mask": ("21_rukia_haori_mask_walk.png", 4, 4, 0.86, 1),
-    "renji__haori_mask": ("22_renji_haori_mask_walk.png", 4, 4, 1.04, 1),
     # Hueco Mundo
     "adjuchas": ("23_adjuchas_walk.png", 4, 4, 1.15, 2),
     "gillian": ("24_gillian_walk.png", 4, 4, 2.0, 2),
@@ -75,14 +71,16 @@ GAME_SPRITES = {
     "exequias": ("50_exequias_walk.png", 4, 4, 1.06, 1),
     "fraccion": ("51_fraccion_walk.png", 4, 4, 1.4, 2),
     "privaron": ("52_privaron_walk.png", 4, 4, 1.3, 2),
-    # formas finais (nível 60) e visual por equipamento do Ishida e do Sado: só existem em 8 quadros
-    "ichigo_final": ("walk8/ichigo_final_sheet.png", 4, 8, 1.00, 1),
-    "rukia_final": ("walk8/rukia_final_sheet.png", 4, 8, 0.86, 1),
-    "renji_final": ("walk8/renji_final_sheet.png", 4, 8, 1.04, 1),
-    "ishida_final": ("walk8/ishida_final_sheet.png", 4, 8, 0.98, 1),
-    "sado_final": ("walk8/sado_final_sheet.png", 4, 8, 1.1, 1),
-    **{f"{b}__{l}": (f"walk8/{b}__{l}_sheet.png", 4, 8, rel, 1)
-       for b, rel in (("ishida", 0.98), ("sado", 1.1)) for l in ("haori", "mask", "haori_mask")},
+    # estágios da evolução pela lore (níveis 30, 60 e 100) e o Hitsugaya: só existem em 8 quadros
+    **{id_: (f"walk8/{id_}_sheet.png", 4, 8, rel, 1) for id_, rel in (
+        ("ichigo_final", 1.00), ("ichigo_hollow", 1.00), ("ichigo_mugetsu", 1.00),
+        ("rukia_tenente", 0.86), ("rukia_capita", 0.86),
+        ("renji_final", 1.04), ("renji_tenente", 1.04), ("renji_soo", 1.04),
+        ("ishida_final", 0.98), ("ishida_stern", 0.98), ("ishida_ultimo", 0.98),
+        ("sado_final", 1.1), ("sado_fullbring", 1.1), ("sado_diablo", 1.1),
+        # o Hitsugaya criança é baixo; adulto, da altura do Ichigo
+        ("hitsugaya", 0.80), ("hitsugaya_bankai", 0.84), ("hitsugaya_adulto", 1.02),
+    ) if (Path(__file__).parent / "raw" / "walk8" / f"{id_}_down.png").exists()},
 }
 
 
@@ -369,7 +367,7 @@ def export_game():
     import walk8
     sprites = dict(GAME_SPRITES)
     for id_ in walk8.available():
-        if id_ in sprites:
+        if id_ in sprites and not sprites[id_][0].startswith("walk8/"):
             _, _, _, rel, tiles = sprites[id_]
             sprites[id_] = (f"walk8/{id_}_sheet.png", 4, 8, rel, tiles)
     sheets, colors = process(sprites, 48, 45, lift=True)

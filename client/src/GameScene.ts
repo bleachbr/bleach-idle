@@ -53,9 +53,9 @@ const MOB_FX: Record<string, string> = {
   gillian: "cero", menos_anciao: "cero", arrancar: "cero", arrancar_numeros: "cero", privaron: "cero",
 };
 /** explosão da liberação (Bankai e afins) de cada personagem */
-const RELEASE: Record<string, string> = { ichigo: "rel_ichigo", rukia: "rel_rukia", renji: "rel_renji", ishida: "rel_blue", sado: "rel_renji" };
+const RELEASE: Record<string, string> = { ichigo: "rel_ichigo", rukia: "rel_rukia", renji: "rel_renji", ishida: "rel_blue", sado: "rel_renji", hitsugaya: "rel_rukia" };
 /** aura do Bankai (ou forma liberada) de cada personagem */
-const AURA: Record<string, string> = { ichigo: "aura_ichigo", rukia: "aura_rukia", renji: "aura_renji", ishida: "aura_blue", sado: "aura_renji" };
+const AURA: Record<string, string> = { ichigo: "aura_ichigo", rukia: "aura_rukia", renji: "aura_renji", ishida: "aura_blue", sado: "aura_renji", hitsugaya: "aura_rukia" };
 /** habilidade de cada personagem: projétil que voa até o alvo, ou explosão no alvo */
 const SKILL_FX: Record<string, { anim: string; fly: boolean }> = {
   ichigo: { anim: "getsuga", fly: true },
@@ -63,6 +63,7 @@ const SKILL_FX: Record<string, { anim: string; fly: boolean }> = {
   renji: { anim: "fang", fly: true },
   ishida: { anim: "arrow", fly: true },
   sado: { anim: "punch", fly: true },
+  hitsugaya: { anim: "ice", fly: false },
 };
 
 /** O servidor anda em ticks de 100 ms: um passo de 260 ms acontece, na prática, a cada 300 ms.
@@ -187,7 +188,10 @@ export class GameScene extends Phaser.Scene {
     const form = CHARS[e.charId].forms[e.form];
     // visual do equipamento; sem a folha da combinação, tenta as partes ("haori_mask" -> "haori") e depois a base
     const look: string = e.look ?? "";
-    const tries = [spriteKey(form.sprite, look), ...look.split("_").map((l) => spriteKey(form.sprite, l))];
+    // sem a folha do estágio (arte ainda não feita), usa a do estágio anterior
+    const prev = CHARS[e.charId].forms.slice(0, e.form).reverse().map((f) => f.sprite);
+    const looks = [look, ...look.split("_")].filter(Boolean).map((l) => spriteKey(form.sprite, l)).filter((k) => k !== form.sprite);
+    const tries = [...looks, form.sprite, ...prev];
     return { key: tries.find((k) => this.textures.exists(k)) ?? form.sprite, tint: form.tint, scale: 1 };
   }
 
@@ -515,14 +519,15 @@ export class GameScene extends Phaser.Scene {
         break;
       case "form":
         {
-          // nome da liberação de cada um (Quincy e Fullbring não têm Bankai)
+          // grito de cada estágio da evolução ("BANKAI!", "MÁSCARA HOLLOW!", "MUGETSU!"); quanto mais alto, maior a explosão
           const cid = fx.id ? this.room.state.players.get(fx.id)?.charId : "";
-          const up = fx.v === 2 ? "FORMA FINAL!" : ({ ishida: "LETZT STIL!", sado: "DIABLO!" } as Record<string, string>)[cid ?? ""] ?? "BANKAI!";
-          this.float(v, fx.v ? up : "Forma normal", fx.v === 2 ? "#ff3a6a" : fx.v ? "#ff6a3a" : "#cfd8ff", fx.v === 2 ? 18 : 14);
-          if (v && fx.v) this.playFx(RELEASE[cid ?? ""] ?? "rel_ichigo", v.c.x, v.c.y - 26, { scale: fx.v === 2 ? 1.8 : 1.2 }); // o anel da explosão cai nos pés
-          if (v && fx.v === 2) this.cameras.main.flash(250, 255, 255, 255);
+          const up = CHARS[cid ?? ""]?.forms[fx.v ?? 0]?.shout ?? "BANKAI!";
+          const big = (fx.v ?? 0) >= 3;
+          this.float(v, fx.v ? up : "Forma normal", big ? "#ff3a6a" : fx.v ? "#ff6a3a" : "#cfd8ff", fx.v ? 12 + (fx.v ?? 0) * 2 : 14);
+          if (v && fx.v) this.playFx(RELEASE[cid ?? ""] ?? "rel_ichigo", v.c.x, v.c.y - 26, { scale: 1 + (fx.v ?? 0) * 0.25 }); // o anel da explosão cai nos pés
+          if (v && big) this.cameras.main.flash(250, 255, 255, 255);
         }
-        if (v && fx.v) this.cameras.main.shake(fx.v === 2 ? 400 : 200, fx.v === 2 ? 0.008 : 0.004);
+        if (v && fx.v) this.cameras.main.shake(150 + (fx.v ?? 0) * 70, 0.003 + (fx.v ?? 0) * 0.0015);
         if (mine && fx.v) sfx.bankai();
         break;
       case "skill": {

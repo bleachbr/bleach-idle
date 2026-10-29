@@ -177,10 +177,11 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (!p) return;
       const forms = CHARS[p.charId].forms;
       const top = maxForm(p.charId, p.level);
-      if (p.form > 0 && p.form >= top) return this.setForm(p, 0);
+      // T liberado vai direto ao estágio mais alto da evolução; T de novo volta ao normal
+      if (p.form > 0) return this.setForm(p, 0);
       if (top === 0) return this.log(p, `${forms[1].label} exige nível ${forms[1].minLevel}.`);
-      if (p.rei < p.maxRei * 0.3) return this.log(p, `Reiatsu insuficiente para ${forms[p.form + 1].label}.`);
-      this.setForm(p, p.form + 1);
+      if (p.rei < p.maxRei * 0.3) return this.log(p, `Reiatsu insuficiente para ${forms[top].label}.`);
+      this.setForm(p, top);
     });
     this.handle("auto", (c, m: { autoTarget?: boolean; autoHunt?: boolean; autoTrain?: boolean; autoSell?: boolean; autoHeal?: number;
       huntSpot?: string; autoReturn?: boolean; autoRei?: number; autoBankai?: boolean; autoBox?: boolean; autoRestock?: boolean }) => {

@@ -585,7 +585,10 @@ function renderStats(p: any) {
   setBar(".bar.rei", p.rei, p.maxRei, `Reiatsu ${Math.floor(p.rei)}/${p.maxRei}`);
   const a = expForLevel(p.level), b = expForLevel(p.level + 1);
   setBar(".bar.exp", p.exp - a, b - a, `XP ${Math.round(((p.exp - a) / (b - a)) * 100)}%`);
-  $("#pform").textContent = ch.forms[p.form].label;
+  // estágio atual e a linha da evolução inteira no balão (nível de cada estágio, liberado ou não)
+  const pf = $("#pform");
+  pf.textContent = `${ch.forms[p.form].label} · ${p.form + 1}/${ch.forms.length}`;
+  pf.title = ch.forms.map((f) => `${p.level >= f.minLevel ? "✔" : "🔒"} nível ${f.minLevel}: ${f.label}`).join("\n");
   const tier = POWER_TIERS[powerTier(p.power)];
   const pw = $("#ppower");
   pw.innerHTML = `Poder <b>${fmtPower(p.power)}</b> · <span>${tier.title}</span>`;

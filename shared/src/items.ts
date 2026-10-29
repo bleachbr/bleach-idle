@@ -242,7 +242,8 @@ export function isPureLoot(d: ItemDef): boolean {
   return !d.slot && !d.heal && !d.restoreRei && !d.boost && !d.box && !d.keep;
 }
 
-/** Visual do personagem conforme o equipamento: "", "haori", "mask" ou "haori_mask". */
+/** Visual do personagem conforme o equipamento: "", "haori", "mask" ou "haori_mask".
+ * Quem não tem a folha da combinação (a máscara Hollow só existe no Ichigo) aparece sem ela (spriteKey). */
 export function lookOf(equip: Partial<Record<EquipSlot, string>>): string {
   const parts = [];
   if (equip.armor === "haori") parts.push("haori");
