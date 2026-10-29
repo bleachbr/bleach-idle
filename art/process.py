@@ -302,6 +302,30 @@ def lift_darks(colors):
     return out
 
 
+PLAYER_IDS = ("ichigo", "rukia", "renji", "ishida", "sado", "hitsugaya")
+
+
+def even_rows(cells, fname, name):
+    """Folha de 8 quadros: o Codex desenha cada direção numa imagem própria, e às vezes a de costas
+    (ou a de perfil) vem menor. Reescala cada linha para a altura mediana da linha de frente, senão
+    o personagem encolhe ao virar. O perfil só é igualado nos jogáveis (monstro de quatro patas é
+    mais baixo de lado mesmo)."""
+    if not fname.startswith("walk8/") or len(cells) != 32:
+        return cells
+    med = lambda r: sorted(c.height for c, _ in cells[r * 8:(r + 1) * 8])[4]
+    ref = med(0)
+    rows = (1, 2, 3) if name.split("_")[0] in PLAYER_IDS else (3,)
+    out = list(cells)
+    for r in rows:
+        k = ref / med(r)
+        if abs(k - 1) < 0.03:
+            continue
+        for i in range(r * 8, (r + 1) * 8):
+            c, o = cells[i]
+            out[i] = (c.resize((max(1, round(c.width * k)), max(1, round(c.height * k))), Image.LANCZOS), o * k)
+    return out
+
+
 def process(sprites, tile, body_h, lift=False):
     """Retorna {nome: [frames]} já na célula final, com paleta compartilhada."""
     small = {}
@@ -310,7 +334,7 @@ def process(sprites, tile, body_h, lift=False):
         if not path.exists():
             print("faltando:", fname)
             continue
-        cells = [keep_main(c) for c in split_cells(remove_bg(Image.open(path)), rows, cols)]
+        cells = even_rows([keep_main(c) for c in split_cells(remove_bg(Image.open(path)), rows, cols)], fname, name)
         # escala única por folha: mesma altura de corpo em todos os frames
         ref_h = max(c.height for c, _ in cells)
         # -2: o contorno externo soma 1 px de cada lado

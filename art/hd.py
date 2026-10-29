@@ -20,11 +20,11 @@ def place_hd(img, cell, ofs):
     return out
 
 
-def sheet_hd(fname, rows, cols, rel, tiles, tile=48, body_h=45):
+def sheet_hd(fname, rows, cols, rel, tiles, tile=48, body_h=45, name=""):
     path = P.RAW / fname
     if not path.exists():
         return None
-    cells = [P.keep_main(c) for c in P.split_cells(P.remove_bg(Image.open(path)), rows, cols)]
+    cells = P.even_rows([P.keep_main(c) for c in P.split_cells(P.remove_bg(Image.open(path)), rows, cols)], fname, name)
     ref_h = max(c.height for c, _ in cells)
     cell = tile * tiles * HD_K
     # a mesma conta de escala do process.py, só que HD_K vezes maior
@@ -49,7 +49,7 @@ def main():
             sprites[id_] = (f"walk8/{id_}_sheet.png", 4, 8, rel, tiles)
     done = []
     for name, spec in sprites.items():
-        sheet = sheet_hd(*spec)
+        sheet = sheet_hd(*spec, name=name)
         if sheet is None:
             continue
         sheet.save(OUT / f"{name}.webp", "WEBP", quality=88, method=6)
