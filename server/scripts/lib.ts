@@ -87,3 +87,11 @@ export function patchSave(id: string, fields: Record<string, unknown>) {
   db.prepare("UPDATE players SET data = ? WHERE id = ?").run(JSON.stringify(data), id);
   db.close();
 }
+
+/** Põe cristais na conta dona do personagem direto no banco (a compra com dinheiro ainda não existe). */
+export function grantCrystals(charId: string, n: number) {
+  const db = new DatabaseSync(DB_FILE);
+  const { account_id } = db.prepare("SELECT account_id FROM players WHERE id = ?").get(charId) as { account_id: number };
+  db.prepare("INSERT INTO wallets (account_id, crystals) VALUES (?, ?) ON CONFLICT(account_id) DO UPDATE SET crystals = crystals + excluded.crystals").run(account_id, n);
+  db.close();
+}

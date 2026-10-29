@@ -43,6 +43,8 @@ export interface SaveData {
   autoBankai?: boolean;
   autoBox?: boolean;
   autoRestock?: boolean;
+  /** cosméticos equipados neste personagem */
+  cos?: import("../../shared/src").CosEquip;
   /** presente enquanto o personagem caça offline (para o relatório e o limite de 12 h) */
   offline?: { since: number; expAtLeave: number; goldAtLeave: number; zanAtLeave?: number; reiAtLeave?: number; deaths?: import("./schema").DeathReport[]; kills?: number; items?: Record<string, number> };
 }
@@ -201,4 +203,48 @@ export function setInWorld(id: string, inWorld: boolean) {
 /** Cópia consistente do banco (funciona com o jogo rodando). */
 export function backup(file: string) {
   db.exec(`VACUUM INTO '${file.replace(/'/g, "''")}'`);
+}
+
+// ---------- cristais (moeda da conta) ----------
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS wallets (
+    account_id INTEGER PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+    crystals INTEGER NOT NULL DEFAULT 0,
+    owned TEXT NOT NULL DEFAULT '[]'
+  );
+  CREATE TABLE IF NOT EXISTS crystal_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_id INTEGER NOT NULL,
+    delta INTEGER NOT NULL,
+    reason TEXT NOT NULL,
+    at INTEGER NOT NULL
+  );
+`);
+
+export interface Wallet { crystals: number; owned: string[] }
+
+export function wallet(accountId: number): Wallet {
+  const r = db.prepare("SELECT crystals, owned FROM wallets WHERE account_id = ?").get(accountId) as { crystals: number; owned: string } | undefined;
+  return r ? { crystals: r.crystals, owned: JSON.parse(r.owned) } : { crystals: 0, owned: [] };
+}
+
+/** Muda o saldo (positivo = ganhar, negativo = gastar) e, se vier, marca um cosmético como da conta.
+ * Tudo numa transação com registro no histórico; falha (null) se o saldo não der ou o item já for da conta. */
+export function changeCrystals(accountId: number, delta: number, reason: string, own?: string): Wallet | null {
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const w = wallet(accountId);
+    if (w.crystals + delta < 0 || (own && w.owned.includes(own))) { db.exec("ROLLBACK"); return null; }
+    w.crystals += delta;
+    if (own) w.owned.push(own);
+    db.prepare("INSERT INTO wallets (account_id, crystals, owned) VALUES (?, ?, ?) ON CONFLICT(account_id) DO UPDATE SET crystals = excluded.crystals, owned = excluded.owned")
+      .run(accountId, w.crystals, JSON.stringify(w.owned));
+    db.prepare("INSERT INTO crystal_log (account_id, delta, reason, at) VALUES (?, ?, ?, ?)").run(accountId, delta, reason, Date.now());
+    db.exec("COMMIT");
+    return w;
+  } catch (e) {
+    db.exec("ROLLBACK");
+    throw e;
+  }
 }

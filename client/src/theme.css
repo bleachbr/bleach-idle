@@ -221,3 +221,23 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 .tech.cooling small { color: #cfc9de; }
 .tech.locked { opacity: .4; border-left-color: #555; filter: grayscale(1); }
 .tech.locked small::before { content: "🔒 "; }
+
+/* Loja de Cristais */
+#shop { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: min(560px, calc(100% - 24px)); max-height: calc(100% - 120px); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 30px #0008; z-index: 15; padding: 10px 12px; }
+#shop header { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #ffffff1a; padding: 0 2px 8px; }
+#shop header > button { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; }
+#shop .crystals { color: #9ae8ff; font-weight: 700; }
+#shop .tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 0 4px; }
+#shop .tabs button { padding: 3px 8px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; font-size: 12px; }
+#shop .tabs button[aria-pressed="true"] { color: var(--text); border-color: var(--accent); }
+#shop-body { overflow-y: auto; padding: 4px 2px 0; }
+#shop-body p { line-height: 1.45; }
+#shop .cos { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+#shop .cos.on { background: #ffffff0d; }
+#shop .cos-text { flex: 1; min-width: 0; }
+#shop .cos-act { display: flex; gap: 4px; flex-shrink: 0; }
+#shop .cos-act button, #shop .claim { padding: 4px 10px; background: var(--bg); color: var(--text); border: 1px solid var(--accent); border-radius: 4px; cursor: pointer; font-size: 12px; }
+#shop .cos-act button:disabled { opacity: 0.5; cursor: default; border-color: var(--line); }
+#shop .swatch { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; border: 1px solid #ffffff40; }
+#shop .buy-note { margin-top: 10px; font-style: italic; }
+.crystal-btn { font-size: 15px; line-height: 1; }

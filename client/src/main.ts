@@ -3,7 +3,7 @@ import Phaser from "phaser";
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower } from "../../shared/src";
+import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { serverNow, syncClock } from "./clock";
@@ -197,6 +197,7 @@ function start(room: Room<any>, myId: string) {
   });
   bindGuild(room);
   bindBook(room);
+  bindShop(room);
   bindDangai(room, myId);
   $("#travel-btn").onclick = () => inventory.openTravel();
   $("#rebirth-btn").onclick = () => {
@@ -310,6 +311,57 @@ function bindParty(room: Room<any>, myId: string) {
 }
 
 // ---------- livro: bestiário, conquistas e recompensa diária ----------
+
+// ---------- Loja de Cristais ----------
+
+function bindShop(room: Room<any>) {
+  const panel = $("#shop");
+  let data: { crystals: number; owned: string[]; equip: Partial<Record<string, string>> } | null = null;
+  let tab: CosKind = "aura";
+  let reading = "";
+  const hex = (n: number) => `#${n.toString(16).padStart(6, "0")}`;
+  const render = () => {
+    if (!data) return;
+    $("#shop-crystals").textContent = `${data.crystals.toLocaleString("pt-BR")} cristais`;
+    $("#shop-tabs").innerHTML = COS_KINDS.map((k) => `<button type="button" data-tab="${k.kind}" aria-pressed="${k.kind === tab}">${k.label}</button>`).join("");
+    $("#shop-tabs").querySelectorAll<HTMLButtonElement>("button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab as CosKind; reading = ""; render(); }));
+    const body = $("#shop-body");
+    if (reading) {
+      const x = COSMETIC[reading];
+      body.innerHTML = `<h3>${escHtml(x.name)}</h3>${(x.text ?? []).map((t) => `<p>${escHtml(t)}</p>`).join("")}
+        <p class="hint">Título desta crônica: <b style="color:${hex(x.color)}">${escHtml(x.title ?? "")}</b></p><button type="button" class="claim" data-back>Voltar</button>`;
+      body.querySelector<HTMLButtonElement>("[data-back]")!.onclick = () => { reading = ""; render(); };
+      return;
+    }
+    const kind = COS_KINDS.find((k) => k.kind === tab)!;
+    const slot = tab === "lore" ? "title" : tab;
+    body.innerHTML = `<p class="hint">${escHtml(kind.hint)} Ganhe cristais na recompensa diária e nas conquistas; eles valem para todos os personagens da conta.</p>` +
+      COSMETICS.filter((x) => x.kind === tab).map((x) => {
+        const own = data!.owned.includes(x.id);
+        const on = data!.equip[slot] === x.id;
+        const swatch = `<span class="swatch" style="background:${hex(x.color)};box-shadow:0 0 8px ${hex(x.color2 ?? x.color)}"></span>`;
+        const action = !own ? `<button type="button" data-buy="${x.id}" ${data!.crystals < x.price ? "disabled" : ""}>💎 ${x.price}</button>`
+          : tab === "lore" ? `<button type="button" data-read="${x.id}">Ler</button><button type="button" data-equip="${x.id}" ${on ? "disabled" : ""}>${on ? "Título em uso" : "Usar título"}</button>`
+          : on ? `<button type="button" data-off="${slot}">Tirar</button>` : `<button type="button" data-equip="${x.id}">Usar</button>`;
+        const label = tab === "title" || tab === "lore" ? `<b style="color:${hex(x.color)}">« ${escHtml(titleText(x.id))} »</b>` : `<b>${escHtml(x.name)}</b>`;
+        return `<div class="cos${own ? " own" : ""}${on ? " on" : ""}">${swatch}<div class="cos-text">${label}${tab === "lore" ? ` <small>${escHtml(x.name)}</small>` : ""}<div class="hint">${escHtml(x.desc)}</div></div><div class="cos-act">${action}</div></div>`;
+      }).join("") +
+      `<p class="hint buy-note">Compra de cristais com dinheiro: ainda não está aberta.</p>`;
+    // compra em dois cliques: o primeiro pede confirmação no próprio botão
+    body.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach((b) => (b.onclick = () => {
+      if (b.dataset.sure) return room.send("shopBuy", { id: b.dataset.buy });
+      b.dataset.sure = "1";
+      b.textContent = "Confirmar?";
+    }));
+    body.querySelectorAll<HTMLButtonElement>("[data-equip]").forEach((b) => (b.onclick = () => room.send("shopEquip", { id: b.dataset.equip })));
+    body.querySelectorAll<HTMLButtonElement>("[data-off]").forEach((b) => (b.onclick = () => room.send("shopEquip", { kind: b.dataset.off })));
+    body.querySelectorAll<HTMLButtonElement>("[data-read]").forEach((b) => (b.onclick = () => { reading = b.dataset.read!; render(); }));
+  };
+  room.onMessage("shopData", (d: typeof data) => { data = d; panel.hidden = false; render(); });
+  room.onMessage("crystals", (m: { crystals: number }) => { if (data) { data.crystals = m.crystals; render(); } });
+  $("#shop-btn").onclick = () => room.send("shopOpen");
+  $("#shop-close").onclick = () => (panel.hidden = true);
+}
 
 function bindBook(room: Room<any>) {
   const panel = $("#book");

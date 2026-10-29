@@ -15,7 +15,7 @@ import {
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
-  TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
+  COSMETIC, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -163,6 +163,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.registerBagMessages();
     this.registerMarketMessages();
     this.registerBookMessages();
+    this.registerShopMessages();
     this.registerForgeMessages();
     this.registerRebirthMessages();
     this.registerDangaiMessages();
@@ -237,6 +238,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const row = db.load(id);
       if (!row || row.accountId !== auth.accountId) throw new ServerError(404, "Personagem não encontrado.");
       p = this.fromSave(id, row.data);
+      p.accountId = row.accountId ?? 0;
       this.state.players.set(id, p);
       if (row.data.offline) {
         p.offlineSince = row.data.offline.since;
@@ -328,6 +330,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.forge = saved.forge ?? {};
     p.expBoostUntil = saved.expBoostUntil ?? 0;
     p.lootBoostUntil = saved.lootBoostUntil ?? 0;
+    this.applyCos(p, saved.cos ?? {});
     const g = guilds.guildOf(id);
     p.guildId = g?.id ?? 0;
     p.guildTag = g?.tag ?? "";
@@ -352,6 +355,7 @@ export class WorldRoom extends GameRoom<WorldState> {
         continue;
       }
       const p = this.fromSave(row.id, row.data);
+      p.accountId = row.accountId ?? 0;
       p.online = false;
       p.offlineSince = since;
       p.expAtLeave = row.data.offline?.expAtLeave ?? p.exp;
@@ -621,7 +625,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.techReady[i] = now + sk.cdMs;
     p.skillReadyAt = now + 600;
     this.face(p, t);
-    this.broadcast("fx", { t: "skill", from: p.id, to: t.id, color: sk.color, name: sk.name, i, area: sk.area ?? 0, cd: sk.cdMs });
+    const skin = p.cosFx ? COSMETIC[p.cosFx] : undefined;
+    this.broadcast("fx", { t: "skill", from: p.id, to: t.id, color: skin?.color ?? sk.color, color2: skin?.color2, skin: !!skin, name: sk.name, i, area: sk.area ?? 0, cd: sk.cdMs });
     // técnica em área: os monstros em volta do alvo também levam (um pouco menos)
     const splash = sk.area && !isPlayer(t)
       ? [...this.state.monsters.values()].filter((m) => m !== t && m.hp > 0 && sameMap(m, t) && (!m.owner || m.owner === p.id)
@@ -2047,10 +2052,87 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (p.prog.ach.includes(a.id) || s[a.stat] < a.need) continue;
       p.prog.ach.push(a.id);
       const got = this.grant(p, a.reward);
-      this.log(p, `Conquista: ${a.name}! Recompensa: ${got}.`);
+      this.giveCrystals(p, FREE_CRYSTALS.achievement, `conquista ${a.id}`);
+      this.log(p, `Conquista: ${a.name}! Recompensa: ${got} e ${FREE_CRYSTALS.achievement} cristais.`);
       this.sendTo(p, "fx", { t: "book", text: `Conquista: ${a.name}` });
       if (a.need >= 25 || a.stat === "level") this.broadcast("chat", { from: "", text: `🏆 ${p.name} conquistou "${a.name}".`, ch: "sys" });
     }
+  }
+
+  // ---------- Loja de Cristais ----------
+
+  private cosOf(p: Player): CosEquip {
+    const c: CosEquip = {};
+    if (p.cosAura) c.aura = p.cosAura;
+    if (p.cosFx) c.fx = p.cosFx;
+    if (p.cosTitle) c.title = p.cosTitle;
+    if (p.cosName) c.name = p.cosName;
+    if (p.cosPet) c.pet = p.cosPet;
+    return c;
+  }
+
+  /** Equipa a partir do save, ignorando ids que sumiram do catálogo. */
+  private applyCos(p: Player, c: CosEquip) {
+    const ok = (id: string | undefined, kinds: string[]) => (id && COSMETIC[id] && kinds.includes(COSMETIC[id].kind) ? id : "");
+    p.cosAura = ok(c.aura, ["aura"]);
+    p.cosFx = ok(c.fx, ["fx"]);
+    p.cosTitle = ok(c.title, ["title", "lore"]);
+    p.cosName = ok(c.name, ["name"]);
+    p.cosPet = ok(c.pet, ["pet"]);
+  }
+
+  /** Cristais grátis do jogo (vão para a conta, valem para todos os personagens). */
+  private giveCrystals(p: Player, n: number, reason: string) {
+    if (!p.accountId || n <= 0) return;
+    db.changeCrystals(p.accountId, n, reason);
+    this.sendTo(p, "crystals", { crystals: db.wallet(p.accountId).crystals });
+  }
+
+  private sendShop(p: Player) {
+    const w = p.accountId ? db.wallet(p.accountId) : { crystals: 0, owned: [] };
+    this.sendTo(p, "shopData", { crystals: w.crystals, owned: w.owned, equip: this.cosOf(p) });
+  }
+
+  private registerShopMessages() {
+    this.handle("shopOpen", (c) => { const p = this.me(c); if (p) this.sendShop(p); });
+    this.handle("shopBuy", (c, m: { id?: string }) => {
+      const p = this.me(c);
+      const item = COSMETIC[String(m?.id ?? "")];
+      if (!p || !item || !p.accountId) return;
+      const w = db.wallet(p.accountId);
+      if (w.owned.includes(item.id)) return this.log(p, `${item.name} já é seu.`);
+      if (w.crystals < item.price) return this.log(p, `Faltam ${item.price - w.crystals} cristais para ${item.name}.`);
+      if (!db.changeCrystals(p.accountId, -item.price, `compra ${item.id}`, item.id)) return this.log(p, "Não deu para comprar agora. Tente de novo.");
+      // já sai equipado (a crônica equipa o título dela)
+      this.equipCos(p, item.id);
+      this.log(p, item.kind === "lore" ? `Crônica liberada: ${item.name}. Você ganhou o título "${item.title}".` : `Você comprou ${item.name}!`);
+      this.sendTo(p, "fx", { t: "event", text: item.kind === "lore" ? `Título: ${item.title}` : item.name });
+      this.sendShop(p);
+    });
+    this.handle("shopEquip", (c, m: { id?: string; kind?: string }) => {
+      const p = this.me(c);
+      if (!p || !p.accountId) return;
+      const id = String(m?.id ?? "");
+      if (!id) {
+        // tirar: o tipo vem junto
+        const kind = String(m?.kind ?? "");
+        if (kind === "aura") p.cosAura = ""; else if (kind === "fx") p.cosFx = ""; else if (kind === "title") p.cosTitle = "";
+        else if (kind === "name") p.cosName = ""; else if (kind === "pet") p.cosPet = "";
+        return this.sendShop(p);
+      }
+      if (!COSMETIC[id] || !db.wallet(p.accountId).owned.includes(id)) return this.log(p, "Esse cosmético não é da sua conta.");
+      this.equipCos(p, id);
+      this.sendShop(p);
+    });
+  }
+
+  private equipCos(p: Player, id: string) {
+    const kind = COSMETIC[id].kind;
+    if (kind === "aura") p.cosAura = id;
+    else if (kind === "fx") p.cosFx = id;
+    else if (kind === "title" || kind === "lore") p.cosTitle = id;
+    else if (kind === "name") p.cosName = id;
+    else if (kind === "pet") p.cosPet = id;
   }
 
   private registerBookMessages() {
@@ -2104,7 +2186,9 @@ export class WorldRoom extends GameRoom<WorldState> {
       d.streak = d.last === prevDay(today) ? d.streak + 1 : 1;
       d.last = today;
       const got = this.grant(p, DAILY[(d.streak - 1) % DAILY.length]);
-      this.log(p, `Recompensa diária (${d.streak}º dia seguido): ${got}.`);
+      const cr = d.streak % DAILY.length === 0 ? FREE_CRYSTALS.daily7 : FREE_CRYSTALS.daily;
+      this.giveCrystals(p, cr, "diária");
+      this.log(p, `Recompensa diária (${d.streak}º dia seguido): ${got} e ${cr} cristais.`);
       this.sendTo(p, "dailyReady", { ready: false });
       this.tutorial(p, "daily");
       this.checkAchievements(p);
@@ -2216,7 +2300,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       name: p.name, charId: p.charId, level: p.level, exp: p.exp, hp: p.hp, rei: Math.round(p.rei), map: p.map, x: p.x, y: p.y,
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
       autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil, rebirths: p.rebirths, prog: p.prog, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
-      autoTrain: p.autoTrain, autoSell: p.autoSell, ignore: p.ignore, huntSpot: p.huntSpot, autoReturn: p.autoReturn, autoRei: p.autoRei, autoBankai: p.autoBankai, autoBox: p.autoBox, autoRestock: p.autoRestock, zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
+      autoTrain: p.autoTrain, autoSell: p.autoSell, ignore: p.ignore, huntSpot: p.huntSpot, autoReturn: p.autoReturn, autoRei: p.autoRei, autoBankai: p.autoBankai, autoBox: p.autoBox, autoRestock: p.autoRestock, cos: this.cosOf(p), zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
       offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, zanAtLeave: p.zanAtLeave, reiAtLeave: p.reiAtLeave, deaths: p.offlineDeaths, kills: p.offKills, items: p.offItems },
     };
   }

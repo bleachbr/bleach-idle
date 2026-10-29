@@ -45,8 +45,15 @@ export class Player extends Schema {
   skullUntil = 0; // ms epoch: caveira de assassino (abates injustos)
   rebirths = 0; // renascimentos (prestígio)
   power = 0; // Poder (resumo de atributos, equipamento e renascimentos): define o título e a aura
+  // cosméticos da Loja de Cristais equipados (ids de COSMETIC; "" = nenhum)
+  cosAura = "";
+  cosFx = "";
+  cosTitle = "";
+  cosName = "";
+  cosPet = "";
 
   // só no servidor (não sincronizado)
+  accountId = 0; // conta dona do personagem (carteira de cristais)
   path: { x: number; y: number }[] = [];
   follow = false;
   nextStepAt = 0;
@@ -110,6 +117,7 @@ defineTypes(Player, {
   level: "uint16", exp: "number", targetId: "string",
   online: "boolean", autoTarget: "boolean", autoHunt: "boolean", autoHeal: "uint8", huntSpot: "string", autoReturn: "boolean", autoRei: "uint8", autoBankai: "boolean", autoBox: "boolean", autoRestock: "boolean", look: "string", map: "string",
   partyId: "string", partyLead: "boolean", pvpUntil: "number", skullUntil: "number", rebirths: "uint8", power: "uint32", guildTag: "string",
+  cosAura: "string", cosFx: "string", cosTitle: "string", cosName: "string", cosPet: "string",
   autoTrain: "boolean", autoSell: "boolean", zanjutsu: "uint8", zanPct: "uint8", reiryoku: "uint8", reiPct: "uint8",
 });
 

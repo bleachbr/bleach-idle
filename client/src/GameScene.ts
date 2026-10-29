@@ -3,15 +3,20 @@
 import Phaser from "phaser";
 import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
-import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, type GameMap } from "../../shared/src";
+import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, titleText, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, type GameMap } from "../../shared/src";
 import { serverNow } from "./clock";
 
 const VIEW_W = 15;
 const VIEW_H = 11;
 
 interface View {
-  /** aura do título de Poder */
-  tier?: number;
+  /** aura do título de Poder (chave: título + aura comprada) */
+  tier?: string;
+  /** cosméticos: título acima do nome e borboleta que acompanha */
+  title?: Phaser.GameObjects.Text;
+  titleId?: string;
+  pet?: Phaser.GameObjects.Graphics;
+  petId?: string;
   glow?: Phaser.GameObjects.Graphics;
   glowFx?: Phaser.GameObjects.Particles.ParticleEmitter;
   id: string;
@@ -210,7 +215,7 @@ export class GameScene extends Phaser.Scene {
       this.tweens.add({ targets: c, alpha: 1, duration: 450, ease: "Quad.easeOut" });
       this.playFx("death", c.x, c.y - spr.displayHeight / 3, { scale: 0.6 })?.setAlpha(0.6);
     }
-    if (!isMonster) { this.setAura(v, e.form ? e.charId : undefined); this.setPowerAura(v, e.power ?? 0); }
+    if (!isMonster) { this.setAura(v, e.form ? e.charId : undefined); this.setPowerAura(v, e.power ?? 0, e.cosAura); this.setCosmetics(v, e); }
     this.drawBar(v, e.hp, e.maxHp);
 
     e.onChange(() => {
@@ -228,7 +233,8 @@ export class GameScene extends Phaser.Scene {
         }
         v.label.setAlpha(e.online ? 1 : 0.55); // offline caçando aparece meio apagado
         this.setAura(v, e.form ? e.charId : undefined);
-        this.setPowerAura(v, e.power ?? 0);
+        this.setPowerAura(v, e.power ?? 0, e.cosAura);
+        this.setCosmetics(v, e);
         if (id === this.myId) this.onMe(e);
       }
     });
@@ -314,14 +320,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Aura do título de Poder: brilho nos pés que cresce e muda de cor a cada título; dos Capitães para cima, pulsa e solta faíscas. */
-  private setPowerAura(v: View, power: number) {
-    const tier = powerTier(power);
-    if (v.tier === tier) return;
-    v.tier = tier;
+  private setPowerAura(v: View, power: number, cosAura?: string) {
+    const skin = cosAura ? COSMETIC[cosAura] : undefined;
+    // aura comprada: a cor é dela e o brilho vale no mínimo o de Capitão (com faíscas)
+    const tier = skin ? Math.max(powerTier(power), 4) : powerTier(power);
+    const key = `${tier}|${cosAura ?? ""}`;
+    if (v.tier === key) return;
+    v.tier = key;
     v.glow?.destroy();
     v.glowFx?.destroy();
     v.glow = v.glowFx = undefined;
-    const t = POWER_TIERS[tier];
+    const t = skin ? { color: skin.color } : POWER_TIERS[tier];
     if (!t.color) return;
     const w = 26 + tier * 4;
     const g = this.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
@@ -333,9 +342,56 @@ export class GameScene extends Phaser.Scene {
     if (tier >= 4 && this.textures.exists("amb_dot")) {
       v.glowFx = this.add.particles(0, -6, "amb_dot", {
         x: { min: -w / 3, max: w / 3 }, lifespan: 900, frequency: 260 - tier * 25, speedY: { min: -40, max: -18 },
-        scale: { start: 0.9, end: 0 }, alpha: { start: 0.9, end: 0 }, tint: t.color, blendMode: Phaser.BlendModes.ADD,
+        scale: { start: 0.9, end: 0 }, alpha: { start: 0.9, end: 0 }, tint: skin?.color2 ? [t.color, skin.color2] : t.color, blendMode: Phaser.BlendModes.ADD,
       });
       v.c.addAt(v.glowFx, 2);
+    }
+  }
+
+  /** Título comprado acima do nome e borboleta que acompanha o personagem. */
+  private setCosmetics(v: View, e: any) {
+    const titleId: string = e.cosTitle ?? "";
+    if (v.titleId !== titleId) {
+      v.titleId = titleId;
+      v.title?.destroy();
+      v.title = undefined;
+      const text = titleText(titleId);
+      if (text) {
+        const col = `#${COSMETIC[titleId].color.toString(16).padStart(6, "0")}`;
+        v.title = this.add.text(0, v.label.y - 12, `« ${text} »`, {
+          fontFamily: PIXEL_FONT, fontSize: "9px", color: col, stroke: "#000000", strokeThickness: 3, resolution: 2,
+        }).setOrigin(0.5, 1);
+        v.c.add(v.title);
+      }
+    }
+    const petId: string = e.cosPet ?? "";
+    if (v.petId !== petId) {
+      v.petId = petId;
+      v.pet?.destroy();
+      v.pet = undefined;
+      const pet = petId ? COSMETIC[petId] : undefined;
+      if (pet) {
+        // borboleta: duas asas de cada lado e o corpo; bate as asas encolhendo na horizontal
+        // contorno escuro para aparecer em qualquer chão
+        const g = this.add.graphics();
+        g.fillStyle(0x000000, 0.6).fillEllipse(-4.5, -2, 9, 8).fillEllipse(4.5, -2, 9, 8).fillEllipse(-3, 2.5, 7, 6).fillEllipse(3, 2.5, 7, 6);
+        g.fillStyle(pet.color2 ?? pet.color, 1).fillEllipse(-4.5, -2, 7, 6).fillEllipse(4.5, -2, 7, 6);
+        g.fillStyle(pet.color, 1).fillEllipse(-3, 2.5, 5, 4).fillEllipse(3, 2.5, 5, 4);
+        g.fillStyle(0x000000, 1).fillRect(-0.5, -4, 1, 9);
+        g.setScale(1.2);
+        this.tweens.add({ targets: g, scaleX: 0.3, duration: 140, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+        v.pet = g;
+        v.c.add(g);
+      }
+    }
+  }
+
+  /** Borboletas voam em volta do dono (um oito lento, cada uma no seu ritmo). */
+  private flyPets(time: number) {
+    for (const v of this.views.values()) {
+      if (!v.pet) continue;
+      const t = time / 900 + v.id.length;
+      v.pet.setPosition(Math.sin(t) * 18, -v.spr.displayHeight * 0.55 + Math.sin(t * 2) * 5);
     }
   }
 
@@ -384,7 +440,7 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({ targets: t, alpha: 0, delay: 500, duration: 400, onComplete: () => t.destroy() });
   }
 
-  private onFx(fx: { t: string; id?: string; v?: number; from?: string; to?: string; color?: number; name?: string; text?: string; skill?: boolean; i?: number; cd?: number; area?: number }) {
+  private onFx(fx: { t: string; id?: string; v?: number; from?: string; to?: string; color?: number; color2?: number; skin?: boolean; name?: string; text?: string; skill?: boolean; i?: number; cd?: number; area?: number }) {
     const v = fx.id ? this.views.get(fx.id) : undefined;
     // som só do que envolve você: o próprio personagem ou o seu alvo
     const mine = fx.id === this.myId;
@@ -488,12 +544,17 @@ export class GameScene extends Phaser.Scene {
         const sk = SKILL_FX[p?.charId ?? ""];
         const ang = Phaser.Math.Angle.Between(a.c.x, a.c.y, b.c.x, b.c.y);
         this.lunge(a, b);
+        if (fx.skin) this.skinTrail(a, b, fx.color ?? 0xffffff, fx.color2 ?? fx.color ?? 0xffffff);
         if (sk && this.anims.exists(`fx-${sk.anim}`)) {
           if (sk.fly) {
             // projétil: sai do personagem e voa até o alvo
             const shot = this.playFx(sk.anim, a.c.x, a.c.y - 20, { rotation: ang, scale: 0.9 });
+            if (shot && fx.skin) shot.setTint(fx.color!);
             if (shot) this.tweens.add({ targets: shot, x: b.c.x, y: b.c.y - 20, duration: 220 });
-          } else this.playFx(sk.anim, b.c.x, b.c.y - 20, { scale: 1.1 + (fx.area ?? 0) * 0.35 });
+          } else {
+            const blast = this.playFx(sk.anim, b.c.x, b.c.y - 20, { scale: 1.1 + (fx.area ?? 0) * 0.35 });
+            if (blast && fx.skin) blast.setTint(fx.color!);
+          }
           this.time.delayedCall(200, () => this.playFx("hit", b.c.x, b.c.y - 20));
         } else {
           const orb = this.add.ellipse(a.c.x, a.c.y - 20, 22, 10, fx.color, 0.9).setDepth(1e6);
@@ -503,6 +564,16 @@ export class GameScene extends Phaser.Scene {
         break;
       }
     }
+  }
+
+  /** Visual comprado de técnica: um rastro de faíscas nas duas cores do atacante até o alvo. */
+  private skinTrail(a: View, b: View, c1: number, c2: number) {
+    if (!this.textures.exists("amb_dot")) return;
+    const em = this.add.particles(a.c.x, a.c.y - 20, "amb_dot", {
+      lifespan: 450, frequency: 12, speed: { min: 5, max: 30 }, scale: { start: 1.4, end: 0 }, alpha: { start: 1, end: 0 },
+      tint: [c1, c2], blendMode: c1 < 0x404040 ? Phaser.BlendModes.NORMAL : Phaser.BlendModes.ADD,
+    }).setDepth(1e6);
+    this.tweens.add({ targets: em, x: b.c.x, y: b.c.y - 20, duration: 220, onComplete: () => { em.stop(); this.time.delayedCall(500, () => em.destroy()); } });
   }
 
   private restoreTint(v: View) {
@@ -770,6 +841,7 @@ export class GameScene extends Phaser.Scene {
 
   update(time: number, delta: number) {
     this.glide(delta);
+    this.flyPets(time);
     this.updateTarget();
     if (time >= this.nextMinimapAt) {
       this.nextMinimapAt = time + 250;
@@ -805,7 +877,9 @@ export class GameScene extends Phaser.Scene {
       if (!p) continue;
       // ☠ vermelho escuro = assassino; vermelho = marcado (atacou alguém há pouco); verde = minha party
       const skull = p.skullUntil > now;
-      const color = skull ? "#ff2020" : p.pvpUntil > now ? "#ff6a5a" : me?.partyId && p.partyId === me.partyId && v.id !== this.myId ? "#7dff8a" : "#ffffff";
+      const cosName = p.cosName ? COSMETIC[p.cosName] : undefined;
+      const color = skull ? "#ff2020" : p.pvpUntil > now ? "#ff6a5a" : me?.partyId && p.partyId === me.partyId && v.id !== this.myId ? "#7dff8a"
+        : cosName ? `#${cosName.color.toString(16).padStart(6, "0")}` : "#ffffff";
       const text = `${skull ? "☠ " : ""}${p.rebirths ? `✦${p.rebirths} ` : ""}${p.name}${p.guildTag ? ` [${p.guildTag}]` : ""}`;
       if (v.label.text !== text) v.label.setText(text);
       if (v.label.style.color !== color) v.label.setColor(color);
