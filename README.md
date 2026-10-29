@@ -49,10 +49,10 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 - **Evolução pela lore:** cada personagem tem **5 estágios**, nos níveis 1, 10, 30, 60 e 100, que seguem a história dele:
   - **Ichigo:** Shikai, Bankai, Visored (Máscara Hollow), Hollowficação e Mugetsu;
   - **Rukia:** Shikai, Tenente da 13ª, Bankai (Hakka no Togame), Capitã da 13ª e Capitã com Bankai;
-  - **Renji:** Shikai, Bankai, Bankai verdadeiro (Sōō Zabimaru), Tenente Veterano e Chamas de Hihiō;
-  - **Ishida:** Ginrei Kojaku, Letzt Stil, Sternritter, Vollständig e O Último Quincy;
-  - **Sado:** Brazo Derecha, Brazo Izquierda, Gigante e Diablo, Fullbring Completo e Diablo Supremo;
-  - **Hitsugaya:** Shikai, Bankai (asas de gelo), Flores de Gelo, Forma Adulta e Hyōten Hyakkasō.
+  - **Renji:** Shikai, Bankai, Treino da Divisão Zero, Bankai verdadeiro (Sōō Zabimaru) e Zaga Tetsuzan;
+  - **Ishida:** Ginrei Kojaku, Letzt Stil, Hueco Mundo (Seele Schneider), Sternritter "A" e Antithesis;
+  - **Sado:** Brazo Derecha, Brazo Izquierda, Fullbring (Gigante e Diablo), El Directo e La Muerte;
+  - **Hitsugaya:** Shikai, Bankai (asas de gelo), Hyōten Hyakkasō, Forma Adulta e Shiten Kōsō.
 
   A tecla T vai direto ao estágio mais alto liberado, e o Auto Bankai sobe um estágio por vez. Cada estágio tem sprite e grito próprios. A explosão fica maior a cada estágio. Passar o mouse no nome da forma mostra a linha inteira. Tem também **4 técnicas** nas teclas 1, 4, 5 e 6, aprendidas nos níveis 1, 25, 50 e 100. Algumas acertam em área, e a técnica 1 muda de nome, cor e força a cada forma (ex.: Getsuga Tenshō → Negro → Mascarado). O Auto Hunt usa a mais forte que estiver pronta.
 - **Poder e títulos:** um número que resume ataque, defesa, vida, perícias, equipamento e renascimentos. Cada título (Oficial, Assento, Tenente, Capitão, Capitão-Comandante, Lenda e Rei das Almas) acende uma aura nos pés de outra cor, e a partir de Capitão ela solta faíscas. O ranking tem aba de Poder.

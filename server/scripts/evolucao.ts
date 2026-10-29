@@ -10,6 +10,7 @@ ok(`${chars.length} personagens, todos com ${FORM_LEVELS.length} estágios nos n
   chars.length >= 6 && chars.every((c) => c.forms.length === FORM_LEVELS.length && c.forms.every((f, i) => f.minLevel === FORM_LEVELS[i])));
 ok("cada estágio bate mais forte e anda mais rápido que o anterior",
   chars.every((c) => c.forms.every((f, i) => i === 0 || (f.dmgMult > c.forms[i - 1].dmgMult && f.stepMs < c.forms[i - 1].stepMs))));
+ok("cada estágio tem sprite próprio (nenhum repete folha)", chars.every((c) => new Set(c.forms.map((f) => f.sprite)).size === c.forms.length));
 ok("a Rukia não tem mais asas de gelo (são do Hitsugaya)", !CHARS.rukia.forms.some((f) => /asas/i.test(f.label)) && CHARS.hitsugaya.forms.some((f) => f.sprite === "hitsugaya_bankai"));
 ok("máscara Hollow só muda o visual do Ichigo", spriteKey("ichigo_shikai", lookOf({ head: "mascara" })) === "ichigo_shikai__mask"
   && spriteKey("rukia", lookOf({ head: "mascara" })) === "rukia" && spriteKey("sado", lookOf({ armor: "haori" })) === "sado"
@@ -49,7 +50,7 @@ ok("ranking de Poder", await until(() => a.ranking()?.poder?.some((r: any) => r.
 a.room.send("auto", { autoTarget: false });
 await a.room.leave();
 
-// Hitsugaya no nível 100: Forma Adulta com Hyōten Hyakkasō
+// Hitsugaya no nível 100: Forma Adulta com Shiten Kōsō
 const h = await bot("Evo Toshiro", { level: 100, exp: expForLevel(100), hp: 99999, rei: 99999 }, "hitsugaya");
 h.room.send("transform");
 ok("Hitsugaya jogável: no nível 100, T chega ao 5º estágio", await until(() => h.me()?.form === 4));
@@ -58,7 +59,7 @@ await until(() => !!h.me().targetId);
 // o alvo pode estar fora de alcance: tenta até ele chegar perto
 for (let i = 0; i < 40 && !h.fx.some((f) => f.t === "skill" && f.i === 0); i++) { h.room.send("skill", { slot: 1 }); await sleep(300); }
 const hs = h.fx.find((f) => f.t === "skill" && f.i === 0);
-ok(`e a técnica 1 vira Hyōten Hyakkasō (${hs?.name ?? h.logs.slice(-2).join(" | ")})`, hs?.name === "Hyōten Hyakkasō");
+ok(`e a técnica 1 vira Shiten Kōsō (${hs?.name ?? h.logs.slice(-2).join(" | ")})`, hs?.name === "Shiten Kōsō");
 h.room.send("auto", { autoTarget: false });
 await h.room.leave();
 

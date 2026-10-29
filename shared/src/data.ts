@@ -50,17 +50,19 @@ export const SPRITES: Record<string, SpriteDef> = {
   ichigo_mugetsu: { frame: 48, cols: 8 },
   rukia_tenente: { frame: 48, cols: 8 },
   rukia_capita: { frame: 48, cols: 8 },
-  renji_tenente: { frame: 48, cols: 8 },
+  renji_zero: { frame: 48, cols: 8 },
   renji_soo: { frame: 48, cols: 8 },
+  ishida_hueco: { frame: 48, cols: 8 },
   ishida_stern: { frame: 48, cols: 8 },
-  ishida_ultimo: { frame: 48, cols: 8 },
-  sado_fullbring: { frame: 48, cols: 8 },
-  sado_diablo: { frame: 48, cols: 8 },
+  ishida_antithesis: { frame: 48, cols: 8 },
+  sado_directo: { frame: 48, cols: 8 },
+  sado_muerte: { frame: 48, cols: 8 },
   hitsugaya: { frame: 48, cols: 8 },
   hitsugaya_bankai: { frame: 48, cols: 8 },
+  hitsugaya_hyakkaso: { frame: 48, cols: 8 },
   hitsugaya_adulto: { frame: 48, cols: 8 },
+  hitsugaya_shiten: { frame: 48, cols: 8 },
   renji_final: { frame: 48, cols: 8 },
-  ishida_final: { frame: 48, cols: 8 },
   sado_final: { frame: 48, cols: 8 },
 };
 
@@ -179,7 +181,7 @@ export const CHARS: Record<string, CharDef> = {
       { name: "Zero Absoluto", minLevel: 100, range: 6, cost: 90, mult: 8, cdMs: 30000, color: 0xffffff, area: 3 },
     ],
   },
-  // Shikai → Bankai → Bankai verdadeiro (Sōō Zabimaru) → veterano da 6ª → Sōō em chamas
+  // Shikai → Bankai → depois do treino com a Divisão Zero → Bankai verdadeiro (Sōō Zabimaru) → Zaga Tetsuzan
   renji: {
     id: "renji",
     name: "Renji",
@@ -189,22 +191,22 @@ export const CHARS: Record<string, CharDef> = {
       { id: "shikai", label: "Shikai: Zabimaru", sprite: "renji", dmgMult: 1, stepMs: 270, attackMs: 1050, reiDrain: 0, minLevel: 1 },
       { id: "bankai", label: "Bankai: Hihiō Zabimaru", shout: "BANKAI!", sprite: "renji_bankai", dmgMult: 1.8, stepMs: 200, attackMs: 750, reiDrain: 2.5, minLevel: 10,
         skill: { name: "Higa Zekkō: Hihiō", color: 0xff4a2a, mult: 3 } },
-      { id: "soo", label: "Bankai Verdadeiro: Sōō Zabimaru", shout: "SŌŌ ZABIMARU!", sprite: "renji_final", dmgMult: 2.25, stepMs: 180, attackMs: 680, reiDrain: 3.5, minLevel: 30,
-        skill: { name: "Higa Zekkō: Sōō", color: 0xff2a10, mult: 3.3 } },
-      { id: "veterano", label: "Tenente Veterano da 6ª", shout: "TENENTE!", sprite: "renji_tenente", dmgMult: 2.7, stepMs: 160, attackMs: 600, reiDrain: 5, minLevel: 60,
-        skill: { name: "Hikotsu Taihō", color: 0xff6a20, mult: 3.6 } },
-      { id: "chamas", label: "Sōō Zabimaru: Chamas de Hihiō", shout: "HIHIŌ!", sprite: "renji_soo", dmgMult: 3.2, stepMs: 145, attackMs: 540, reiDrain: 6, minLevel: 100,
-        skill: { name: "Zaga Tetsuzan Flamejante", color: 0xff3a00, mult: 4.2 } },
+      { id: "zero", label: "Treino da Divisão Zero", shout: "DIVISÃO ZERO!", sprite: "renji_zero", dmgMult: 2.25, stepMs: 180, attackMs: 680, reiDrain: 3.5, minLevel: 30,
+        skill: { name: "Hikotsu Taihō", color: 0xff6a20, mult: 3.3 } },
+      { id: "soo", label: "Bankai Verdadeiro: Sōō Zabimaru", shout: "SŌŌ ZABIMARU!", sprite: "renji_final", dmgMult: 2.7, stepMs: 160, attackMs: 600, reiDrain: 5, minLevel: 60,
+        skill: { name: "Higa Zekkō: Sōō", color: 0xff2a10, mult: 3.6 } },
+      { id: "zaga", label: "Sōō Zabimaru: Zaga Tetsuzan", shout: "ZAGA TETSUZAN!", sprite: "renji_soo", dmgMult: 3.2, stepMs: 145, attackMs: 540, reiDrain: 6, minLevel: 100,
+        skill: { name: "Zaga Tetsuzan", color: 0xff3a00, mult: 4.2 } },
     ],
     skill: { name: "Higa Zekkō", range: 3, cost: 18, mult: 2.4, cdMs: 2500, color: 0xff6a4a },
     techs: [
       { name: "Rōga Sō", minLevel: 25, range: 4, cost: 35, mult: 3.2, cdMs: 6000, color: 0xff6a4a, area: 2 },
       { name: "Hikotsu Taihō", minLevel: 50, range: 6, cost: 45, mult: 4.6, cdMs: 9000, color: 0xff4020, area: 1 },
-      { name: "Zaga Tetsuzan", minLevel: 100, range: 5, cost: 90, mult: 9.5, cdMs: 30000, color: 0xff2010, area: 2 },
+      { name: "Hihiō Zabimaru: Fogo Total", minLevel: 100, range: 5, cost: 90, mult: 9.5, cdMs: 30000, color: 0xff2010, area: 2 },
     ],
   },
   // Quincy: corpo a corpo fraco, flecha de longe e barata.
-  // Ginrei Kojaku → Letzt Stil → Sternritter → Vollständig → o último Quincy
+  // Ginrei Kojaku → Letzt Stil → Hueco Mundo (Seele Schneider) → Sternritter "A" → Antithesis
   ishida: {
     id: "ishida",
     name: "Ishida",
@@ -214,12 +216,12 @@ export const CHARS: Record<string, CharDef> = {
       { id: "shikai", label: "Quincy: Ginrei Kojaku", sprite: "ishida", dmgMult: 1, stepMs: 240, attackMs: 900, reiDrain: 0, minLevel: 1 },
       { id: "letzt", label: "Quincy: Letzt Stil", shout: "LETZT STIL!", sprite: "ishida_power", dmgMult: 1.6, stepMs: 180, attackMs: 650, reiDrain: 2.5, minLevel: 10,
         skill: { name: "Licht Regen: Letzt Stil", color: 0x9fe6ff, mult: 3.1 } },
-      { id: "stern", label: "Sternritter \"A\": Antithesis", shout: "STERNRITTER!", sprite: "ishida_stern", dmgMult: 2, stepMs: 160, attackMs: 570, reiDrain: 3.5, minLevel: 30,
+      { id: "hueco", label: "Hueco Mundo: Seele Schneider", shout: "SEELE SCHNEIDER!", sprite: "ishida_hueco", dmgMult: 2, stepMs: 160, attackMs: 570, reiDrain: 3.5, minLevel: 30,
         skill: { name: "Seele Schneider", color: 0x7fd6ff, mult: 3.5 } },
-      { id: "voll", label: "Vollständig: Asas de Luz", shout: "VOLLSTÄNDIG!", sprite: "ishida_final", dmgMult: 2.4, stepMs: 140, attackMs: 500, reiDrain: 5, minLevel: 60,
-        skill: { name: "Licht Regen: Vollständig", color: 0xffffff, mult: 3.8 } },
-      { id: "ultimo", label: "O Último Quincy", shout: "O ÚLTIMO QUINCY!", sprite: "ishida_ultimo", dmgMult: 2.9, stepMs: 125, attackMs: 450, reiDrain: 6, minLevel: 100,
-        skill: { name: "Heilig Bogen Dourado", color: 0xffe08a, mult: 4.4 } },
+      { id: "stern", label: "Sternritter \"A\"", shout: "STERNRITTER!", sprite: "ishida_stern", dmgMult: 2.4, stepMs: 140, attackMs: 500, reiDrain: 5, minLevel: 60,
+        skill: { name: "Heilig Pfeil: Sternritter", color: 0xffffff, mult: 3.8 } },
+      { id: "antithesis", label: "Sternritter \"A\": Antithesis", shout: "ANTITHESIS!", sprite: "ishida_antithesis", dmgMult: 2.9, stepMs: 125, attackMs: 450, reiDrain: 6, minLevel: 100,
+        skill: { name: "Antithesis", color: 0x4ab0ff, mult: 4.4 } },
     ],
     skill: { name: "Licht Regen", range: 7, cost: 16, mult: 2.5, cdMs: 2500, color: 0x7fd6ff },
     techs: [
@@ -229,7 +231,7 @@ export const CHARS: Record<string, CharDef> = {
     ],
   },
   // braço do gigante: o mais forte e resistente, o mais lento.
-  // Brazo Derecha → Brazo Izquierda → os dois braços → Fullbring treinado → Diablo supremo
+  // Brazo Derecha → Brazo Izquierda (Hueco Mundo) → os braços do Fullbring → El Directo → La Muerte
   sado: {
     id: "sado",
     name: "Sado",
@@ -239,22 +241,22 @@ export const CHARS: Record<string, CharDef> = {
       { id: "shikai", label: "Brazo Derecha de Gigante", sprite: "sado", dmgMult: 1, stepMs: 290, attackMs: 1100, reiDrain: 0, minLevel: 1 },
       { id: "diablo", label: "Brazo Izquierda del Diablo", shout: "DIABLO!", sprite: "sado_power", dmgMult: 1.85, stepMs: 200, attackMs: 800, reiDrain: 2.5, minLevel: 10,
         skill: { name: "El Directo Diablo", color: 0xff3020, mult: 3.4 } },
-      { id: "dois", label: "Gigante e Diablo", shout: "GIGANTE E DIABLO!", sprite: "sado_final", dmgMult: 2.3, stepMs: 185, attackMs: 720, reiDrain: 3.5, minLevel: 30,
-        skill: { name: "El Directo Máximo", color: 0xff1a1a, mult: 3.8 } },
-      { id: "fullbring", label: "Fullbring Completo", shout: "FULLBRING!", sprite: "sado_fullbring", dmgMult: 2.8, stepMs: 170, attackMs: 640, reiDrain: 5, minLevel: 60,
-        skill: { name: "La Muerte", color: 0xffd040, mult: 4.2 } },
-      { id: "supremo", label: "Diablo Supremo", shout: "PUÑO DEL DIABLO!", sprite: "sado_diablo", dmgMult: 3.3, stepMs: 155, attackMs: 580, reiDrain: 6, minLevel: 100,
-        skill: { name: "Martillo del Diablo", color: 0xff2020, mult: 4.8 } },
+      { id: "fullbring", label: "Fullbring: Gigante e Diablo", shout: "FULLBRING!", sprite: "sado_final", dmgMult: 2.3, stepMs: 185, attackMs: 720, reiDrain: 3.5, minLevel: 30,
+        skill: { name: "El Directo Fullbring", color: 0xff1a1a, mult: 3.8 } },
+      { id: "directo", label: "Fullbring: El Directo", shout: "EL DIRECTO!", sprite: "sado_directo", dmgMult: 2.8, stepMs: 170, attackMs: 640, reiDrain: 5, minLevel: 60,
+        skill: { name: "El Directo Máximo", color: 0x9fd8ff, mult: 4.2 } },
+      { id: "muerte", label: "Fullbring: La Muerte", shout: "LA MUERTE!", sprite: "sado_muerte", dmgMult: 3.3, stepMs: 155, attackMs: 580, reiDrain: 6, minLevel: 100,
+        skill: { name: "La Muerte", color: 0xc01030, mult: 4.8 } },
     ],
     skill: { name: "El Directo", range: 3, cost: 20, mult: 2.8, cdMs: 3000, color: 0xff5040 },
     techs: [
-      { name: "La Muerte", minLevel: 25, range: 3, cost: 35, mult: 3.8, cdMs: 6000, color: 0xff5040, area: 2 },
+      { name: "Golpe de Mi Abuelo", minLevel: 25, range: 3, cost: 35, mult: 3.8, cdMs: 6000, color: 0xff5040, area: 2 },
       { name: "Golpe do Gigante", minLevel: 50, range: 4, cost: 45, mult: 5, cdMs: 9000, color: 0xffd040, area: 1 },
       { name: "Puño del Diablo", minLevel: 100, range: 4, cost: 90, mult: 10, cdMs: 30000, color: 0xff2020, area: 3 },
     ],
   },
   // o capitão-prodígio do gelo: técnicas em área, alcance médio.
-  // Shikai → Bankai (asas de gelo) → Bankai com as flores → Bankai adulto → Hyōten Hyakkasō
+  // Shikai → Bankai (asas de gelo) → Hyōten Hyakkasō → Forma Adulta → Shiten Kōsō
   hitsugaya: {
     id: "hitsugaya",
     name: "Hitsugaya",
@@ -264,18 +266,18 @@ export const CHARS: Record<string, CharDef> = {
       { id: "shikai", label: "Shikai: Hyōrinmaru", sprite: "hitsugaya", dmgMult: 1, stepMs: 250, attackMs: 950, reiDrain: 0, minLevel: 1 },
       { id: "bankai", label: "Bankai: Daiguren Hyōrinmaru", shout: "BANKAI!", sprite: "hitsugaya_bankai", dmgMult: 1.7, stepMs: 180, attackMs: 680, reiDrain: 2.5, minLevel: 10,
         skill: { name: "Ryūsenka", color: 0x9fe8ff, mult: 3.2 } },
-      { id: "flores", label: "Daiguren: Flores de Gelo", shout: "FLORES DE GELO!", sprite: "hitsugaya_bankai", tint: 0xd8f6ff, dmgMult: 2.1, stepMs: 165, attackMs: 610, reiDrain: 3.5, minLevel: 30,
-        skill: { name: "Sennen Hyōrō", color: 0xbff4ff, mult: 3.6 } },
+      { id: "hyakkaso", label: "Bankai: Hyōten Hyakkasō", shout: "HYŌTEN HYAKKASŌ!", sprite: "hitsugaya_hyakkaso", dmgMult: 2.1, stepMs: 165, attackMs: 610, reiDrain: 3.5, minLevel: 30,
+        skill: { name: "Hyōten Hyakkasō", color: 0xbff4ff, mult: 3.6 } },
       { id: "adulto", label: "Daiguren Hyōrinmaru: Forma Adulta", shout: "FORMA ADULTA!", sprite: "hitsugaya_adulto", dmgMult: 2.5, stepMs: 145, attackMs: 540, reiDrain: 5, minLevel: 60,
-        skill: { name: "Shiten Kōsō", color: 0xe6fbff, mult: 4.1 } },
-      { id: "hyakkaso", label: "Forma Adulta: Hyōten Hyakkasō", shout: "HYAKKASŌ!", sprite: "hitsugaya_adulto", tint: 0xc8f0ff, dmgMult: 3, stepMs: 130, attackMs: 480, reiDrain: 6, minLevel: 100,
-        skill: { name: "Hyōten Hyakkasō", color: 0xffffff, mult: 4.7 } },
+        skill: { name: "Sennen Hyōrō", color: 0xe6fbff, mult: 4.1 } },
+      { id: "shiten", label: "Forma Adulta: Shiten Kōsō", shout: "SHITEN KŌSŌ!", sprite: "hitsugaya_shiten", dmgMult: 3, stepMs: 130, attackMs: 480, reiDrain: 6, minLevel: 100,
+        skill: { name: "Shiten Kōsō", color: 0xffffff, mult: 4.7 } },
     ],
     skill: { name: "Hyōryū: Dragão de Gelo", range: 5, cost: 20, mult: 2.8, cdMs: 3000, color: 0x9fe8ff },
     techs: [
       { name: "Guncho Tsurara", minLevel: 25, range: 5, cost: 35, mult: 3.1, cdMs: 6000, color: 0xbff4ff, area: 2 },
       { name: "Hyōryū Senbi", minLevel: 50, range: 6, cost: 45, mult: 4.6, cdMs: 9000, color: 0x9fe8ff, area: 1 },
-      { name: "Hyōten Hyakkasō", minLevel: 100, range: 7, cost: 90, mult: 8.5, cdMs: 30000, color: 0xffffff, area: 3 },
+      { name: "Ryūsenka: Flor de Gelo", minLevel: 100, range: 7, cost: 90, mult: 8.5, cdMs: 30000, color: 0xffffff, area: 3 },
     ],
   },
 };

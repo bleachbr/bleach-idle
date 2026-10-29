@@ -75,11 +75,12 @@ GAME_SPRITES = {
     **{id_: (f"walk8/{id_}_sheet.png", 4, 8, rel, 1) for id_, rel in (
         ("ichigo_final", 1.00), ("ichigo_hollow", 1.00), ("ichigo_mugetsu", 1.00),
         ("rukia_tenente", 0.86), ("rukia_capita", 0.86),
-        ("renji_final", 1.04), ("renji_tenente", 1.04), ("renji_soo", 1.04),
-        ("ishida_final", 0.98), ("ishida_stern", 0.98), ("ishida_ultimo", 0.98),
-        ("sado_final", 1.1), ("sado_fullbring", 1.1), ("sado_diablo", 1.1),
+        ("renji_zero", 1.04), ("renji_final", 1.04), ("renji_soo", 1.04),
+        ("ishida_hueco", 0.98), ("ishida_stern", 0.98), ("ishida_antithesis", 0.98),
+        ("sado_final", 1.1), ("sado_directo", 1.1), ("sado_muerte", 1.1),
         # o Hitsugaya criança é baixo; adulto, da altura do Ichigo
-        ("hitsugaya", 0.80), ("hitsugaya_bankai", 0.84), ("hitsugaya_adulto", 1.02),
+        ("hitsugaya", 0.80), ("hitsugaya_bankai", 0.84), ("hitsugaya_hyakkaso", 0.84),
+        ("hitsugaya_adulto", 1.02), ("hitsugaya_shiten", 1.02),
     ) if (Path(__file__).parent / "raw" / "walk8" / f"{id_}_down.png").exists()},
 }
 
