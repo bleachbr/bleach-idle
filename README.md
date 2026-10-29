@@ -46,6 +46,8 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 
 **Combate e progressão**
 - **Níveis:** fórmula do Tibia, começando no nível 8. Shikai/Bankai na tecla T (nível 10+), com mais dano e velocidade, mas gastando reiatsu.
+- **Evolução:** cada personagem tem 3 formas na tecla T: a base, a liberação no nível 10 e a **forma final no nível 60** (Máscara Hollow, Asas de Gelo, Sōō Zabimaru, Vollständig e Gigante e Diablo), cada uma com sprite próprio. Tem também **4 técnicas** nas teclas 1, 4, 5 e 6, aprendidas nos níveis 1, 25, 50 e 100. Algumas acertam em área, e a técnica 1 muda de nome, cor e força a cada forma (ex.: Getsuga Tenshō → Negro → Mascarado). O Auto Hunt usa a mais forte que estiver pronta.
+- **Poder e títulos:** um número que resume ataque, defesa, vida, perícias, equipamento e renascimentos. Cada título (Oficial, Assento, Tenente, Capitão, Capitão-Comandante, Lenda e Rei das Almas) acende uma aura nos pés de outra cor, e a partir de Capitão ela solta faíscas. O ranking tem aba de Poder.
 - **Monstros:** 18 tipos, mais o boneco de treino, todos com sprite próprio. Chefes: Grand Fisher (Karakura), Metastacia (sul do Rukongai), Gillian (Hueco Mundo) e Privaron Espada (Las Noches).
 - **Treino:** **Zanjutsu** sobe com golpes e aumenta o dano corpo a corpo (+2%/nível). **Reiryoku** sobe com o reiatsu gasto e aumenta o dano das habilidades (+3%/nível). O **Auto Treino** queima o reiatsu parado, e os **bonecos de treino** da Soul Society não morrem. Os dois continuam offline.
 - **Morte (estilo Tibia):** perde 8% de XP, 10% do dinheiro carregado e cada item tem 10% de chance de cair. O que cai fica num **corpo no chão** por 5 minutos (sobrevive a um reinício do servidor); em PvP, quem matou (e a party dele) tem prioridade por 1 minuto. O **Amuleto da Alma** protege tudo, e o depot nunca perde nada.
@@ -71,7 +73,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
   - **Traje de Capitão:** +40 de vida com 2 peças e +8% de dano com 3.
   - **Herança Hollow:** +3 de ataque com 2 peças e +10% de loot com 3.
   - **Lua Negra:** +6% de dano e +5% de XP.
-- **Visual:** Haori de Capitão e Máscara de Osso mudam o sprite, e todos veem. Rukia e Renji têm sprite próprio no Bankai.
+- **Visual:** Haori de Capitão e Máscara de Osso mudam o sprite dos cinco personagens, e todos veem. Cada liberação e cada forma final tem sprite próprio.
 - **Mercado entre jogadores** (aba no Kisuke): anuncie itens do inventário com preço por unidade; o item fica guardado até alguém comprar ou você cancelar. Taxa de 5% na venda, e o vendedor recebe mesmo fora do jogo. Anúncio sem comprador por 7 dias volta para o depot.
 
 **Social**

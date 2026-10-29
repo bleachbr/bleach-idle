@@ -60,16 +60,18 @@
           <div class="bar rei"><i></i><span></span></div>
           <div class="bar exp"><i></i><span></span></div>
           <div id="pform"></div>
+          <div id="ppower"></div>
           <div id="pskills" class="hint"></div>
           <div id="pvp-lock" hidden></div>
           <button type="button" id="rebirth-btn" class="rebirth" hidden></button>
         </section>
         <section id="skills">
-          <h2 data-ico="swords">Atalhos</h2>
-          <div><kbd>1</kbd> <span id="skill-name"></span></div>
+          <h2 data-ico="swords">Técnicas</h2>
+          <div id="techs"></div>
+          <h2 data-ico="scroll">Atalhos</h2>
           <div><kbd>2</kbd> Poção de Cura (<span id="potions">0</span>)</div>
           <div><kbd>3</kbd> Poção de Reiatsu (<span id="rei-potions">0</span>)</div>
-          <div><kbd>T</kbd> Liberar ↔ voltar (Bankai)</div>
+          <div><kbd>T</kbd> Liberar (Bankai, depois forma final) ↔ voltar</div>
           <div><kbd>R</kbd> Voltar à cidade</div>
           <div><kbd>Tab</kbd> próximo alvo · <kbd>Esc</kbd> soltar alvo</div>
           <div><kbd>WASD</kbd> ou clique no chão para andar</div>
@@ -116,7 +118,7 @@
         <div id="ctx" hidden></div>
         <div id="ranking" hidden>
           <header><b data-ico="trophy">Ranking</b>
-            <span class="tabs"><button type="button" data-tab="nivel" aria-pressed="true">Nível</button><button type="button" data-tab="abates">Abates (PvP)</button><button type="button" data-tab="guildas">Guildas</button><button type="button" data-tab="conquistas">Conquistas</button><button type="button" data-tab="bestiario">Bestiário</button><button type="button" data-tab="dangai">Dangai</button></span>
+            <span class="tabs"><button type="button" data-tab="nivel" aria-pressed="true">Nível</button><button type="button" data-tab="poder">Poder</button><button type="button" data-tab="abates">Abates (PvP)</button><button type="button" data-tab="guildas">Guildas</button><button type="button" data-tab="conquistas">Conquistas</button><button type="button" data-tab="bestiario">Bestiário</button><button type="button" data-tab="dangai">Dangai</button></span>
             <button type="button" id="ranking-close" aria-label="Fechar">✕</button></header>
           <div id="ranking-body"></div>
         </div>
@@ -148,7 +150,7 @@
           <div id="stick"><div id="knob"></div></div>
           <div id="actions">
             <button type="button" data-act="target" title="Próximo alvo (Tab)">🎯</button>
-            <button type="button" data-act="skill" title="Habilidade (1)">⚔</button>
+            <button type="button" data-act="skill" title="Técnica mais forte pronta">⚔</button>
             <button type="button" data-act="hp" title="Poção de Cura (2)">❤</button>
             <button type="button" data-act="rei" title="Poção de Reiatsu (3)">✦</button>
             <button type="button" data-act="form" title="Shikai/Bankai (T)">卍</button>

@@ -207,3 +207,17 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 .auto-row select { flex: 1; min-width: 0; background: #0b0a12; color: var(--text); border: 1px solid #ffffff2a; font: 500 12px var(--title); padding: 3px; }
 .auto-row input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
 .auto-row b { min-width: 58px; text-align: right; font: 500 11px var(--title); color: var(--gold); }
+
+/* Poder e título (a cor é a da aura) */
+#ppower { font: 500 12px var(--title); color: #c9c4da; margin: 2px 0; }
+#ppower b { color: var(--gold); }
+#ppower span { color: var(--tier); text-shadow: 0 0 6px var(--tier); }
+/* técnicas: uma linha por tecla, na cor da técnica; trancada até o nível, apagada na recarga */
+#techs { display: grid; gap: 3px; margin: 4px 0 8px; }
+.tech { display: flex; align-items: center; gap: 6px; padding: 3px 5px; background: #0b0a12; border-left: 3px solid var(--c); font-size: 12px; }
+.tech span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; }
+.tech small { font: 500 10px var(--title); color: var(--gold); }
+.tech.cooling { opacity: .55; }
+.tech.cooling small { color: #cfc9de; }
+.tech.locked { opacity: .4; border-left-color: #555; filter: grayscale(1); }
+.tech.locked small::before { content: "🔒 "; }

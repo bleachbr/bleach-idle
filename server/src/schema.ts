@@ -44,13 +44,16 @@ export class Player extends Schema {
   pvpUntil = 0; // ms epoch: até quando está bloqueado depois de atacar um jogador
   skullUntil = 0; // ms epoch: caveira de assassino (abates injustos)
   rebirths = 0; // renascimentos (prestígio)
+  power = 0; // Poder (resumo de atributos, equipamento e renascimentos): define o título e a aura
 
   // só no servidor (não sincronizado)
   path: { x: number; y: number }[] = [];
   follow = false;
   nextStepAt = 0;
   nextAttackAt = 0;
-  skillReadyAt = 0;
+  skillReadyAt = 0; // recarga global curta entre técnicas
+  /** recarga de cada técnica (teclas 1, 4, 5 e 6) */
+  techReady: number[] = [0, 0, 0, 0];
   potionReadyAt = 0;
   lastCombatAt = 0;
   offlineSince = 0;
@@ -106,7 +109,7 @@ defineTypes(Player, {
   hp: "int32", maxHp: "int32", rei: "number", maxRei: "int32",
   level: "uint16", exp: "number", targetId: "string",
   online: "boolean", autoTarget: "boolean", autoHunt: "boolean", autoHeal: "uint8", huntSpot: "string", autoReturn: "boolean", autoRei: "uint8", autoBankai: "boolean", autoBox: "boolean", autoRestock: "boolean", look: "string", map: "string",
-  partyId: "string", partyLead: "boolean", pvpUntil: "number", skullUntil: "number", rebirths: "uint8", guildTag: "string",
+  partyId: "string", partyLead: "boolean", pvpUntil: "number", skullUntil: "number", rebirths: "uint8", power: "uint32", guildTag: "string",
   autoTrain: "boolean", autoSell: "boolean", zanjutsu: "uint8", zanPct: "uint8", reiryoku: "uint8", reiPct: "uint8",
 });
 

@@ -45,11 +45,16 @@ export const SPRITES: Record<string, SpriteDef> = {
   exequias: { frame: 48, cols: 8 },
   fraccion: { frame: 96, cols: 8 },
   privaron: { frame: 96, cols: 8 },
+  ichigo_final: { frame: 48, cols: 8 },
+  rukia_final: { frame: 48, cols: 8 },
+  renji_final: { frame: 48, cols: 8 },
+  ishida_final: { frame: 48, cols: 8 },
+  sado_final: { frame: 48, cols: 8 },
 };
 
 // Variantes de visual por equipamento (folha inteira por combinação: <base>__<look>).
 // O Bankai do Ichigo tem roupa própria e não muda.
-export const OUTFIT_BASES = ["ichigo_shikai", "rukia", "renji"];
+export const OUTFIT_BASES = ["ichigo_shikai", "rukia", "renji", "ishida", "sado"];
 export const OUTFIT_LOOKS = ["haori", "mask", "haori_mask"];
 for (const b of OUTFIT_BASES) for (const l of OUTFIT_LOOKS) SPRITES[`${b}__${l}`] = { frame: 48 };
 
@@ -67,7 +72,7 @@ export function spriteKey(base: string, look: string): string {
 }
 
 export interface FormDef {
-  id: "shikai" | "bankai";
+  id: "shikai" | "bankai" | "final";
   label: string;
   sprite: string;
   tint?: number;
@@ -77,6 +82,8 @@ export interface FormDef {
   /** reiatsu gasto por segundo enquanto a forma estiver ativa */
   reiDrain: number;
   minLevel: number;
+  /** a técnica 1 evolui com a forma: novo nome, cor e força */
+  skill?: { name: string; color: number; mult: number };
 }
 
 export interface SkillDef {
@@ -86,6 +93,10 @@ export interface SkillDef {
   mult: number;
   cdMs: number;
   color: number;
+  /** nível para aprender (a técnica 1 vem do começo) */
+  minLevel?: number;
+  /** raio em volta do alvo: acerta também os monstros vizinhos */
+  area?: number;
 }
 
 export interface CharDef {
@@ -93,8 +104,11 @@ export interface CharDef {
   name: string;
   atk: number;
   def: number;
-  forms: [FormDef, FormDef];
+  /** forma base, liberação no nível 10 e forma final no nível 60 */
+  forms: [FormDef, FormDef, FormDef];
   skill: SkillDef;
+  /** técnicas aprendidas com o nível (25, 50 e 100) */
+  techs: SkillDef[];
 }
 
 export const CHARS: Record<string, CharDef> = {
@@ -105,9 +119,17 @@ export const CHARS: Record<string, CharDef> = {
     def: 4,
     forms: [
       { id: "shikai", label: "Shikai: Zangetsu", sprite: "ichigo_shikai", dmgMult: 1, stepMs: 260, attackMs: 1000, reiDrain: 0, minLevel: 1 },
-      { id: "bankai", label: "Bankai: Tensa Zangetsu", sprite: "ichigo_bankai", dmgMult: 1.7, stepMs: 170, attackMs: 650, reiDrain: 2.5, minLevel: 10 },
+      { id: "bankai", label: "Bankai: Tensa Zangetsu", sprite: "ichigo_bankai", dmgMult: 1.7, stepMs: 170, attackMs: 650, reiDrain: 2.5, minLevel: 10,
+        skill: { name: "Getsuga Tenshō Negro", color: 0xd0203c, mult: 3.2 } },
+      { id: "final", label: "Máscara Hollow: Tensa Zangetsu", sprite: "ichigo_final", dmgMult: 2.5, stepMs: 140, attackMs: 520, reiDrain: 5, minLevel: 60,
+        skill: { name: "Getsuga Tenshō Mascarado", color: 0xff1e3c, mult: 4 } },
     ],
     skill: { name: "Getsuga Tenshō", range: 4, cost: 20, mult: 2.6, cdMs: 3000, color: 0x5ad1ff },
+    techs: [
+      { name: "Getsuga Jūjishō", minLevel: 25, range: 4, cost: 35, mult: 3.4, cdMs: 6000, color: 0x5ad1ff, area: 1 },
+      { name: "Cero", minLevel: 50, range: 6, cost: 50, mult: 4.5, cdMs: 10000, color: 0xff2040, area: 2 },
+      { name: "Mugetsu", minLevel: 100, range: 7, cost: 90, mult: 9, cdMs: 30000, color: 0x8a2be2, area: 3 },
+    ],
   },
   rukia: {
     id: "rukia",
@@ -116,10 +138,18 @@ export const CHARS: Record<string, CharDef> = {
     def: 3,
     forms: [
       { id: "shikai", label: "Shikai: Sode no Shirayuki", sprite: "rukia", dmgMult: 1, stepMs: 250, attackMs: 950, reiDrain: 0, minLevel: 1 },
-      { id: "bankai", label: "Bankai: Hakka no Togame", sprite: "rukia_bankai", dmgMult: 1.6, stepMs: 190, attackMs: 700, reiDrain: 2.5, minLevel: 10 },
+      { id: "bankai", label: "Bankai: Hakka no Togame", sprite: "rukia_bankai", dmgMult: 1.6, stepMs: 190, attackMs: 700, reiDrain: 2.5, minLevel: 10,
+        skill: { name: "Hakuren: Neve Eterna", color: 0xbfe9ff, mult: 3.6 } },
+      { id: "final", label: "Forma Final: Asas de Gelo", sprite: "rukia_final", dmgMult: 2.4, stepMs: 150, attackMs: 560, reiDrain: 5, minLevel: 60,
+        skill: { name: "Hakuren Absoluto", color: 0xffffff, mult: 4.4 } },
     ],
     // mais alcance e mais dano de habilidade, menos corpo a corpo
     skill: { name: "Tsugi no Mai: Hakuren", range: 6, cost: 22, mult: 3.0, cdMs: 3000, color: 0xe6fbff },
+    techs: [
+      { name: "Some no Mai: Tsukishiro", minLevel: 25, range: 5, cost: 35, mult: 3, cdMs: 6000, color: 0xbff4ff, area: 2 },
+      { name: "San no Mai: Shirafune", minLevel: 50, range: 7, cost: 45, mult: 4.8, cdMs: 9000, color: 0xe6fbff },
+      { name: "Zero Absoluto", minLevel: 100, range: 6, cost: 90, mult: 8, cdMs: 30000, color: 0xffffff, area: 3 },
+    ],
   },
   renji: {
     id: "renji",
@@ -128,9 +158,17 @@ export const CHARS: Record<string, CharDef> = {
     def: 5,
     forms: [
       { id: "shikai", label: "Shikai: Zabimaru", sprite: "renji", dmgMult: 1, stepMs: 270, attackMs: 1050, reiDrain: 0, minLevel: 1 },
-      { id: "bankai", label: "Bankai: Hihiō Zabimaru", sprite: "renji_bankai", dmgMult: 1.8, stepMs: 200, attackMs: 750, reiDrain: 2.5, minLevel: 10 },
+      { id: "bankai", label: "Bankai: Hihiō Zabimaru", sprite: "renji_bankai", dmgMult: 1.8, stepMs: 200, attackMs: 750, reiDrain: 2.5, minLevel: 10,
+        skill: { name: "Higa Zekkō: Hihiō", color: 0xff4a2a, mult: 3 } },
+      { id: "final", label: "Forma Final: Sōō Zabimaru", sprite: "renji_final", dmgMult: 2.7, stepMs: 160, attackMs: 600, reiDrain: 5, minLevel: 60,
+        skill: { name: "Higa Zekkō: Sōō", color: 0xff2a10, mult: 3.6 } },
     ],
     skill: { name: "Higa Zekkō", range: 3, cost: 18, mult: 2.4, cdMs: 2500, color: 0xff6a4a },
+    techs: [
+      { name: "Rōga Sō", minLevel: 25, range: 4, cost: 35, mult: 3.2, cdMs: 6000, color: 0xff6a4a, area: 2 },
+      { name: "Hikotsu Taihō", minLevel: 50, range: 6, cost: 45, mult: 4.6, cdMs: 9000, color: 0xff4020, area: 1 },
+      { name: "Zaga Tetsuzan", minLevel: 100, range: 5, cost: 90, mult: 9.5, cdMs: 30000, color: 0xff2010, area: 2 },
+    ],
   },
   // Quincy: corpo a corpo fraco, flecha de longe e barata (a "segunda forma" é o Letzt Stil)
   ishida: {
@@ -140,9 +178,17 @@ export const CHARS: Record<string, CharDef> = {
     def: 3,
     forms: [
       { id: "shikai", label: "Quincy: Ginrei Kojaku", sprite: "ishida", dmgMult: 1, stepMs: 240, attackMs: 900, reiDrain: 0, minLevel: 1 },
-      { id: "bankai", label: "Quincy: Letzt Stil", sprite: "ishida_power", dmgMult: 1.6, stepMs: 180, attackMs: 650, reiDrain: 2.5, minLevel: 10 },
+      { id: "bankai", label: "Quincy: Letzt Stil", sprite: "ishida_power", dmgMult: 1.6, stepMs: 180, attackMs: 650, reiDrain: 2.5, minLevel: 10,
+        skill: { name: "Licht Regen: Letzt Stil", color: 0x9fe6ff, mult: 3.1 } },
+      { id: "final", label: "Vollständig: Asas de Luz", sprite: "ishida_final", dmgMult: 2.4, stepMs: 140, attackMs: 500, reiDrain: 5, minLevel: 60,
+        skill: { name: "Licht Regen: Vollständig", color: 0xffffff, mult: 3.8 } },
     ],
     skill: { name: "Licht Regen", range: 7, cost: 16, mult: 2.5, cdMs: 2500, color: 0x7fd6ff },
+    techs: [
+      { name: "Sprenger", minLevel: 25, range: 6, cost: 35, mult: 3, cdMs: 6000, color: 0x7fd6ff, area: 2 },
+      { name: "Heilig Pfeil", minLevel: 50, range: 9, cost: 40, mult: 4.6, cdMs: 8000, color: 0xbfefff },
+      { name: "Heizen", minLevel: 100, range: 8, cost: 90, mult: 8.5, cdMs: 30000, color: 0xffffff, area: 3 },
+    ],
   },
   // braço do gigante: o mais forte e resistente, o mais lento
   sado: {
@@ -152,9 +198,17 @@ export const CHARS: Record<string, CharDef> = {
     def: 7,
     forms: [
       { id: "shikai", label: "Brazo Derecha de Gigante", sprite: "sado", dmgMult: 1, stepMs: 290, attackMs: 1100, reiDrain: 0, minLevel: 1 },
-      { id: "bankai", label: "Brazo Izquierda del Diablo", sprite: "sado_power", dmgMult: 1.85, stepMs: 200, attackMs: 800, reiDrain: 2.5, minLevel: 10 },
+      { id: "bankai", label: "Brazo Izquierda del Diablo", sprite: "sado_power", dmgMult: 1.85, stepMs: 200, attackMs: 800, reiDrain: 2.5, minLevel: 10,
+        skill: { name: "El Directo Diablo", color: 0xff3020, mult: 3.4 } },
+      { id: "final", label: "Forma Final: Gigante e Diablo", sprite: "sado_final", dmgMult: 2.8, stepMs: 170, attackMs: 640, reiDrain: 5, minLevel: 60,
+        skill: { name: "El Directo Máximo", color: 0xff1a1a, mult: 4.2 } },
     ],
     skill: { name: "El Directo", range: 3, cost: 20, mult: 2.8, cdMs: 3000, color: 0xff5040 },
+    techs: [
+      { name: "La Muerte", minLevel: 25, range: 3, cost: 35, mult: 3.8, cdMs: 6000, color: 0xff5040, area: 2 },
+      { name: "Golpe do Gigante", minLevel: 50, range: 4, cost: 45, mult: 5, cdMs: 9000, color: 0xffd040, area: 1 },
+      { name: "Puño del Diablo", minLevel: 100, range: 4, cost: 90, mult: 10, cdMs: 30000, color: 0xff2020, area: 3 },
+    ],
   },
 };
 

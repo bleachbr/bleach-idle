@@ -3,7 +3,7 @@ import Phaser from "phaser";
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss } from "../../shared/src";
+import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { serverNow, syncClock } from "./clock";
@@ -440,7 +440,7 @@ function bindGuild(room: Room<any>) {
     const rows: string[] = (data[tab] as any[]).map((r, i) => tab === "guildas"
       ? `<tr><td>${i + 1}</td><td>${escHtml(r.name)} <small>[${escHtml(r.tag)}]</small></td><td>${r.frags} abates</td><td>${r.members} membros · ${r.levels} níveis</td></tr>`
       : `<tr><td>${i + 1}</td><td>${escHtml(r.name)}${r.guild ? ` <small>[${escHtml(r.guild)}]</small>` : ""}</td><td>${CHARS[r.charId]?.name ?? ""}</td><td>${
-        tab === "nivel" ? `${r.rebirths ? `✦${r.rebirths} · ` : ""}nível ${r.level}` : tab === "dangai" ? `andar ${r.dg}` : tab === "conquistas" ? `${r.ach} conquistas` : tab === "bestiario" ? `${r.stages} estágios` : `${r.frags} abates`}</td></tr>`);
+        tab === "nivel" ? `${r.rebirths ? `✦${r.rebirths} · ` : ""}nível ${r.level}` : tab === "poder" ? `${fmtPower(r.power)} · ${POWER_TIERS[powerTier(r.power)].title}` : tab === "dangai" ? `andar ${r.dg}` : tab === "conquistas" ? `${r.ach} conquistas` : tab === "bestiario" ? `${r.stages} estágios` : `${r.frags} abates`}</td></tr>`);
     $("#ranking-body").innerHTML = rows.length ? `<table>${rows.join("")}</table>` : `<p class="hint">Ninguém aqui ainda.</p>`;
   };
   room.onMessage("ranking", (d: any) => { data = d; panel.hidden = false; render(); });
@@ -480,11 +480,39 @@ function renderStats(p: any) {
   const a = expForLevel(p.level), b = expForLevel(p.level + 1);
   setBar(".bar.exp", p.exp - a, b - a, `XP ${Math.round(((p.exp - a) / (b - a)) * 100)}%`);
   $("#pform").textContent = ch.forms[p.form].label;
-  $("#skill-name").textContent = `${ch.skill.name} (${ch.skill.cost} reiatsu)`;
+  const tier = POWER_TIERS[powerTier(p.power)];
+  const pw = $("#ppower");
+  pw.innerHTML = `Poder <b>${fmtPower(p.power)}</b> · <span>${tier.title}</span>`;
+  pw.style.setProperty("--tier", tier.color ? `#${tier.color.toString(16).padStart(6, "0")}` : "#9a94b0");
+  renderTechs(p);
   $("#pskills").textContent = `Zanjutsu ${p.zanjutsu} (${p.zanPct}%) · Reiryoku ${p.reiryoku} (${p.reiPct}%)`;
   // o servidor pode mudar o Auto Helper (ex.: desligar ao morrer): espelha nos controles
   renderAuto(p);
 }
+
+/** Técnicas nas teclas 1, 4, 5 e 6: nome da forma atual, custo, nível para aprender e recarga. */
+const techCd: number[] = [0, 0, 0, 0];
+let lastMe: any = null;
+function renderTechs(p: any) {
+  lastMe = p;
+  const now = Date.now();
+  $("#techs").innerHTML = techniques(p.charId).map((_, i) => {
+    const t = techniqueFor(p.charId, i, p.form)!;
+    const locked = p.level < (t.minLevel ?? 1);
+    const cd = Math.ceil((techCd[i] - now) / 1000);
+    const state = locked ? `nível ${t.minLevel}` : cd > 0 ? `${cd}s` : `${t.cost} rei`;
+    const color = `#${t.color.toString(16).padStart(6, "0")}`;
+    return `<div class="tech${locked ? " locked" : ""}${cd > 0 && !locked ? " cooling" : ""}" style="--c:${color}" title="${t.name}: alcance ${t.range}${t.area ? `, área ${t.area}` : ""}, ${t.cost} de reiatsu, recarga ${t.cdMs / 1000}s">`
+      + `<kbd>${TECH_SLOTS[i]}</kbd><span>${t.name}</span><small>${state}</small></div>`;
+  }).join("");
+}
+// o GameScene avisa cada técnica minha (fx "skill" do servidor): marca a recarga
+window.addEventListener("tech-used", (e) => {
+  const { i, cd } = (e as CustomEvent<{ i: number; cd: number }>).detail;
+  techCd[i] = Date.now() + cd;
+  if (lastMe) renderTechs(lastMe);
+});
+setInterval(() => { if (lastMe && techCd.some((t) => t > Date.now() - 1000)) renderTechs(lastMe); }, 250);
 
 /** Cartões do Auto Helper: um por automação, aceso quando ligado. */
 const AUTO_CARDS: { key: string; name: string; ico: string; tip: string }[] = [

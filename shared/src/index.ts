@@ -6,3 +6,4 @@ export * from "./social";
 export * from "./quests";
 export * from "./training";
 export * from "./progress";
+export * from "./evolution";

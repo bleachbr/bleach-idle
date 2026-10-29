@@ -15,7 +15,7 @@ import {
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
-  ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
+  TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -137,10 +137,20 @@ export class WorldRoom extends GameRoom<WorldState> {
       const p = this.me(c);
       if (!p) return;
       const now = Date.now();
-      if (m?.slot === 1) {
+      const ti = TECH_SLOTS.indexOf(m?.slot);
+      if (m?.slot === 0) {
+        // botão único (celular): a técnica mais forte que estiver pronta
         const t = this.targetOf(p) ?? this.nearestMonster(p, CHARS[p.charId].skill.range);
         if (!t) return this.log(p, "Nenhum alvo ao alcance.");
-        if (!this.trySkill(p, t, now, false)) this.log(p, "Habilidade indisponível (recarga, reiatsu ou alcance).");
+        for (let i = TECH_SLOTS.length - 1; i >= 0; i--) if (this.trySkill(p, t, now, false, i)) return;
+        this.log(p, "Nenhuma técnica pronta (recarga, reiatsu ou alcance).");
+      } else if (ti >= 0) {
+        const tech = techniqueFor(p.charId, ti, p.form);
+        if (!tech) return;
+        if (p.level < (tech.minLevel ?? 1)) return this.log(p, `${tech.name} se aprende no nível ${tech.minLevel}.`);
+        const t = this.targetOf(p) ?? this.nearestMonster(p, tech.range);
+        if (!t) return this.log(p, "Nenhum alvo ao alcance.");
+        if (!this.trySkill(p, t, now, false, ti)) this.log(p, `${tech.name} indisponível (recarga, reiatsu ou alcance).`);
       } else if (m?.slot === 2 || m?.slot === 3) {
         const id = this.bestPotion(p, m.slot === 2 ? "hp" : "rei");
         if (!id) this.log(p, m.slot === 2 ? "Sem poções de cura." : "Sem poções de reiatsu.");
@@ -161,11 +171,12 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.handle("transform", (c) => {
       const p = this.me(c);
       if (!p) return;
-      const bankai = CHARS[p.charId].forms[1];
-      if (p.form === 1) return this.setForm(p, 0);
-      if (p.level < bankai.minLevel) return this.log(p, `Bankai exige nível ${bankai.minLevel}.`);
-      if (p.rei < p.maxRei * 0.3) return this.log(p, "Reiatsu insuficiente para o Bankai.");
-      this.setForm(p, 1);
+      const forms = CHARS[p.charId].forms;
+      const top = maxForm(p.charId, p.level);
+      if (p.form > 0 && p.form >= top) return this.setForm(p, 0);
+      if (top === 0) return this.log(p, `${forms[1].label} exige nível ${forms[1].minLevel}.`);
+      if (p.rei < p.maxRei * 0.3) return this.log(p, `Reiatsu insuficiente para ${forms[p.form + 1].label}.`);
+      this.setForm(p, p.form + 1);
     });
     this.handle("auto", (c, m: { autoTarget?: boolean; autoHunt?: boolean; autoTrain?: boolean; autoSell?: boolean; autoHeal?: number;
       huntSpot?: string; autoReturn?: boolean; autoRei?: number; autoBankai?: boolean; autoBox?: boolean; autoRestock?: boolean }) => {
@@ -412,7 +423,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.rei = Math.max(0, p.rei - (form.reiDrain * TICK_MS) / 1000);
       if (p.rei <= 0) {
         this.setForm(p, 0);
-        this.log(p, "O reiatsu acabou: Bankai desfeito.");
+        this.log(p, "O reiatsu acabou: liberação desfeita.");
       }
     }
     if (p.autoHeal && (p.hp * 100) / p.maxHp < p.autoHeal) {
@@ -446,7 +457,7 @@ export class WorldRoom extends GameRoom<WorldState> {
         || (kinds && this.nearestMonster(p, HUNT_RADIUS, kinds)) || this.nearestMonster(p, p.autoHunt ? HUNT_RADIUS : VIEW);
       if (t) { p.targetId = t.id; p.follow = true; }
     }
-    if (t && p.autoHunt) this.trySkill(p, t, now, true);
+    if (t && p.autoHunt) for (let i = TECH_SLOTS.length - 1; i >= 0; i--) if (this.trySkill(p, t, now, true, i)) break;
 
     if (t && p.follow && now >= p.nextStepAt) {
       const tx = t.x, ty = t.y;
@@ -598,18 +609,26 @@ export class WorldRoom extends GameRoom<WorldState> {
     }
   }
 
-  private trySkill(p: Player, t: Player | Monster, now: number, auto: boolean): boolean {
-    const sk = CHARS[p.charId].skill;
-    if (now < p.skillReadyAt || p.rei < sk.cost || inPZ(mapOf(p), p.x, p.y)) return false;
-    if (auto && p.rei < p.maxRei * 0.4) return false; // Auto Hunt guarda reiatsu para o Bankai
+  private trySkill(p: Player, t: Player | Monster, now: number, auto: boolean, i = 0): boolean {
+    const sk = techniqueFor(p.charId, i, p.form);
+    if (!sk || p.level < (sk.minLevel ?? 1)) return false;
+    if (now < p.skillReadyAt || now < p.techReady[i] || p.rei < sk.cost || inPZ(mapOf(p), p.x, p.y)) return false;
+    if (auto && p.rei - sk.cost < p.maxRei * 0.3) return false; // Auto Hunt guarda reiatsu para a liberação
     if (chebyshev(p.x, p.y, t.x, t.y) > sk.range) return false;
     if (isPlayer(t) && this.cantAttack(p, t)) return false;
     p.rei -= sk.cost;
     this.train(p, 0, sk.cost);
-    p.skillReadyAt = now + sk.cdMs;
+    p.techReady[i] = now + sk.cdMs;
+    p.skillReadyAt = now + 600;
     this.face(p, t);
-    this.broadcast("fx", { t: "skill", from: p.id, to: t.id, color: sk.color, name: sk.name });
+    this.broadcast("fx", { t: "skill", from: p.id, to: t.id, color: sk.color, name: sk.name, i, area: sk.area ?? 0, cd: sk.cdMs });
+    // técnica em área: os monstros em volta do alvo também levam (um pouco menos)
+    const splash = sk.area && !isPlayer(t)
+      ? [...this.state.monsters.values()].filter((m) => m !== t && m.hp > 0 && sameMap(m, t) && (!m.owner || m.owner === p.id)
+        && chebyshev(m.x, m.y, t.x, t.y) <= sk.area!)
+      : [];
     this.hit(p, t, sk.mult, now, true);
+    for (const m of splash) this.hit(p, m, sk.mult * 0.7, now, true);
     return true;
   }
 
@@ -671,6 +690,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.reiryoku++;
       this.log(p, `Reiryoku subiu para ${p.reiryoku}! (+3% de dano das habilidades por nível)`);
     }
+    if (zan + rei > 0 && powerOf(p) !== p.power) this.updatePower(p);
     p.zanPct = Math.floor((p.zanTries * 100) / zanNext(p.zanjutsu));
     p.reiPct = Math.floor((p.reiTries * 100) / reiNext(p.reiryoku));
   }
@@ -772,6 +792,16 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.rei = p.maxRei;
       this.broadcast("fx", { t: "level", id: p.id, v: p.level });
       this.log(p, `Você subiu para o nível ${p.level}!`);
+      techniques(p.charId).forEach((tech, i) => {
+        if (tech.minLevel !== p.level || i === 0) return;
+        this.log(p, `Nova técnica: ${tech.name} (tecla ${TECH_SLOTS[i]})!`);
+        this.sendTo(p, "fx", { t: "event", text: `Nova técnica: ${tech.name}` });
+      });
+      const nf = CHARS[p.charId].forms.findIndex((f, i) => i > 0 && f.minLevel === p.level);
+      if (nf > 0) {
+        this.log(p, `Nova forma liberada: ${CHARS[p.charId].forms[nf].label} (tecla T)!`);
+        this.sendTo(p, "fx", { t: "event", text: CHARS[p.charId].forms[nf].label });
+      }
       if (p.level > (p.prog.peak ?? 0)) {
         p.prog.peak = p.level;
         const m = levelMilestone(p.level);
@@ -795,6 +825,20 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.rei = Math.min(p.rei, p.maxRei);
     p.stepMs = CHARS[p.charId].forms[p.form].stepMs;
     p.look = lookOf(p.equip);
+    this.updatePower(p);
+  }
+
+  /** Recalcula o Poder; ao subir de título, avisa e solta o efeito na tela. */
+  private updatePower(p: Player) {
+    const prev = p.power; // 0 ao entrar no jogo: aí não anuncia
+    const before = powerTier(prev);
+    p.power = powerOf(p);
+    const now = powerTier(p.power);
+    if (prev > 0 && now > before) {
+      const t = POWER_TIERS[now];
+      this.log(p, `Seu Poder chegou a ${fmtPower(p.power)}: agora você é ${t.title}! Sua aura ficou mais forte.`);
+      this.sendTo(p, "fx", { t: "event", text: `Título: ${t.title}` });
+    }
   }
 
   /** tipos de monstro que ainda faltam nas missões de caça ativas (do Kisuke e a diária) */
@@ -1418,9 +1462,10 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   /** Ranking: nível (por XP), abates em PvP e guildas (soma de abates e de níveis). */
   private buildRanking() {
-    const rows = new Map<string, { name: string; charId: string; level: number; exp: number; frags: number; guild: string; ach: number; stages: number; rebirths: number; dg: number }>();
-    for (const r of db.allChars()) rows.set(r.id, { name: r.data.name, charId: r.data.charId, level: r.data.level, exp: r.data.exp, frags: r.data.frags ?? 0, guild: "", ach: r.data.prog?.ach.length ?? 0, stages: stagesSum(r.data.prog?.bestiary ?? {}), rebirths: r.data.rebirths ?? 0, dg: r.data.prog?.dgBest ?? 0 });
-    for (const p of this.state.players.values()) rows.set(p.id, { name: p.name, charId: p.charId, level: p.level, exp: p.exp, frags: p.frags, guild: "", ach: p.prog.ach.length, stages: stagesSum(p.prog.bestiary), rebirths: p.rebirths, dg: p.prog.dgBest ?? 0 });
+    const rows = new Map<string, { name: string; charId: string; level: number; exp: number; frags: number; guild: string; ach: number; stages: number; rebirths: number; dg: number; power: number }>();
+    for (const r of db.allChars()) rows.set(r.id, { name: r.data.name, charId: r.data.charId, level: r.data.level, exp: r.data.exp, frags: r.data.frags ?? 0, guild: "", ach: r.data.prog?.ach.length ?? 0, stages: stagesSum(r.data.prog?.bestiary ?? {}), rebirths: r.data.rebirths ?? 0, dg: r.data.prog?.dgBest ?? 0,
+      power: powerOf({ charId: r.data.charId, level: r.data.level, rebirths: r.data.rebirths ?? 0, zanjutsu: r.data.zanjutsu ?? 0, reiryoku: r.data.reiryoku ?? 0, equip: r.data.equip ?? {}, forge: r.data.forge ?? {} }) });
+    for (const p of this.state.players.values()) rows.set(p.id, { name: p.name, charId: p.charId, level: p.level, exp: p.exp, frags: p.frags, guild: "", ach: p.prog.ach.length, stages: stagesSum(p.prog.bestiary), rebirths: p.rebirths, dg: p.prog.dgBest ?? 0, power: p.power });
     const memberOf = guilds.memberMap();
     const byId = new Map(guilds.all().map((g) => [g.id, g]));
     const g = new Map<number, { name: string; tag: string; members: number; levels: number; frags: number }>();
@@ -1436,6 +1481,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     const list = [...rows.values()];
     return {
       nivel: [...list].sort((a, b) => b.rebirths - a.rebirths || b.exp - a.exp).slice(0, 20),
+      poder: [...list].sort((a, b) => b.power - a.power).slice(0, 20),
       abates: list.filter((r) => r.frags > 0).sort((a, b) => b.frags - a.frags).slice(0, 20),
       guildas: [...g.values()].sort((a, b) => b.frags - a.frags || b.levels - a.levels).slice(0, 20),
       conquistas: list.filter((r) => r.ach > 0).sort((a, b) => b.ach - a.ach || b.exp - a.exp).slice(0, 20),
@@ -1835,9 +1881,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     const fighting = now - p.lastCombatAt < 2500;
     // Bankai em combate (com reiatsu de sobra) e de volta ao normal fora dele, para guardar reiatsu
     if (p.autoBankai) {
-      const bankai = CHARS[p.charId].forms[1];
-      if (p.form === 0 && fighting && p.level >= bankai.minLevel && p.rei > p.maxRei * 0.6) this.setForm(p, 1);
-      else if (p.form === 1 && now - p.lastCombatAt > 8000) this.setForm(p, 0);
+      if (fighting && p.form < maxForm(p.charId, p.level) && p.rei > p.maxRei * 0.6) this.setForm(p, p.form + 1);
+      else if (p.form > 0 && now - p.lastCombatAt > 8000) this.setForm(p, 0);
     }
     if (now < p.helperAt) return;
     p.helperAt = now + 3000;

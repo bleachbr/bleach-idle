@@ -46,7 +46,7 @@ export function initTouch(room: Room<any>, setDir: (dir: number | null) => void)
 
   const acts: Record<string, () => void> = {
     target: () => room.send("nextTarget"),
-    skill: () => room.send("skill", { slot: 1 }),
+    skill: () => room.send("skill", { slot: 0 }),
     hp: () => room.send("skill", { slot: 2 }),
     rei: () => room.send("skill", { slot: 3 }),
     form: () => room.send("transform"),

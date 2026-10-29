@@ -75,6 +75,14 @@ GAME_SPRITES = {
     "exequias": ("50_exequias_walk.png", 4, 4, 1.06, 1),
     "fraccion": ("51_fraccion_walk.png", 4, 4, 1.4, 2),
     "privaron": ("52_privaron_walk.png", 4, 4, 1.3, 2),
+    # formas finais (nível 60) e visual por equipamento do Ishida e do Sado: só existem em 8 quadros
+    "ichigo_final": ("walk8/ichigo_final_sheet.png", 4, 8, 1.00, 1),
+    "rukia_final": ("walk8/rukia_final_sheet.png", 4, 8, 0.86, 1),
+    "renji_final": ("walk8/renji_final_sheet.png", 4, 8, 1.04, 1),
+    "ishida_final": ("walk8/ishida_final_sheet.png", 4, 8, 0.98, 1),
+    "sado_final": ("walk8/sado_final_sheet.png", 4, 8, 1.1, 1),
+    **{f"{b}__{l}": (f"walk8/{b}__{l}_sheet.png", 4, 8, rel, 1)
+       for b, rel in (("ishida", 0.98), ("sado", 1.1)) for l in ("haori", "mask", "haori_mask")},
 }
 
 
