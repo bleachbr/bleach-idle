@@ -212,6 +212,7 @@ function start(room: Room<any>, myId: string) {
   const showMute = () => { mute.dataset.ico = sfx.isMuted() ? "mute" : "sound"; mute.title = sfx.isMuted() ? "Som desligado (clique para ligar)" : "Som ligado (clique para desligar)"; };
   showMute();
   mute.onclick = () => { sfx.setMuted(!sfx.isMuted()); showMute(); };
+  bindHd(game);
   room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log"));
   room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[]; zanGain?: number; reiGain?: number; zanjutsu?: number; reiryoku?: number; kills?: number; items?: string[] }) => {
     const sign = (n: number) => (n >= 0 ? "+" : "") + n;
@@ -312,6 +313,32 @@ function bindParty(room: Room<any>, myId: string) {
 }
 
 // ---------- livro: bestiário, conquistas e recompensa diária ----------
+
+// ---------- visual: pixel art ou desenho original (HD) ----------
+
+function bindHd(game: Phaser.Game) {
+  const btn = $<HTMLButtonElement>("#hd-btn");
+  let on = false;
+  try { on = localStorage.getItem("bi_hd") === "1"; } catch {}
+  const show = (loading = false) => {
+    btn.classList.toggle("on", on);
+    btn.textContent = loading ? "…" : "HD";
+    btn.title = on ? "Visual HD: desenho original (clique para pixel art)" : "Visual pixel art (clique para o desenho original em HD)";
+  };
+  const apply = () => {
+    const scene = game.scene.getScene("game") as GameScene | null;
+    if (!scene?.sys.isActive()) return void window.setTimeout(apply, 300); // a cena ainda está carregando
+    show(on);
+    scene.setHd(on, () => show());
+  };
+  btn.onclick = () => {
+    on = !on;
+    try { localStorage.setItem("bi_hd", on ? "1" : "0"); } catch {}
+    apply();
+  };
+  show();
+  if (on) apply();
+}
 
 // ---------- passe de temporada ----------
 

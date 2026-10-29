@@ -8,6 +8,10 @@ import { serverNow } from "./clock";
 
 const VIEW_W = 15;
 const VIEW_H = 11;
+/** Modo HD: folhas sem pixelar (art/hd.py), HD_K vezes maiores, e a tela renderizada HD_K vezes maior */
+const HD_K = 3;
+const HD = "hd:";
+const baseKey = (key: string) => (key.startsWith(HD) ? key.slice(HD.length) : key);
 
 interface View {
   /** aura do título de Poder (chave: título + aura comprada) */
@@ -31,6 +35,8 @@ interface View {
   lastMoveAt: number;
   stepMs: number;
   isMonster: boolean;
+  /** escala do sprite na arte de pixel (monstros grandes > 1) */
+  baseScale: number;
   /** respirando parado (tween de escala) */
   idle?: Phaser.Tweens.Tween;
   /** aura do Bankai, atrás do sprite */
@@ -94,7 +100,61 @@ export class GameScene extends Phaser.Scene {
   /** quadros de andar por direção (4 ou 8), pela largura da folha carregada: nunca diverge da imagem */
   private cols(key: string) {
     const img = this.textures.exists(key) ? (this.textures.get(key).getSourceImage() as HTMLImageElement) : undefined;
-    return img && SPRITES[key] ? Math.max(1, Math.round(img.width / SPRITES[key].frame)) : 4;
+    const def = SPRITES[baseKey(key)];
+    return img && def ? Math.max(1, Math.round(img.width / (def.frame * (key.startsWith(HD) ? HD_K : 1)))) : 4;
+  }
+
+  /** modo HD ligado e já carregado */
+  private hd = false;
+
+  /** chave da textura no modo atual: a HD quando existe, senão a de pixel */
+  private texKey(key: string) {
+    const b = baseKey(key);
+    return this.hd && this.textures.exists(HD + b) ? HD + b : b;
+  }
+
+  /** Liga ou desliga o modo HD. Na primeira vez baixa as folhas (só quem liga paga o download). */
+  setHd(on: boolean, done?: (ok: boolean) => void) {
+    if (!on) return this.applyHd(false), done?.(true);
+    const missing = Object.entries(SPRITES).filter(([k]) => !this.textures.exists(HD + k));
+    if (!missing.length) return this.applyHd(true), done?.(true);
+    for (const [key, def] of missing)
+      this.load.spritesheet(HD + key, `/assets/sprites_hd/${key}.webp`, { frameWidth: def.frame * HD_K, frameHeight: def.frame * HD_K });
+    // folha que não existe em HD (boneco de treino, variações de visual) só fica de fora
+    this.load.on("loaderror", () => {});
+    this.load.once("complete", () => {
+      for (const [key] of missing) {
+        const hk = HD + key;
+        if (!this.textures.exists(hk)) continue;
+        this.textures.get(hk).setFilter(Phaser.Textures.FilterMode.LINEAR);
+        for (let d = 0; d < 4; d++)
+          this.anims.create({ key: `${hk}-${d}`, frames: this.anims.generateFrameNumbers(hk, { start: d * this.cols(hk), end: d * this.cols(hk) + this.cols(hk) - 1 }), repeat: -1 });
+      }
+      this.applyHd(true);
+      done?.(true);
+    });
+    this.load.start();
+  }
+
+  private applyHd(on: boolean) {
+    this.hd = on;
+    const k = on ? HD_K : 1;
+    // a tela renderiza k vezes maior com zoom k: o mapa fica igual e os sprites HD aparecem com o detalhe original
+    this.scale.setGameSize(VIEW_W * TILE * k, VIEW_H * TILE * k);
+    this.cameras.main.setZoom(k);
+    // a câmera pula direto para o personagem em vez de deslizar até ele
+    const me = this.views.get(this.myId);
+    if (me) this.cameras.main.centerOn(me.c.x, me.c.y);
+    for (const v of this.views.values()) {
+      const key = this.texKey(v.sprite);
+      const idle = !!v.idle;
+      this.setIdle(v, false);
+      v.sprite = key;
+      v.spr.anims.stop();
+      v.spr.setTexture(key, this.stand(key, v.dir)).setScale(v.baseScale / (key.startsWith(HD) ? HD_K : 1));
+      if (idle) this.setIdle(v, true);
+    }
+    this.startAmbient(this.mapId);
   }
 
   /** quadro parado de uma direção (o de passagem, com as pernas juntas) */
@@ -180,10 +240,10 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- entidades ----------
 
-  private spriteFor(e: any, isMonster: boolean): { key: string; tint?: number; scale: number } {
+  private spriteFor(e: any, isMonster: boolean): { key: string; tint?: number; scale: number; sprScale: number } {
     if (isMonster) {
       const def = MONSTERS[e.kind];
-      return { key: def.sprite, tint: def.tint, scale: def.scale };
+      return this.hdLook(def.sprite, def.tint, def.scale);
     }
     const form = CHARS[e.charId].forms[e.form];
     // visual do equipamento; sem a folha da combinação, tenta as partes ("haori_mask" -> "haori") e depois a base
@@ -192,13 +252,18 @@ export class GameScene extends Phaser.Scene {
     const prev = CHARS[e.charId].forms.slice(0, e.form).reverse().map((f) => f.sprite);
     const looks = [look, ...look.split("_")].filter(Boolean).map((l) => spriteKey(form.sprite, l)).filter((k) => k !== form.sprite);
     const tries = [...looks, form.sprite, ...prev];
-    return { key: tries.find((k) => this.textures.exists(k)) ?? form.sprite, tint: form.tint, scale: 1 };
+    return this.hdLook(tries.find((k) => this.textures.exists(k)) ?? form.sprite, form.tint, 1);
+  }
+
+  private hdLook(key: string, tint: number | undefined, scale: number) {
+    const k = this.texKey(key);
+    return { key: k, tint, scale, sprScale: scale / (k.startsWith(HD) ? HD_K : 1) };
   }
 
   private addView(id: string, e: any, isMonster: boolean) {
     const look = this.spriteFor(e, isMonster);
     const shadow = this.add.ellipse(0, -3, 22 * look.scale + 4, 8, 0x000000, 0.3);
-    const spr = this.add.sprite(0, 0, look.key, this.stand(look.key, e.dir)).setOrigin(0.5, 1).setScale(look.scale);
+    const spr = this.add.sprite(0, 0, look.key, this.stand(look.key, e.dir)).setOrigin(0.5, 1).setScale(look.sprScale);
     if (look.tint) spr.setTint(look.tint);
     const top = -spr.displayHeight + (isMonster ? 4 : 2);
     const name = isMonster ? MONSTERS[e.kind].name : e.guildTag ? `${e.name} [${e.guildTag}]` : e.name;
@@ -209,7 +274,7 @@ export class GameScene extends Phaser.Scene {
     const bar = this.add.graphics();
     bar.y = top - 9;
     const c = this.add.container(px(e.x), py(e.y), [shadow, spr, bar, label]);
-    const v: View = { id, c, spr, label, bar, sprite: look.key, dir: e.dir, tx: e.x, ty: e.y, lastMoveAt: 0, stepMs: e.stepMs, isMonster };
+    const v: View = { id, c, spr, label, bar, sprite: look.key, dir: e.dir, tx: e.x, ty: e.y, lastMoveAt: 0, stepMs: e.stepMs, isMonster, baseScale: look.scale };
     this.views.set(id, v);
     c.setDepth(c.y);
     this.setIdle(v, true);
@@ -232,7 +297,10 @@ export class GameScene extends Phaser.Scene {
         const look2 = this.spriteFor(e, false);
         if (look2.key !== v.sprite || (look2.tint ?? 0xffffff) !== v.spr.tintTopLeft) {
           v.sprite = look2.key;
-          v.spr.setTexture(look2.key, this.stand(look2.key, e.dir));
+          const idle = !!v.idle;
+          this.setIdle(v, false);
+          v.spr.setTexture(look2.key, this.stand(look2.key, e.dir)).setScale(look2.sprScale);
+          if (idle) this.setIdle(v, true);
           if (look2.tint) v.spr.setTint(look2.tint); else v.spr.clearTint();
         }
         v.label.setAlpha(e.online ? 1 : 0.55); // offline caçando aparece meio apagado

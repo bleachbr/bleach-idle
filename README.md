@@ -85,6 +85,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
   - **Traje de Capitão:** +40 de vida com 2 peças e +8% de dano com 3.
   - **Herança Hollow:** +3 de ataque com 2 peças e +10% de loot com 3.
   - **Lua Negra:** +6% de dano e +5% de XP.
+- **Visual HD:** o botão **HD** no painel troca a pixel art pelos desenhos originais do Codex, sem pixelar, e a tela passa a renderizar 3 vezes maior. O mapa não muda. As folhas HD saem de `art/hd.py` para `client/public/assets/sprites_hd/` e só são baixadas por quem liga o modo. A escolha fica salva no navegador.
 - **Visual:** o Haori de Capitão muda o sprite dos shinigami (Ichigo, Rukia e Renji). A Máscara de Osso só aparece no Ichigo, o único Visored. Nos outros, os dois dão só os atributos. Todos os jogadores veem o visual.
 - **Mercado entre jogadores** (aba no Kisuke): anuncie itens do inventário com preço por unidade; o item fica guardado até alguém comprar ou você cancelar. Taxa de 5% na venda, e o vendedor recebe mesmo fora do jogo. Anúncio sem comprador por 7 dias volta para o depot.
 

@@ -259,3 +259,7 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 #season-btn.ping { position: relative; }
 #season-btn.ping::after { content: ""; position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 1px #000, 0 0 6px var(--accent); }
 #event-line { color: #ffd34a; font-size: 12px; margin-top: 2px; }
+
+/* botão do visual HD */
+.hd-btn { font: 700 10px/1 var(--title); letter-spacing: 0.5px; color: var(--muted); }
+.hd-btn.on { color: #ffd34a; text-shadow: 0 0 6px #ffb04a; }
