@@ -21,7 +21,8 @@ Comando: `npx tsx .claude/skills/performance-servidor/scripts/bench.mts 1000`. B
 | :--- | :--- | :--- | :--- |
 | `JSON.stringify` de 200 saves (já está dentro da linha seguinte; não soma) | dentro do `saveAll`, a cada 10 s | 1,12 a 1,14 ms | 3,3 ms |
 | `db.saveMany` de 200 personagens | a cada 10 s | 1,40 a 1,43 ms | 1,7 ms |
-| `db.allChars()` com 1.000 personagens | ranking, no máximo a cada 15 s | 10,2 a 10,4 ms | 15,7 ms |
+| `db.allChars()` com 1.000 personagens | apenas na 1ª carga (`ensureSeeded`) | 10,2 a 10,4 ms | 15,7 ms |
+| `buildRanking()` incremental com 1.000 personagens | ranking, no máximo a cada 15 s | 0,10 ms | 0,45 ms |
 | BFS `findPath`, meta inalcançável, em `karakura` | por jogador ou monstro sem caminho | 0,09 a 0,10 ms | 1,0 ms |
 | BFS `findPath`, meta inalcançável, em `falsa` | idem | 0,09 ms | 0,8 ms |
 
