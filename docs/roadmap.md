@@ -33,6 +33,12 @@ flowchart TD
 ### Milestone 1: NPCs do Seireitei & Crônicas Semanais da Lore (Foco Atual) 🎯
 Transformar a Soul Society (Seireitei) em um centro vibrante de história e narrativa, onde NPCs representam momentos marcantes da obra e trazem eventos semanais rotativos.
 
+> **Documentação de Engenharia e Especificação Técnica:**
+> - [PRD: Crônicas Semanais & NPCs do Seireitei](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v3/bleach-idle/docs/features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md)
+> - [ADR 001: Arquitetura de NPCs Interativos](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v3/bleach-idle/docs/features/cronicas-semanais-lore/adrs/ADR-001-arquitetura-npcs-interativos.md)
+> - [ADR 002: Rotação Semanal Determinística de Crônicas](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v3/bleach-idle/docs/features/cronicas-semanais-lore/adrs/ADR-002-rotacao-semanal-cronicas.md)
+> - [ADR 003: Protocolo Colyseus e Interface de Diálogo](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v3/bleach-idle/docs/features/cronicas-semanais-lore/adrs/ADR-003-protocolo-rede-e-interface-dialogo.md)
+
 1. **Arquitetura de NPCs Interativos:**
    - Generalizar a camada de objetos de mapa (`logica`) para suportar instâncias de NPCs interativos (`npc` com id, sprite, nome e diálogo).
    - Diálogo com opções de resposta, árvore de conversa e entrega de tarefas ou lore.
