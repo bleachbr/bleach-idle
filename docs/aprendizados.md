@@ -173,3 +173,10 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
   1. As definições canônicas (`SERVER_MILESTONES`) residem em `shared/src/progress.ts` e seus títulos exclusivos (`season: true`) em `shared/src/shop.ts`.
   2. O módulo `server/src/milestones.ts` carrega `db.getMeta("server_milestones")` uma única vez para um `Map` em memória; chamadas subsequentes a `claimServerMilestone` verificam `claimed.has(id)` em O(1) e só gravam no SQLite (`db.setMeta`) na primeira conquista de cada marco.
   3. O título conquistado é salvo tanto em `p.prog.titles` (no save do personagem) quanto na carteira da conta (`db.changeCrystals(p.accountId, 0, ...)`), equipado automaticamente caso o personagem esteja sem título, anunciado globalmente e listado na aba **Marcos** do Ranking (`#ranking`).
+
+## 17. Rotação Semanal Determinística de Crônicas Sem Depender de `TZ` (M1-01 e M1-05)
+
+- **Contexto:** Funções de data do JavaScript (`getDay`, `setHours`, `getFullYear`) usam o fuso horário (`TZ`) do processo, fazendo a semana virar em instantes diferentes no Linux em UTC vs máquinas locais em `America/Sao_Paulo` ou `Asia/Tokyo`.
+- **Solução (`shared/src/chronicles.ts`):**
+  1. `weekNumber(now)` deriva a semana exclusivamente por aritmética inteira sobre o timestamp UTC relativo à âncora `CHRONICLE_EPOCH = Date.UTC(2026, 9, 26, 3, 0, 0)` (segunda-feira 00:00 BRT), garantindo que `weekNumber`, `weekIndex` e `currentWeekKey` virem no exato mesmo milissegundo em qualquer `TZ`.
+  2. `syncChronicleProgress(prog, now)` (M1-05) compara `prog.chronicle?.activeWeekKey` com `currentWeekKey(now)` e reinicia `{ activeWeekKey, questKills: 0 }` (removendo `completedAt`) de forma preguiçosa ao interagir/salvar, sem precisar de cron jobs ou varreduras em lote no SQLite.
