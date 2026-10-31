@@ -17,7 +17,7 @@ Status: `Feito` · `Em andamento (PR #N)` · `Pronto` · `Bloqueado por X` · `P
 Ordem de pegada: com itens `Pronto` em mais de um bloco, pegue F antes de M.
 Tamanho: **P** cabe num PR pequeno; **M** exige alguns PRs ou mexe em cliente e servidor; **G** precisa ser fatiado antes de começar.
 
-Onde fica cada informação: este arquivo guarda ID, ordem, dependência e status. O detalhe de cada débito fica em [`pendencias.md`](pendencias.md), as lições em [`aprendizados.md`](aprendizados.md), as medições em [`baseline.md`](baseline.md) e a especificação de cada funcionalidade grande em `docs/features/<nome>/`. Número que aparece em mais de um arquivo vale o do `baseline.md`. `RELATORIO-NOITE.md` é registro histórico de 29/10/2026 e pode estar defasado.
+A divisão do trabalho entre Waldir e Rafael está em [`roadmap-duplas.md`](roadmap-duplas.md). Onde fica cada informação: este arquivo guarda ID, ordem, dependência e status. O detalhe de cada débito fica em [`pendencias.md`](pendencias.md), as lições em [`aprendizados.md`](aprendizados.md), as medições em [`baseline.md`](baseline.md) e a especificação de cada funcionalidade grande em `docs/features/<nome>/`. Número que aparece em mais de um arquivo vale o do `baseline.md`. `RELATORIO-NOITE.md` é registro histórico de 29/10/2026 e pode estar defasado.
 
 ## Estado atual
 
