@@ -21,6 +21,7 @@ Tudo o que o código precisa para ir ao ar já está pronto. O que falta é **co
 | `EXP_RATE` | 1 | taxa de XP dos monstros (0,3 = 30%); simule antes com `server/scripts/balance.ts` |
 | `INVASION_FIRST_MS` / `INVASION_EVERY_MS` | 30 min / 3 h | quando começa a primeira invasão de Hollows e o intervalo entre elas |
 | `LOGIN_MAX_FAILS_IP` | 30 | senhas erradas por IP antes do bloqueio de 1 min |
+| `REGISTER_MAX_IP` | 5 | contas novas criadas pelo mesmo IP por janela de 1 h |
 | `TRUST_PROXY` | desligado (o `docker-compose.yml` define `172.28.0.0/24`) | lista de CIDRs confiáveis (separados por vírgula). Atrás do Caddy, conta as tentativas pelo IP real (`X-Forwarded-For`) só quando a conexão vem dessa rede. Só ligue se o jogo não for alcançável direto da internet |
 | `BI_DEV` | desligado | `1` liga o modo Dev (nível, kan e itens de graça). Só para desenvolvimento: nunca em produção |
 
@@ -69,6 +70,6 @@ NODE_ENV=production npm start   # abre em http://localhost:2567
 
 ## Antes de abrir para o público (não é obrigatório para testar com amigos)
 - **Senha:** recuperação por e-mail (hoje não existe).
-- **Abuso:** limite de criação de contas por IP (existe só para tentativas de login) e moderação de chat (silenciar, banir).
+- **Abuso:** moderação de chat (silenciar, banir). O limite de criação de contas por IP (`REGISTER_MAX_IP`, 5/h) já está ativo.
 - **Jogo:** balanceamento dos mapas mais avançados.
 - **Direitos:** sem monetização, o risco de direitos autorais (Bleach é da Shueisha) é baixo; com monetização, espere pedidos de remoção.

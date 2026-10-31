@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { Client } from "colyseus.js";
 import { startTestServer, stopTestServer, once } from "./helpers/testServer";
+import { clearFails } from "../src/auth";
 
 describe("E2E: Lobby e World", () => {
   let url: string;
@@ -141,5 +142,35 @@ describe("E2E: Lobby e World", () => {
     await vi.waitFor(() => expect(leaveCode).toBe(4001), { timeout: 5000, interval: 25 });
 
     await world2.leave();
+  });
+
+  it("limita criação de contas por IP sem bloquear login de contas existentes", async () => {
+    const prev = process.env.REGISTER_MAX_IP;
+    process.env.REGISTER_MAX_IP = "2";
+    for (const k of ["reg:127.0.0.1", "reg:::ffff:127.0.0.1", "reg:::1"]) clearFails(k);
+    try {
+      const client = new Client(url);
+      const l1 = `r1_${Date.now().toString(36)}`;
+      const l2 = `r2_${Date.now().toString(36)}`;
+      const l3 = `r3_${Date.now().toString(36)}`;
+
+      const r1 = await client.joinOrCreate("lobby", { action: "register", login: l1, password: "senha_valida_123" });
+      await r1.leave();
+      const r2 = await client.joinOrCreate("lobby", { action: "register", login: l2, password: "senha_valida_123" });
+      await r2.leave();
+
+      // 3º cadastro do mesmo IP excede REGISTER_MAX_IP=2
+      const erroTerceiro = await err(client.joinOrCreate("lobby", { action: "register", login: l3, password: "senha_valida_123" }));
+      expect(erroTerceiro).toContain("Muitas contas criadas");
+
+      // Mas o login normal na conta já criada continua liberado
+      const loginOk = await client.joinOrCreate("lobby", { action: "login", login: l1, password: "senha_valida_123" });
+      await once(loginOk, "account");
+      await loginOk.leave();
+    } finally {
+      if (prev === undefined) delete process.env.REGISTER_MAX_IP;
+      else process.env.REGISTER_MAX_IP = prev;
+      for (const k of ["reg:127.0.0.1", "reg:::ffff:127.0.0.1", "reg:::1"]) clearFails(k);
+    }
   });
 });

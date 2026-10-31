@@ -107,6 +107,10 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - No `node:sqlite`, violações de unicidade expõem `errcode` estendido numérico: `2067` (`SQLITE_CONSTRAINT_UNIQUE`, ex.: `accounts.login`) e `1555` (`SQLITE_CONSTRAINT_PRIMARYKEY`, ex.: `players.id`), ambos com mensagem iniciada por `"UNIQUE constraint failed:"`.
 - **Solução:** Função dedicada `isUniqueConstraintError(err)` em `server/src/db.ts` que retorna `null`/`false` apenas para essas duas restrições e relança qualquer outro erro.
 
+### Separação de Baldes entre Login Falho (`ip:`) e Criação de Conta (`reg:`) por IP (`F-14`)
+- Compartilhar o mesmo contador `ip:` (30 tentativas / 1 min) entre senhas erradas e criação de contas (`register`) permitia criar até 30 contas por minuto pelo mesmo IP e fazia com que cadastros bloqueassem logins de contas existentes na mesma rede (e vice-versa).
+- **Solução:** Balde próprio `reg:<ip>` com janela de 1 hora (`3_600_000 ms`) e limite configurável via `REGISTER_MAX_IP` (padrão `5`), verificado em `LobbyRoom.onAuth` antes do `hashPassword` (poupando CPU de `scrypt` sob abuso) e com relógio injetável (`now`) para testes determinísticos.
+
 ---
 
 ## 8. Jogador-IA (Cradle) e Correções de UX/Motor (`F-16`)
