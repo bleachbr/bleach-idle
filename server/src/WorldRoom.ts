@@ -16,7 +16,7 @@ import {
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
-  COSMETIC, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
+  own, isOwnKey, COSMETIC, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -24,10 +24,11 @@ import { consumeTicket, type Ticket } from "./auth";
 import { MAPS, HOME, TEMPLE, SPAWNS, tileKey } from "./maps";
 import * as guilds from "./guilds";
 import * as market from "./market";
+import { flagOn } from "./flags";
 
 const GUILD_COST = 500;
-/** Modo Dev (botão que libera tudo para testar): ligado fora de produção, ou forçado com BI_DEV=1 / BI_DEV=0 */
-const DEV_MODE = process.env.BI_DEV ? process.env.BI_DEV === "1" : process.env.NODE_ENV !== "production";
+/** Modo Dev (botão que libera tudo para testar): nasce DESLIGADO e só liga com BI_DEV=1 (`npm run dev` já define). */
+const DEV_MODE = flagOn("BI_DEV");
 const GUILD_MIN_LEVEL = 10;
 const GUILD_NAME_RE = /^[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ]{2,19}$/;
 const HELP = [
@@ -211,7 +212,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     });
     this.handle("ranking", (c) => c.send("ranking", this.ranking()));
     if (DEV_MODE) this.registerDevMessages();
-    if (process.env.BI_DEBUG) {
+    if (flagOn("BI_DEBUG")) {
       this.handle("debugInvasion", () => this.startInvasion());
       this.handle("debugInvasionEnd", () => this.endInvasion(false));
       this.handle("debugWorldBoss", () => this.spawnWorldBoss());
@@ -967,7 +968,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     });
     this.handle("buy", (c, m: { id: string; qty: number }) => {
       const p = this.me(c);
-      const def = ITEMS[m?.id];
+      const def = own(ITEMS, m?.id);
       if (!p || !def?.buy || !SHOP.includes(def.id)) return;
       if (!this.near(p, "shop")) return this.log(p, "Chegue perto da loja.");
       const qty = Math.max(1, Math.min(100, Math.floor(Number(m.qty) || 1)));
@@ -1517,7 +1518,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.handle("quests", (c) => { const p = this.me(c); if (p) this.sendQuests(p); });
     this.handle("questAccept", (c, m: { id: string }) => {
       const p = this.me(c);
-      const q = QUEST_BY_ID[m?.id];
+      const q = own(QUEST_BY_ID, m?.id);
       if (!p || !q) return;
       if (!this.near(p, "shop")) return this.log(p, "Fale com o Kisuke para aceitar missões.");
       if (q.id in p.quests.active) return;
@@ -1531,14 +1532,14 @@ export class WorldRoom extends GameRoom<WorldState> {
     });
     this.handle("questAbandon", (c, m: { id: string }) => {
       const p = this.me(c);
-      if (!p || !(m?.id in p.quests.active)) return;
+      if (!p || !isOwnKey(p.quests.active, m?.id)) return;
       delete p.quests.active[m.id];
       this.sendQuests(p);
     });
     this.handle("questTurnIn", (c, m: { id: string }) => {
       const p = this.me(c);
-      const q = QUEST_BY_ID[m?.id];
-      if (!p || !q || !(q.id in p.quests.active)) return;
+      const q = own(QUEST_BY_ID, m?.id);
+      if (!p || !q || !isOwnKey(p.quests.active, q.id)) return;
       if (!this.near(p, "shop")) return this.log(p, "Entregue a missão ao Kisuke.");
       const g = q.goal;
       if (g.type === "kill" && p.quests.active[q.id] < g.count) return this.log(p, "A missão ainda não está completa.");
@@ -2343,7 +2344,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.handle("shopOpen", (c) => { const p = this.me(c); if (p) this.sendShop(p); });
     this.handle("shopBuy", (c, m: { id?: string }) => {
       const p = this.me(c);
-      const item = COSMETIC[String(m?.id ?? "")];
+      const item = own(COSMETIC, m?.id);
       if (!p || !item || !p.accountId) return;
       if (item.season) return this.log(p, `${item.name} só sai no passe de temporada.`);
       const w = db.wallet(p.accountId);
@@ -2367,7 +2368,7 @@ export class WorldRoom extends GameRoom<WorldState> {
         else if (kind === "name") p.cosName = ""; else if (kind === "pet") p.cosPet = "";
         return this.sendShop(p);
       }
-      if (!COSMETIC[id] || !db.wallet(p.accountId).owned.includes(id)) return this.log(p, "Esse cosmético não é da sua conta.");
+      if (!own(COSMETIC, id) || !db.wallet(p.accountId).owned.includes(id)) return this.log(p, "Esse cosmético não é da sua conta.");
       this.equipCos(p, id);
       this.sendShop(p);
     });

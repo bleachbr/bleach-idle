@@ -19,17 +19,17 @@ Mudança de segurança só é aprovada pela outra pessoa do projeto; o veredito 
 - `create` com `charId` igual a `constructor`, `__proto__`, `toString` ou `hasOwnProperty` cria o personagem (`LobbyRoom`, `if (!CHARS[m?.charId])`). Entrar no mundo com ele falha com `Cannot read properties of undefined`; o servidor segue vivo.
 - `shopBuy` com essas chaves lança `NOT NULL constraint failed: wallets.crystals`.
 - `questAccept` com `constructor` aceita a missão "Object" e grava `{"undefined":0}` em `quests.active`.
-- Faça: `typeof chave === "string" && Object.hasOwn(TABELA, chave)` antes de indexar, ou use `Map`.
+- Faça: `own(TABELA, chave)` e `isOwnKey(objeto, chave)` (`shared/src/lookup.ts`), nunca `TABELA[chave]` nem `chave in objeto`. Estado: corrigido em `create`, `buy`, `questAccept`, `questAbandon`, `questTurnIn`, `shopBuy` e `shopEquip`; ao criar handler novo com id vindo do cliente, use o mesmo. Teste de modelo: `server/test/e2e-seguranca.test.ts`.
 
 **R2. Números e índices.** `Number.isInteger` e limites antes de usar. Valor de tipo errado gravado em campo do Schema já derrubou todos os jogadores da sala (comentário em `step`): valide o tipo antes de tocar no estado sincronizado.
 
 **R3. Rotas de debug nascem desligadas.**
 `DEV_MODE` (`WorldRoom.ts`) liga sempre que `NODE_ENV` não é `production`. Provado com o servidor iniciado sem `NODE_ENV`, como o `npm start` o inicia: ele responde à mensagem `dev` para qualquer jogador logado ("Dev: nível 300", "+1.000.000 kan"); com `NODE_ENV=production` o handler não existe. O `Dockerfile` define `production`, mas o README manda `npm run build && npm start` fora do Docker. Mitigação imediata: `NODE_ENV=production npm start` (ou `BI_DEV=0`).
-- Faça: ligar só com `BI_DEV=1` explícito. `server/scripts/dev.ts` e `endgame.ts` usam `dev`, então `server/scripts/test.ts` precisa exportar `BI_DEV=1`. `BI_DEBUG` também deve exigir `=== "1"`: hoje qualquer valor não vazio liga, inclusive `0`.
+- Estado: corrigido. `flagOn("BI_DEV")` e `flagOn("BI_DEBUG")` (`server/src/flags.ts`) só ligam com `1`; `npm run dev` carrega `server/dev.env`; `server/scripts/test.ts` exporta `BI_DEV=1` porque os cenários `dev` e `endgame` usam o handler. Sem handler, o Colyseus desconecta quem manda `dev`. Qualquer recurso novo de debug segue o mesmo padrão.
 
 **R4. Limite de tentativas por IP.**
 `LobbyRoom.onAuth` lê `req.socket.remoteAddress` e `auth.ts` só guarda o contador por chave. Provado que o balde por IP é compartilhado: depois de 30 falhas de logins diferentes, o pedido seguinte, de outra pessoa criando conta, recebeu 429; `register` também consome o mesmo balde. Não verificado com o Caddy: o `reverse_proxy` do Caddy 2 envia `X-Forwarded-For` por padrão (documentação do Caddy), e o jogo ignora esse cabeçalho, então atrás dele todos devem chegar com o IP do proxy.
-- Faça: ler `X-Forwarded-For` só quando a conexão vier do proxy confiável. Nunca confie nesse cabeçalho vindo direto da internet.
+- Estado: corrigido. `clientIp(req)` (`server/src/clientIp.ts`) usa o último item de `X-Forwarded-For` só com `TRUST_PROXY=1` e conexão de endereço local ou privado; o `docker-compose.yml` define a flag. Nunca confie nesse cabeçalho vindo direto da internet; com CDN na frente do Caddy, ajuste a função.
 
 **R5. Cliente (DOM).**
 - Valor dinâmico em `innerHTML` só se vier do catálogo de `shared/` ou passar por `escHtml`. Texto de jogador (nome, chat, guilda) vai em `textContent`.
