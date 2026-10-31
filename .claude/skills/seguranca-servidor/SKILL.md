@@ -19,7 +19,10 @@ Mudança de segurança só é aprovada pela outra pessoa do projeto; o veredito 
 - `create` com `charId` igual a `constructor`, `__proto__`, `toString` ou `hasOwnProperty` cria o personagem (`LobbyRoom`, `if (!CHARS[m?.charId])`). Entrar no mundo com ele falha com `Cannot read properties of undefined`; o servidor segue vivo.
 - `shopBuy` com essas chaves lança `NOT NULL constraint failed: wallets.crystals`.
 - `questAccept` com `constructor` aceita a missão "Object" e grava `{"undefined":0}` em `quests.active`.
-- Faça: `own(TABELA, chave)` e `isOwnKey(objeto, chave)` (`shared/src/lookup.ts`), nunca `TABELA[chave]` nem `chave in objeto`. Estado: corrigido em `create`, `buy`, `questAccept`, `questAbandon`, `questTurnIn`, `shopBuy` e `shopEquip`; ao criar handler novo com id vindo do cliente, use o mesmo. Teste de modelo: `server/test/e2e-seguranca.test.ts`.
+- Faça: `own(TABELA, chave)` e `isOwnKey(objeto, chave)` (`shared/src/lookup.ts`), nunca `TABELA[chave]` nem `chave in objeto`. Estado: corrigido em `create`, `buy`, `questAccept`, `questAbandon`, `questTurnIn`, `shopBuy` e `shopEquip`; ao criar handler novo com id vindo do cliente, use o mesmo.
+- Validação de string em handlers: use `typeof m?.x === "string" ? m.x : ""` em vez de `String(m?.x)`. Objeto sem protótipo (`Object.create(null)`) enviado no payload faz `String()` disparar `TypeError`.
+- Proteção contra `__proto__` em tipos de mensagem: `GameRoom` anula o protótipo de `onMessageHandlers` (`Object.setPrototypeOf(this.onMessageHandlers, null)`) para evitar que mensagens de rede com tipo `__proto__` acessem métodos do `Object.prototype` e derrubem o processo.
+- Teste de modelo: `server/test/e2e-seguranca.test.ts`.
 
 **R2. Números e índices.** `Number.isInteger` e limites antes de usar. Valor de tipo errado gravado em campo do Schema já derrubou todos os jogadores da sala (comentário em `step`): valide o tipo antes de tocar no estado sincronizado.
 
@@ -29,7 +32,7 @@ Mudança de segurança só é aprovada pela outra pessoa do projeto; o veredito 
 
 **R4. Limite de tentativas por IP.**
 `LobbyRoom.onAuth` lê `req.socket.remoteAddress` e `auth.ts` só guarda o contador por chave. Provado que o balde por IP é compartilhado: depois de 30 falhas de logins diferentes, o pedido seguinte, de outra pessoa criando conta, recebeu 429; `register` também consome o mesmo balde. Não verificado com o Caddy: o `reverse_proxy` do Caddy 2 envia `X-Forwarded-For` por padrão (documentação do Caddy), e o jogo ignora esse cabeçalho, então atrás dele todos devem chegar com o IP do proxy.
-- Estado: corrigido. `clientIp(req)` (`server/src/clientIp.ts`) usa o último item de `X-Forwarded-For` só com `TRUST_PROXY=1` e conexão de endereço local ou privado; o `docker-compose.yml` define a flag. Nunca confie nesse cabeçalho vindo direto da internet; com CDN na frente do Caddy, ajuste a função.
+- Estado: corrigido. `clientIp(req)` (`server/src/clientIp.ts`) usa o último item de `X-Forwarded-For` só quando a conexão vier de endereço listado em `TRUST_PROXY` (CIDRs validados via `net.BlockList`); o `docker-compose.yml` define `172.28.0.0/24`. Nunca confie nesse cabeçalho vindo direto da internet; com CDN na frente do Caddy, ajuste a lista.
 
 **R5. Cliente (DOM).**
 - Valor dinâmico em `innerHTML` só se vier do catálogo de `shared/` ou passar por `escHtml`. Texto de jogador (nome, chat, guilda) vai em `textContent`.

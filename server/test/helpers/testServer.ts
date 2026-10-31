@@ -4,6 +4,10 @@ import { Client, type Room } from "colyseus.js";
 
 // Garante que o banco seja em memória durante testes
 process.env.DB_FILE = ":memory:";
+// um `export BI_DEV=1` ou TRUST_PROXY no shell de quem roda os testes mudaria o resultado
+delete process.env.BI_DEV;
+delete process.env.BI_DEBUG;
+delete process.env.TRUST_PROXY;
 
 let serverInstance: Server | null = null;
 let serverPort = 0;

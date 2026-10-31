@@ -8,6 +8,14 @@ const MAX_PER_SECOND = 40; // folgado para jogar (andar segurando a tecla manda 
 export abstract class GameRoom<S extends Schema = any> extends Room<S> {
   private rate = new WeakMap<Client, { n: number; since: number; warned: boolean }>();
 
+  constructor(...args: ConstructorParameters<typeof Room>) {
+    super(...args);
+    // O Colyseus guarda os handlers num objeto comum e faz `onMessageHandlers[tipo]` com o tipo vindo da rede: com o tipo
+    // "__proto__" (ou "__defineGetter__"...) isso devolve algo que não é função, lança TypeError fora de qualquer try/catch
+    // e derruba o processo inteiro. Sem protótipo, só os handlers registrados existem.
+    Object.setPrototypeOf((this as unknown as { onMessageHandlers: object }).onMessageHandlers, null);
+  }
+
   /** Sem isto o Colyseus não envolve os handlers em try/catch: uma exceção derrubaria o processo. */
   onUncaughtException(error: Error & { cause?: unknown }, methodName: string) {
     // ServerError é resposta de propósito (senha errada, ingresso inválido...), não bug

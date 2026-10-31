@@ -6,8 +6,8 @@ Medida em 31/10/2026 (sábado), sobre a `main` no commit `84e0180` mais as mudan
 | Verificação | Comando | Resultado |
 | :--- | :--- | :--- |
 | Tipos | `npm run typecheck` | sem erros (Node 22 e Node 24) |
-| Vitest | `npm test` | 10 arquivos e 83 testes passam em cerca de 1,3 s (Node 22). Eram 9 e 76 antes do `season.test.ts`; no Node 24 foram medidos os 76 |
-| Cenários | `npm run test:scripts` | Na `main` (`84e0180`): 312 verificações OK e 2 falhas **só aos sábados e domingos** (`social` e `rebirth`, XP em dobro), 418 s local e cerca de 9 min no CI, com o mesmo resultado no Node 24. Neste PR, `social` e `rebirth` passam num sábado (29 verificações) e com o relógio simulado em dia útil; a bateria completa não foi repetida com o conserto |
+| Vitest | `npm test` | 14 arquivos e 135 testes passam em cerca de 1,2 s (Node 22) |
+| Cenários | `npm run test:scripts` | 314 verificações OK e 0 falhas, cerca de 7 min local (Node 22) |
 | Build do cliente | `npm run build` | 4,5 s; um JavaScript de 1,67 MB (398 KB comprimido); `client/dist` com 19 MB |
 | Imagem Docker | `docker build .` | constrói (675 MB). Em contêiner descartável, `/healthz`, `/`, `/maps/soul.tmj` e `/manifest.webmanifest` respondem 200. Roda como root, com `NODE_ENV=production` e Node 24. Sem `.git`, `.claude`, `art` nem `docs` dentro |
 | Segredos | `gitleaks git --redact -c .gitleaks.toml .` | sem achados em todo o histórico. Sem a config seriam 5, todos a senha fictícia do e2e do lobby |

@@ -21,7 +21,7 @@ Tudo o que o código precisa para ir ao ar já está pronto. O que falta é **co
 | `EXP_RATE` | 1 | taxa de XP dos monstros (0,3 = 30%); simule antes com `server/scripts/balance.ts` |
 | `INVASION_FIRST_MS` / `INVASION_EVERY_MS` | 30 min / 3 h | quando começa a primeira invasão de Hollows e o intervalo entre elas |
 | `LOGIN_MAX_FAILS_IP` | 30 | senhas erradas por IP antes do bloqueio de 1 min |
-| `TRUST_PROXY` | desligado (o `docker-compose.yml` define `1`) | atrás do Caddy, conta as tentativas pelo IP real (`X-Forwarded-For`) e não pelo do proxy. Só ligue se o jogo não for alcançável direto da internet |
+| `TRUST_PROXY` | desligado (o `docker-compose.yml` define `172.28.0.0/24`) | lista de CIDRs confiáveis (separados por vírgula). Atrás do Caddy, conta as tentativas pelo IP real (`X-Forwarded-For`) só quando a conexão vem dessa rede. Só ligue se o jogo não for alcançável direto da internet |
 | `BI_DEV` | desligado | `1` liga o modo Dev (nível, kan e itens de graça). Só para desenvolvimento: nunca em produção |
 
 ## Opções de servidor (preços conferidos em out/2026; confira antes de contratar)

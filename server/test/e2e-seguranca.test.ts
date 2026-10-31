@@ -73,17 +73,28 @@ describe("E2E: segurança do servidor", () => {
     await lobby.leave();
   });
 
-  it("o modo Dev está desligado: a mensagem dev não tem handler, o Colyseus desconecta quem a envia e nada é concedido", async () => {
-    const s1 = await entrar();
+  it("o cliente real envia devHello ao entrar: com o modo Dev desligado isso NÃO pode desconectá-lo", async () => {
+    const { world, sincronizar } = await entrar();
     let recebeuDevMode = false;
-    s1.world.onMessage("devMode", () => (recebeuDevMode = true));
+    world.onMessage("devMode", () => (recebeuDevMode = true));
+    let saiu: number | undefined;
+    world.onLeave((code) => (saiu = code));
+
+    world.send("devHello");
+    await sincronizar(); // se o servidor tivesse desconectado, o `time` nunca voltaria
+
+    expect(recebeuDevMode).toBe(false);
+    expect(saiu).toBeUndefined();
+    await world.leave();
+  });
+
+  it("o modo Dev está desligado: a mensagem dev desconecta quem a envia (4002) e nada é concedido", async () => {
+    const s1 = await entrar();
     const saiu = new Promise<number>((resolve) => s1.world.onLeave(resolve));
 
     s1.world.send("dev", { a: "gold" });
     s1.world.send("dev", { a: "level", n: 300 });
-
-    expect(await saiu).not.toBe(1000); // desconexão com erro, não saída normal
-    expect(recebeuDevMode).toBe(false);
+    expect(await saiu).toBe(4002); // WS_CLOSE_WITH_ERROR do Colyseus para mensagem sem handler
 
     // reentra com a mesma conta: o personagem segue com o nível e o ouro iniciais
     const lobby = await s1.client.joinOrCreate("lobby", { action: "login", login: s1.login, password: SENHA });
@@ -93,6 +104,55 @@ describe("E2E: segurança do servidor", () => {
     expect(s2.world.state.players.get(s1.id)?.level).toBe(START_LEVEL);
     expect(s2.inv()?.gold).toBe(START_KIT.gold);
     await s2.world.leave();
+  });
+
+  it.each(["__proto__", "__defineGetter__", "__defineSetter__"])("o tipo de mensagem %s não derruba o servidor (nem desconecta ninguém além de quem o envia)", async (tipo) => {
+    const vitima = await entrar();
+    const atacante = await entrar();
+    const saiu = new Promise<number>((resolve) => atacante.world.onLeave(resolve));
+
+    atacante.world.send(tipo);
+    expect(await saiu).toBe(4002);
+
+    await vitima.sincronizar(); // o servidor continua vivo e respondendo para os outros
+    await vitima.world.leave();
+  });
+
+  it("o lobby também sobrevive ao tipo de mensagem __proto__", async () => {
+    const r = await registrar();
+    const saiu = new Promise<number>((resolve) => r.lobby.onLeave(resolve));
+    r.lobby.send("__proto__");
+    expect(await saiu).toBe(4002);
+
+    const outro = await registrar(); // o servidor segue aceitando contas novas
+    expect(outro.id).toBeTruthy();
+  });
+
+  it("um personagem salvo com charId envenenado (de antes da correção) abre o mundo como ichigo", async () => {
+    const r = await registrar();
+    const { DatabaseSync } = await import("node:sqlite");
+    // o helper usa o mesmo banco em memória do processo; a gravação passa pelo db do servidor
+    const db = await import("../src/db");
+    const row = db.load(r.id)!;
+    db.save(r.id, { ...row.data, charId: "constructor" }, false);
+
+    const w = await abrirMundo(r.client, r.lobby, r.id);
+    await w.sincronizar();
+    expect(w.world.state.players.get(r.id)?.charId).toBe("ichigo");
+    void DatabaseSync;
+    await w.world.leave();
+  });
+
+  it("um save com missão fantasma (de antes da correção) é limpo ao carregar", async () => {
+    const r = await registrar();
+    const db = await import("../src/db");
+    const row = db.load(r.id)!;
+    db.save(r.id, { ...row.data, quests: { active: { undefined: 0, patrulha: 2 }, done: [] } }, false);
+
+    const w = await abrirMundo(r.client, r.lobby, r.id);
+    await w.sincronizar();
+    expect(Object.keys(w.missoes()?.active ?? {})).toEqual(["patrulha"]);
+    await w.world.leave();
   });
 
   it("questAccept com id válido aceita a missão (garante que o teste abaixo enxerga o efeito)", async () => {

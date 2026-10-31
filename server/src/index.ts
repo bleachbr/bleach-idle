@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { WorldRoom } from "./WorldRoom";
 import { LobbyRoom } from "./LobbyRoom";
 import { createHttpServer } from "./http";
+import { flagOn } from "./flags";
 import * as db from "./db";
 
 // Configuração por variáveis de ambiente (veja DEPLOY.md):
@@ -26,6 +27,7 @@ await gameServer.listen(port);
 // o mundo existe mesmo sem ninguém conectado: é isso que mantém a hunt offline rodando
 await matchMaker.createRoom("world", {});
 console.log(`Servidor do mundo em ws://localhost:${port} (cliente pronto em http://localhost:${port}, se houver build)`);
+console.log(`Modo Dev: ${flagOn("BI_DEV") ? "LIGADO (nunca em produção)" : "desligado"} · TRUST_PROXY: ${process.env.TRUST_PROXY ? "ligado" : "desligado"}`);
 
 const backupDir = process.env.BACKUP_DIR;
 if (backupDir) {
