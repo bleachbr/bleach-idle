@@ -14,6 +14,8 @@ npm run build && npm start   # modo de produção: tudo em http://localhost:2567
 
 Para pôr no ar, veja **[DEPLOY.md](DEPLOY.md)** (Docker, HTTPS automático, backups, opções de hospedagem e preços).
 
+Para contribuir, veja o **[roadmap](docs/roadmap.md)** (o que vem a seguir, em que ordem e como pegar um item) e o **[AGENTS.md](AGENTS.md)** (regras de engenharia, também para agentes de IA).
+
 Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra conta sem apagar o login lembrado), e `?toque` mostra os controles de celular no computador.
 
 ## Stack

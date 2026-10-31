@@ -43,7 +43,7 @@ Tudo que chega pelo WebSocket é hostil até o servidor validar. O cliente só e
 
 **R8. Economia atômica e sem duplicação.**
 - Mova dinheiro, itens e cristais numa operação só (modelos: `db.changeCrystals` com `BEGIN IMMEDIATE`; `market.remove()` devolve boolean e barra compra dupla).
-- A recompensa de cristais trava por personagem e paga na carteira da conta. Provado com a diária: dois personagens da mesma conta, saldo 5 depois 10; o limite é 5 personagens por conta. Conquistas pagam do mesmo jeito (lido no código, não executado). Decida de propósito se a trava é por conta ou por personagem antes de criar recompensas novas.
+- A recompensa de cristais trava por personagem e paga na carteira da conta. Provado com a diária: dois personagens da mesma conta, saldo 5 depois 10; o limite é 5 personagens por conta. Conquistas pagam do mesmo jeito (lido no código, não executado). Decisão D-001 (31/10/2026, `docs/roadmap.md`): a trava fica por personagem. Recompensa nova segue essa regra, e o balanceamento conta com até 5 personagens por conta.
 
 **R9. Erro não vira mentira.** `db.createAccount` e `db.createChar` devolvem falha para qualquer exceção, e o chamador responde "login já existe" ou "nome em uso". Um erro de disco apareceria assim. Capture só o erro esperado (UNIQUE) e deixe o resto subir.
 
