@@ -1,5 +1,5 @@
 // Renascimento: nível 60+ volta ao 8 guardando tudo, com bônus permanentes e nível exigido crescente.
-import { expForLevel, maxHp, nearestWalkable, rebirthLevel, levelMilestone, START_LEVEL } from "../../shared/src";
+import { expForLevel, maxHp, nearestWalkable, rebirthLevel, levelMilestone, START_LEVEL, xpWeekend, WEEKEND_EXP } from "../../shared/src";
 import { HOME, TEMPLE } from "../src/maps";
 import { play, patchSave, sleep, ok, done } from "./lib";
 
@@ -45,6 +45,8 @@ a.room.send("auto", { autoHunt: true, autoHeal: 40 });
 for (let i = 0; i < 120 && !a.logs.some((l) => /Hollow Menor derrotado: \+\d+ XP/.test(l)); i++) await sleep(500);
 a.room.send("auto", { autoHunt: false });
 const line = a.logs.find((l) => /Hollow Menor derrotado: \+\d+ XP/.test(l)) ?? "";
-ok(`XP com +10% (${line})`, line.includes("+66 XP"));
+// sábado e domingo (Brasília) todo XP de monstro vale em dobro: o esperado segue a mesma regra do servidor
+const xp66 = 66 * (xpWeekend(Date.now()) ? WEEKEND_EXP : 1);
+ok(`XP com +10% (${line})`, line.includes(`+${xp66} XP`));
 await a.room.leave();
 done();
