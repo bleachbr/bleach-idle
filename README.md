@@ -9,7 +9,7 @@ npm install
 npm run dev        # servidor em ws://localhost:2567 e cliente em http://localhost:5173
 npm test           # testes unitários e E2E (Vitest), os mesmos do CI
 npm run test:scripts   # bateria de cenários de jogo (sobe um servidor de teste isolado)
-npm run build && npm start   # modo de produção: tudo em http://localhost:2567
+npm run build && NODE_ENV=production npm start   # modo de produção: tudo em http://localhost:2567
 ```
 
 Para pôr no ar, veja **[DEPLOY.md](DEPLOY.md)** (Docker, HTTPS automático, backups, opções de hospedagem e preços).

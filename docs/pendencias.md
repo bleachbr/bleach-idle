@@ -69,10 +69,10 @@ Cada item foi reproduzido num servidor isolado (porta própria, banco temporári
 
 | ID | Item | Evidência | Prioridade | Correção proposta |
 | :-- | :--- | :--- | :--- | :--- |
-| S1 | **Modo Dev ligado por omissão.** `DEV_MODE` em `WorldRoom.ts` liga quando `NODE_ENV` não é `production` | Executado: servidor iniciado sem `NODE_ENV` respondeu à mensagem `dev` com "nível 300" e "+1.000.000 kan"; com `production`, o handler não existe. O `Dockerfile` define `production`; README e DEPLOY.md mandam `npm start` fora do Docker | Alta | Ligar só com `BI_DEV=1` (e `BI_DEBUG` só com `1`). Exportar `BI_DEV=1` em `server/scripts/test.ts` (os cenários `dev` e `endgame` dependem do handler). Mitigação imediata: `NODE_ENV=production npm start` ou `BI_DEV=0` |
+| S1 | **Modo Dev ligado por omissão.** `DEV_MODE` em `WorldRoom.ts` liga quando `NODE_ENV` não é `production` | Executado: servidor iniciado sem `NODE_ENV` respondeu à mensagem `dev` com "nível 300" e "+1.000.000 kan"; com `production`, o handler não existe. O `Dockerfile` define `production`; o README manda `npm run build && npm start` fora do Docker (o DEPLOY.md já usa `NODE_ENV=production`) | Alta | Ligar só com `BI_DEV=1` (e `BI_DEBUG` só com `1`). Exportar `BI_DEV=1` em `server/scripts/test.ts` (os cenários `dev` e `endgame` dependem do handler). Mitigação imediata: `NODE_ENV=production npm start` ou `BI_DEV=0` |
 | S2 | **Chaves de protótipo aceitas.** `CHARS[m?.charId]` e outras buscas em objeto comum | Executado: `create` com `constructor`, `__proto__`, `toString` e `hasOwnProperty` cria personagem; entrar com ele falha; `shopBuy` lança `NOT NULL constraint failed: wallets.crystals`; `questAccept` com `constructor` aceita a missão "Object". Servidor segue vivo | Média | `Object.hasOwn` antes de indexar; teste de regressão por handler |
 | S3 | **Limite de login por IP é compartilhado atrás do proxy.** `LobbyRoom.onAuth` (linha 34) lê o IP da conexão | Executado: 30 falhas de logins diferentes e o pedido seguinte de outra pessoa levou 429. Não testado com o Caddy: o `reverse_proxy` do Caddy 2 envia `X-Forwarded-For` por padrão (documentação do Caddy), e o jogo ignora o cabeçalho | Média | Ler `X-Forwarded-For` só de proxy confiável |
-| S4 | **Cristais por personagem, carteira por conta.** Diária e conquistas | Diária executada: 2 personagens da mesma conta, saldo 5 depois 10. Conquistas lidas no código. Limite de 5 personagens por conta | Decidido | **D-001 (31/10/2026): a trava fica por personagem.** Sem mudança de código; recompensa nova conta com até 5 personagens por conta |
+| S4 | **Cristais por personagem, carteira por conta.** Diária e conquistas | Diária executada: 2 personagens da mesma conta, saldo 5 depois 10. Conquistas lidas no código. Limite de 5 personagens por conta | Decidido por Waldir; aguarda o Rafael | **D-001 (31/10/2026): a trava fica por personagem.** Sem mudança de código; recompensa nova conta com até 5 personagens por conta |
 | S5 | **Dependência com advisory alto** (`nanoid`, via Colyseus 0.15) | `npm audit --omit=dev`: 1 alto e 2 moderados. O Colyseus chama `nanoid` com tamanho fixo nos pontos lidos | Baixa | Upgrade maior do Colyseus em PR próprio, com a bateria completa. Não usar `npm audit fix --force`. O alto (GHSA-xwg4-73v4-xw9w) só é explorável com `size` de 2^31 ou mais vindo do usuário |
 | S6 | **`createAccount` e `createChar` tratam qualquer exceção como "já existe"** | Lido em `db.ts` | Baixa | Capturar só a violação de `UNIQUE` |
 | S7 | **Sem CSP nem cabeçalhos de segurança**; sessão de 30 dias em `localStorage` | Nenhum cabeçalho em `http.ts`, `index.html` ou `deploy/Caddyfile` | Baixa | CSP no Caddy; manter o rigor de `escHtml` e `textContent` |
@@ -90,6 +90,9 @@ Cada item foi reproduzido num servidor isolado (porta própria, banco temporári
 | Q5 | Actions em Node 20 (aviso do GitHub: serão forçadas ao Node 24) | Anotação do run do PR #2 | Baixa | Subir para checkout v7 e setup-node v7 em PR próprio e conferir o CI |
 | Q6 | `DEPLOY.md` diz que a imagem Docker nunca foi construída | Executado: ela constrói e responde 200 | Baixa | **Corrigido neste PR** (`DEPLOY.md`). Continua sem teste: HTTPS atrás do Caddy |
 | Q7 | Hooks de commit | Nenhum hook ativo em `.git/hooks` | Baixa | Opcional: rodar `gitleaks` antes de cada commit |
+| Q8 | CI sem varredura de segredos (`gitleaks` só roda se alguém lembrar) | Lido em `ci.yml` | Média | F-11: job de gitleaks com binário fixado e verificado por hash |
+| Q9 | `ubuntu-latest` migra para o Ubuntu 26 (aviso do GitHub no run do PR #2) | Anotação do run 41209911669 | Baixa | F-11: fixar `ubuntu-24.04` |
+| Q10 | CI testa Node 22 e o `Dockerfile` roda Node 24 | `ci.yml` e `Dockerfile`; typecheck, Vitest e a bateria completa passam nos dois (medido) | Baixa | F-11: matriz com os dois |
 
 ## 9. Desempenho
 
@@ -97,8 +100,8 @@ Números e método em [`baseline.md`](baseline.md). Skill: `performance-servidor
 
 | ID | Item | Evidência | Prioridade |
 | :-- | :--- | :--- | :--- |
-| P1 | Reconstrução do ranking bloqueia o tick | `db.allChars()` com 1.000 personagens: p50 26 ms, p99 57 ms (tick de 100 ms) | Média, cresce com a base |
-| P2 | Salvamento em lote é síncrono | `saveMany` de 200 saves: p50 5,5 ms, p99 17,5 ms, a cada 10 s | Baixa hoje |
+| P1 | Reconstrução do ranking bloqueia o tick | `db.allChars()` com 1.000 personagens: p50 10,2 a 10,4 ms, máximo visto 15,7 ms, cerca de 10% de um tick de 100 ms (3 rodadas; ver baseline) | Baixa hoje; cresce com a base |
+| P2 | Salvamento em lote é síncrono | `saveMany` de 200 saves: p50 1,40 a 1,43 ms, máximo 1,7 ms, a cada 10 s (banco em memória; disco soma o fsync) | Baixa hoje |
 | P3 | Não há métrica da duração do tick | Nenhuma ocorrência no código | Média: sem ela, as demais são estimativas |
 | P4 | Schema sem filtro e `broadcast` global | 31 `broadcast` no `WorldRoom`; estado de todos os mapas vai a todos os clientes | Média, cresce com o número de jogadores |
 | P5 | Um único JavaScript de 1,67 MB | Build do Vite avisa acima de 500 kB | Baixa |
