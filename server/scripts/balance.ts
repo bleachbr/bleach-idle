@@ -4,15 +4,18 @@
 // Considera Shikai, corpo a corpo + habilidade quando há reiatsu, equipamento inicial, sem forja,
 // sem bônus de bestiário/treino, 3 s de deslocamento entre um abate e outro e caçando sozinho
 // (o renascimento limita: um spawn de 4 monstros com 20 s de renascimento rende no máximo ~720 abates/h).
-import { CHARS, MONSTERS, expForLevel, maxHp, maxRei, playerAtk, playerDef, equipBonus, START_KIT } from "../../shared/src";
+import { CHARS, MONSTERS, TRAVEL, expForLevel, maxHp, maxRei, playerAtk, playerDef, equipBonus, START_KIT } from "../../shared/src";
 import { SPAWNS } from "../src/maps";
 
 const charId = process.argv[2] ?? "ichigo";
-const top = Number(process.argv[3] ?? 60);
+const top = Number(process.argv[3] ?? 150);
 const ch = CHARS[charId];
 const kinds = Object.values(MONSTERS).filter((m) => !m.dummy);
 const WALK_S = 3;
 const avgDmg = (atk: number, mult: number, def: number) => Math.max(1, (atk * mult * 50) / (50 + def));
+const MAP_MIN_LEVEL: Record<string, number> = Object.fromEntries(
+  TRAVEL.map((t) => [t.map, Math.min(t.minLevel, ...TRAVEL.filter((x) => x.map === t.map).map((x) => x.minLevel))]),
+);
 
 function hunt(level: number, kind: string) {
   const m = MONSTERS[kind];
@@ -31,7 +34,8 @@ function hunt(level: number, kind: string) {
   // vida volta a 1%/s em luta e 4%/s fora: o tempo de recuperação entra no ciclo
   const rest = Math.max(0, taken - hp * 0.01 * ttk) / (hp * 0.04);
   const cycle = ttk + WALK_S + rest;
-  const alive = SPAWNS.filter((sp) => sp.kind === kind).reduce((n, sp) => n + sp.count, 0);
+  const alive = SPAWNS.filter((sp) => sp.kind === kind && (MAP_MIN_LEVEL[sp.map] ?? 1) <= level).reduce((n, sp) => n + sp.count, 0);
+  if (!alive) return { kind, ttk, taken, risk: 999, expH: 0 };
   const killsH = Math.min(3600 / cycle, (alive * 3600) / (m.respawnMs / 1000 + ttk));
   return { kind, ttk, taken, risk: taken / hp, expH: m.exp * (Number(process.env.EXP_RATE) || 1) * killsH };
 }

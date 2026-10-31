@@ -124,6 +124,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Em vez de usar actions de terceiros para o Gitleaks (que ampliam a superfície de supply-chain), o job `gitleaks` em `.github/workflows/ci.yml` baixa diretamente o tarball oficial `gitleaks_8.30.1_linux_x64.tar.gz`, valida o hash SHA-256 (`551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb`) via `sha256sum -c` e executa `gitleaks git --redact -c .gitleaks.toml .` sobre `fetch-depth: 0`.
 - O runner foi fixado em `ubuntu-24.04`, `actions/checkout` (`v7.0.1`) e `actions/setup-node` (`v7.1.0`) foram atualizadas com SHA de 40 caracteres e o job `test` passou a rodar em matriz `["22.x", "24.x"]` (cobrindo tanto o ambiente de dev quanto a versão do `Dockerfile`).
 
+### Curva de Progressão e Balanceamento entre Hueco Mundo, Las Noches, Karakura Falsa e Wandenreich (`F-15`)
+- Quando `falsa` (nível 60+) e `wandenreich` (nível 95+) foram adicionados após `lasnoches` (nível 45+), os monstros de Las Noches (`arrancar_numeros`, `exequias`, `fraccion`) permaneceram com atributos de fim de jogo (`hp: 2300..4300, atk: 60..78, def: 17..24`), superiores aos da Karakura Falsa (`fraccion_espada` com `hp: 2600, atk: 56, def: 18`), além de `balance.ts` ignorar o `minLevel` dos mapas em `TRAVEL` e parar no nível 60.
+- Isso fazia a curva ótima de caça pular completamente `arrancar` (em Hueco Mundo) e todos os monstros de Las Noches (`exequias`, `fraccion`).
+- **Solução:** Recalibramos `adjuchas`, `arrancar`, `arrancar_numeros`, `exequias`, `fraccion` e `privaron` em `shared/src/data.ts` para formar uma escada estritamente crescente em `hp`, `atk`, `def`, `exp` e `exp/hp` do nível 25 ao 150, atualizamos `server/scripts/balance.ts` para respeitar `MAP_MIN_LEVEL` até o nível 150 e blindamos a curva com `server/test/balance-progression.test.ts`.
+
 ---
 
 ## 8. Jogador-IA (Cradle) e Correções de UX/Motor (`F-16`)
