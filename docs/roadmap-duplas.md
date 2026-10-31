@@ -56,7 +56,7 @@ Backlog novo (IDs W-##) — motor, operação e conteúdo de mundo misturados:
 | Ordem | ID | Entrega | Tam. | Depende de | Spec |
 | :-- | :-- | :--- | :-- | :--- | :-- |
 | 23 | W-04 | **Chefes com fases** — motor de fases de boss (Aizen, Yhwach) reutilizável por chefe mundial e M4-02 | M | — | sim |
-| 24 | W-06 | **Títulos e marcos de servidor** — por feitos (primeiro Bankai do servidor, top da arena), persistidos | M | — | não |
+| 24 | W-06 | **Títulos e marcos de servidor** — por feitos (primeiro Bankai do servidor, top da arena), persistidos | M | — | **Feito** (`feat/w-06-marcos-servidor`) |
 | 25 | W-07 | **Correio interno (mailbox)** — recompensas, itens de mercado expirado, mensagens de sistema | M | — | sim |
 | 26 | W-05 | **Caçada offline v2** — resumo detalhado ao voltar (drops, mortes, kan), simulação por lote | M | — | sim |
 | 27 | W-09 | **Métricas de operação** — `/metrics` (tick, salas, jogadores, saves) com alerta mínimo | M | F-08 | não |

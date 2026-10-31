@@ -161,3 +161,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - A reconstrução anterior do ranking chamava `db.allChars()`, lendo do SQLite e fazendo `JSON.parse()` do `SaveData` completo (3,7 KB) + `powerOf()` de todos os personagens a cada 15 s (`p50 = 10,29 ms`, `máx = 27,82 ms` para 1.000 personagens).
 - Como personagens offline só mudam quando passam por `db.createChar`, `db.save`, `db.saveMany` ou `db.deleteChar`, extraímos `server/src/ranking.ts`: ele semeia o mapa `savedEntries` uma única vez (`ensureSeeded`), recebe atualizações O(1) via `db.onCharWrite` e sobrepõe apenas os jogadores ativos em `state.players`.
 - **Resultado medido (`bench.mts 1000`):** `buildRanking()` caiu de `p50 = 10,29 ms` para **`p50 = 0,10 ms`** (`p95 = 0,20 ms`, `máx = 0,45 ms`), uma redução de **100x** no tempo de CPU síncrono.
+
+## 16. Marcos Históricos de Servidor com Cache O(1) e Persistência em `meta` (W-06)
+
+- **Contexto:** Feitos únicos do servidor ("Primeiro Bankai", "Primeiro Capitão", "Primeiro Renascido", "Pioneiro do Dangai", "Campeão da Arena", "Regicida Quincy") precisam ser verificados em eventos frequentes (`setForm`, `gainExp`, `rebirth`, `dangaiKilled`, `pvpHit`, `bestiaryKill`) sem consultar o SQLite a cada abate ou nível, mas garantindo persistência imediata quando conquistados pela primeira vez.
+- **Solução (`server/src/milestones.ts`):**
+  1. As definições canônicas (`SERVER_MILESTONES`) residem em `shared/src/progress.ts` e seus títulos exclusivos (`season: true`) em `shared/src/shop.ts`.
+  2. O módulo `server/src/milestones.ts` carrega `db.getMeta("server_milestones")` uma única vez para um `Map` em memória; chamadas subsequentes a `claimServerMilestone` verificam `claimed.has(id)` em O(1) e só gravam no SQLite (`db.setMeta`) na primeira conquista de cada marco.
+  3. O título conquistado é salvo tanto em `p.prog.titles` (no save do personagem) quanto na carteira da conta (`db.changeCrystals(p.accountId, 0, ...)`), equipado automaticamente caso o personagem esteja sem título, anunciado globalmente e listado na aba **Marcos** do Ranking (`#ranking`).

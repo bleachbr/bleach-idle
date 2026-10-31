@@ -625,6 +625,12 @@ function bindGuild(room: Room<any>, closeWindows: (keep?: string) => void) {
   const render = () => {
     panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === tab)));
     if (!data) return;
+    if (tab === "marcos") {
+      const list = (data.marcos ?? []) as { name: string; desc: string; title: string; holder: string; charId: string }[];
+      const rows = list.map((m) => `<tr><td><b>${escHtml(m.name)}</b><div class="hint">${escHtml(m.desc)}</div></td><td>« ${escHtml(m.title)} »</td><td>${m.holder ? `<b>${escHtml(m.holder)}</b> <small>${CHARS[m.charId]?.name ?? ""}</small>` : `<span class="hint">Em aberto</span>`}</td></tr>`);
+      $("#ranking-body").innerHTML = rows.length ? `<table>${rows.join("")}</table>` : `<p class="hint">Nenhum marco definido.</p>`;
+      return;
+    }
     const rows: string[] = (data[tab] as any[]).map((r, i) => tab === "guildas"
       ? `<tr><td>${i + 1}</td><td>${escHtml(r.name)} <small>[${escHtml(r.tag)}]</small></td><td>${r.frags} abates</td><td>${r.members} membros · ${r.levels} níveis</td></tr>`
       : `<tr><td>${i + 1}</td><td>${escHtml(r.name)}${r.guild ? ` <small>[${escHtml(r.guild)}]</small>` : ""}</td><td>${CHARS[r.charId]?.name ?? ""}</td><td>${
