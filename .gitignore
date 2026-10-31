@@ -4,3 +4,5 @@ dist/
 *.sqlite-*
 *.log
 .vite/
+.claude/settings.local.json
+CLAUDE.local.md
