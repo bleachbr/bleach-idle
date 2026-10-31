@@ -37,20 +37,17 @@ export function weekIndex(now = Date.now()): number {
   return ((weeks % TOTAL_CRONICAS) + TOTAL_CRONICAS) % TOTAL_CRONICAS;
 }
 
-export function currentWeekKey(now = Date.now()): string {
-  const d = new Date(now - 3 * 3600 * 1000); // offset Brasília UTC-3
-  // Retorna identificador ISO de semana, ex: "2026-W44"
-  const date = new Date(d.getTime());
-  date.setHours(0, 0, 0, 0);
-  date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
-  const week1 = new Date(date.getFullYear(), 0, 4);
-  const weekNum = 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
-  return `${date.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
-}
+/** Número da semana desde a âncora. Só aritmética sobre o instante UTC: não depende do fuso do processo. */
+export const weekNumber = (now = Date.now()): number => Math.floor((now - CHRONICLE_EPOCH) / MS_PER_WEEK);
+
+/** Chave gravada em `ChronicleProgress.activeWeekKey`. Vira no mesmo instante que `weekIndex`. */
+export const currentWeekKey = (now = Date.now()): string => `w${weekNumber(now)}`;
 ```
 
+> **Correção de 31/10/2026.** A primeira versão de `currentWeekKey` usava `setHours`, `getDay` e `getFullYear`, que dependem do fuso do processo. Medido com os instantes de virada da semana: em UTC a chave virava junto com `weekIndex`; em `America/Sao_Paulo` e `America/Los_Angeles` a chave seguia a semana anterior às 00:00 de segunda em Brasília; em `Asia/Tokyo` ela já tinha virado no domingo às 23:59:59. O servidor em produção é Linux/Docker em UTC, mas o Vitest roda na máquina de cada pessoa, então o erro apareceria só nos testes locais e no relógio de quem desenvolve em Brasília. A versão acima usa só aritmética sobre o instante (como `dayKey` em `shared/src/progress.ts`) e deu saída idêntica em cinco fusos (UTC, Sao_Paulo, Tokyo, Los_Angeles, Kiritimati) nos instantes de borda: um segundo antes e no início da âncora, domingo 23:59:59 e segunda 00:00:00 em Brasília, e a virada de ano. Premissa herdada do resto do código: Brasília fixa em UTC-3 (sem horário de verão desde 2019).
+
 ### 2.2. Persistência de Progresso em SQLite (`shared/src/progress.ts` e `server/src/db.ts`)
-A estrutura `ProgressData` receberá um mapa de histórico de crônicas:
+A interface `Progress` (`shared/src/progress.ts`) receberá um campo opcional `chronicle`, que `fromSave` já preenche com o padrão ao carregar saves antigos (`{ ...newProgress(), ...saved.prog }`):
 ```typescript
 export interface ChronicleProgress {
   activeWeekKey: string;

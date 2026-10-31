@@ -8,7 +8,7 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ### Lição: O Cliente Nunca Deve Decidir o Estado
 - Em jogos de visão de cima em tempo real, qualquer concessão de autoridade ao cliente (como cálculo de colisão, cooldown ou dano) abre brechas e gera desincronias graves (rubberbanding).
-- **Abordagem adotada:** O cliente emite intenções leves (`move`, `step`, `target`, `skill`, `use`, `bankai`). O servidor avalia se o personagem pode agir no tick atual (`trySkill`, `tryStep`, `tryAttack`), aplica custos e dispara eventos de feedback (`fx`, `hit`, `state`).
+- **Abordagem adotada:** O cliente emite intenções leves (`move`, `step`, `target`, `skill`, `use`, `bankai`). O servidor avalia se o personagem pode agir no tick atual (`trySkill`, `hit`, `stepTo` em `WorldRoom.ts`), aplica custos e dispara eventos de feedback (mensagens `fx` e `log`, além do estado sincronizado do Colyseus).
 
 ### Movimento Fluido Sem "Anda e Trava"
 - Com ticks de 100 ms, se o cliente apenas teleportar o personagem a cada atualização do servidor, o movimento fica travado e desagradável.
@@ -27,7 +27,7 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 - Fazer `UPDATE` no banco a cada golpe ou item recebido gera contenção extrema de I/O em disco, mesmo com poucos jogadores.
 - **Solução:** O estado vive em memória RAM durante o jogo. Um save transacional em lote é executado a cada 10 segundos, além de saves pontuais em momentos críticos (login, logout, morte).
 - Modo **WAL (`PRAGMA journal_mode = WAL`)** permitiu leituras assíncronas do lobby enquanto o mundo salva em lote sem bloqueios de tabela.
-- Corpos no chão com loot derrubado e sacolas possuem tabela própria (`ground_items`) para garantir que sobrevivem mesmo a uma queda ou reinício forçado do servidor.
+- Corpos no chão com loot derrubado e sacolas são gravados junto com o resto a cada 10 s (`db.setMeta("bags", ...)`, na tabela `meta`) e recarregados em `restoreWorld`, então sobrevivem a uma queda ou reinício forçado do servidor.
 
 ---
 
@@ -47,7 +47,7 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ### Timeout de Perseguição no Pathfinding A*
 - Se um monstro visível estivesse atrás de uma barreira sólida ou sem rota navegável até ele, o Auto Hunt entrava em loop tentando recalcular a rota a cada ciclo, paralisando a caçada.
-- **Solução:** Implementação de um timer de desistência (`targetGiveUpMs = 3000`). Se em 3 segundos o personagem não diminuir a distância em direção ao alvo, o monstro é ignorado temporariamente e o Auto Hunt seleciona o próximo alvo disponível.
+- **Solução:** Implementação de um timer de desistência (`p.stuckSince`, em `WorldRoom.ts`). Se não existe caminho até o alvo por mais de 3 segundos, o monstro é ignorado por 20 segundos (`skipId` e `skipUntil`) e o Auto Hunt seleciona o próximo alvo disponível.
 
 ### Priorização Determinística de Metas
 - Para maximizar a eficiência do jogador e dos testes, o Auto Target segue uma hierarquia estrita:
