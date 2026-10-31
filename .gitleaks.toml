@@ -1,0 +1,11 @@
+title = "bleach-idle"
+
+[extend]
+useDefault = true
+
+# Senha fictícia usada só nos testes automatizados. Pede caminho E valor: outro arquivo ou outro valor continua sendo alertado.
+[[allowlists]]
+description = "Senha de teste do e2e do lobby"
+condition = "AND"
+paths = ['''^server/test/e2e-lobby-and-world\.test\.ts$''']
+regexes = ['''senha_valida_123''']
