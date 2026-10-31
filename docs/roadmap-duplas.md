@@ -35,7 +35,7 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 | 5 | F-06 | CSP e cabeçalhos de segurança no Caddy | P | — | não | |
 | 6 | F-08 | Métrica da duração do tick, aviso acima de 50 ms | P | — | não | **Feito** (`feat/f-08-metrica-tick`) |
 | 7 | F-09 | Ranking sem bloquear o tick | M | F-08 | não | **Feito** (`perf/f-09-ranking-incremental`) |
-| 8 | F-11 | CI: gitleaks, `ubuntu-24.04`, Node 22 e 24, actions v7 | M | — | não | |
+| 8 | F-11 | CI: gitleaks, `ubuntu-24.04`, Node 22 e 24, actions v7 | M | — | não | **Feito** (`ci/f-11-ci-gitleaks-matrix`) |
 | 9 | F-15 | Balanceamento dos mapas avançados (`balance.ts`) | M | — | não | |
 | 10 | M1-01 | `shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) + testes de borda | P | M1-00 (Rafael) | PRD/ADRs das Crônicas | |
 | 11 | M1-05 | `newProgress()` e `Progress.chronicle`; virada de semana zera `questKills`/`completedAt` | P | M1-01 | idem | |
