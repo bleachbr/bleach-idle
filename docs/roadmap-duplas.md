@@ -59,7 +59,7 @@ Backlog novo (IDs W-##) — motor, operação e conteúdo de mundo misturados:
 | 24 | W-06 | **Títulos e marcos de servidor** — por feitos (primeiro Bankai do servidor, top da arena), persistidos | M | — | não |
 | 25 | W-07 | **Correio interno (mailbox)** — recompensas, itens de mercado expirado, mensagens de sistema | M | — | sim |
 | 26 | W-05 | **Caçada offline v2** — resumo detalhado ao voltar (drops, mortes, kan), simulação por lote | M | — | sim |
-| 27 | W-09 | **Métricas de operação** — `/metrics` (tick, salas, jogadores, saves) com alerta mínimo | M | F-08 | não |
+| 27 | W-09 | **Métricas de operação** — `/metrics` (tick, salas, jogadores, saves) com alerta mínimo (`feat/w-09-metricas-operacao` — **Feito**) | M | F-08 | não |
 | 28 | W-08 | **Auditoria de economia** — trilha imutável de kan/cristais/itens (anti-dupe, suporte) | M | — | sim |
 | 29 | W-13 | **Patrulhas idle de Hollows** — jogador/party em patrulha por X horas retorna com recompensa | M | — | sim |
 | 30 | W-14 | **Personagens novos (bloco W)** — Orihime (barreira/suporte), Urahara, Mayuri; 5 estágios e 4 técnicas cada | M cada | — | skill `adicionar-conteudo`; Orihime exige mecânica nova de barreira no motor |

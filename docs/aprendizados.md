@@ -161,3 +161,7 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - A reconstrução anterior do ranking chamava `db.allChars()`, lendo do SQLite e fazendo `JSON.parse()` do `SaveData` completo (3,7 KB) + `powerOf()` de todos os personagens a cada 15 s (`p50 = 10,29 ms`, `máx = 27,82 ms` para 1.000 personagens).
 - Como personagens offline só mudam quando passam por `db.createChar`, `db.save`, `db.saveMany` ou `db.deleteChar`, extraímos `server/src/ranking.ts`: ele semeia o mapa `savedEntries` uma única vez (`ensureSeeded`), recebe atualizações O(1) via `db.onCharWrite` e sobrepõe apenas os jogadores ativos em `state.players`.
 - **Resultado medido (`bench.mts 1000`):** `buildRanking()` caiu de `p50 = 10,29 ms` para **`p50 = 0,10 ms`** (`p95 = 0,20 ms`, `máx = 0,45 ms`), uma redução de **100x** no tempo de CPU síncrono.
+
+### Telemetria Operacional Consolidada (`/metrics` e `saveStats` — `W-09`)
+- Além da duração do tick (`tickStats.ts`), o loop de evento do processo único depende do tempo síncrono de gravação em lote no SQLite (`saveAll`).
+- Extraímos `server/src/metrics.ts`, que mede cada `saveAll` (`saves`, `savedChars`, `slowSaves`, `lastMs`, `maxMs`), registra o snapshot em tempo real da sala (`players: { online, offlineHunt, totalInWorld }` e `entities: { monsters, bags }`) e calcula o estado de alerta mínimo (`alert: true`, `alerts: ["tick_lento" | "save_lento"]` quando o tick ou o save ultrapassam `50 ms`), exposto em `GET /metrics` e `GET /healthz`.

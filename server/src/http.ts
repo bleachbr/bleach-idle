@@ -40,9 +40,11 @@ export function createHttpServer(status: () => Record<string, unknown>) {
 
   async function handler(req: IncomingMessage, res: ServerResponse) {
     const url = new URL(req.url ?? "/", "http://x");
-    if (url.pathname === "/healthz") {
+    if (url.pathname === "/healthz" || url.pathname === "/metrics") {
+      const s = status();
+      const ok = typeof s.alert === "boolean" ? !s.alert : true;
       res.writeHead(200, { ...SECURITY_HEADERS, "content-type": "application/json", "cache-control": "no-store" });
-      return res.end(JSON.stringify({ ok: true, ...status() }));
+      return res.end(JSON.stringify({ ok, ...s }));
     }
     // arquivo estático; caminhos desconhecidos caem no index.html
     const rel = normalize(decodeURIComponent(url.pathname)).replace(/^([/\\])+/, "");

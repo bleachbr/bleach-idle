@@ -26,6 +26,7 @@ import * as guilds from "./guilds";
 import * as market from "./market";
 import { flagOn } from "./flags";
 import { recordTick } from "./tickStats";
+import { recordSave, setWorldMetricsProvider } from "./metrics";
 import { getRanking } from "./ranking";
 
 const GUILD_COST = 500;
@@ -86,6 +87,15 @@ export class WorldRoom extends GameRoom<WorldState> {
   onCreate() {
     this.autoDispose = false;
     this.setState(new WorldState());
+    setWorldMetricsProvider(() => {
+      let online = 0;
+      for (const p of this.state.players.values()) if (p.online) online++;
+      const totalInWorld = this.state.players.size;
+      return {
+        players: { online, offlineHunt: totalInWorld - online, totalInWorld },
+        entities: { monsters: this.state.monsters.size, bags: this.state.bags.size },
+      };
+    });
     SPAWNS.forEach((s, i) => { for (let k = 0; k < s.count; k++) this.spawnMonster(i); });
     this.restoreWorld();
     this.setSimulationInterval(() => {
@@ -2532,10 +2542,13 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private saveAll() {
-    db.saveMany([...this.state.players.values()].map((p) => ({ id: p.id, data: this.toSave(p), inWorld: true })));
+    const t0 = performance.now();
+    const list = [...this.state.players.values()].map((p) => ({ id: p.id, data: this.toSave(p), inWorld: true }));
+    db.saveMany(list);
     db.setMeta("parties", [...this.parties.values()]);
     db.setMeta("bags", [...this.state.bags.values()].map((b): SavedBag => ({
       id: b.id, map: b.map, x: b.x, y: b.y, kind: b.kind, label: b.label, owners: b.owners, ownerUntil: b.ownerUntil, expires: b.expires, gold: b.gold, items: b.items,
     })));
+    recordSave(performance.now() - t0, list.length);
   }
 }
