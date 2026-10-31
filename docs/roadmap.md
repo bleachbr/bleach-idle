@@ -27,7 +27,7 @@ A divisão do trabalho entre Waldir e Rafael está em [`roadmap-duplas.md`](road
 - **Economia:** 45 itens (26 de equipamento), 7 espaços de equipamento, conjuntos com bônus, forja até +10, 32 cosméticos na Loja de Cristais e mercado entre jogadores com anúncios de 7 dias.
 - **Automação:** Auto Helper (alvo, caçada, cura, treino, venda), caçada offline de até 12 horas que sobrevive a reinício do servidor.
 - **Eventos:** passe de temporada mensal grátis, chefe mundial a cada 2 h, invasões de Hollows a cada 3 h e XP em dobro aos sábados e domingos (Brasília).
-- **Qualidade:** 137 testes Vitest e 31 cenários de integração no CI, cinco skills de projeto e uma [linha de base medida](baseline.md).
+- **Qualidade:** 139 testes Vitest e 31 cenários de integração no CI, cinco skills de projeto e uma [linha de base medida](baseline.md).
 
 ## Ordem de execução
 
@@ -85,7 +85,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-01 | Modo Dev e `BI_DEBUG` só ligam com `=== "1"` | P | | Feito | S1 |
 | F-02 | Chave vinda do cliente não indexa objeto comum (`Object.hasOwn`) | P | | Feito | S2 |
 | F-03 | Limite de login por IP usa o IP real atrás do Caddy | P | | Feito | S3 |
-| F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | | Pronto | S6 |
+| F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | | Feito | S6 |
 | F-05 | Contêiner roda como `node`, não como root (conferir a permissão do volume `/data`) | P | | Pronto | S9 |
 | F-06 | CSP e cabeçalhos de segurança no Caddy | P | | Pronto | S7 |
 | F-07 | Proteger a `main` (PR obrigatório e CI verde). O GitHub responde 403 para proteção de branch e rulesets neste plano: exige plano pago ou repositório público. Alternativa: combinado escrito mais um hook `pre-push` local | P | | Decisão pendente (Waldir e Rafael) | S8 |
