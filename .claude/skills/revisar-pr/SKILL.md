@@ -8,8 +8,10 @@ description: Revisa um pull request do Bleach Idle de ponta a ponta e devolve um
 Quem escreveu (pessoa ou IA) não aprova o próprio PR. Esta skill é o segundo par de olhos. Por padrão ela só lê e relata no terminal; publicar com `gh pr review` exige o aval explícito do dono do repositório.
 
 ## 1. Contexto
-`gh pr view N --json title,body,headRefName,files,statusCheckRollup`, `gh pr diff N`, `gh pr checks N`.
-- CI vermelho: ache a causa antes de opinar (`gh run view ID --log-failed`) e compare com a `main`. Não aprove com CI vermelho, e não culpe o PR sem evidência (já aconteceu: PR só de documentação ficou vermelho por um cenário que depende do dia da semana).
+Há dois pontos de partida, e a revisão adversarial acontece **antes** do push:
+- **Branch local, antes de publicar:** `git fetch origin`, `git log origin/main..HEAD`, `git diff origin/main...HEAD --stat` e `git diff origin/main...HEAD`. Revise essas referências, sem trocar de branch nem alterar arquivos; rode os testes numa cópia (`git archive HEAD | tar -x -C /tmp/rev`) se precisar executar algo.
+- **PR já aberto:** `gh pr view N --json title,body,headRefName,files,statusCheckRollup`, `gh pr diff N`, `gh pr checks N`.
+- **CI vermelho** (só existe com PR aberto): ache a causa antes de opinar (`gh run view ID --log-failed`) e compare com a `main`. Não aprove com CI vermelho, e não culpe o PR sem evidência (já aconteceu: PR só de documentação ficou vermelho por um cenário que depende do dia da semana).
 - Rode `git status` e leia as seções 1 e 4 do AGENTS.md.
 
 ## 2. Portão de segurança (sempre primeiro)
@@ -26,7 +28,7 @@ Se o diff toca `this.handle`, login ou sessão, `innerHTML`, dependências, Dock
 8. **Tipos.** `any` novo precisa de motivo. Dado externo (`JSON.parse`, mensagem do cliente) é validado antes de virar tipo.
 9. **Mapas.** O `.tmj` editado no Tiled não foi regenerado por `build_maps.py`, e `mapcheck.ts` passa.
 10. **Docs e comentários.** `roadmap`, `aprendizados` e `pendencias` atualizados (AGENTS.md §5); comentários e notas de lore preservados (§4.1); nenhuma função, arquivo ou constante citada que não exista (confira com `grep`).
-11. **Escopo.** Um resultado por PR, sem refatoração de carona. O `WorldRoom.ts` já passa de 2.500 linhas: código novo vai para um `registerXMessages` próprio ou para um módulo novo.
+11. **Escopo.** Um resultado por PR, sem refatoração de carona. Conserto pequeno que destrava o CI fica no PR, em commit próprio; qualquer outro vira PR separado. O `WorldRoom.ts` já passa de 2.500 linhas: código novo vai para um `registerXMessages` próprio ou para um módulo novo.
 
 ## 4. Relatório
 Veredito no topo: BLOQUEIA, APROVA COM RESSALVAS ou APROVA. Depois os achados, do mais grave ao menos grave:
@@ -34,3 +36,5 @@ Veredito no topo: BLOQUEIA, APROVA COM RESSALVAS ou APROVA. Depois os achados, d
 `[SEVERIDADE] categoria, arquivo:linha, risco em uma frase, correção`
 
 Termine com o que foi executado (comando e resultado) e o que não foi. Não escreva "os testes passam" sem ter rodado.
+
+Para mudança em segurança (handler, login, sessão, `innerHTML`, dependências, Dockerfile, CI, segredos), o veredito de agente é insumo e não substitui a aprovação da outra pessoa.

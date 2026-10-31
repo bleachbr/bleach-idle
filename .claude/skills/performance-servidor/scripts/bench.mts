@@ -1,6 +1,7 @@
 // Micro-benchmark dos pontos quentes do servidor. Sem rede e sem servidor: chama os módulos direto, com SQLite em memória.
 // Uso, na raiz do repositório:  npx tsx .claude/skills/performance-servidor/scripts/bench.mts [personagens=1000]
-// Compare com docs/baseline.md na mesma máquina. Banco em memória não mede o fsync do disco.
+// Rode 3 vezes com a máquina ociosa e compare a mediana (p50) com docs/baseline.md; a cauda (p95 e máx) varia muito entre rodadas.
+// Banco em memória não mede o fsync do disco.
 process.env.DB_FILE = ":memory:";
 import { performance } from "node:perf_hooks";
 
@@ -11,15 +12,16 @@ const { MAPS } = await import("../../../../server/src/maps");
 const { findPath } = await import("../../../../server/src/path");
 
 const N = Number(process.argv[2] ?? 1000);
+const AMOSTRAS = 300; // p95 só faz sentido com amostra grande; com 100 ou menos o "p99" seria o próprio máximo
 const quantil = (xs: number[]) => {
   const s = [...xs].sort((a, b) => a - b);
   const q = (p: number) => s[Math.min(s.length - 1, Math.floor(p * s.length))];
-  return `p50=${q(0.5).toFixed(3)} p99=${q(0.99).toFixed(3)} max=${s[s.length - 1].toFixed(3)} ms`;
+  return `p50=${q(0.5).toFixed(2)} p95=${q(0.95).toFixed(2)} max=${s[s.length - 1].toFixed(2)} ms (n=${s.length})`;
 };
-const medir = (vezes: number, fn: () => void) => {
+const medir = (fn: () => void) => {
   for (let i = 0; i < 30; i++) fn(); // aquecimento
   const t: number[] = [];
-  for (let i = 0; i < vezes; i++) { const a = performance.now(); fn(); t.push(performance.now() - a); }
+  for (let i = 0; i < AMOSTRAS; i++) { const a = performance.now(); fn(); t.push(performance.now() - a); }
   return quantil(t);
 };
 
@@ -46,14 +48,14 @@ if (criados !== N || lidos !== N) throw new Error("benchmark inválido: as inser
 console.log(`tamanho de um save de fim de jogo: ${JSON.stringify(save(0)).length} bytes`);
 
 const lote = Array.from({ length: 200 }, (_, i) => ({ id: `bench${i}`, data: save(i), inWorld: true }));
-console.log(`JSON.stringify x200 (parte do saveAll):      ${medir(100, () => { for (const l of lote) JSON.stringify(l.data); })}`);
-console.log(`db.saveMany(200 personagens):                ${medir(60, () => db.saveMany(lote))}`);
-console.log(`db.allChars() com ${N} personagens (ranking): ${medir(30, () => { db.allChars(); })}`);
+console.log(`JSON.stringify x200 (parte do saveAll):      ${medir(() => { for (const l of lote) JSON.stringify(l.data); })}`);
+console.log(`db.saveMany(200 personagens):                ${medir(() => db.saveMany(lote))}`);
+console.log(`db.allChars() com ${N} personagens (ranking): ${medir(() => { db.allChars(); })}`);
 
 for (const id of ["karakura", "falsa"] as const) {
   const m: any = MAPS[id];
   let o = { x: 5, y: 5 };
   achar: for (let y = 5; y < m.h; y++) for (let x = 5; x < m.w; x++) if (S.walkable(m, x, y)) { o = { x, y }; break achar; }
   const bloqueado = (x: number, y: number) => !S.walkable(m, x, y);
-  console.log(`BFS ${id.padEnd(8)} meta inalcançável (4000 nós): ${medir(400, () => findPath(o.x, o.y, () => false, bloqueado))}`);
+  console.log(`BFS ${id.padEnd(8)} meta inalcançável (4000 nós): ${medir(() => findPath(o.x, o.y, () => false, bloqueado))}`);
 }

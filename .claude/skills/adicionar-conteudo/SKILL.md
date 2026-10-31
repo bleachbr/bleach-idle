@@ -33,7 +33,7 @@ Regra de ouro: **não renomeie ids existentes** (item, monstro, personagem, mapa
 1. Id em `MAP_IDS` (`shared/src/map.ts`) e o `.tmj` em `client/public/maps/` (Tiled 1.10+, tileset embutido).
 2. Camada `logica`: `pz`, `depot`, `loja`, `portal`, `chegada` (o nome é o id do destino), `spawn`, `arena`; `templo` só em Karakura.
 3. Destino em `TRAVEL` (`shared/src/social.ts`), com `minLevel` e `cost`. Partículas do mapa em `AMBIENT` (`GameScene.ts`).
-4. **Depois de editar no Tiled, nunca rode `art/maps/build_maps.py`**: ele sobrescreve os mapas. `build_endgame.py` lê as edições e pode rodar de novo.
+4. **Depois de editar no Tiled, nunca rode `art/maps/build_maps.py`**: ele sobrescreve os mapas. `build_endgame.py` lê `karakura.tmj` e `soul.tmj` (preserva as edições feitas neles), mas regenera `falsa.tmj` e `wandenreich.tmj`: edições feitas direto nesses dois são perdidas.
 5. `cd server && npx tsx scripts/mapcheck.ts`.
 
 ## Missão
