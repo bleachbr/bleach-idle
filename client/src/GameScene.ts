@@ -59,9 +59,11 @@ const MOB_FX: Record<string, string> = {
   gillian: "cero", menos_anciao: "cero", arrancar: "cero", arrancar_numeros: "cero", privaron: "cero",
 };
 /** explosão da liberação (Bankai e afins) de cada personagem */
-const RELEASE: Record<string, string> = { ichigo: "rel_ichigo", rukia: "rel_rukia", renji: "rel_renji", ishida: "rel_blue", sado: "rel_renji", hitsugaya: "rel_rukia" };
+const RELEASE: Record<string, string> = { ichigo: "rel_ichigo", rukia: "rel_rukia", renji: "rel_renji", ishida: "rel_blue", sado: "rel_renji", hitsugaya: "rel_rukia", byakuya: "rel_rukia", kenpachi: "rel_renji" };
 /** aura do Bankai (ou forma liberada) de cada personagem */
-const AURA: Record<string, string> = { ichigo: "aura_ichigo", rukia: "aura_rukia", renji: "aura_renji", ishida: "aura_blue", sado: "aura_renji", hitsugaya: "aura_rukia" };
+const AURA: Record<string, string> = { ichigo: "aura_ichigo", rukia: "aura_rukia", renji: "aura_renji", ishida: "aura_blue", sado: "aura_renji", hitsugaya: "aura_rukia", byakuya: "aura_rukia", kenpachi: "aura_renji" };
+/** cor por cima dos efeitos que o personagem divide com outro (pétalas rosa do Byakuya, reiatsu amarelo do Kenpachi) */
+const CHAR_TINT: Record<string, number> = { byakuya: 0xffa8d0, kenpachi: 0xffd040 };
 /** habilidade de cada personagem: projétil que voa até o alvo, ou explosão no alvo */
 const SKILL_FX: Record<string, { anim: string; fly: boolean }> = {
   ichigo: { anim: "getsuga", fly: true },
@@ -70,6 +72,8 @@ const SKILL_FX: Record<string, { anim: string; fly: boolean }> = {
   ishida: { anim: "arrow", fly: true },
   sado: { anim: "punch", fly: true },
   hitsugaya: { anim: "ice", fly: false },
+  byakuya: { anim: "blast", fly: false },
+  kenpachi: { anim: "slash", fly: false },
 };
 
 /** O servidor anda em ticks de 100 ms: um passo de 260 ms acontece, na prática, a cada 300 ms.
@@ -392,6 +396,7 @@ export class GameScene extends Phaser.Scene {
     v.aura?.destroy();
     v.aura = this.add.sprite(0, 8, "", 0).setOrigin(0.5, 1).setAlpha(0.85).setBlendMode(Phaser.BlendModes.ADD);
     v.aura.play(anim);
+    if (charId && CHAR_TINT[charId]) v.aura.setTint(CHAR_TINT[charId]);
     v.c.addAt(v.aura, 1); // atrás do sprite, na frente da sombra
   }
 
@@ -596,7 +601,8 @@ export class GameScene extends Phaser.Scene {
           const up = CHARS[cid ?? ""]?.forms[fx.v ?? 0]?.shout ?? "BANKAI!";
           const big = (fx.v ?? 0) >= 3;
           this.float(v, fx.v ? up : "Forma normal", big ? "#ff3a6a" : fx.v ? "#ff6a3a" : "#cfd8ff", fx.v ? 12 + (fx.v ?? 0) * 2 : 14);
-          if (v && fx.v) this.playFx(RELEASE[cid ?? ""] ?? "rel_ichigo", v.c.x, v.c.y - 26, { scale: 1 + (fx.v ?? 0) * 0.25 }); // o anel da explosão cai nos pés
+          const rel = v && fx.v ? this.playFx(RELEASE[cid ?? ""] ?? "rel_ichigo", v.c.x, v.c.y - 26, { scale: 1 + (fx.v ?? 0) * 0.25 }) : undefined; // o anel da explosão cai nos pés
+          if (rel && CHAR_TINT[cid ?? ""]) rel.setTint(CHAR_TINT[cid ?? ""]);
           if (v && big) this.cameras.main.flash(250, 255, 255, 255);
         }
         if (v && fx.v) this.cameras.main.shake(150 + (fx.v ?? 0) * 70, 0.003 + (fx.v ?? 0) * 0.0015);
@@ -627,10 +633,12 @@ export class GameScene extends Phaser.Scene {
             // projétil: sai do personagem e voa até o alvo
             const shot = this.playFx(sk.anim, a.c.x, a.c.y - 20, { rotation: ang, scale: 0.9 });
             if (shot && fx.skin) shot.setTint(fx.color!);
+            else if (shot && CHAR_TINT[p?.charId ?? ""]) shot.setTint(CHAR_TINT[p!.charId]);
             if (shot) this.tweens.add({ targets: shot, x: b.c.x, y: b.c.y - 20, duration: 220 });
           } else {
             const blast = this.playFx(sk.anim, b.c.x, b.c.y - 20, { scale: 1.1 + (fx.area ?? 0) * 0.35 });
             if (blast && fx.skin) blast.setTint(fx.color!);
+            else if (blast && CHAR_TINT[p?.charId ?? ""]) blast.setTint(CHAR_TINT[p!.charId]);
           }
           this.time.delayedCall(200, () => this.playFx("hit", b.c.x, b.c.y - 20));
         } else {

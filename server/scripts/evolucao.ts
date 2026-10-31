@@ -63,6 +63,14 @@ ok(`e a técnica 1 vira Shiten Kōsō (${hs?.name ?? h.logs.slice(-2).join(" | "
 h.room.send("auto", { autoTarget: false });
 await h.room.leave();
 
+// Byakuya e Kenpachi jogáveis: no nível 100, T leva ao último estágio da obra
+for (const [cid, last] of [["byakuya", "Shūkei: Hakuteiken"], ["kenpachi", "Bankai"]] as const) {
+  const k = await bot(`Evo ${cid}`, { level: 100, exp: expForLevel(100), hp: 99999, rei: 99999 }, cid);
+  k.room.send("transform");
+  ok(`${CHARS[cid].name} jogável: no nível 100, T vai a ${last}`, await until(() => k.me()?.form === 4) && CHARS[cid].forms[4].label === last);
+  await k.room.leave();
+}
+
 // subir para o nível 25 ensina a técnica nova
 const b = await bot("Evo Beto", { level: 24, exp: expForLevel(25) - 1, hp: 9999, rei: 9999, autoHunt: true });
 ok("ao chegar no nível 25, aprende Getsuga Jūjishō", await until(() => b.logs.some((l) => l.includes("Nova técnica: Getsuga Jūjishō")), 20000));

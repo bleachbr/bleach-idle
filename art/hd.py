@@ -24,7 +24,8 @@ def sheet_hd(fname, rows, cols, rel, tiles, tile=48, body_h=45, name=""):
     path = P.RAW / fname
     if not path.exists():
         return None
-    cells = P.even_rows([P.keep_main(c) for c in P.split_cells(P.remove_bg(Image.open(path)), rows, cols)], fname, name)
+    rel = rel() if callable(rel) else rel
+    cells = P.even_rows([P.keep_main(c, P.LOOSE.get(name, 0.05)) for c in P.split_cells(P.remove_bg(Image.open(path)), rows, cols)], fname, name)
     ref_h = max(c.height for c, _ in cells)
     cell = tile * tiles * HD_K
     # a mesma conta de escala do process.py, só que HD_K vezes maior

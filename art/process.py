@@ -16,7 +16,7 @@ from PIL import Image
 ROOT = Path(__file__).parent
 RAW = ROOT / "raw"
 OUTLINE = (0x1A, 0x18, 0x22)
-MAX_COLORS = 48  # paleta compartilhada; com mais de 20 folhas, 32 cores fundiam o verde do Hollow Ácido no marrom
+MAX_COLORS = 64  # paleta compartilhada; com mais de 20 folhas, 32 cores fundiam o verde do Hollow Ácido no marrom, e com 70 folhas 48 apagavam as pétalas rosa do Byakuya
 
 # nome -> (arquivo raw, linhas, colunas, altura relativa, célula em tiles)
 SPRITES = {
@@ -27,6 +27,28 @@ SPRITES = {
     "ichigo_walk": ("05_ichigo_shikai_walk_4x4.png", 4, 4, 1.00, 1),
 }
 DIRS = ["down", "left", "right", "up"]
+
+# estágios com pedaços soltos de verdade (pétalas-lâmina, espadas flutuando): o keep_main normal os
+# apaga como se fossem sujeira da célula vizinha, então aqui só some o que for quase um pixel
+LOOSE = {"byakuya_bankai": 0.002, "byakuya_senkei": 0.002, "byakuya_gokei": 0.002, "byakuya_hakuteiken": 0.002}
+
+
+def rel_like(id_, base_id, base_rel):
+    """Escala de um estágio com enfeite acima da cabeça: a mesma do desenho base, proporcional à
+    altura do desenho (o Codex desenha o corpo do mesmo tamanho; o que sobra em cima é enfeite)."""
+    return lambda: _rel_like(id_, base_id, base_rel)
+
+
+def _rel_like(id_, base_id, base_rel):
+    walk = Path(__file__).parent / "raw" / "walk8"
+    if not (walk / f"{id_}_down.png").exists() or not (walk / f"{base_id}_down.png").exists():
+        return base_rel
+
+    def height(i):
+        cells = [keep_main(c, LOOSE.get(i, 0.05))[0] for c in split_cells(remove_bg(Image.open(walk / f"{i}_down.png")), 2, 4)]
+        return sorted(c.height for c in cells)[4]
+    return round(base_rel * height(id_) / height(base_id), 3)
+
 
 # folhas do jogo: personagens em 48x48 sobre tiles de 32 (Hollow em 96x96)
 GAME_OUT = ROOT.parent / "client" / "public" / "assets" / "sprites"
@@ -72,7 +94,7 @@ GAME_SPRITES = {
     "fraccion": ("51_fraccion_walk.png", 4, 4, 1.4, 2),
     "privaron": ("52_privaron_walk.png", 4, 4, 1.3, 2),
     # estágios da evolução pela lore (níveis 30, 60 e 100) e o Hitsugaya: só existem em 8 quadros
-    **{id_: (f"walk8/{id_}_sheet.png", 4, 8, rel, 1) for id_, rel in (
+    **{id_: (f"walk8/{id_}_sheet.png", 4, 8, rel[0] if isinstance(rel, tuple) else rel, rel[1] if isinstance(rel, tuple) else 1) for id_, rel in (
         ("ichigo_final", 1.00), ("ichigo_hollow", 1.00), ("ichigo_mugetsu", 1.00),
         ("rukia_tenente", 0.86), ("rukia_capita", 0.86),
         ("renji_zero", 1.04), ("renji_final", 1.04), ("renji_soo", 1.04),
@@ -81,6 +103,13 @@ GAME_SPRITES = {
         # o Hitsugaya criança é baixo; adulto, da altura do Ichigo
         ("hitsugaya", 0.80), ("hitsugaya_bankai", 0.84), ("hitsugaya_hyakkaso", 0.84),
         ("hitsugaya_adulto", 1.02), ("hitsugaya_shiten", 1.02),
+        # Byakuya alto e esguio; Kenpachi o mais alto de todos. Estágios com algo acima da cabeça
+        # (espadas flutuando, espada erguida, aura) usam a altura do desenho base, senão o corpo encolhe
+        ("byakuya", 1.06), ("byakuya_bankai", 1.06), ("byakuya_gokei", 1.06),
+        ("byakuya_senkei", (1.24, 2)), ("byakuya_hakuteiken", (1.2, 2)),
+        ("kenpachi", 1.16), ("kenpachi_shikai", (1.16, 2)),
+        ("kenpachi_sem_tapa", (rel_like("kenpachi_sem_tapa", "kenpachi", 1.16), 2)), ("kenpachi_kendo", (rel_like("kenpachi_kendo", "kenpachi", 1.16), 2)),
+        ("kenpachi_bankai", (rel_like("kenpachi_bankai", "kenpachi", 1.16), 2)),
     ) if (Path(__file__).parent / "raw" / "walk8" / f"{id_}_down.png").exists()},
     # níveis 60–150: Karakura Falsa e Wandenreich
     **{id_: (f"walk8/{id_}_sheet.png", 4, 8, rel, tiles) for id_, rel, tiles in (
@@ -209,7 +238,7 @@ def add_outline(img):
     return out
 
 
-PER_SPRITE = 12
+PER_SPRITE = 16
 
 
 def kmeans_colors(pixels, k, iters=15):
@@ -307,7 +336,7 @@ def lift_darks(colors):
     return out
 
 
-PLAYER_IDS = ("ichigo", "rukia", "renji", "ishida", "sado", "hitsugaya")
+PLAYER_IDS = ("ichigo", "rukia", "renji", "ishida", "sado", "hitsugaya", "byakuya", "kenpachi")
 
 
 def even_rows(cells, fname, name):
@@ -335,11 +364,12 @@ def process(sprites, tile, body_h, lift=False):
     """Retorna {nome: [frames]} já na célula final, com paleta compartilhada."""
     small = {}
     for name, (fname, rows, cols, rel, tiles) in sprites.items():
+        rel = rel() if callable(rel) else rel
         path = RAW / fname
         if not path.exists():
             print("faltando:", fname)
             continue
-        cells = even_rows([keep_main(c) for c in split_cells(remove_bg(Image.open(path)), rows, cols)], fname, name)
+        cells = even_rows([keep_main(c, LOOSE.get(name, 0.05)) for c in split_cells(remove_bg(Image.open(path)), rows, cols)], fname, name)
         # escala única por folha: mesma altura de corpo em todos os frames
         ref_h = max(c.height for c, _ in cells)
         # -2: o contorno externo soma 1 px de cada lado

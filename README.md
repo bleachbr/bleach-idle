@@ -27,7 +27,7 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
 ## O que o jogo tem
 **Contas e personagens**
 - **Login e senha:** hash scrypt; bloqueio de 1 min depois de 5 senhas erradas (30 por IP); "Lembrar neste navegador" com token de 30 dias. Troca de senha na tela de personagens (derruba os outros aparelhos lembrados).
-- **Personagens:** até 5 por conta, com nome único: Ichigo, Rukia, Renji, **Ishida** (Quincy: flecha de longe e barata, corpo a corpo fraco), **Sado** (o mais forte e resistente, de ataque lento) ou **Hitsugaya** (o capitão do gelo, com técnicas em área).
+- **Personagens:** até 5 por conta, com nome único: Ichigo, Rukia, Renji, **Ishida** (Quincy: flecha de longe e barata, corpo a corpo fraco), **Sado** (o mais forte e resistente, de ataque lento) **Hitsugaya** (o capitão do gelo, com técnicas em área), **Byakuya** (o capitão nobre: pétalas-lâmina em área, de longe) ou **Kenpachi** (o capitão da 11ª: corpo a corpo, o que bate mais forte de perto).
 - **Primeiros passos:** personagem novo vê na barra lateral um guia de 6 tarefas (derrotar um Hollow, ligar o Auto Hunt, visitar o Kisuke, aceitar uma missão, pegar a diária, soltar o Bankai), cada uma com uma pequena recompensa.
 - **Entrada no mundo:** por ingresso de uso único. Se o mesmo personagem abre em outra janela, a nova assume.
 
@@ -56,6 +56,8 @@ Dica: `http://localhost:5173/?login` abre direto o login (para entrar com outra 
   - **Ishida:** Ginrei Kojaku, Letzt Stil, Hueco Mundo (Seele Schneider), Sternritter "A" e Antithesis;
   - **Sado:** Brazo Derecha, Brazo Izquierda, Fullbring (Gigante e Diablo), El Directo e La Muerte;
   - **Hitsugaya:** Shikai, Bankai (asas de gelo), Hyōten Hyakkasō, Forma Adulta e Shiten Kōsō.
+  - **Byakuya:** Shikai (Senbonzakura), Bankai (Senbonzakura Kageyoshi), Senkei, Gōkei e Shūkei: Hakuteiken.
+  - **Kenpachi:** de tapa-olho e sinos, sem o tapa-olho, Kendō com as duas mãos, Shikai (Nozarashi) e Bankai.
 
   A tecla T vai direto ao estágio mais alto liberado, e o Auto Bankai sobe um estágio por vez. Cada estágio tem sprite e grito próprios. A explosão fica maior a cada estágio. Passar o mouse no nome da forma mostra a linha inteira. Tem também **4 técnicas** nas teclas 1, 4, 5 e 6, aprendidas nos níveis 1, 25, 50 e 100. Algumas acertam em área, e a técnica 1 muda de nome, cor e força a cada forma (ex.: Getsuga Tenshō → Negro → Mascarado). O Auto Hunt usa a mais forte que estiver pronta.
 - **Poder e títulos:** um número que resume ataque, defesa, vida, perícias, equipamento e renascimentos. Cada título (Oficial, Assento, Tenente, Capitão, Capitão-Comandante, Lenda e Rei das Almas) acende uma aura nos pés de outra cor, e a partir de Capitão ela solta faíscas. O ranking tem aba de Poder.

@@ -164,7 +164,7 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 ::-webkit-scrollbar-track { background: #0b0a12; }
 ::-webkit-scrollbar-thumb { background: #8a2a30; border: 1px solid #c9c4da55; }
 /* escolha de personagem: cabem os cinco (no celular, quebram em linhas) */
-#chars { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 6px; }
+#chars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .char { padding: 6px 2px !important; min-width: 0; }
 .char .portrait { width: 72px; height: 72px; }
 

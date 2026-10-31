@@ -64,6 +64,16 @@ export const SPRITES: Record<string, SpriteDef> = {
   hitsugaya_shiten: { frame: 48, cols: 8 },
   renji_final: { frame: 48, cols: 8 },
   sado_final: { frame: 48, cols: 8 },
+  byakuya: { frame: 48, cols: 8 },
+  byakuya_bankai: { frame: 48, cols: 8 },
+  byakuya_senkei: { frame: 96, cols: 8 },
+  byakuya_gokei: { frame: 48, cols: 8 },
+  byakuya_hakuteiken: { frame: 96, cols: 8 },
+  kenpachi: { frame: 48, cols: 8 },
+  kenpachi_sem_tapa: { frame: 96, cols: 8 },
+  kenpachi_kendo: { frame: 96, cols: 8 },
+  kenpachi_shikai: { frame: 96, cols: 8 },
+  kenpachi_bankai: { frame: 96, cols: 8 },
   // níveis 60–150: Karakura Falsa e Wandenreich
   fraccion_espada: { frame: 48, cols: 8 },
   arrancar_resurreccion: { frame: 96, cols: 8 },
@@ -287,6 +297,56 @@ export const CHARS: Record<string, CharDef> = {
       { name: "Guncho Tsurara", minLevel: 25, range: 5, cost: 35, mult: 3.1, cdMs: 6000, color: 0xbff4ff, area: 2 },
       { name: "Hyōryū Senbi", minLevel: 50, range: 6, cost: 45, mult: 4.6, cdMs: 9000, color: 0x9fe8ff, area: 1 },
       { name: "Ryūsenka: Flor de Gelo", minLevel: 100, range: 7, cost: 90, mult: 8.5, cdMs: 30000, color: 0xffffff, area: 3 },
+    ],
+  },
+  // o capitão nobre da 6ª Divisão: pétalas-lâmina em área, de longe.
+  // Shikai → Bankai → Senkei → Gōkei → Shūkei: Hakuteiken
+  byakuya: {
+    id: "byakuya",
+    name: "Byakuya",
+    atk: 14,
+    def: 4,
+    forms: [
+      { id: "shikai", label: "Shikai: Senbonzakura", sprite: "byakuya", dmgMult: 1, stepMs: 250, attackMs: 950, reiDrain: 0, minLevel: 1 },
+      { id: "bankai", label: "Bankai: Senbonzakura Kageyoshi", shout: "BANKAI!", sprite: "byakuya_bankai", dmgMult: 1.7, stepMs: 175, attackMs: 660, reiDrain: 2.5, minLevel: 10,
+        skill: { name: "Senbonzakura Kageyoshi", color: 0xff9fc4, mult: 3.2 } },
+      { id: "senkei", label: "Senkei: Senbonzakura Kageyoshi", shout: "SENKEI!", sprite: "byakuya_senkei", dmgMult: 2.1, stepMs: 160, attackMs: 600, reiDrain: 3.5, minLevel: 30,
+        skill: { name: "Senkei", color: 0xffc0dc, mult: 3.6 } },
+      { id: "gokei", label: "Gōkei: Senbonzakura Kageyoshi", shout: "GŌKEI!", sprite: "byakuya_gokei", dmgMult: 2.5, stepMs: 145, attackMs: 530, reiDrain: 5, minLevel: 60,
+        skill: { name: "Gōkei", color: 0xff7ab0, mult: 4.1 } },
+      { id: "hakuteiken", label: "Shūkei: Hakuteiken", shout: "SHŪKEI: HAKUTEIKEN!", sprite: "byakuya_hakuteiken", dmgMult: 3, stepMs: 130, attackMs: 470, reiDrain: 6, minLevel: 100,
+        skill: { name: "Hakuteiken", color: 0xffffff, mult: 4.8 } },
+    ],
+    skill: { name: "Senbonzakura", range: 5, cost: 25, mult: 2.6, cdMs: 3500, color: 0xff9fc4, area: 1 },
+    techs: [
+      { name: "Hadō 4: Byakurai", minLevel: 25, range: 6, cost: 35, mult: 3.4, cdMs: 6000, color: 0xe8f4ff },
+      { name: "Senka", minLevel: 50, range: 2, cost: 45, mult: 5, cdMs: 9000, color: 0xffd0e8 },
+      { name: "Ikka Senjinka", minLevel: 100, range: 5, cost: 90, mult: 9.5, cdMs: 30000, color: 0xff7ab0, area: 2 },
+    ],
+  },
+  // o capitão da 11ª Divisão: só quer briga. Corpo a corpo, o mais forte de perto.
+  // Tapa-olho e sinos → Sem o tapa-olho → Kendō com as duas mãos → Shikai: Nozarashi → Bankai
+  kenpachi: {
+    id: "kenpachi",
+    name: "Kenpachi",
+    atk: 16,
+    def: 5,
+    forms: [
+      { id: "base", label: "Kenpachi: Tapa-Olho e Sinos", sprite: "kenpachi", dmgMult: 1, stepMs: 260, attackMs: 1000, reiDrain: 0, minLevel: 1 },
+      { id: "semtapa", label: "Sem o Tapa-Olho", shout: "SEM LIMITES!", sprite: "kenpachi_sem_tapa", dmgMult: 1.85, stepMs: 185, attackMs: 680, reiDrain: 2.5, minLevel: 10,
+        skill: { name: "Corte sem Limites", color: 0xffb030, mult: 3.3 } },
+      { id: "kendo", label: "Kendō: Duas Mãos", shout: "KENDŌ!", sprite: "kenpachi_kendo", dmgMult: 2.3, stepMs: 170, attackMs: 610, reiDrain: 3.5, minLevel: 30,
+        skill: { name: "Ryōdan", color: 0xffe080, mult: 3.8 } },
+      { id: "nozarashi", label: "Shikai: Nozarashi", shout: "BEBA, NOZARASHI!", sprite: "kenpachi_shikai", dmgMult: 2.8, stepMs: 150, attackMs: 540, reiDrain: 5, minLevel: 60,
+        skill: { name: "Nozarashi", color: 0xffc040, mult: 4.3 } },
+      { id: "bankai", label: "Bankai", shout: "BANKAI!", sprite: "kenpachi_bankai", dmgMult: 3.3, stepMs: 135, attackMs: 480, reiDrain: 6, minLevel: 100,
+        skill: { name: "Fúria do Demônio", color: 0xff2020, mult: 5 } },
+    ],
+    skill: { name: "Corte de Reiatsu", range: 2, cost: 20, mult: 3, cdMs: 3000, color: 0xffd040 },
+    techs: [
+      { name: "Reiatsu Esmagador", minLevel: 25, range: 2, cost: 35, mult: 3.8, cdMs: 6000, color: 0xffd040, area: 2 },
+      { name: "Kendō: Ryōdan", minLevel: 50, range: 3, cost: 45, mult: 5.4, cdMs: 9000, color: 0xffe080, area: 1 },
+      { name: "Nozarashi: Corte do Céu", minLevel: 100, range: 3, cost: 90, mult: 10.5, cdMs: 30000, color: 0xff2020, area: 3 },
     ],
   },
 };
