@@ -4,6 +4,8 @@ Este documento reparte o [roadmap](roadmap.md) em dois núcleos de backlog para 
 
 Atualizado em 31/10/2026.
 
+Item riscado já foi implementado (status no `roadmap.md`). Ele continua na fila para não mudar a numeração da ordem.
+
 ## As duas filas
 
 As filas são **estanques**: ninguém puxa item da fila do outro. Mas os **temas são mistos em cada uma** — os dois tocam `server/`, `client/`, `shared/` e mapas. O critério de repartição não é camada, é pacote de funcionalidade:
@@ -83,7 +85,7 @@ Itens herdados do roadmap e das pendências:
 | 4 | M1-07 | Janela de diálogo no `#modal` (teclado, toque, `Esc`) | M | M1-04 (Waldir) | idem | |
 | 5 | M2-07 | Tempo de recarga numérico no HUD | P | — | spec de M2 | Independente do motor; pode sair antes |
 | 6 | M2-06 | Efeitos visuais de status (cor no sprite, ícone, número de dano contínuo) | M | M2-01 (Waldir) | spec de M2 | Fatia de cliente do pacote M2 |
-| 7 | F-10 | Trocar `sleep` fixo por `vi.waitFor`/`once` e limpar ruído do Vitest | M | — | não | Contínuo, junto com cada teste que tocar |
+| 7 | ~~F-10~~ | ~~Trocar `sleep` fixo por `vi.waitFor`/`once` e limpar ruído do Vitest~~ | M | — | não | Feito no Vitest; nos cenários segue como rotina, junto com cada teste que tocar |
 | 8 | M3-02 | Abas de chat (Geral, Combate, Party, Guilda, Privado) | M | — | sim | |
 | 9 | M3-01 | Troca direta 1v1, duas confirmações, mesmo mapa e alcance | M | — | sim | Servidor + UI; handler sensível: skill `seguranca-servidor`, revisão do Waldir |
 | 10 | M3-03 | Filtro de loot do Auto Helper | M | — | sim | Preferências no cliente, validação no servidor |
