@@ -93,7 +93,9 @@ Ao implementar código ou refatorar no Bleach Idle, o agente deve obrigatoriamen
 - Sanitizar inputs de chat, nomes de personagens e operações no mercado.
 - **Nunca** use uma chave vinda do cliente para indexar objeto comum (`CHARS[m.charId]`): `constructor` e `__proto__` passam. Valide com `Object.hasOwn`.
 - Mensagens novas entram por `this.handle` (aplica o limite de 40 mensagens por segundo), nunca por `this.onMessage`.
-- Rotas de debug e modo Dev nascem desligadas e só ligam com variável explícita. O contrário está registrado em `docs/pendencias.md` (S1).
+- Rotas de debug e modo Dev nascem desligadas e só ligam com `BI_DEV=1` ou `BI_DEBUG=1` (`flagOn` em `server/src/flags.ts`); `npm run dev` já define `BI_DEV=1`. Nunca ligue "quando não é produção".
+- Busca em tabela de dados com chave vinda do cliente: `own(TABELA, chave)` e `isOwnKey(objeto, chave)` (`shared/src/lookup.ts`), nunca `TABELA[chave]` nem `chave in objeto`.
+- IP do cliente para limites: `clientIp(req)` (`server/src/clientIp.ts`); atrás do proxy, `TRUST_PROXY=1`.
 - Detalhes e checklist: skill `seguranca-servidor`.
 
 ### 4.3. Testes Determinísticos e Estabilidade de CI

@@ -4,6 +4,8 @@ services:
   jogo:
     build: .
     restart: unless-stopped
+    environment:
+      TRUST_PROXY: "1"       # o Caddy é o único que alcança o jogo: vale o IP que ele repassa em X-Forwarded-For
     volumes:
       - dados:/data            # banco (bleach-idle.sqlite) e backups/
     expose:

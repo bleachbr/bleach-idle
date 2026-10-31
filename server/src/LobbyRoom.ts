@@ -4,12 +4,13 @@ import { Client, ServerError } from "@colyseus/core";
 import { GameRoom } from "./GameRoom";
 import type { IncomingMessage } from "node:http";
 import {
-  CHARS, START_LEVEL, START_KIT, INV_SIZE, DEPOT_SIZE, expForLevel, maxHp, maxRei, addItem, type Slot,
+  CHARS, own, START_LEVEL, START_KIT, INV_SIZE, DEPOT_SIZE, expForLevel, maxHp, maxRei, addItem, type Slot,
 } from "../../shared/src";
 import * as db from "./db";
 import { HOME, TEMPLE } from "./maps";
 import * as guilds from "./guilds";
 import { hashPassword, verifyPassword, issueTicket, blocked, fail, clearFails } from "./auth";
+import { clientIp } from "./clientIp";
 
 const MAX_CHARS = 5;
 const LOGIN_RE = /^[a-z0-9_]{3,20}$/;
@@ -31,7 +32,7 @@ export class LobbyRoom extends GameRoom {
   maxClients = 1000;
 
   async onAuth(_client: Client, opts: any, req?: IncomingMessage): Promise<Auth> {
-    const ip = `ip:${req?.socket?.remoteAddress ?? "?"}`;
+    const ip = `ip:${clientIp(req)}`;
     if (opts?.token) {
       const acc = db.sessionAccount(String(opts.token));
       if (!acc) throw new ServerError(401, "Sessão expirada. Entre de novo.");
@@ -71,7 +72,7 @@ export class LobbyRoom extends GameRoom {
       const { accountId } = c.userData as Auth;
       const name = String(m?.name ?? "").trim().replace(/\s+/g, " ");
       if (!NAME_RE.test(name)) return c.send("error", { text: "Nome: de 3 a 16 letras (espaços permitidos)." });
-      if (!CHARS[m?.charId]) return c.send("error", { text: "Escolha um personagem." });
+      if (!own(CHARS, m?.charId)) return c.send("error", { text: "Escolha um personagem." });
       if (db.listChars(accountId).length >= MAX_CHARS) return c.send("error", { text: `Limite de ${MAX_CHARS} personagens por conta.` });
       if (!db.createChar(accountId, name.toLowerCase(), newCharacter(name, m.charId))) return c.send("error", { text: "Esse nome já está em uso." });
       this.sendChars(c);

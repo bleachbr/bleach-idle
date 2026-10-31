@@ -73,7 +73,7 @@ PR só de documentação ou de infraestrutura: o item sobre teste novo não se a
 
 | Portão | Condição |
 | :--- | :--- |
-| Testar com amigos | F-01, F-02 e F-03 `Feito`, e o deploy do [DEPLOY.md](../DEPLOY.md) (F-13) |
+| Testar com amigos | F-01, F-02 e F-03 (`Feito`) e o deploy do [DEPLOY.md](../DEPLOY.md) (F-13) |
 | Abrir ao público | O anterior, mais F-04 a F-07, F-13 a F-15, M3-05 (moderação de chat) e M5-01 (recuperação de senha) |
 
 ## F: Fundação (segurança, qualidade e operação)
@@ -82,9 +82,9 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 
 | ID | Entrega | Tam. | Depende de | Status | Ref. |
 | :-- | :--- | :-- | :--- | :--- | :-- |
-| F-01 | Modo Dev e `BI_DEBUG` só ligam com `=== "1"` | P | | Pronto | S1 |
-| F-02 | Chave vinda do cliente não indexa objeto comum (`Object.hasOwn`) | P | | Pronto | S2 |
-| F-03 | Limite de login por IP usa o IP real atrás do Caddy | P | | Pronto | S3 |
+| F-01 | Modo Dev e `BI_DEBUG` só ligam com `=== "1"` | P | | Feito | S1 |
+| F-02 | Chave vinda do cliente não indexa objeto comum (`Object.hasOwn`) | P | | Feito | S2 |
+| F-03 | Limite de login por IP usa o IP real atrás do Caddy | P | | Feito | S3 |
 | F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | | Pronto | S6 |
 | F-05 | Contêiner roda como `node`, não como root (conferir a permissão do volume `/data`) | P | | Pronto | S9 |
 | F-06 | CSP e cabeçalhos de segurança no Caddy | P | | Pronto | S7 |
@@ -95,7 +95,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-11 | CI: job de gitleaks, `ubuntu-24.04` fixo, Node 22 e 24 e `actions` na v7 | M | | Pronto | Q5, Q8, Q9, Q10 |
 | F-12 | Upgrade maior do Colyseus (0.15 para 0.18) | G | spec | Precisa de spec | S5 |
 | F-13 | Primeiro deploy com HTTPS atrás do Caddy e restauração de backup testada | M | | Decisão pendente (servidor e domínio) | DEPLOY.md |
-| F-14 | Limite de criação de contas por IP | P | F-03 | Bloqueado por F-03 | DEPLOY.md |
+| F-14 | Limite de criação de contas por IP | P | F-03 | Pronto | DEPLOY.md |
 | F-15 | Balanceamento dos mapas avançados (`balance.ts`) | M | | Pronto | DEPLOY.md |
 
 Recomendação: fazer F-12 antes de M4, porque as salas instanciadas dependem do Colyseus e é melhor não construir sobre uma versão com advisory.

@@ -9,6 +9,7 @@ art/sprites
 art/sprites48
 art/*.png
 art/*.gif
+server/dev.env
 .git
 .claude
 .kiro
