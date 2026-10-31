@@ -87,14 +87,25 @@ db.exec("CREATE INDEX IF NOT EXISTS players_account ON players(account_id)");
 
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 
+// Códigos estendidos do SQLite: 1555 = SQLITE_CONSTRAINT_PRIMARYKEY, 2067 = SQLITE_CONSTRAINT_UNIQUE
+const SQLITE_UNIQUE_CODES = new Set([1555, 2067]);
+
+function isUniqueConstraintError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { errcode?: unknown; message?: unknown };
+  if (typeof e.errcode === "number" && SQLITE_UNIQUE_CODES.has(e.errcode)) return true;
+  return typeof e.message === "string" && e.message.startsWith("UNIQUE constraint failed:");
+}
+
 // ---------- contas ----------
 
 export function createAccount(login: string, passHash: string): number | null {
   try {
     const r = db.prepare("INSERT INTO accounts (login, pass, created_at) VALUES (?, ?, ?)").run(login, passHash, Date.now());
     return Number(r.lastInsertRowid);
-  } catch {
-    return null; // login já existe (UNIQUE)
+  } catch (err) {
+    if (isUniqueConstraintError(err)) return null; // login já existe (UNIQUE)
+    throw err;
   }
 }
 
@@ -143,8 +154,9 @@ export function createChar(accountId: number, id: string, data: SaveData): boole
     db.prepare("INSERT INTO players (id, account_id, data, in_world, updated_at) VALUES (?, ?, ?, 0, ?)")
       .run(id, accountId, JSON.stringify(data), Date.now());
     return true;
-  } catch {
-    return false; // nome já usado
+  } catch (err) {
+    if (isUniqueConstraintError(err)) return false; // nome já usado (PRIMARY KEY)
+    throw err;
   }
 }
 

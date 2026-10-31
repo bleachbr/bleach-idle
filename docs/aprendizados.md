@@ -102,6 +102,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Tentar inferir "endereço privado" para confiar em `X-Forwarded-For` é falho em redes NAT, CGNAT (`100.64.0.0/10`) e em contêineres Docker bridge.
 - **Solução:** Uso explícito de `net.BlockList` com os CIDRs dos proxies confiáveis configurados pelo operador via `TRUST_PROXY` (ex.: `172.28.0.0/24` no Docker Compose). Conexões vindas de fora da lista nunca têm seu cabeçalho `X-Forwarded-For` considerado, impedindo IP spoofing.
 
+### Tratamento Seletivo de Erros `UNIQUE` no `node:sqlite` (`F-04`)
+- Capturar qualquer exceção com `catch { return null; }` em `createAccount` e `createChar` mascarava falhas graves de banco (`NOT NULL`, `FOREIGN KEY`, disco cheio ou `SQLITE_BUSY`) como se fossem simples colisões de nome ("login já existe" / "nome em uso").
+- No `node:sqlite`, violações de unicidade expõem `errcode` estendido numérico: `2067` (`SQLITE_CONSTRAINT_UNIQUE`, ex.: `accounts.login`) e `1555` (`SQLITE_CONSTRAINT_PRIMARYKEY`, ex.: `players.id`), ambos com mensagem iniciada por `"UNIQUE constraint failed:"`.
+- **Solução:** Função dedicada `isUniqueConstraintError(err)` em `server/src/db.ts` que retorna `null`/`false` apenas para essas duas restrições e relança qualquer outro erro.
+
 ---
 
 ## 8. Jogador-IA (Cradle) e Correções de UX/Motor (`F-16`)
