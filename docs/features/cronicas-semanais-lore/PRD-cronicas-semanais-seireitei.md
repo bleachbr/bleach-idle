@@ -5,7 +5,7 @@
 | **Feature** | NPCs do Seireitei e Crônicas Históricas Semanais |
 | **Status** | Especificação Técnica (Pronto para Revisão) |
 | **Autores** | Time de Engenharia & Game Design Bleach Idle |
-| **Alvo** | Versão v1.1.0 (Milestone 1) |
+| **Alvo** | Milestone 1 (o repositório não usa tags de versão) |
 
 ---
 
@@ -134,3 +134,18 @@ No mapa `soul.tmj`, a área segura (PZ) central ao redor do portal Senkaimon rec
 - **RNF02 (Compatibilidade com Mapas do Tiled):** A adição de NPCs não pode quebrar mapas existentes nem sobrescrever o arquivo `soul.tmj` com ferramentas externas sem validação.
 - **RNF03 (Segurança e Zero-Trust):** Toda validação de aceitação e entrega de missão deve ser processada exclusivamente no `WorldRoom.ts`, impedindo injeção de missões já concluídas.
 - **RNF04 (Testabilidade Automatizada):** A feature deve incluir testes unitários para a rotação de semanas em `shared/test/` e testes E2E com Vitest em `server/test/` validando o fluxo completo de interação e entrega de recompensa.
+
+---
+
+## 8. Pontos em aberto, conferidos contra o código (31/10/2026)
+
+| # | O que o documento assume | O que o código mostra | Decisão necessária |
+| :-- | :--- | :--- | :--- |
+| 1 | Itens "Fragmentos de Reiatsu" (semana 1) e "Relatório Lacrado" (semana 2) | Não existem em `shared/src/items.ts`. Existem `pedra_reishi` (Pedra de Reishi) e `fragmento` (Fragmento de Máscara) | Criar os itens ou reaproveitar os existentes |
+| 2 | "Monstros de nível 50+" (semana 4) | `MonsterDef` não tem nível | Listar ids (`soldado_wandenreich`, `sternritter`...) ou usar o mapa `wandenreich` |
+| 3 | "Título temporário" | Os cosméticos são permanentes (`wallets.owned`) | Criar a expiração ou trocar por título permanente |
+| 4 | Recompensa em Cristais uma vez por ciclo | A trava é por personagem e a carteira é por conta. Na diária, 2 personagens da mesma conta renderam +5 cada (saldo 5, depois 10), e o limite é 5 personagens por conta | Travar por conta ou aceitar o multiplicador |
+| 5 | NPC central diferente em cada semana (Sentinela do Portão, Cronista, Hitsugaya, Oficial Veterano, Arquivista) | A seção 4 define só 3 NPCs (Maki, Shunsui, Sentinela) | O Maki cobre todas as semanas, ou criar os NPCs que faltam |
+| 6 | NPCs em (21,14), (26,13) e (23,16) no `soul.tmj` | Conferido: os três estão na zona segura (x de 14 a 33, y de 10 a 17), em tiles livres | Nenhuma |
+| 7 | Sprites `rukia__haori`, `byakuya`, `renji__haori` | Existem em `client/public/assets/sprites/` | Nenhuma |
+| 8 | Recompensas: Caixa do Kisuke, Pergaminho de Treino, Incenso da Sorte, Amuleto da Alma | Existem (`caixa_kisuke`, `pergaminho_xp`, `incenso`, `amuleto_alma`) | Nenhuma |

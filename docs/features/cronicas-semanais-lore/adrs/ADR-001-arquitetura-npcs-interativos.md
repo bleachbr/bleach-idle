@@ -11,7 +11,7 @@
 
 ## 1. Contexto e Problema
 
-Atualmente, o motor de jogo do Bleach Idle possui suporte a apenas um tipo de entidade não jogável interativa no mapa: o objeto de tipo `loja` (`shared/src/map.ts`), que carrega hardcoded o sprite `npc_shop` e abre diretamente o menu de compras e mercado do Kisuke Urahara (`client/src/GameScene.ts:811`).
+Atualmente, o motor de jogo do Bleach Idle possui suporte a apenas um tipo de entidade não jogável interativa no mapa: o objeto de tipo `loja` (`shared/src/map.ts`), que carrega hardcoded o sprite `npc_shop` e abre diretamente o menu de compras e mercado do Kisuke Urahara (`onClick` em `client/src/GameScene.ts`, que envia `interact` com `kind: "shop"`).
 
 Para viabilizar a presença de **capitães, tenentes, guardas e cronistas no Seireitei**, precisamos de uma arquitetura flexível que permita:
 1. Declarar múltiplos NPCs por mapa com identidade visual própria (nomes, títulos e spritesheets diferentes).

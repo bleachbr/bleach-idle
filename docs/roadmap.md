@@ -10,8 +10,8 @@ Este documento consolida o planejamento estratégico e técnico do **Bleach Idle
 - **Evolução Fiel à Lore:** Cada personagem possui **5 estágios** (níveis 1, 10, 30, 60 e 100), com sprites, técnicas que evoluem e gritos característicos.
 - **Sistema de 4 Técnicas:** Mapeadas em teclas dedicadas (1, 4, 5, 6), aprendidas progressivamente com dano em área (`area`).
 - **Mundo e Mapas:** Karakura, Soul Society (Seireitei + Rukongai), Hueco Mundo, Las Noches, Karakura Falsa (60+), Wandenreich (95+) e Dangai (desafio sem fim).
-- **Progressão de Longo Prazo:** Renascimento (rebirths com bônus permanente de dano/vida/XP), Marcos de Nível (Caixas do Kisuke), Bestiário em 3 estágios, 19 Conquistas, Missões Diárias e Recompensa Diária (ciclo de 7 dias).
-- **Economia e Equipamentos:** 29 itens, 7 slots de equipamento, conjuntos com bônus de sinergia, Forja do Kisuke até +10, Loja de Cristais cosméticos (auras, títulos, borboletas, crônicas) e Mercado entre jogadores com expiração de 7 dias.
+- **Progressão de Longo Prazo:** Renascimento (rebirths com bônus permanente de dano/vida/XP), Marcos de Nível (Caixas do Kisuke), Bestiário em 3 estágios, 21 Conquistas, Missões Diárias e Recompensa Diária (ciclo de 7 dias).
+- **Economia e Equipamentos:** 45 itens (26 de equipamento), 7 slots de equipamento, conjuntos com bônus de sinergia, Forja do Kisuke até +10, Loja de Cristais cosméticos (auras, títulos, borboletas, crônicas) e Mercado entre jogadores com expiração de 7 dias.
 - **Automação Completa:** Auto Helper (Target, Hunt, Heal, Treino, Auto Venda), caçada offline contínua de até 12 horas e sobrevivência a quedas/reinícios de servidor.
 - **Temporadas e Eventos:** Passe de temporada mensal gratuito (30 níveis), Chefe Mundial periódico (Menos Ancião a cada 2h), Invasões de Hollows (a cada 3h) e Fim de Semana com XP dobrado.
 - **Ferramental & Qualidade:** Modo DEV para testes rápidos, Modo HD com sprites de alta resolução e suíte de 76 testes automatizados (Vitest) integrados com GitHub Actions CI.
@@ -34,10 +34,10 @@ flowchart TD
 Transformar a Soul Society (Seireitei) em um centro vibrante de história e narrativa, onde NPCs representam momentos marcantes da obra e trazem eventos semanais rotativos.
 
 > **Documentação de Engenharia e Especificação Técnica:**
-> - [PRD: Crônicas Semanais & NPCs do Seireitei](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v3/bleach-idle/docs/features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md)
-> - [ADR 001: Arquitetura de NPCs Interativos](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v3/bleach-idle/docs/features/cronicas-semanais-lore/adrs/ADR-001-arquitetura-npcs-interativos.md)
-> - [ADR 002: Rotação Semanal Determinística de Crônicas](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v3/bleach-idle/docs/features/cronicas-semanais-lore/adrs/ADR-002-rotacao-semanal-cronicas.md)
-> - [ADR 003: Protocolo Colyseus e Interface de Diálogo](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v3/bleach-idle/docs/features/cronicas-semanais-lore/adrs/ADR-003-protocolo-rede-e-interface-dialogo.md)
+> - [PRD: Crônicas Semanais & NPCs do Seireitei](features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md)
+> - [ADR 001: Arquitetura de NPCs Interativos](features/cronicas-semanais-lore/adrs/ADR-001-arquitetura-npcs-interativos.md)
+> - [ADR 002: Rotação Semanal Determinística de Crônicas](features/cronicas-semanais-lore/adrs/ADR-002-rotacao-semanal-cronicas.md)
+> - [ADR 003: Protocolo Colyseus e Interface de Diálogo](features/cronicas-semanais-lore/adrs/ADR-003-protocolo-rede-e-interface-dialogo.md)
 
 1. **Arquitetura de NPCs Interativos:**
    - Generalizar a camada de objetos de mapa (`logica`) para suportar instâncias de NPCs interativos (`npc` com id, sprite, nome e diálogo).
@@ -47,7 +47,7 @@ Transformar a Soul Society (Seireitei) em um centro vibrante de história e narr
      - **Semana da Invasão do Ryoka:** Ichigo e amigos invadem o Seireitei; missões de escolta, duelos contra tenentes e desafios no muro de Shakonmaku.
      - **Semana da Traição no Soukyoku:** Aizen revela seu plano e confronta o Gotei 13; evento mundial ou instância temática da colina do Soukyoku.
      - **Semana do Passado (Turn Back the Pendulum):** Evento histórico com visual e tarefas envolvendo os Vizard e Urahara capitão.
-     - **Semana do Inverno das Espadas:** Batalha contra Arrancars e Privaron.
+     - **Semana da Batalha de Karakura Falsa:** Gotei 13 contra o exército de Espadas de Aizen, na réplica da cidade.
      - **Semana da Guerra dos Mil Anos (Wandenreich Invasion):** Queda da Soul Society sob invasão dos Quincy.
 3. **Recompensas Temáticas:**
    - Títulos exclusivos temporários ou permanentes, cristais da conta, fragmentos de memórias e cosméticos temáticos.
