@@ -103,7 +103,7 @@ Backlog novo (IDs R-##) — narrativa, QoL e social com partes de servidor:
 | 19 | R-09 | **Codex / enciclopédia de lore** — bestiário expandido com fichas de personagens, facções e eventos | M | — | sim |
 | 20 | R-14 | **Acessibilidade e QoL do cliente** — escala de fonte, alto contraste, re-mapeamento de teclas, modo uma mão no toque | M | — | sim |
 | 21 | R-07 | **Companion: Mod Soul** — Kon e afins acompanham o personagem, coletam loot cosmético, progressão própria (entidade seguidora no servidor + visual no cliente) | M | M1-04 | sim |
-| 22 | R-13 | **Cosméticos sazonais** — uniforme Karakura, haori de divisões, máscaras Vizard na Loja de Cristais | M | — | não |
+| 22 | R-13 | **Cosméticos sazonais** — uniforme Karakura, haori de divisões, máscaras Vizard na Loja de Cristais | M | arte nova (uniforme, haori por divisão); decisão de lore (máscara fora do Ichigo) | não |
 | 23 | R-04 | **Expansão Wandenreich** — Sternritter como chefes de elite rotativos, Volständig visual para Ishida | M | W-04 recomendado | sim |
 | 24 | R-05 | **Kidō e Hadō** — árvore paralela de habilidades: bakudō (CC/utilidade) e hadō (dano); servidor e HUD | G | M2-01 a M2-05 (Waldir) | sim |
 | 25 | R-03 | **Mapa Hell (Jigoku)** — zona 100+ com ogres, mecânica de "pecado" (debuff por morte), drops novos | G | W-04 recomendado | sim |
