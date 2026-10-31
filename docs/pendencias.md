@@ -60,7 +60,7 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 
 | Item | Situação Atual | Impacto / Necessidade |
 | :--- | :--- | :--- |
-| **Migração Completa para Vitest** | O projeto possui 83 testes rápidos no Vitest e 31 scripts de integração em `server/scripts/test.ts`. | Consolidar os 31 cenários legados no Vitest para unificar a execução em um único runner padronizado. |
+| **Migração Completa para Vitest** | O projeto possui 141 testes rápidos no Vitest e 31 scripts de integração em `server/scripts/test.ts`. | Consolidar os 31 cenários legados no Vitest para unificar a execução em um único runner padronizado. |
 | **Testes de Interface (Playwright)** | O cliente Phaser 3 não possui testes de regressão visual ou de cliques automatizados. | Implementar testes E2E com Playwright para validar a tela de login, menus e HUD. |
 
 ---
