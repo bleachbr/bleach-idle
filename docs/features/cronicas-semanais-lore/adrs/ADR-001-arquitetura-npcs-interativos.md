@@ -44,9 +44,6 @@ export interface NpcDef {
   id: string;
   name: string;
   title: string;
-  map: string;
-  x: number;
-  y: number;
   sprite: string;
   solid?: boolean;
   defaultDialog: NpcDialogNode;
@@ -56,8 +53,9 @@ export interface NpcDef {
 ```
 
 ### 2.2. Integração com Mapas (`shared/src/map.ts`)
-- O tipo `GameMap` receberá um campo opcional `npcs: NpcDef[]`.
-- Em tempo de carregamento (`parseMap`), o servidor e o cliente registrarão os NPCs mapeados para aquele mapa.
+- **A posição de cada NPC vem do `.tmj`** (objeto `npc` na camada `logica`, com a propriedade `id`), a mesma fonte única dos demais objetos do mapa (AGENTS.md §1.3). O catálogo `NpcDef` guarda só identidade e diálogo.
+- O tipo `GameMap` receberá um campo opcional `npcs: { id: string; x: number; y: number }[]`.
+- Em tempo de carregamento (`parseMap`), o servidor e o cliente juntam cada posição ao `NpcDef` de mesmo `id`; um `id` sem catálogo é erro de carga.
 - Tiles ocupados por NPCs com `solid: true` marcarão o bit de colisão na matriz `solid[y * w + x] = 1`.
 
 ### 2.3. Desacoplamento da Lógica de Negócio

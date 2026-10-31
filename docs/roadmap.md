@@ -12,10 +12,12 @@ Atualizado em 31/10/2026.
 4. Siga o [fluxo de trabalho](#fluxo-de-trabalho) e confira a [definição de pronto](#definição-de-pronto).
 5. Item **Precisa de spec** não começa sem PRD e ADR aprovados. O modelo está em [`features/cronicas-semanais-lore/`](features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md).
 
-Status: `Feito` · `Em andamento (quem)` · `Pronto` · `Bloqueado por X` · `Precisa de spec` · `Decisão pendente (quem decide)`.
+Status: `Feito` · `Em andamento (PR #N)` · `Pronto` · `Bloqueado por X` · `Precisa de spec` · `Decisão pendente (quem decide)`. "Em andamento" significa que existe PR aberto, ou rascunho, citando o ID (`gh pr list`); não é preciso commit só para marcar isso.
+
+Ordem de pegada: com itens `Pronto` em mais de um bloco, pegue F antes de M. M1-01 e M1-02 são exceção por mexerem só em `shared/` sem tocar em segurança.
 Tamanho: **P** cabe num PR pequeno; **M** exige alguns PRs ou mexe em cliente e servidor; **G** precisa ser fatiado antes de começar.
 
-Onde fica cada informação: este arquivo guarda ID, ordem, dependência e status. O detalhe de cada débito fica em [`pendencias.md`](pendencias.md), as lições em [`aprendizados.md`](aprendizados.md), as medições em [`baseline.md`](baseline.md) e a especificação de cada funcionalidade grande em `docs/features/<nome>/`.
+Onde fica cada informação: este arquivo guarda ID, ordem, dependência e status. O detalhe de cada débito fica em [`pendencias.md`](pendencias.md), as lições em [`aprendizados.md`](aprendizados.md), as medições em [`baseline.md`](baseline.md) e a especificação de cada funcionalidade grande em `docs/features/<nome>/`. Número que aparece em mais de um arquivo vale o do `baseline.md`. `RELATORIO-NOITE.md` é registro histórico de 29/10/2026 e pode estar defasado.
 
 ## Estado atual
 
@@ -25,35 +27,35 @@ Onde fica cada informação: este arquivo guarda ID, ordem, dependência e statu
 - **Economia:** 45 itens (26 de equipamento), 7 espaços de equipamento, conjuntos com bônus, forja até +10, 32 cosméticos na Loja de Cristais e mercado entre jogadores com anúncios de 7 dias.
 - **Automação:** Auto Helper (alvo, caçada, cura, treino, venda), caçada offline de até 12 horas que sobrevive a reinício do servidor.
 - **Eventos:** passe de temporada mensal grátis, chefe mundial a cada 2 h, invasões de Hollows a cada 3 h e XP em dobro aos sábados e domingos (Brasília).
-- **Qualidade:** 76 testes Vitest e 31 cenários de integração no CI, cinco skills de projeto e uma [linha de base medida](baseline.md).
+- **Qualidade:** 83 testes Vitest e 31 cenários de integração no CI, cinco skills de projeto e uma [linha de base medida](baseline.md).
 
 ## Ordem de execução
 
 ```mermaid
 flowchart LR
-  F["F: Fundação<br/>segurança, qualidade, operação"] --> P1["Portão: testar com amigos"]
+  F["F: Fundação<br/>segurança, qualidade, operação"] --> G1["Portão G1: testar com amigos"]
   F --> M1["M1: NPCs e Crônicas Semanais"]
   M1 --> M2["M2: Status e controle de grupo"]
   M2 --> M3["M3: Social avançado"]
   M3 --> M4["M4: Dungeons e raids"]
   F --> M5["M5: Contas e infraestrutura"]
-  M5 --> P2["Portão: abrir ao público"]
+  M5 --> G2["Portão G2: abrir ao público"]
 ```
 
 A ordem é de prioridade, não de dependência técnica, salvo onde a coluna "Depende de" disser o contrário. Os marcos de M2 em diante só ganham itens fatiados quando virarem o foco.
 
 ## Fluxo de trabalho
 
-1. **Escolha** um item `Pronto` e marque `Em andamento (seu nome)` aqui, no mesmo PR ou num commit pequeno.
+1. **Escolha** um item `Pronto` e avise a outra pessoa (conversa ou PR rascunho com o ID no título).
 2. **Branch** a partir da `main` atualizada: `feat/`, `fix/`, `test/`, `docs/` ou `chore/` + ID + assunto.
 3. **Implemente em passos pequenos**, com teste (skill `testes-deterministicos`) e a skill do assunto (`seguranca-servidor`, `adicionar-conteudo`, `performance-servidor`).
 4. **Verifique localmente:** `npm run typecheck`, `npm test`, os cenários afetados e `gitleaks git --redact -c .gitleaks.toml .`.
-5. **Revisão adversarial antes de publicar.** Quem escreveu o código não o revisa: outra pessoa, ou uma sessão nova de agente com a skill `revisar-pr`. O revisor procura o que está errado em vez de confirmar o que parece certo, e confere cada afirmação contra o código. Achado BLOQUEIA ou ALTA é corrigido antes do passo seguinte.
+5. **Revisão adversarial antes de publicar.** Quem escreveu o código não o revisa: outra pessoa, ou uma sessão nova de agente com a skill `revisar-pr` (que revisa a branch local com `git diff origin/main...HEAD`). O revisor procura o que está errado em vez de confirmar o que parece certo e confere cada afirmação contra o código. Achado BLOQUEIA ou ALTA é corrigido antes do passo seguinte. Em mudança de segurança (handler, login, sessão, `innerHTML`, dependências, Dockerfile, CI, segredos), o veredito de agente é insumo e a aprovação é da outra pessoa.
 6. **Commit e push** só depois do passo 5, em commits pequenos de um assunto só.
-7. **Abra o PR** com o modelo do repositório (`.github/pull_request_template.md`) e cole o veredito da revisão.
-8. **CI verde.** Se estiver vermelho, ache a causa (`gh run view ID --log-failed`) e corrija em commit separado, mesmo que a falha já existisse.
-9. **Merge** por uma pessoa, ou por agente com pedido explícito, com CI verde e sem achado BLOQUEIA ou ALTA aberto. PR com commits bem separados entra por "rebase and merge"; PR com commits de trabalho, por "squash".
-10. **Feche o item:** status `Feito` aqui, lição em `aprendizados.md`, sobras em `pendencias.md`.
+7. **Abra o PR** com o modelo do repositório (`.github/pull_request_template.md`) e cole o veredito da revisão, com os comandos que o revisor rodou.
+8. **CI verde.** Se estiver vermelho, ache a causa (`gh run view ID --log-failed`). Conserto pequeno que destrava o CI fica no PR, em commit próprio, mesmo que a falha já existisse; qualquer outro conserto vira PR separado.
+9. **Feche o item no PR, antes do merge:** status `Feito` aqui, lição em `aprendizados.md`, sobras em `pendencias.md`.
+10. **Merge** com CI verde e sem achado BLOQUEIA ou ALTA aberto, por uma pessoa ou por agente a pedido explícito. PR com commits bem separados entra por "rebase and merge"; PR com commits de trabalho, por "squash". O GitHub não impõe nada disso neste plano (veja F-07): é combinado entre as pessoas.
 
 ## Definição de pronto
 
@@ -65,12 +67,14 @@ A ordem é de prioridade, não de dependência técnica, salvo onde a coluna "De
 - Documentos atualizados: este roadmap e, quando couber, `aprendizados.md` e `pendencias.md`.
 - Revisão adversarial feita e registrada no PR.
 
+PR só de documentação ou de infraestrutura: o item sobre teste novo não se aplica, o ID do roadmap é opcional e o resto vale.
+
 ## Portões
 
 | Portão | Condição |
 | :--- | :--- |
-| Testar com amigos | F-01, F-02 e F-03 `Feito`, e o deploy do [DEPLOY.md](../DEPLOY.md) |
-| Abrir ao público | O anterior, mais F-04 a F-07 e F-13, M5-01 (recuperação de senha), M3-05 (moderação de chat), balanceamento dos mapas avançados e a lista "Antes de abrir para o público" do DEPLOY.md |
+| Testar com amigos | F-01, F-02 e F-03 `Feito`, e o deploy do [DEPLOY.md](../DEPLOY.md) (F-13) |
+| Abrir ao público | O anterior, mais F-04 a F-07, F-13 a F-15, M3-05 (moderação de chat) e M5-01 (recuperação de senha) |
 
 ## F: Fundação (segurança, qualidade e operação)
 
@@ -78,19 +82,21 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 
 | ID | Entrega | Tam. | Depende de | Status | Ref. |
 | :-- | :--- | :-- | :--- | :--- | :-- |
-| F-01 | Modo Dev só liga com `BI_DEV=1` | P | | Em andamento (PR de segurança) | S1 |
-| F-02 | Chave vinda do cliente não indexa objeto comum (`Object.hasOwn`) | P | | Em andamento (PR de segurança) | S2 |
-| F-03 | Limite de login por IP usa o IP real atrás do Caddy | P | | Em andamento (PR de segurança) | S3 |
+| F-01 | Modo Dev e `BI_DEBUG` só ligam com `=== "1"` | P | | Pronto | S1 |
+| F-02 | Chave vinda do cliente não indexa objeto comum (`Object.hasOwn`) | P | | Pronto | S2 |
+| F-03 | Limite de login por IP usa o IP real atrás do Caddy | P | | Pronto | S3 |
 | F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | | Pronto | S6 |
 | F-05 | Contêiner roda como `node`, não como root (conferir a permissão do volume `/data`) | P | | Pronto | S9 |
 | F-06 | CSP e cabeçalhos de segurança no Caddy | P | | Pronto | S7 |
-| F-07 | Proteger a `main`: PR obrigatório e CI verde | P | | Decisão pendente (dono do repositório) | S8 |
+| F-07 | Proteger a `main` (PR obrigatório e CI verde). O GitHub responde 403 para proteção de branch e rulesets neste plano: exige plano pago ou repositório público. Alternativa: combinado escrito mais um hook `pre-push` local | P | | Decisão pendente (Waldir e Rafael) | S8 |
 | F-08 | Métrica da duração do tick, com aviso acima de 50 ms | P | | Pronto | P3 |
 | F-09 | Ranking sem bloquear o tick | M | F-08 | Bloqueado por F-08 | P1 |
-| F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once`; limpar o ruído do Vitest | M | | Pronto (contínuo) | Q2, Q3 |
-| F-11 | Subir `actions/checkout` e `actions/setup-node` para a v7 | P | | Pronto | Q5 |
+| F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once`; limpar o ruído do Vitest. Rotina: ao mexer num teste com `sleep`, troque-o | M | | Pronto | Q2, Q3 |
+| F-11 | CI: job de gitleaks, `ubuntu-24.04` fixo, Node 22 e 24 e `actions` na v7 | M | | Pronto | Q5 |
 | F-12 | Upgrade maior do Colyseus (0.15 para 0.18) | G | spec | Precisa de spec | S5 |
 | F-13 | Primeiro deploy com HTTPS atrás do Caddy e restauração de backup testada | M | | Decisão pendente (servidor e domínio) | DEPLOY.md |
+| F-14 | Limite de criação de contas por IP | P | F-03 | Bloqueado por F-03 | DEPLOY.md |
+| F-15 | Balanceamento dos mapas avançados (`balance.ts`) | M | | Pronto | DEPLOY.md |
 
 Recomendação: fazer F-12 antes de M4, porque as salas instanciadas dependem do Colyseus e é melhor não construir sobre uma versão com advisory.
 
@@ -100,16 +106,16 @@ Especificação: [PRD](features/cronicas-semanais-lore/PRD-cronicas-semanais-sei
 
 | ID | Entrega | Tam. | Depende de | Status |
 | :-- | :--- | :-- | :--- | :--- |
-| M1-00 | Fechar os pontos em aberto do [PRD §8](features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md#8-pontos-em-aberto-conferidos-contra-o-código-31102026) (itens que faltam, NPC de cada semana, título temporário) | P | | Decisão pendente (Waldir e Rafael) |
-| M1-01 | `shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) com testes em vários fusos | P | | Pronto |
-| M1-02 | `shared/src/npcs.ts`: tipos e catálogo de NPCs | P | | Pronto |
+| M1-00 | Aprovar o PRD e os 3 ADRs (status "Aceito", com data e quem aprovou, no PR que aprova) e fechar os pontos do [PRD §8](features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md#8-pontos-em-aberto-conferidos-contra-o-código-31102026) (itens que faltam, nível de monstro, título temporário, NPC de cada semana) | P | | Decisão pendente (Waldir e Rafael) |
+| M1-01 | `shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) com testes de borda: virada de semana, ciclo de 5 semanas, antes da âncora e `TZ` diferentes | P | M1-00 | Bloqueado por M1-00 |
+| M1-02 | `shared/src/npcs.ts`: tipos e catálogo (identidade e diálogo; a posição vem do `.tmj`) | P | M1-00 | Bloqueado por M1-00 |
 | M1-03 | NPCs no `soul.tmj` (objeto `npc` na camada `logica`), leitura em `parseMap` e `mapcheck` | M | M1-02 | Bloqueado por M1-02 |
-| M1-04 | Servidor: `interact` com `kind: "npc"`, `npc_dialog` e `npc_action`, com a distância validada | M | M1-02, M1-03 | Bloqueado |
-| M1-05 | Persistência: `Progress.chronicle` com padrão em `fromSave` | P | M1-01 | Bloqueado por M1-01 |
-| M1-06 | Missão semanal e recompensa uma vez por semana, por personagem (D-001) | M | M1-00, M1-04, M1-05 | Bloqueado |
+| M1-04 | Servidor: `interact` com `kind: "npc"`, `npc_dialog` e `npc_action` por índice de opção, com o nó atual guardado no servidor e a distância validada | M | M1-02, M1-03 | Bloqueado por M1-03 |
+| M1-05 | Persistência: `newProgress()` e `Progress.chronicle` com padrão; a virada da semana zera `questKills` e `completedAt` | P | M1-01 | Bloqueado por M1-01 |
+| M1-06 | Missão semanal e recompensa uma vez por semana, por personagem (D-001). Antes: fazer a conta de cristais por semana com 1 e 5 personagens (diária: 35 por semana por personagem; crônica: 15 a 30) | M | M1-00, M1-04, M1-05 | Bloqueado por M1-04 e M1-05 |
 | M1-07 | Cliente: janela de diálogo no `#modal` (teclado, toque e `Esc`) | M | M1-04 | Bloqueado por M1-04 |
 | M1-08 | Textos e conteúdo das 5 crônicas | M | M1-00 | Bloqueado por M1-00 |
-| M1-09 | Cenário `cronicas.ts` e testes de rotação, diálogo e entrega | M | M1-06, M1-07 | Bloqueado |
+| M1-09 | Cenário `cronicas.ts` e testes de rotação, diálogo e entrega | M | M1-06, M1-07 | Bloqueado por M1-06 e M1-07 |
 
 ## M2: Status e controle de grupo no combate
 
@@ -135,8 +141,8 @@ Visual de equipamentos além do haori e da máscara, e interiores de edifícios 
 
 | ID | Data | Decisão | Quem |
 | :-- | :--- | :--- | :--- |
-| D-001 | 31/10/2026 | A trava das recompensas em cristais fica **por personagem** (comportamento atual). Cada personagem extra repete a diária e as conquistas, até 5 por conta. Recompensa nova (como as Crônicas) segue a mesma regra, e o balanceamento deve contar com isso. | Waldir; Rafael confirma na revisão do PR #2 |
-| D-002 | 31/10/2026 | Nada é publicado sem revisão adversarial, e PR só é mesclado com CI verde (fluxo de trabalho, passos 5 a 9). | Waldir |
+| D-001 | 31/10/2026 | A trava das recompensas em cristais fica **por personagem** (comportamento atual). Cada personagem extra repete a diária e as conquistas, até 5 por conta; pelo código, o chefe mundial e o passe de temporada também pagam por personagem (não executado). Recompensa nova (como as Crônicas) segue a mesma regra, e o balanceamento deve contar com isso (M1-06). | Waldir decidiu; aguarda a confirmação do Rafael |
+| D-002 | 31/10/2026 | Nada é publicado sem revisão adversarial, e PR só é mesclado com CI verde (fluxo de trabalho, passos 5 a 10). É um combinado entre as pessoas: o GitHub não o impõe neste plano (F-07). | Waldir |
 | D-003 | 31/10/2026 | Skills do projeto ficam em `.claude/skills/`, com um link por skill em `.kiro/skills/`. | Waldir |
 
 ## Riscos

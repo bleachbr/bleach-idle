@@ -2,7 +2,7 @@
 
 <!-- Uma ou duas frases. -->
 
-**ID do roadmap:** <!-- ex.: F-04, M1-02 (veja docs/roadmap.md) -->
+**ID do roadmap:** <!-- ex.: F-04, M1-02 (veja docs/roadmap.md). Opcional em PR só de documentação ou infraestrutura -->
 
 ## Como verificar
 
@@ -15,7 +15,7 @@
 
 ## Revisão adversarial
 
-- [ ] Feita por quem não escreveu o código (pessoa, ou sessão nova de agente com a skill `revisar-pr`)
+- [ ] Feita por quem não escreveu o código (pessoa, ou sessão nova de agente com a skill `revisar-pr`). Em mudança de segurança, a aprovação é da outra pessoa
 
 **Veredito e achados tratados:**
 
