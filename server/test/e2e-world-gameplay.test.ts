@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { Client, type Room } from "colyseus.js";
-import { startTestServer, stopTestServer, once, sleep } from "./helpers/testServer";
+import { startTestServer, stopTestServer, once, quiet } from "./helpers/testServer";
 
 describe("E2E: World Gameplay", () => {
   let url: string;
@@ -21,11 +21,11 @@ describe("E2E: World Gameplay", () => {
     const client = new Client(url);
     const login = `user_${Date.now().toString(36)}_${randomLetters(4)}`;
 
-    const lobby = await client.joinOrCreate("lobby", {
+    const lobby = quiet(await client.joinOrCreate("lobby", {
       action: "register",
       login,
       password: "password123",
-    });
+    }));
 
     await once(lobby, "chars");
     lobby.send("create", { name: charName, charId: "ichigo" });
@@ -34,8 +34,7 @@ describe("E2E: World Gameplay", () => {
     const { ticket } = await once<{ ticket: string }>(lobby, "ticket");
     await lobby.leave();
 
-    const world = await client.join("world", { ticket });
-    world.onMessage("*", () => {}); // evita avisos de tipo não registrado
+    const world = quiet(await client.join("world", { ticket })); // evita avisos de tipo não registrado
     return { client, world, charName: charName.toLowerCase() };
   }
 
@@ -43,10 +42,9 @@ describe("E2E: World Gameplay", () => {
     const { world, charName } = await createPlayerAndJoin();
 
     // Aguarda sincronização do estado
-    await sleep(200);
+    await vi.waitFor(() => expect(world.state.players.get(charName)).toBeDefined(), { timeout: 5000, interval: 25 });
 
     const me = world.state.players.get(charName);
-    expect(me).toBeDefined();
     expect(me.name).toBeTruthy();
     expect(me.level).toBe(8);
 
@@ -101,12 +99,14 @@ describe("E2E: World Gameplay", () => {
     const { world, charName } = await createPlayerAndJoin();
 
     world.send("auto", { autoTarget: true, autoHunt: true, autoHeal: 60 });
-    await sleep(200);
 
-    const me = world.state.players.get(charName);
-    expect(me.autoTarget).toBe(true);
-    expect(me.autoHunt).toBe(true);
-    expect(me.autoHeal).toBe(60);
+    // os três campos chegam no mesmo patch do estado; espera o patch, não um tempo fixo
+    await vi.waitFor(() => {
+      const me = world.state.players.get(charName);
+      expect(me?.autoTarget).toBe(true);
+      expect(me?.autoHunt).toBe(true);
+      expect(me?.autoHeal).toBe(60);
+    }, { timeout: 5000, interval: 25 });
 
     await world.leave();
   });
