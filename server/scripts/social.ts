@@ -1,5 +1,5 @@
 // Teste de party, PvP e viagem.
-import { expForLevel, nearestWalkable } from "../../shared/src";
+import { expForLevel, nearestWalkable, xpWeekend, WEEKEND_EXP } from "../../shared/src";
 import { HOME, MAPS, TEMPLE } from "../src/maps";
 import { play, patchSave, sleep, once, ok, done } from "./lib";
 
@@ -33,7 +33,9 @@ await sleep(15000);
 const shared = [...a.logs, ...b.logs].filter((l) => l.includes("(party, 2)"));
 ok(`XP dividido entre os dois (${shared.length} abates divididos)`, a.logs.some((l) => l.includes("(party, 2)")) && b.logs.some((l) => l.includes("(party, 2)")));
 const menor = shared.find((l) => l.startsWith("Hollow Menor"));
-ok(`Hollow Menor (60 XP) em 2 dá 33 cada (+10% de bônus): "${menor ?? "nenhum"}"`, !menor || menor.includes("+33 XP"));
+// sábado e domingo (Brasília) todo XP de monstro vale em dobro: o esperado segue a mesma regra do servidor
+const xp33 = 33 * (xpWeekend(Date.now()) ? WEEKEND_EXP : 1);
+ok(`Hollow Menor (60 XP) em 2 dá ${xp33} cada (+10% de bônus): "${menor ?? "nenhum"}"`, !menor || menor.includes(`+${xp33} XP`));
 a.room.send("partyLeave");
 await sleep(300);
 ok("líder sai e a party de 2 se desfaz", !a.me().partyId && !b.me().partyId);
