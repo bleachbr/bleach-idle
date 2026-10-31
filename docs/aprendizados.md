@@ -111,6 +111,10 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Compartilhar o mesmo contador `ip:` (30 tentativas / 1 min) entre senhas erradas e criação de contas (`register`) permitia criar até 30 contas por minuto pelo mesmo IP e fazia com que cadastros bloqueassem logins de contas existentes na mesma rede (e vice-versa).
 - **Solução:** Balde próprio `reg:<ip>` com janela de 1 hora (`3_600_000 ms`) e limite configurável via `REGISTER_MAX_IP` (padrão `5`), verificado em `LobbyRoom.onAuth` antes do `hashPassword` (poupando CPU de `scrypt` sob abuso) e com relógio injetável (`now`) para testes determinísticos.
 
+### Cabeçalhos CSP e `X-Content-Type-Options: nosniff` com Assets `.webp`/`.jpg` (`F-06`)
+- Ao ativar `X-Content-Type-Options: nosniff` em `deploy/Caddyfile` e `server/src/http.ts`, qualquer extensão ausente no mapa `TYPES` do servidor HTTP nativo cai em `application/octet-stream`, fazendo navegadores estritos recusarem imagens com MIME incompatível.
+- Como o cliente usa `login_bg.jpg` e sprites/tiles HD em `.webp`, além de texturas `blob:`/`data:` geradas pelo Phaser 3, adicionamos `.jpg`/`.jpeg` (`image/jpeg`) e `.webp` (`image/webp`) em `TYPES` e configuramos `Content-Security-Policy` restritiva (`script-src 'self'; object-src 'none'; frame-ancestors 'none'`) permitindo `img-src`/`media-src` `'self' data: blob:` e `connect-src 'self' ws: wss:`.
+
 ---
 
 ## 8. Jogador-IA (Cradle) e Correções de UX/Motor (`F-16`)
