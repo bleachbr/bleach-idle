@@ -6,3 +6,6 @@ dist/
 .vite/
 .claude/settings.local.json
 CLAUDE.local.md
+test/node_modules/
+test/runs/
+.env
