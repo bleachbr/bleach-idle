@@ -106,3 +106,14 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 ### Identificação de IP Atrás de Proxy Reverso
 - Tentar inferir "endereço privado" para confiar em `X-Forwarded-For` é falho em redes NAT, CGNAT (`100.64.0.0/10`) e em contêineres Docker bridge.
 - **Solução:** Uso explícito de `net.BlockList` com os CIDRs dos proxies confiáveis configurados pelo operador via `TRUST_PROXY` (ex.: `172.28.0.0/24` no Docker Compose). Conexões vindas de fora da lista nunca têm seu cabeçalho `X-Forwarded-For` considerado, impedindo IP spoofing.
+
+---
+
+## 8. Eventos Globais no Cliente sem Campo Novo no Schema
+
+### Banner de Evento por Mensagem Pontual (R-12)
+- O banner da invasão e do chefe mundial podia virar campo sincronizado no `WorldState`. Não virou: o schema não tem filtro, então todo campo novo vai a todos os clientes a cada patch (`pendencias.md`, P4), e um valor de tipo errado num campo sincronizado derruba a codificação do estado da sala inteira (comentário do handler `step` em `WorldRoom.ts`).
+- **Solução:** o servidor manda `event` (`{ kind, phase, until, left }`) só quando a fase muda e guarda o último banner de cada tipo (`banners` em `WorldRoom.ts`). Quem entra no meio recebe os banners ainda válidos em `onJoin` (`sendBanners`). O cliente apaga o banner sozinho quando o prazo passa, sem mensagem de "fim".
+- O prazo no cliente sai de `left` (ms que faltam) somado ao relógio do aparelho, e não de `until` com `serverNow()`: o banner de quem entra chega antes da resposta do `time` (`clock.ts`), e um aparelho adiantado apagaria o banner na hora.
+- Os textos ficam em `shared/src/events.ts`, e o servidor manda só a fase. O cliente busca o texto com `own(EVENT_BANNER, fase)`: mesmo vindo do servidor, a chave chega pela rede.
+- Os avisos de sistema com números (vida, XP, minutos) continuam iguais e a lore vai numa linha separada (canal `lore`), porque os cenários `invasion` e `temporada` conferem trechos desses avisos.
