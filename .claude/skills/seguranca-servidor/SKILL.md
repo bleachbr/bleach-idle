@@ -10,7 +10,7 @@ Tudo que chega pelo WebSocket é hostil até o servidor validar. O cliente só e
 ## Antes de começar
 1. Liste a superfície: `grep -n 'this.handle(' server/src/*.ts` (54 no `WorldRoom`, 5 no `LobbyRoom`).
 2. Handler novo usa `this.handle`, nunca `this.onMessage`: só `handle` aplica o limite de 40 mensagens por segundo por cliente (`server/src/GameRoom.ts`).
-3. Copie o rigor do vizinho mais parecido. Bons modelos: `idx()` em `registerItemMessages`, `marketSell`, `buy`.
+3. Copie o rigor do vizinho mais parecido. Bons modelos: `idx()` em `registerItemMessages` e `marketSell`. O `buy` só é seguro por acaso (`def?.buy` é indefinido para chaves de protótipo) e deve usar o mesmo cuidado da R1.
 
 ## Regras e evidência
 
@@ -24,11 +24,11 @@ Tudo que chega pelo WebSocket é hostil até o servidor validar. O cliente só e
 **R2. Números e índices.** `Number.isInteger` e limites antes de usar. Valor de tipo errado gravado em campo do Schema já derrubou todos os jogadores da sala (comentário em `step`): valide o tipo antes de tocar no estado sincronizado.
 
 **R3. Rotas de debug nascem desligadas.**
-`DEV_MODE` (`WorldRoom.ts`) liga sempre que `NODE_ENV` não é `production`. Provado com o servidor iniciado sem `NODE_ENV`, como o `npm start` o inicia: ele responde à mensagem `dev` para qualquer jogador logado ("Dev: nível 300", "+1.000.000 kan"); com `NODE_ENV=production` o handler não existe. O `Dockerfile` define `production`, mas README e DEPLOY.md também mandam `npm start` fora do Docker.
-- Faça: ligar só com `BI_DEV=1` explícito. `server/scripts/dev.ts` e `endgame.ts` usam `dev`, então `server/scripts/test.ts` precisa exportar `BI_DEV=1`. Mesma regra para `BI_DEBUG`.
+`DEV_MODE` (`WorldRoom.ts`) liga sempre que `NODE_ENV` não é `production`. Provado com o servidor iniciado sem `NODE_ENV`, como o `npm start` o inicia: ele responde à mensagem `dev` para qualquer jogador logado ("Dev: nível 300", "+1.000.000 kan"); com `NODE_ENV=production` o handler não existe. O `Dockerfile` define `production`, mas o README manda `npm run build && npm start` fora do Docker. Mitigação imediata: `NODE_ENV=production npm start` (ou `BI_DEV=0`).
+- Faça: ligar só com `BI_DEV=1` explícito. `server/scripts/dev.ts` e `endgame.ts` usam `dev`, então `server/scripts/test.ts` precisa exportar `BI_DEV=1`. `BI_DEBUG` também deve exigir `=== "1"`: hoje qualquer valor não vazio liga, inclusive `0`.
 
 **R4. Limite de tentativas por IP.**
-`auth.ts` usa `req.socket.remoteAddress`. Provado que o balde por IP é compartilhado: depois de 30 falhas de logins diferentes, o pedido seguinte, de outra pessoa criando conta, recebeu 429; `register` também consome o mesmo balde. Não testei com o Caddy; pelo código, atrás dele todos chegam com o IP do proxy.
+`LobbyRoom.onAuth` lê `req.socket.remoteAddress` e `auth.ts` só guarda o contador por chave. Provado que o balde por IP é compartilhado: depois de 30 falhas de logins diferentes, o pedido seguinte, de outra pessoa criando conta, recebeu 429; `register` também consome o mesmo balde. Não verificado com o Caddy: o `reverse_proxy` do Caddy 2 envia `X-Forwarded-For` por padrão (documentação do Caddy), e o jogo ignora esse cabeçalho, então atrás dele todos devem chegar com o IP do proxy.
 - Faça: ler `X-Forwarded-For` só quando a conexão vier do proxy confiável. Nunca confie nesse cabeçalho vindo direto da internet.
 
 **R5. Cliente (DOM).**
@@ -39,7 +39,7 @@ Tudo que chega pelo WebSocket é hostil até o servidor validar. O cliente só e
 
 **R6. Segredos.** Nunca em código, log, commit ou texto de PR. Rode `gitleaks git --redact -c .gitleaks.toml .` antes do PR. Os 5 achados de 31/10/2026 eram uma senha fictícia de teste em `server/test/e2e-lobby-and-world.test.ts`, hoje na allowlist. Senha usa scrypt com `timingSafeEqual` (`auth.ts`); mantenha. Não registre `password`, `token` nem `ticket` em log.
 
-**R7. Dependências.** `npm audit --omit=dev` em 31/10/2026: 3 achados (1 alto em `nanoid`, 2 moderados em `@colyseus/core` e `@colyseus/ws-transport`), todos ligados ao Colyseus 0.15; a correção é um upgrade maior (0.18). Nos pontos que li, o Colyseus chama `nanoid` com tamanho fixo. Não rode `npm audit fix --force`: planeje o upgrade em PR próprio com a bateria de cenários. Dependência nova só quando o marco atual exige, com versão exata no lockfile.
+**R7. Dependências.** `npm audit --omit=dev` em 31/10/2026: 3 achados (1 alto em `nanoid`, 2 moderados em `@colyseus/core` e `@colyseus/ws-transport`), todos ligados ao Colyseus 0.15; a correção é um upgrade maior (0.18). O alto (GHSA-xwg4-73v4-xw9w) só é explorável quando o chamador passa à `nanoid` um tamanho de 2^31 ou mais vindo do usuário; nos pontos verificados (31/10/2026), o Colyseus chama com o tamanho padrão. Não rode `npm audit fix --force`: planeje o upgrade em PR próprio com a bateria de cenários. Dependência nova só quando o marco atual exige, com versão exata no lockfile.
 
 **R8. Economia atômica e sem duplicação.**
 - Mova dinheiro, itens e cristais numa operação só (modelos: `db.changeCrystals` com `BEGIN IMMEDIATE`; `market.remove()` devolve boolean e barra compra dupla).
