@@ -9,7 +9,7 @@ Medida em 31/10/2026 (sábado), sobre a `main` no commit `84e0180` mais as mudan
 | Vitest | `npm test` | 16 arquivos e 144 testes passam em cerca de 1,2 s (Node 22) |
 | Cenários | `npm run test:scripts` | 314 verificações OK e 0 falhas, cerca de 7 min local (Node 22) |
 | Build do cliente | `npm run build` | 4,5 s; um JavaScript de 1,67 MB (398 KB comprimido); `client/dist` com 19 MB |
-| Imagem Docker | `docker build .` | constrói (675 MB). Em contêiner descartável, `/healthz`, `/`, `/maps/soul.tmj` e `/manifest.webmanifest` respondem 200. Roda como root, com `NODE_ENV=production` e Node 24. Sem `.git`, `.claude`, `art` nem `docs` dentro |
+| Imagem Docker | `docker build .` | constrói (675 MB). Em contêiner descartável com volume novo em `/data`, `/healthz`, `/`, `/maps/soul.tmj` e `/manifest.webmanifest` respondem 200. Roda como `node` (não-root), com `NODE_ENV=production` e Node 24. Sem `.git`, `.claude`, `art` nem `docs` dentro |
 | Segredos | `gitleaks git --redact -c .gitleaks.toml .` | sem achados em todo o histórico. Sem a config seriam 5, todos a senha fictícia do e2e do lobby |
 | Dependências | `npm audit --omit=dev` | 3 achados: 1 alto (`nanoid`, transitiva) e 2 moderados (`@colyseus/core`, `@colyseus/ws-transport`). A correção é um upgrade maior do Colyseus (0.15 para 0.18) |
 | CI da `main` | `gh run list --workflow ci.yml` | das 11 execuções mais recentes da `main` antes do PR #2, 1 falhou (29/10, commit "Sprite não encolhe..."); o commit seguinte troca a espera fixa do teste do Bankai por espera de estado, que é a causa provável (não li o log dessa execução) |

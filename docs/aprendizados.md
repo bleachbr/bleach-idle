@@ -111,6 +111,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Compartilhar o mesmo contador `ip:` (30 tentativas / 1 min) entre senhas erradas e criação de contas (`register`) permitia criar até 30 contas por minuto pelo mesmo IP e fazia com que cadastros bloqueassem logins de contas existentes na mesma rede (e vice-versa).
 - **Solução:** Balde próprio `reg:<ip>` com janela de 1 hora (`3_600_000 ms`) e limite configurável via `REGISTER_MAX_IP` (padrão `5`), verificado em `LobbyRoom.onAuth` antes do `hashPassword` (poupando CPU de `scrypt` sob abuso) e com relógio injetável (`now`) para testes determinísticos.
 
+### Ordem de `chown`, `VOLUME /data` e `USER node` no `Dockerfile` (`F-05`)
+- Em imagens Docker multi-stage, a diretiva `VOLUME /data` congela metadados e permissões do diretório no instante em que é declarada. Qualquer `RUN chown` sobre `/data` colocado **depois** de `VOLUME /data` é silenciosamente ignorado pelo builder, fazendo volumes nomeados novos nascerem como `root:root` e quebrarem a escrita do SQLite sob `USER node`.
+- Além disso, executar `chown -R node:node /app` num `RUN` separado após `COPY` duplica todas as camadas copiadas (incluindo `node_modules`) no OverlayFS.
+- **Solução:** Usar `COPY --chown=node:node --from=build ...` no estágio final, seguido de `RUN mkdir -p /data/backups && chown -R node:node /data && chown node:node /app` **antes** de `VOLUME /data` e `USER node`.
+
 ---
 
 ## 8. Jogador-IA (Cradle) e Correções de UX/Motor (`F-16`)
