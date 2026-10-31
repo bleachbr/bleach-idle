@@ -103,8 +103,8 @@ Números e método em [`baseline.md`](baseline.md). Skill: `performance-servidor
 
 | ID | Item | Evidência | Prioridade |
 | :-- | :--- | :--- | :--- |
-| P1 | Reconstrução do ranking bloqueia o tick | `db.allChars()` com 1.000 personagens: p50 10,2 a 10,4 ms, máximo visto 15,7 ms, cerca de 10% de um tick de 100 ms (3 rodadas; ver baseline) | Baixa hoje; cresce com a base |
+| P1 | Reconstrução do ranking bloqueia o tick | **Corrigido em `perf/f-09-ranking-incremental`** (`server/src/ranking.ts`): p50 caiu de `10,29 ms` para `0,10 ms` (máx `0,45 ms`) com 1.000 personagens | Corrigido |
 | P2 | Salvamento em lote é síncrono | `saveMany` de 200 saves: p50 1,40 a 1,43 ms, máximo 1,7 ms, a cada 10 s (banco em memória; disco soma o fsync) | Baixa hoje |
-| P3 | Não há métrica da duração do tick | Nenhuma ocorrência no código | Média: sem ela, as demais são estimativas |
+| P3 | Não há métrica da duração do tick | **Corrigido em `feat/f-08-metrica-tick`** (`server/src/tickStats.ts`, exposto em `/healthz` e com aviso `> 50 ms`) | Corrigido |
 | P4 | Schema sem filtro e `broadcast` global | 31 `broadcast` no `WorldRoom`; estado de todos os mapas vai a todos os clientes | Média, cresce com o número de jogadores |
 | P5 | Um único JavaScript de 1,67 MB | Build do Vite avisa acima de 500 kB | Baixa |

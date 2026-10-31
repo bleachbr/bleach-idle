@@ -145,6 +145,14 @@ const rowOf = (r: any): CharRow => ({
   id: r.id, accountId: r.account_id, data: JSON.parse(r.data), inWorld: !!r.in_world, updatedAt: r.updated_at,
 });
 
+let onUpsertChar: ((id: string, data: SaveData) => void) | null = null;
+let onRemoveChar: ((id: string) => void) | null = null;
+
+export function onCharWrite(upsert: (id: string, data: SaveData) => void, remove: (id: string) => void): void {
+  onUpsertChar = upsert;
+  onRemoveChar = remove;
+}
+
 export function listChars(accountId: number): CharRow[] {
   return (db.prepare("SELECT * FROM players WHERE account_id = ? ORDER BY updated_at DESC").all(accountId) as any[]).map(rowOf);
 }
@@ -153,6 +161,7 @@ export function createChar(accountId: number, id: string, data: SaveData): boole
   try {
     db.prepare("INSERT INTO players (id, account_id, data, in_world, updated_at) VALUES (?, ?, ?, 0, ?)")
       .run(id, accountId, JSON.stringify(data), Date.now());
+    onUpsertChar?.(id, data);
     return true;
   } catch (err) {
     if (isUniqueConstraintError(err)) return false; // nome já usado (PRIMARY KEY)
@@ -161,7 +170,9 @@ export function createChar(accountId: number, id: string, data: SaveData): boole
 }
 
 export function deleteChar(accountId: number, id: string): boolean {
-  return db.prepare("DELETE FROM players WHERE id = ? AND account_id = ? AND in_world = 0").run(id, accountId).changes > 0;
+  const ok = db.prepare("DELETE FROM players WHERE id = ? AND account_id = ? AND in_world = 0").run(id, accountId).changes > 0;
+  if (ok) onRemoveChar?.(id);
+  return ok;
 }
 
 export function load(id: string): CharRow | undefined {
@@ -173,6 +184,7 @@ const putStmt = db.prepare("UPDATE players SET data = ?, in_world = ?, updated_a
 
 export function save(id: string, data: SaveData, inWorld: boolean): void {
   putStmt.run(JSON.stringify(data), inWorld ? 1 : 0, Date.now(), id);
+  onUpsertChar?.(id, data);
 }
 
 /** Vários saves numa transação só: ou grava todos, ou nenhum. */
@@ -183,6 +195,7 @@ export function saveMany(list: { id: string; data: SaveData; inWorld: boolean }[
     const now = Date.now();
     for (const s of list) putStmt.run(JSON.stringify(s.data), s.inWorld ? 1 : 0, now, s.id);
     db.exec("COMMIT");
+    for (const s of list) onUpsertChar?.(s.id, s.data);
   } catch (e) {
     db.exec("ROLLBACK");
     throw e;

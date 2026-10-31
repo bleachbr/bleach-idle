@@ -6,7 +6,7 @@ Medida em 31/10/2026 (sábado), sobre a `main` no commit `84e0180` mais as mudan
 | Verificação | Comando | Resultado |
 | :--- | :--- | :--- |
 | Tipos | `npm run typecheck` | sem erros (Node 22 e Node 24) |
-| Vitest | `npm test` | 14 arquivos e 139 testes passam em cerca de 1,1 s (Node 22) |
+| Vitest | `npm test` | 16 arquivos e 144 testes passam em cerca de 1,2 s (Node 22) |
 | Cenários | `npm run test:scripts` | 314 verificações OK e 0 falhas, cerca de 7 min local (Node 22) |
 | Build do cliente | `npm run build` | 4,5 s; um JavaScript de 1,67 MB (398 KB comprimido); `client/dist` com 19 MB |
 | Imagem Docker | `docker build .` | constrói (675 MB). Em contêiner descartável, `/healthz`, `/`, `/maps/soul.tmj` e `/manifest.webmanifest` respondem 200. Roda como root, com `NODE_ENV=production` e Node 24. Sem `.git`, `.claude`, `art` nem `docs` dentro |
@@ -21,7 +21,8 @@ Comando: `npx tsx .claude/skills/performance-servidor/scripts/bench.mts 1000`. B
 | :--- | :--- | :--- | :--- |
 | `JSON.stringify` de 200 saves (já está dentro da linha seguinte; não soma) | dentro do `saveAll`, a cada 10 s | 1,12 a 1,14 ms | 3,3 ms |
 | `db.saveMany` de 200 personagens | a cada 10 s | 1,40 a 1,43 ms | 1,7 ms |
-| `db.allChars()` com 1.000 personagens | ranking, no máximo a cada 15 s | 10,2 a 10,4 ms | 15,7 ms |
+| `db.allChars()` com 1.000 personagens | apenas na 1ª carga (`ensureSeeded`) | 10,2 a 10,4 ms | 15,7 ms |
+| `buildRanking()` incremental com 1.000 personagens | ranking, no máximo a cada 15 s | 0,10 ms | 0,45 ms |
 | BFS `findPath`, meta inalcançável, em `karakura` | por jogador ou monstro sem caminho | 0,09 a 0,10 ms | 1,0 ms |
 | BFS `findPath`, meta inalcançável, em `falsa` | idem | 0,09 ms | 0,8 ms |
 

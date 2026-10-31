@@ -6,6 +6,7 @@ import { WorldRoom } from "./WorldRoom";
 import { LobbyRoom } from "./LobbyRoom";
 import { createHttpServer } from "./http";
 import { flagOn } from "./flags";
+import { getTickStats } from "./tickStats";
 import * as db from "./db";
 
 // Configuração por variáveis de ambiente (veja DEPLOY.md):
@@ -19,6 +20,7 @@ const startedAt = Date.now();
 
 const http = createHttpServer(() => ({
   uptimeS: Math.round((Date.now() - startedAt) / 1000),
+  tick: getTickStats(),
 }));
 const gameServer = new Server({ transport: new WebSocketTransport({ server: http }) });
 gameServer.define("lobby", LobbyRoom);

@@ -25,6 +25,8 @@ import { MAPS, HOME, TEMPLE, SPAWNS, tileKey } from "./maps";
 import * as guilds from "./guilds";
 import * as market from "./market";
 import { flagOn } from "./flags";
+import { recordTick } from "./tickStats";
+import { getRanking } from "./ranking";
 
 const GUILD_COST = 500;
 /** Modo Dev (botão que libera tudo para testar): nasce DESLIGADO e só liga com BI_DEV=1 (`npm run dev` já define). */
@@ -86,7 +88,11 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.setState(new WorldState());
     SPAWNS.forEach((s, i) => { for (let k = 0; k < s.count; k++) this.spawnMonster(i); });
     this.restoreWorld();
-    this.setSimulationInterval(() => this.tick(), TICK_MS);
+    this.setSimulationInterval(() => {
+      const t0 = performance.now();
+      this.tick();
+      recordTick(performance.now() - t0);
+    }, TICK_MS);
     // save frequente e em transação: numa queda se perdem no máximo ~10 s
     this.clock.setInterval(() => this.saveAll(), 10_000);
     this.scheduleInvasion(Number(process.env.INVASION_FIRST_MS) || INVASION.firstMs);
@@ -1478,43 +1484,9 @@ export class WorldRoom extends GameRoom<WorldState> {
     for (const x of this.state.players.values()) if (x.guildId === guildId) this.sendGuild(x);
   }
 
-  private rankingCache: { at: number; data: ReturnType<WorldRoom["buildRanking"]> } | null = null;
-
-  /** Ranking com cache de 15 s (varre todos os personagens do banco). */
+  /** Ranking com cache de 15 s e índice incremental em memória (server/src/ranking.ts). */
   private ranking() {
-    if (!this.rankingCache || Date.now() - this.rankingCache.at > 15_000)
-      this.rankingCache = { at: Date.now(), data: this.buildRanking() };
-    return this.rankingCache.data;
-  }
-
-  /** Ranking: nível (por XP), abates em PvP e guildas (soma de abates e de níveis). */
-  private buildRanking() {
-    const rows = new Map<string, { name: string; charId: string; level: number; exp: number; frags: number; guild: string; ach: number; stages: number; rebirths: number; dg: number; power: number }>();
-    for (const r of db.allChars()) rows.set(r.id, { name: r.data.name, charId: r.data.charId, level: r.data.level, exp: r.data.exp, frags: r.data.frags ?? 0, guild: "", ach: r.data.prog?.ach.length ?? 0, stages: stagesSum(r.data.prog?.bestiary ?? {}), rebirths: r.data.rebirths ?? 0, dg: r.data.prog?.dgBest ?? 0,
-      power: powerOf({ charId: r.data.charId, level: r.data.level, rebirths: r.data.rebirths ?? 0, zanjutsu: r.data.zanjutsu ?? 0, reiryoku: r.data.reiryoku ?? 0, equip: r.data.equip ?? {}, forge: r.data.forge ?? {} }) });
-    for (const p of this.state.players.values()) rows.set(p.id, { name: p.name, charId: p.charId, level: p.level, exp: p.exp, frags: p.frags, guild: "", ach: p.prog.ach.length, stages: stagesSum(p.prog.bestiary), rebirths: p.rebirths, dg: p.prog.dgBest ?? 0, power: p.power });
-    const memberOf = guilds.memberMap();
-    const byId = new Map(guilds.all().map((g) => [g.id, g]));
-    const g = new Map<number, { name: string; tag: string; members: number; levels: number; frags: number }>();
-    for (const [id, r] of rows) {
-      const gid = memberOf.get(id);
-      const guild = gid ? byId.get(gid) : undefined;
-      if (!guild) continue;
-      r.guild = guild.tag;
-      const e = g.get(guild.id) ?? { name: guild.name, tag: guild.tag, members: 0, levels: 0, frags: 0 };
-      e.members++; e.levels += r.level; e.frags += r.frags;
-      g.set(guild.id, e);
-    }
-    const list = [...rows.values()];
-    return {
-      nivel: [...list].sort((a, b) => b.rebirths - a.rebirths || b.exp - a.exp).slice(0, 20),
-      poder: [...list].sort((a, b) => b.power - a.power).slice(0, 20),
-      abates: list.filter((r) => r.frags > 0).sort((a, b) => b.frags - a.frags).slice(0, 20),
-      guildas: [...g.values()].sort((a, b) => b.frags - a.frags || b.levels - a.levels).slice(0, 20),
-      conquistas: list.filter((r) => r.ach > 0).sort((a, b) => b.ach - a.ach || b.exp - a.exp).slice(0, 20),
-      dangai: list.filter((r) => r.dg > 0).sort((a, b) => b.dg - a.dg || b.exp - a.exp).slice(0, 20),
-      bestiario: list.filter((r) => r.stages > 0).sort((a, b) => b.stages - a.stages || b.exp - a.exp).slice(0, 20),
-    };
+    return getRanking(this.state.players.values());
   }
 
   // ---------- missões ----------

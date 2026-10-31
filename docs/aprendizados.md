@@ -130,3 +130,16 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 ### Corrida no Registro de `onMessage` do Colyseus (`welcome` e `fx`)
 - `WorldRoom.onJoin` envia `welcome` imediatamente ao conectar e transmite `fx` a cada tick de combate, enquanto `GameScene.create()` só registra seus listeners depois que `GameScene.preload()` termina de baixar os sprites e mapas.
 - **Solução:** Registrar listeners iniciais de `welcome` e `fx` imediatamente após `client.joinOrCreate("world")` em `client/src/main.ts` antes do carregamento assíncrono do Phaser.
+
+---
+
+## 9. Telemetria do Tick (`F-08`) e Ranking Incremental (`F-09`)
+
+### Telemetria do Tick sem Alocação (`F-08`)
+- Para medir o tick de `100 ms` sem introduzir pressão de Garbage Collector no próprio loop de simulação, `server/src/tickStats.ts` grava as últimas 100 amostras (10 s) num `Float64Array` estático em anel e só ordena a janela quando `/healthz` consulta `getTickStats()`.
+- Quando um tick ultrapassa `50 ms` (`WARN_TICK_MS`), `recordTick` incrementa `slowTicks` e emite aviso no console com intervalo mínimo de 5 s (`WARN_COOLDOWN_MS`) para evitar tempestade de logs sob pico contínuo.
+
+### Ranking Incremental sem Bloquear o Tick (`F-09`)
+- A reconstrução anterior do ranking chamava `db.allChars()`, lendo do SQLite e fazendo `JSON.parse()` do `SaveData` completo (3,7 KB) + `powerOf()` de todos os personagens a cada 15 s (`p50 = 10,29 ms`, `máx = 27,82 ms` para 1.000 personagens).
+- Como personagens offline só mudam quando passam por `db.createChar`, `db.save`, `db.saveMany` ou `db.deleteChar`, extraímos `server/src/ranking.ts`: ele semeia o mapa `savedEntries` uma única vez (`ensureSeeded`), recebe atualizações O(1) via `db.onCharWrite` e sobrepõe apenas os jogadores ativos em `state.players`.
+- **Resultado medido (`bench.mts 1000`):** `buildRanking()` caiu de `p50 = 10,29 ms` para **`p50 = 0,10 ms`** (`p95 = 0,20 ms`, `máx = 0,45 ms`), uma redução de **100x** no tempo de CPU síncrono.
