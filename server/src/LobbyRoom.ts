@@ -32,7 +32,9 @@ export class LobbyRoom extends GameRoom {
   maxClients = 1000;
 
   async onAuth(_client: Client, opts: any, req?: IncomingMessage): Promise<Auth> {
-    const ip = `ip:${clientIp(req)}`;
+    const rawIp = clientIp(req);
+    const ip = `ip:${rawIp}`;
+    const regIp = `reg:${rawIp}`;
     if (opts?.token) {
       const token = typeof opts.token === "string" ? opts.token : "";
       const acc = db.sessionAccount(token);
@@ -46,9 +48,13 @@ export class LobbyRoom extends GameRoom {
     if (blocked(login) || blocked(ip)) throw new ServerError(429, "Muitas tentativas. Espere um minuto.");
 
     if (opts?.action === "register") {
-      fail(ip); // conta como tentativa: limita criação de contas em massa pelo mesmo IP
+      if (blocked(regIp)) throw new ServerError(429, "Muitas contas criadas deste endereço. Tente mais tarde.");
       const id = db.createAccount(login, await hashPassword(pass));
-      if (!id) throw new ServerError(409, "Esse login já existe.");
+      if (!id) {
+        fail(ip);
+        throw new ServerError(409, "Esse login já existe.");
+      }
+      fail(regIp);
       return { accountId: id, login, token: opts.remember ? db.createSession(id) : undefined };
     }
     const acc = db.getAccount(login);

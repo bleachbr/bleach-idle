@@ -30,7 +30,7 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 | 0 | F-16 | **Pacote de correções do Jogador-IA** (`boneco` sem HD, `nextTarget` ignorando `dummy`, exclusividade de janelas + `Esc`, confirmação no `#exit-btn`, `welcome`/`fx` e tooltips de botões desabilitados) | M | — | não | **Feito** — validado com testes determinísticos + simulação real do Jogador-IA (`test/`) |
 | 1 | F-13 | Primeiro deploy com HTTPS atrás do Caddy e restauração de backup testada | M | — | não | Destrava o portão G1; decisão de servidor e domínio pendente |
 | 2 | F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | — | não | |
-| 3 | F-14 | Limite de criação de contas por IP | P | F-03 (feito) | não | |
+| 3 | F-14 | Limite de criação de contas por IP | P | F-03 (feito) | não | **Feito** (`feat/f-14-limite-contas-ip`) |
 | 4 | F-05 | Contêiner roda como `node`, não root | P | — | não | Conferir permissão de `/data` |
 | 5 | F-06 | CSP e cabeçalhos de segurança no Caddy | P | — | não | |
 | 6 | F-08 | Métrica da duração do tick, aviso acima de 50 ms | P | — | não | Antes de qualquer trabalho de desempenho |
