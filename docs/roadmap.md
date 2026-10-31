@@ -47,8 +47,8 @@ A ordem é de prioridade, não de dependência técnica, salvo onde a coluna "De
 ## Fluxo de trabalho
 
 1. **Escolha** um item `Pronto` (confira `gh pr list` para ver se alguém já está nele) e avise a outra pessoa por conversa.
-2. **Branch** a partir da `main` atualizada: `feat/`, `fix/`, `test/`, `docs/` ou `chore/` + ID + assunto.
-3. **Implemente em passos pequenos**, com teste (skill `testes-deterministicos`) e a skill do assunto (`seguranca-servidor`, `adicionar-conteudo`, `performance-servidor`).
+2. **Worktree a partir da `main` atualizada (Orca IDE):** todo novo desenvolvimento nasce em um worktree próprio via `orca worktree create --name <id-assunto> --branch <prefixo/id-assunto> --base-branch main --no-parent --json` (`feat/`, `fix/`, `perf/`, `test/`, `docs/` ou `chore/` + ID + assunto), mantendo o checkout principal da `main` limpo.
+3. **Implemente em passos pequenos**, simulando primeiro o problema com teste que falha antes da correção (skill `testes-deterministicos`), mantendo funções curtas, nomes claros e módulos coesos, e aplicando a skill do assunto (`seguranca-servidor`, `adicionar-conteudo`, `performance-servidor`).
 4. **Verifique localmente:** `npm run typecheck`, `npm test`, os cenários afetados e `gitleaks git --redact -c .gitleaks.toml .`.
 5. **Revisão adversarial antes de publicar.** Quem escreveu o código não o revisa: outra pessoa, ou uma sessão nova de agente com a skill `revisar-pr` (que revisa a branch local com `git diff origin/main...HEAD`). O revisor procura o que está errado em vez de confirmar o que parece certo e confere cada afirmação contra o código. Achado BLOQUEIA ou ALTA é corrigido antes do passo seguinte. Em mudança de segurança (handler, login, sessão, `innerHTML`, dependências, Dockerfile, CI, segredos), o veredito de agente é insumo e a aprovação é da outra pessoa.
 6. **Commit e push** só depois do passo 5, em commits pequenos de um assunto só.
