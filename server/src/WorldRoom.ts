@@ -16,7 +16,7 @@ import {
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
-  own, isOwnKey, COSMETIC, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
+  own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -27,7 +27,8 @@ import * as market from "./market";
 import { flagOn } from "./flags";
 import { recordTick } from "./tickStats";
 import { recordSave, setWorldMetricsProvider } from "./metrics";
-import { getRanking } from "./ranking";
+import { getRanking, invalidateRankingCache } from "./ranking";
+import { claimServerMilestone } from "./milestones";
 
 const GUILD_COST = 500;
 /** Modo Dev (botão que libera tudo para testar): nasce DESLIGADO e só liga com BI_DEV=1 (`npm run dev` já define). */
@@ -850,12 +851,16 @@ export class WorldRoom extends GameRoom<WorldState> {
         const m = levelMilestone(p.level);
         if (m) this.log(p, `Marco do nível ${p.level}: ${this.grant(p, m)}!`);
       }
+      if (p.level >= 60) this.awardMilestone(p, "first_lv60");
     }
   }
 
   private setForm(p: Player, i: number) {
     p.form = i;
-    if (i === 1) this.tutorial(p, "bankai");
+    if (i === 1) {
+      this.tutorial(p, "bankai");
+      this.awardMilestone(p, "first_bankai");
+    }
     this.recompute(p);
     this.broadcast("fx", { t: "form", id: p.id, v: i });
   }
@@ -1235,6 +1240,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.targetId = "";
       this.broadcast("chat", { from: "", text: `${v.name} foi derrotado por ${p.name}.` });
       p.frags++;
+      if (p.frags >= 10) this.awardMilestone(p, "first_pvp10");
       // abate injusto: a vítima não tinha atacado ninguém (não estava marcada) nem era assassina
       if (!justified) {
         p.skullUntil = Math.min(Math.max(p.skullUntil, now) + SKULL_PER_KILL_MS, now + SKULL_MAX_MS);
@@ -1819,6 +1825,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.log(killer, `Andar ${run.floor} limpo${record ? " (recorde!)" : ""}: ${got}.`);
     this.sendTo(killer, "fx", { t: "book", text: `Andar ${run.floor}${record ? " · recorde!" : ""}` });
     if (record && run.floor % 10 === 0) this.broadcast("chat", { from: "", ch: "sys", text: `🜂 ${killer.name} chegou ao andar ${run.floor} do Dangai.` });
+    if (run.floor >= 10) this.awardMilestone(killer, "first_dangai10");
     // com Auto Hunt, o próximo andar começa sozinho; senão espera o botão
     run.next = killer.autoHunt ? Date.now() + 3000 : 0;
     this.sendDangai(killer);
@@ -1948,6 +1955,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.broadcast("chat", { from: "", ch: "sys", text: `✦ ${p.name} renasceu pela ${p.rebirths}ª vez.` });
       this.broadcast("fx", { t: "level", id: p.id, v: p.level });
       this.sendTo(p, "fx", { t: "event", text: `Renascimento ${p.rebirths}!` });
+      this.awardMilestone(p, "first_rebirth");
       this.checkAchievements(p);
       this.sendInv(p);
     });
@@ -2045,6 +2053,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     if (BOSSES.has(kind)) this.dailyStep(p, "boss");
     if (!p.online) p.offKills++;
     if (BOSSES.has(kind)) pr.bossKills++;
+    if (kind === "yhwach") this.awardMilestone(p, "first_yhwach");
     this.seasonKill(p, BOSSES.has(kind));
     const st = bestiaryStage(kind, before + 1);
     if (st > bestiaryStage(kind, before)) {
@@ -2324,7 +2333,26 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   private sendShop(p: Player) {
     const w = p.accountId ? db.wallet(p.accountId) : { crystals: 0, owned: [] };
-    this.sendTo(p, "shopData", { crystals: w.crystals, owned: w.owned, equip: this.cosOf(p) });
+    const owned = [...new Set([...w.owned, ...(p.prog.titles ?? [])])];
+    this.sendTo(p, "shopData", { crystals: w.crystals, owned, equip: this.cosOf(p) });
+  }
+
+  /** Registra e concede um marco histórico de servidor (W-06) apenas ao primeiro a alcançá-lo. */
+  private awardMilestone(p: Player, id: string) {
+    const def = claimServerMilestone(id, p);
+    if (!def) return;
+    invalidateRankingCache();
+    const titles = (p.prog.titles ??= []);
+    if (!titles.includes(def.titleId)) titles.push(def.titleId);
+    if (p.accountId) {
+      const w = db.wallet(p.accountId);
+      if (!w.owned.includes(def.titleId)) db.changeCrystals(p.accountId, 0, `marco ${def.id}`, def.titleId);
+    }
+    if (!p.cosTitle) this.equipCos(p, def.titleId);
+    const title = titleText(def.titleId);
+    this.log(p, `Marco do servidor conquistado: ${def.name}! Você recebeu o título exclusivo « ${title} ».`);
+    this.sendTo(p, "fx", { t: "event", text: `Marco: ${title}` });
+    this.broadcast("chat", { from: "", ch: "sys", text: `👑 Marco do servidor! ${p.name} conquistou "${def.name}" e recebeu o título « ${title} »!` });
   }
 
   private registerShopMessages() {
@@ -2346,7 +2374,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     });
     this.handle("shopEquip", (c, m: { id?: string; kind?: string }) => {
       const p = this.me(c);
-      if (!p || !p.accountId) return;
+      if (!p) return;
       const id = typeof m?.id === "string" ? m.id : "";
       if (!id) {
         // tirar: o tipo vem junto
@@ -2355,7 +2383,8 @@ export class WorldRoom extends GameRoom<WorldState> {
         else if (kind === "name") p.cosName = ""; else if (kind === "pet") p.cosPet = "";
         return this.sendShop(p);
       }
-      if (!own(COSMETIC, id) || !db.wallet(p.accountId).owned.includes(id)) return this.log(p, "Esse cosmético não é da sua conta.");
+      const owned = p.accountId ? db.wallet(p.accountId).owned : [];
+      if (!own(COSMETIC, id) || (!owned.includes(id) && !(p.prog.titles ?? []).includes(id))) return this.log(p, "Esse cosmético não é da sua conta.");
       this.equipCos(p, id);
       this.sendShop(p);
     });

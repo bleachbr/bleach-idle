@@ -67,6 +67,13 @@ export const COSMETICS: Cosmetic[] = [
   c("aura_eclipse", "aura", "Aura do Eclipse", 0, 0x3a1a6a, "Prêmio do nível 10 do passe de temporada.", { color2: 0xffb04a, season: true }),
   c("tit_temporada", "title", "Veterano da Temporada", 0, 0xffb04a, "Prêmio do nível 20 do passe de temporada.", { season: true }),
   c("pet_eclipse", "pet", "Borboleta do Eclipse", 0, 0x3a1a6a, "Prêmio do nível 30 do passe de temporada.", { color2: 0xffb04a, season: true }),
+  // títulos de marcos do servidor (W-06: concedidos apenas ao primeiro do servidor em cada feito)
+  c("tit_primeiro_bankai", "title", "Primeiro Bankai", 0, 0xff6a3a, "Concedido ao primeiro guerreiro do servidor a liberar a 2ª forma.", { season: true }),
+  c("tit_primeiro_capitao", "title", "Primeiro Capitão", 0, 0xffd34a, "Concedido ao primeiro guerreiro do servidor a alcançar o nível 60.", { season: true }),
+  c("tit_primeiro_renascido", "title", "Primeiro Renascido", 0, 0xc26aff, "Concedido ao primeiro guerreiro do servidor a realizar o Renascimento.", { season: true }),
+  c("tit_pioneiro_dangai", "title", "Pioneiro do Dangai", 0, 0x7ad8ff, "Concedido ao primeiro guerreiro do servidor a limpar o andar 10 do Dangai.", { season: true }),
+  c("tit_terror_arena", "title", "Campeão da Arena", 0, 0xff4a5a, "Concedido ao primeiro guerreiro do servidor a alcançar 10 abates em PvP.", { season: true }),
+  c("tit_regicida", "title", "Regicida Quincy", 0, 0xfff2b0, "Concedido ao primeiro guerreiro do servidor a derrotar Yhwach.", { season: true }),
   // crônicas
   c("lore_karakura", "lore", "Crônica: A Cidade Quieta", 40, 0xbfe9ff, "Por que tantos Hollows aparecem em Karakura.", {
     title: "Cronista de Karakura",

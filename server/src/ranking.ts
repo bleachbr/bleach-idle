@@ -4,6 +4,7 @@
 import { powerOf, stagesSum, type Progress } from "../../shared/src";
 import * as db from "./db";
 import * as guilds from "./guilds";
+import { listServerMilestones } from "./milestones";
 
 export interface RankingEntry {
   name: string;
@@ -125,6 +126,7 @@ export function buildRanking(livePlayers: Iterable<LiveRankingPlayer>) {
     conquistas: list.filter((r) => r.ach > 0).sort((a, b) => b.ach - a.ach || b.exp - a.exp).slice(0, 20),
     dangai: list.filter((r) => r.dg > 0).sort((a, b) => b.dg - a.dg || b.exp - a.exp).slice(0, 20),
     bestiario: list.filter((r) => r.stages > 0).sort((a, b) => b.stages - a.stages || b.exp - a.exp).slice(0, 20),
+    marcos: listServerMilestones(),
   };
 }
 
@@ -133,6 +135,10 @@ export function getRanking(livePlayers: Iterable<LiveRankingPlayer>, now = Date.
     cache = { at: now, data: buildRanking(livePlayers) };
   }
   return cache.data;
+}
+
+export function invalidateRankingCache(): void {
+  cache = null;
 }
 
 export function resetRankingCache(): void {

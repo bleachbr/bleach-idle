@@ -165,3 +165,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 ### Telemetria Operacional Consolidada (`/metrics` e `saveStats` — `W-09`)
 - Além da duração do tick (`tickStats.ts`), o loop de evento do processo único depende do tempo síncrono de gravação em lote no SQLite (`saveAll`).
 - Extraímos `server/src/metrics.ts`, que mede cada `saveAll` (`saves`, `savedChars`, `slowSaves`, `lastMs`, `maxMs`), registra o snapshot em tempo real da sala (`players: { online, offlineHunt, totalInWorld }` e `entities: { monsters, bags }`) e calcula o estado de alerta mínimo (`alert: true`, `alerts: ["tick_lento" | "save_lento"]` quando o tick ou o save ultrapassam `50 ms`), exposto em `GET /metrics` e `GET /healthz`.
+
+## 16. Marcos Históricos de Servidor com Cache O(1) e Persistência em `meta` (W-06)
+
+- **Contexto:** Feitos únicos do servidor ("Primeiro Bankai", "Primeiro Capitão", "Primeiro Renascido", "Pioneiro do Dangai", "Campeão da Arena", "Regicida Quincy") precisam ser verificados em eventos frequentes (`setForm`, `gainExp`, `rebirth`, `dangaiKilled`, `pvpHit`, `bestiaryKill`) sem consultar o SQLite a cada abate ou nível, mas garantindo persistência imediata quando conquistados pela primeira vez.
+- **Solução (`server/src/milestones.ts`):**
+  1. As definições canônicas (`SERVER_MILESTONES`) residem em `shared/src/progress.ts` e seus títulos exclusivos (`season: true`) em `shared/src/shop.ts`.
+  2. O módulo `server/src/milestones.ts` carrega `db.getMeta("server_milestones")` uma única vez para um `Map` em memória; chamadas subsequentes a `claimServerMilestone` verificam `claimed.has(id)` em O(1) e só gravam no SQLite (`db.setMeta`) na primeira conquista de cada marco.
+  3. O título conquistado é salvo tanto em `p.prog.titles` (no save do personagem) quanto na carteira da conta (`db.changeCrystals(p.accountId, 0, ...)`), equipado automaticamente caso o personagem esteja sem título, anunciado globalmente e listado na aba **Marcos** do Ranking (`#ranking`).
