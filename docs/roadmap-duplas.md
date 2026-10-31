@@ -109,6 +109,62 @@ Backlog novo (IDs R-##) — narrativa, QoL e social com partes de servidor:
 | 25 | R-03 | **Mapa Hell (Jigoku)** — zona 100+ com ogres, mecânica de "pecado" (debuff por morte), drops novos | G | W-04 recomendado | sim |
 | 26 | R-15 | **Specs pendentes da fila R** — PRD/ADR dos itens R marcados `sim` conforme a fila anda | contínuo | — | é o próprio trabalho |
 
+## Horizonte de expansão (pós-G2)
+
+Backlog profundo, pesquisado contra o universo de Bleach (arcos ainda não cobertos: Bount, Zanpakutō Rebeldes, Reigai, filmes) e contra mecânicas consolidadas de idle/MMO (prestígio em camadas, geradores aninhados, marcos, eventos raros, profissões, coleções). Tudo aqui é `Precisa de spec` até ser promovido para uma fila com ordem. A tag `[W]`/`[R]` indica a fila de destino quando o item entrar.
+
+### Sagas e conteúdo de Bleach ainda não usados
+
+| Tag | Item | Ideia |
+| :-- | :--- | :--- |
+| [W] | **Arco Bount** | Jin Kariya e os Bount como invasão sazonal: monstros "doll" com vínculo mestre-doll (dois alvos ligados, matar o mestre enfraquece a doll — reusa o motor de vínculo de M2) |
+| [W] | **Zanpakutō Rebeldes** | Evento onde a Zanpakutō do jogador vira NPC inimigo temporário: luta solo contra o próprio kit de técnicas; recompensa desbloqueia "voz da Zanpakutō" (buff cosmético) |
+| [R] | **Reigai (Invasão do Gotei 13)** | Clones corruptos dos capitães como chefes de elite espelhados — reusa sprites dos personagens com paleta roxa; bom retorno de arte por esforço |
+| [W] | **Palácio Real e Divisão Zero** | Mapa de elite pós-100: Senjumaru, Ōetsu (forja especial), Ichibē; requer M4-01 (instância) e W-16 (prova de Bankai) como narrativa de acesso |
+| [W] | **Memories of Nobody — Vale dos Gritos** | Dungeon instanciada com os Blanks (almas sem memória) e chefe Ganryu; mecânica de "memória roubada" (debuff que esconde técnicas) |
+| [R] | **Diamond Dust Rebellion** | Evento de Hitsugaya: artefato Ōin roubado, escolta de caravana pelo Seireitei com ondas de ambush — primeiro evento de escolta do jogo |
+| [R] | **Fade to Black** | Evento de lore: "a apagadora" remove temporariamente buffs de conjuntos/conquistas numa zona; retorno narrativo barato com sistemas existentes |
+| [W] | **Soukyoku Hill** | Arena de evento PvE no cadafalso: defesa da Rukia contra ondas — primo da defesa do Senkaimon (M4-03), reusa motor |
+| [R] | **Karakura noturna** | Ciclo dia/noite nos mapas com spawns diferentes (Hollows mais fortes à noite, Plus durante o dia) e filtros de cor no cliente |
+| [R] | **Konso e Pluses** | Mini-loop idle novo: purificar Pluses espalhados por Karakura/Rukongai dá "mérito espiritual" (moeda de facção Soul Society) |
+
+### Mecânicas de idle para aprofundar o gênero
+
+| Tag | Item | Ideia |
+| :-- | :--- | :--- |
+| [W] | **Segunda camada de prestígio: Transcendência** | Acima do renascimento: reseta o bônus de renascimento e paga "Reiatsu Ancestral", moeda própria com loja exclusiva (modelo Ascension→Transcendence do Clicker Heroes) |
+| [W] | **Academia Shin'ō** | Gerador aninhado: recrutas de academy produzem "formados" que alimentam missões de patrulha (W-13) — gerador que produz gerador, regra do gênero |
+| [W] | **Marcos automáticos (x2/x3/x5)** | Saltos de produção/XP em limites de posse (25/50/100 monstros no bestiário, itens forjados) — milestone idiomático do idle |
+| [W] | **Menos Grande dourado** | Evento raro (estilo golden cookie): Menos dourado aparece por 60 s em mapa aleatório, recompensa multiplicada; anunciado no chat global |
+| [W] | **Salto de tempo** | Consumível raro que adianta X horas de caçada offline — decide economia com a conta de cristais (D-001) |
+| [W] | **Sinergias cruzadas** | Bônus por diversidade: cada conjunto completo diferente dá +1% global — combate a armadilha "compre sempre o mesmo item" |
+| [W] | **Afinidade de caçada** | Monstro tem elemento (fogo/gelo/trovão/corte); técnica com afinidade certa dá +25% — decisão de build para a sessão, não reflexo |
+| [R] | **Relíquias** | Itens de prestígio permanentes comprados com Reiatsu Ancestral: cada renascimento/transcendência melhora o drop delas |
+
+### Sistemas clássicos de MMO
+
+| Tag | Item | Ideia |
+| :-- | :--- | :--- |
+| [W] | **Profissões: forja e coleta** | Minério espiritual e ervas do Rukongai coletados por ação idle; a forja do Kisuke sobe de nível e desbloqueia +11 a +15 |
+| [W] | **Cadeia de crafting** | Consumível de recurso: refino de minério → lingote → peça — a primeira supply chain do jogo, testada com a taxa de drop |
+| [W] | **Leilão global** | Evolução do mercado: leilão com lances em vez de anúncio fixo; W-07 (mailbox) entrega lances perdidos |
+| [R] | **Moradia: quarto no esquadrão** | Mapa interior instanciado por jogador com troféus (bestiário, títulos, manto de divisão) — reusa M4-01 |
+| [R] | **Montarias espirituais** | Desbloqueio por reputação (W-18): velocidade +X% fora de combate; primeiro uso do sistema de speed não-combat |
+| [R] | **Batalha de companions** | Mod Souls (R-07) duelam em mini-arena automática — jogo dentro do jogo, totalmente idle |
+| [R] | **Fotografia/espólio** | Screenshot mode com HUD oculto e poses; compartilhamento no chat |
+| [W] | **Amigos e referência** | Lista de amigos com status/PM em qualquer mapa (base já existe em `social.ts`); bônus de XP por party com amigo |
+
+### Operação, alcance e qualidade de vida
+
+| Tag | Item | Ideia |
+| :-- | :--- | :--- |
+| [W] | **i18n (en/pt)** | Extracão de strings do cliente; servidor manda códigos, cliente traduz — pré-requisito para público fora do BR |
+| [W] | **Espectador e replay** | Assistir chefe mundial/arena ao vivo; gravação de inputs no servidor para replay de cheater (alimenta W-10) |
+| [W] | **Sharding preparatório** | Separar estado de mapa em módulo próprio antes de M5-04 — reduz risco do item grande |
+| [R] | **PWA: prompt de instalação** | Fluxo "instalar como app" com ícone próprio e tela de offline amigável |
+| [R] | **Pacotes de áudio e trilhas por mapa** | BGM por zona (Karakura, Seireitei, Hueco Mundo) com volume e mute persistentes |
+| [R] | **HUD customizável** | Arrastar painéis, escala por elemento, presets salvos no servidor |
+
 ## Plano de specs
 
 Quem escreve é o dono do item; aprovação é das duas pessoas. Ordem sugerida, cada spec em `docs/features/<nome>/` com PRD + ADRs no modelo de `features/cronicas-semanais-lore/`:
