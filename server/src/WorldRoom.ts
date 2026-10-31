@@ -205,13 +205,16 @@ export class WorldRoom extends GameRoom<WorldState> {
     });
     this.handle("chat", (c, m: { text: string }) => {
       const p = this.me(c);
-      const text = String(m?.text ?? "").trim().slice(0, 200);
+      const text = (typeof m?.text === "string" ? m.text : "").trim().slice(0, 200);
       if (!p || !text) return;
       if (text.startsWith("/")) return this.command(p, text);
       for (const x of this.state.players.values()) if (!x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: this.display(p), text });
     });
     this.handle("ranking", (c) => c.send("ranking", this.ranking()));
+    // O cliente envia `devHello` a todo jogador que entra (main.ts, bindDev). Sem handler o Colyseus desconecta quem manda:
+    // por isso ele é sempre registrado e só responde (e só registra `dev`) com o modo Dev ligado.
     if (DEV_MODE) this.registerDevMessages();
+    else this.handle("devHello", () => {});
     if (flagOn("BI_DEBUG")) {
       this.handle("debugInvasion", () => this.startInvasion());
       this.handle("debugInvasionEnd", () => this.endInvasion(false));
@@ -302,7 +305,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     const p = new Player();
     p.id = id;
     p.name = saved.name;
-    p.charId = CHARS[saved.charId] ? saved.charId : "ichigo";
+    p.charId = own(CHARS, saved.charId) ? saved.charId : "ichigo";
     p.level = saved.level;
     p.exp = saved.exp;
     if (saved.inv) {
@@ -336,6 +339,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.reiTries = saved.reiTries ?? 0;
     this.train(p, 0, 0);
     p.quests = saved.quests ?? { active: {}, done: [] };
+    // saves gravados antes da correção de chaves de protótipo podem ter missão fantasma (ex.: "undefined"): descarta o que não existe
+    for (const k of Object.keys(p.quests.active)) if (!own(QUEST_BY_ID, k)) delete p.quests.active[k];
     p.prog = { ...newProgress(), ...saved.prog };
     p.prog.peak = Math.max(p.prog.peak ?? 0, saved.level);
     // quem já é veterano quando o guia chegou não precisa dele
@@ -1073,7 +1078,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   private registerSocialMessages() {
     this.handle("partyInvite", (c, m: { id: string }) => {
       const p = this.me(c);
-      const v = this.state.players.get(String(m?.id ?? ""));
+      const v = typeof m?.id === "string" ? this.state.players.get(m.id) : undefined;
       if (!p || !v || v === p) return;
       if (!v.online) return this.log(p, `${v.name} não está online.`);
       if (v.partyId) return this.log(p, `${v.name} já está numa party.`);
@@ -1113,7 +1118,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.handle("partyKick", (c, m: { id: string }) => {
       const p = this.me(c);
       const party = p ? this.parties.get(p.partyId) : undefined;
-      const v = this.state.players.get(String(m?.id ?? ""));
+      const v = typeof m?.id === "string" ? this.state.players.get(m.id) : undefined;
       if (!p || !party || party.leader !== p.id || !v || v.partyId !== party.id || v === p) return;
       this.log(v, "Você foi removido da party.");
       this.leaveParty(v);
@@ -1611,7 +1616,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.sendTo(p, "bag", { id: b.id, label: b.label, gold: b.gold, items: b.items, locked: !canTake(p, b), until: b.ownerUntil });
     this.handle("bagOpen", (c, m: { id: string }) => {
       const p = this.me(c);
-      const b = this.state.bags.get(String(m?.id ?? ""));
+      const b = typeof m?.id === "string" ? this.state.bags.get(m.id) : undefined;
       if (!p || !b) return;
       if (!nearBag(p, b)) {
         // anda até ficar do lado e o cliente pede de novo ao chegar
@@ -1623,7 +1628,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     });
     this.handle("bagTake", (c, m: { id: string; index?: number }) => {
       const p = this.me(c);
-      const b = this.state.bags.get(String(m?.id ?? ""));
+      const b = typeof m?.id === "string" ? this.state.bags.get(m.id) : undefined;
       if (!p || !b || !nearBag(p, b)) return;
       if (!canTake(p, b)) return this.log(p, `Ainda reservado a quem matou (${Math.ceil((b.ownerUntil - Date.now()) / 1000)} s).`);
       const idx = typeof m.index === "number" ? [m.index] : b.items.map((_, i) => i);
@@ -2360,10 +2365,10 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.handle("shopEquip", (c, m: { id?: string; kind?: string }) => {
       const p = this.me(c);
       if (!p || !p.accountId) return;
-      const id = String(m?.id ?? "");
+      const id = typeof m?.id === "string" ? m.id : "";
       if (!id) {
         // tirar: o tipo vem junto
-        const kind = String(m?.kind ?? "");
+        const kind = typeof m?.kind === "string" ? m.kind : "";
         if (kind === "aura") p.cosAura = ""; else if (kind === "fx") p.cosFx = ""; else if (kind === "title") p.cosTitle = "";
         else if (kind === "name") p.cosName = ""; else if (kind === "pet") p.cosPet = "";
         return this.sendShop(p);

@@ -394,7 +394,7 @@ function bindSeason(room: Room<any>) {
   room.onLeave(() => window.clearInterval(timer));
 }
 
-// ---------- modo Dev (o botão só aparece se o servidor estiver fora de produção) ----------
+// ---------- modo Dev (o botão só aparece se o servidor estiver com BI_DEV=1) ----------
 
 function bindDev(room: Room<any>, myId: string) {
   const panel = $("#dev");

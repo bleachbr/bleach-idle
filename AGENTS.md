@@ -91,11 +91,11 @@ Ao implementar código ou refatorar no Bleach Idle, o agente deve obrigatoriamen
 - **Nunca** confie em parâmetros enviados pelo cliente (ex.: dano, itens obtidos, velocidade).
 - Toda validação de distância (`chebyshev`), tempo de recarga (`cooldown`), custo de reiatsu e elegibilidade de nível deve ser feita no servidor (`WorldRoom.ts`).
 - Sanitizar inputs de chat, nomes de personagens e operações no mercado.
-- **Nunca** use uma chave vinda do cliente para indexar objeto comum (`CHARS[m.charId]`): `constructor` e `__proto__` passam. Valide com `Object.hasOwn`.
-- Mensagens novas entram por `this.handle` (aplica o limite de 40 mensagens por segundo), nunca por `this.onMessage`.
+- **Nunca** use uma chave vinda do cliente para indexar objeto comum: use `own(TABELA, chave)` e `isOwnKey(objeto, chave)` (`shared/src/lookup.ts`), nunca `TABELA[chave]` nem `chave in objeto`.
+- Entrada de rede em handlers: valide o tipo antes de usar (ex.: `typeof m?.id === "string" ? m.id : ""`). Nunca use `String(m?.x)` diretamente, pois objetos sem protótipo disparam `TypeError`.
+- Mensagens novas entram por `this.handle` (aplica o limite de 40 mensagens por segundo), nunca por `this.onMessage`. Handlers esperados pelo cliente no ciclo de vida (ex.: `devHello`) devem estar sempre registrados, pois mensagens sem handler desconectam o cliente (código 4002).
 - Rotas de debug e modo Dev nascem desligadas e só ligam com `BI_DEV=1` ou `BI_DEBUG=1` (`flagOn` em `server/src/flags.ts`); `npm run dev` já define `BI_DEV=1`. Nunca ligue "quando não é produção".
-- Busca em tabela de dados com chave vinda do cliente: `own(TABELA, chave)` e `isOwnKey(objeto, chave)` (`shared/src/lookup.ts`), nunca `TABELA[chave]` nem `chave in objeto`.
-- IP do cliente para limites: `clientIp(req)` (`server/src/clientIp.ts`); atrás do proxy, `TRUST_PROXY=1`.
+- IP do cliente para limites: `clientIp(req)` (`server/src/clientIp.ts`); atrás de proxy, configure `TRUST_PROXY` com os CIDRs confiáveis (ex.: `172.28.0.0/24`).
 - Detalhes e checklist: skill `seguranca-servidor`.
 
 ### 4.3. Testes Determinísticos e Estabilidade de CI

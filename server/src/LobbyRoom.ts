@@ -34,12 +34,13 @@ export class LobbyRoom extends GameRoom {
   async onAuth(_client: Client, opts: any, req?: IncomingMessage): Promise<Auth> {
     const ip = `ip:${clientIp(req)}`;
     if (opts?.token) {
-      const acc = db.sessionAccount(String(opts.token));
+      const token = typeof opts.token === "string" ? opts.token : "";
+      const acc = db.sessionAccount(token);
       if (!acc) throw new ServerError(401, "Sessão expirada. Entre de novo.");
-      return { ...acc, token: String(opts.token) };
+      return { ...acc, token };
     }
-    const login = String(opts?.login ?? "").trim().toLowerCase();
-    const pass = String(opts?.password ?? "");
+    const login = typeof opts?.login === "string" ? opts.login.trim().toLowerCase() : "";
+    const pass = typeof opts?.password === "string" ? opts.password : "";
     if (!LOGIN_RE.test(login)) throw new ServerError(400, "Login: de 3 a 20 caracteres (letras minúsculas, números ou _).");
     if (pass.length < 6 || pass.length > 72) throw new ServerError(400, "Senha: de 6 a 72 caracteres.");
     if (blocked(login) || blocked(ip)) throw new ServerError(429, "Muitas tentativas. Espere um minuto.");
@@ -70,7 +71,7 @@ export class LobbyRoom extends GameRoom {
   onCreate() {
     this.handle("create", (c, m: { name: string; charId: string }) => {
       const { accountId } = c.userData as Auth;
-      const name = String(m?.name ?? "").trim().replace(/\s+/g, " ");
+      const name = (typeof m?.name === "string" ? m.name : "").trim().replace(/\s+/g, " ");
       if (!NAME_RE.test(name)) return c.send("error", { text: "Nome: de 3 a 16 letras (espaços permitidos)." });
       if (!own(CHARS, m?.charId)) return c.send("error", { text: "Escolha um personagem." });
       if (db.listChars(accountId).length >= MAX_CHARS) return c.send("error", { text: `Limite de ${MAX_CHARS} personagens por conta.` });
@@ -79,20 +80,23 @@ export class LobbyRoom extends GameRoom {
     });
     this.handle("delete", (c, m: { id: string }) => {
       const { accountId } = c.userData as Auth;
-      if (!db.deleteChar(accountId, String(m?.id ?? "")))
+      const id = typeof m?.id === "string" ? m.id : "";
+      if (!db.deleteChar(accountId, id))
         return c.send("error", { text: "Não foi possível excluir. Se ele estiver caçando offline, entre e desligue o Auto Hunt antes." });
-      guilds.leave(String(m.id)); // sai da guilda (passa a liderança ou desfaz a guilda)
+      guilds.leave(id); // sai da guilda (passa a liderança ou desfaz a guilda)
       this.sendChars(c);
     });
     this.handle("play", (c, m: { id: string }) => {
       const { accountId } = c.userData as Auth;
-      const row = db.load(String(m?.id ?? ""));
+      const id = typeof m?.id === "string" ? m.id : "";
+      const row = db.load(id);
       if (!row || row.accountId !== accountId) return c.send("error", { text: "Personagem não encontrado." });
       c.send("ticket", { ticket: issueTicket({ accountId, charId: row.id }) });
     });
     this.handle("password", async (c, m: { old: string; new: string }) => {
       const { accountId, login, token } = c.userData as Auth;
-      const oldPw = String(m?.old ?? ""), newPw = String(m?.new ?? "");
+      const oldPw = typeof m?.old === "string" ? m.old : "";
+      const newPw = typeof m?.new === "string" ? m.new : "";
       if (blocked(login)) return c.send("error", { text: "Muitas tentativas. Espere um minuto." });
       if (newPw.length < 6 || newPw.length > 72) return c.send("error", { text: "Nova senha: de 6 a 72 caracteres." });
       const acc = db.getAccount(login);

@@ -1,4 +1,4 @@
-// Modo Dev: fora de produção o servidor aceita os atalhos de teste (nível, kan, cristais, equipamento, itens, imortal).
+// Modo Dev: com BI_DEV=1 o servidor aceita os atalhos de teste (nível, kan, cristais, equipamento, itens, imortal).
 import { expForLevel, nearestWalkable, maxForm, EQUIP_SLOTS } from "../../shared/src";
 import { HOME } from "../src/maps";
 import { play, patchSave, sleep, ok, done } from "./lib";
@@ -19,7 +19,7 @@ const until = async (f: () => unknown, ms = 5000) => { for (let t = 0; t < ms &&
 await sleep(300);
 
 room.send("devHello");
-ok("fora de produção o servidor libera o modo Dev", await until(() => dev));
+ok("com BI_DEV=1 o servidor libera o modo Dev", await until(() => dev));
 
 room.send("dev", { a: "level", n: 100 });
 ok("nível 100 na hora, com o 5º estágio liberado", await until(() => me().level === 100) && maxForm("ichigo", me().level) === 4 && me().exp === expForLevel(100));

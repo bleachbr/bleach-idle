@@ -5,7 +5,8 @@ services:
     build: .
     restart: unless-stopped
     environment:
-      TRUST_PROXY: "1"       # o Caddy é o único que alcança o jogo: vale o IP que ele repassa em X-Forwarded-For
+      TRUST_PROXY: "172.28.0.0/24"   # só o Caddy (rede abaixo) é confiável: vale o IP que ele repassa em X-Forwarded-For
+    networks: [interna]
     volumes:
       - dados:/data            # banco (bleach-idle.sqlite) e backups/
     expose:
@@ -14,15 +15,21 @@ services:
     image: caddy:2
     restart: unless-stopped
     depends_on: [jogo]
+    networks: [interna]
     ports:
       - "80:80"
       - "443:443"
     environment:
-      DOMINIO: ${DOMINIO:?defina DOMINIO, ex.: DOMINIO=bleach.duckdns.org}
+      DOMINIO: "${DOMINIO:?defina DOMINIO, ex.: DOMINIO=bleach.duckdns.org}"
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+networks:
+  interna:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
 volumes:
   dados:
   caddy_data:
