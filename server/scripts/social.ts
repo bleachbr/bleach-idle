@@ -27,15 +27,17 @@ ok("convite chega", (await invite).from === "Party Alfa");
 b.room.send("partyAnswer", { accept: true });
 await sleep(400);
 ok("os dois na mesma party, Alfa líder", !!a.me().partyId && a.me().partyId === b.me().partyId && a.me().partyLead && !b.me().partyLead);
+const semana0 = xpWeekend(Date.now());
 a.room.send("auto", { autoHunt: true });
 b.room.send("auto", { autoHunt: true });
 await sleep(15000);
 const shared = [...a.logs, ...b.logs].filter((l) => l.includes("(party, 2)"));
 ok(`XP dividido entre os dois (${shared.length} abates divididos)`, a.logs.some((l) => l.includes("(party, 2)")) && b.logs.some((l) => l.includes("(party, 2)")));
 const menor = shared.find((l) => l.startsWith("Hollow Menor"));
-// sábado e domingo (Brasília) todo XP de monstro vale em dobro: o esperado segue a mesma regra do servidor
-const xp33 = 33 * (xpWeekend(Date.now()) ? WEEKEND_EXP : 1);
-ok(`Hollow Menor (60 XP) em 2 dá ${xp33} cada (+10% de bônus): "${menor ?? "nenhum"}"`, !menor || menor.includes(`+${xp33} XP`));
+// sábado e domingo (Brasília) todo XP de monstro vale em dobro: o esperado segue a mesma regra do servidor.
+// Se a virada de dia cair no meio do cenário, os dois valores são aceitos.
+const esperados = [semana0, xpWeekend(Date.now())].map((w) => 33 * (w ? WEEKEND_EXP : 1));
+ok(`Hollow Menor (60 XP) em 2 dá ${[...new Set(esperados)].join(" ou ")} cada (+10% de bônus): "${menor ?? "nenhum"}"`, !menor || esperados.some((x) => menor.includes(`+${x} XP`)));
 a.room.send("partyLeave");
 await sleep(300);
 ok("líder sai e a party de 2 se desfaz", !a.me().partyId && !b.me().partyId);

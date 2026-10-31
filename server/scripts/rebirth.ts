@@ -39,14 +39,16 @@ await sleep(300);
 ok("o próximo exige nível 65", a.me().rebirths === 1 && a.logs.some((l) => l.includes("exige nível 65")));
 
 // XP com bônus: um Hollow Menor (60 XP) vale 66 com 1 renascimento
+const semana0 = xpWeekend(Date.now());
 a.room.send("travel", { dest: "leste" });
 await sleep(400);
 a.room.send("auto", { autoHunt: true, autoHeal: 40 });
 for (let i = 0; i < 120 && !a.logs.some((l) => /Hollow Menor derrotado: \+\d+ XP/.test(l)); i++) await sleep(500);
 a.room.send("auto", { autoHunt: false });
 const line = a.logs.find((l) => /Hollow Menor derrotado: \+\d+ XP/.test(l)) ?? "";
-// sábado e domingo (Brasília) todo XP de monstro vale em dobro: o esperado segue a mesma regra do servidor
-const xp66 = 66 * (xpWeekend(Date.now()) ? WEEKEND_EXP : 1);
-ok(`XP com +10% (${line})`, line.includes(`+${xp66} XP`));
+// sábado e domingo (Brasília) todo XP de monstro vale em dobro: o esperado segue a mesma regra do servidor.
+// Se a virada de dia cair no meio do cenário, os dois valores são aceitos.
+const esperados = [semana0, xpWeekend(Date.now())].map((w) => 66 * (w ? WEEKEND_EXP : 1));
+ok(`XP com +10% (${line})`, esperados.some((x) => line.includes(`+${x} XP`)));
 await a.room.leave();
 done();
