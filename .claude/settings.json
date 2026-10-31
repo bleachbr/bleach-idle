@@ -2,17 +2,24 @@
   "permissions": {
     "deny": [
       "Read(./.env)",
+      "Read(./.env.local)",
       "Bash(git push --force*)",
       "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f)",
+      "Bash(git push * +*)",
       "Bash(git reset --hard*)",
       "Bash(git clean *)"
     ],
     "ask": [
       "Bash(git push *)",
+      "Bash(gh pr merge*)",
       "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
       "Bash(npm audit fix*)",
       "Bash(npm publish*)",
-      "Bash(*art/maps/build_maps.py*)"
+      "Bash(*art/maps/build_maps.py*)",
+      "Bash(*art/maps/build_endgame.py*)"
     ]
   }
 }
