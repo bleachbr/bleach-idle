@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  CHRONICLES,
   CHRONICLE_EPOCH,
+  COSMETIC,
+  ITEMS,
+  MONSTERS,
   MS_PER_WEEK,
   TOTAL_CRONICAS,
+  activeChronicle,
   currentWeekKey,
   syncChronicleProgress,
+  titleText,
   weekIndex,
   weekNumber,
   newProgress,
@@ -99,5 +105,40 @@ describe("M1-01 & M1-05: rotação semanal e persistência de Crônicas (ADR-002
     const c1 = syncChronicleProgress(prog, CHRONICLE_EPOCH + MS_PER_WEEK);
     expect(c1).toEqual({ activeWeekKey: "w1", questKills: 0 });
     expect(c1.completedAt).toBeUndefined();
+  });
+
+  it("define o catálogo completo das 5 crônicas semanais com monstros, itens e títulos válidos (M1-08)", () => {
+    expect(CHRONICLES).toHaveLength(TOTAL_CRONICAS);
+    const ids = new Set<string>();
+    for (let i = 0; i < TOTAL_CRONICAS; i++) {
+      const c = activeChronicle(CHRONICLE_EPOCH + i * MS_PER_WEEK);
+      expect(c).toBe(CHRONICLES[i]);
+      expect(ids.has(c.id)).toBe(false);
+      ids.add(c.id);
+      expect(c.title.length).toBeGreaterThan(5);
+      expect(c.badge).toMatch(/^\[CRÔNICA SEMANAL:/);
+      expect(c.pages.length).toBeGreaterThanOrEqual(3);
+      expect(c.quest.name.length).toBeGreaterThan(3);
+      expect(c.quest.kills).toBeGreaterThan(0);
+      expect(c.quest.monsters.length).toBeGreaterThan(0);
+      for (const m of c.quest.monsters) {
+        expect(MONSTERS[m]).toBeDefined();
+      }
+      for (const req of c.quest.items ?? []) {
+        expect(ITEMS[req.id]).toBeDefined();
+        expect(req.qty).toBeGreaterThan(0);
+      }
+      expect(c.reward.gold).toBeGreaterThan(0);
+      expect(c.reward.crystals).toBeGreaterThanOrEqual(15);
+      expect(c.reward.crystals).toBeLessThanOrEqual(30);
+      for (const it of c.reward.items) {
+        expect(ITEMS[it.id]).toBeDefined();
+        expect(it.qty).toBeGreaterThan(0);
+      }
+      expect(COSMETIC[c.reward.titleId]).toBeDefined();
+      expect(COSMETIC[c.reward.titleId].kind).toBe("title");
+      expect(COSMETIC[c.reward.titleId].season).toBe(true);
+      expect(titleText(c.reward.titleId).length).toBeGreaterThan(3);
+    }
   });
 });
