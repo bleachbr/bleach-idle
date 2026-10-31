@@ -8,7 +8,7 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ### Lição: O Cliente Nunca Deve Decidir o Estado
 - Em jogos de visão de cima em tempo real, qualquer concessão de autoridade ao cliente (como cálculo de colisão, cooldown ou dano) abre brechas e gera desincronias graves (rubberbanding).
-- **Abordagem adotada:** O cliente emite intenções leves (`move`, `step`, `target`, `skill`, `use`, `bankai`). O servidor avalia se o personagem pode agir no tick atual (`trySkill`, `hit`, `stepTo` em `WorldRoom.ts`), aplica custos e dispara eventos de feedback (mensagens `fx` e `log`, além do estado sincronizado do Colyseus).
+- **Abordagem adotada:** O cliente emite intenções leves (`move`, `step`, `target`, `skill`, `useItem`, `transform`). O servidor avalia se o personagem pode agir no tick atual (`trySkill`, `hit`, `stepTo` em `WorldRoom.ts`), aplica custos e dispara eventos de feedback (mensagens `fx` e `log`, além do estado sincronizado do Colyseus).
 
 ### Movimento Fluido Sem "Anda e Trava"
 - Com ticks de 100 ms, se o cliente apenas teleportar o personagem a cada atualização do servidor, o movimento fica travado e desagradável.
@@ -26,7 +26,7 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 ### Persistência com SQLite WAL e Transações Periódicas
 - Fazer `UPDATE` no banco a cada golpe ou item recebido gera contenção extrema de I/O em disco, mesmo com poucos jogadores.
 - **Solução:** O estado vive em memória RAM durante o jogo. Um save transacional em lote é executado a cada 10 segundos, além de saves pontuais em momentos críticos (login, logout, morte).
-- Modo **WAL (`PRAGMA journal_mode = WAL`)** permitiu leituras assíncronas do lobby enquanto o mundo salva em lote sem bloqueios de tabela.
+- O banco usa o modo **WAL** (`PRAGMA journal_mode = WAL`). As conexões `node:sqlite` são síncronas e rodam na mesma thread; o ganho do WAL aqui não foi medido.
 - Corpos no chão com loot derrubado e sacolas são gravados junto com o resto a cada 10 s (`db.setMeta("bags", ...)`, na tabela `meta`) e recarregados em `restoreWorld`, então sobrevivem a uma queda ou reinício forçado do servidor.
 
 ---
@@ -45,15 +45,13 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ## 4. Automação Inteligente (Auto Helper) e Pathfinding
 
-### Timeout de Perseguição no Pathfinding A*
+### Timeout de Perseguição no Pathfinding (busca em largura)
 - Se um monstro visível estivesse atrás de uma barreira sólida ou sem rota navegável até ele, o Auto Hunt entrava em loop tentando recalcular a rota a cada ciclo, paralisando a caçada.
 - **Solução:** Implementação de um timer de desistência (`p.stuckSince`, em `WorldRoom.ts`). Se não existe caminho até o alvo por mais de 3 segundos, o monstro é ignorado por 20 segundos (`skipId` e `skipUntil`) e o Auto Hunt seleciona o próximo alvo disponível.
 
-### Priorização Determinística de Metas
-- Para maximizar a eficiência do jogador e dos testes, o Auto Target segue uma hierarquia estrita:
-  1. Monstros prioritários da missão ativa do Kisuke ou da diária de caça.
-  2. Monstros mais próximos com rota navegável.
-  3. Descarte de monstros pertencentes a outros jogadores (evitando roubo de loot/kill sharing injusto).
+### Escolha de Alvo
+- `nearestMonster` (`WorldRoom.ts`) escolhe o monstro mais próximo (distância de Chebyshev) dentro do alcance, no mesmo mapa, ignorando bonecos de treino, monstros de outro jogador e o alvo que o Auto Helper acabou de abandonar (`skipId` e `skipUntil`).
+- Não existe escolha por "rota navegável": o caminho é calculado depois de escolhido o alvo, e é por isso que o timer de desistência acima é necessário.
 
 ---
 

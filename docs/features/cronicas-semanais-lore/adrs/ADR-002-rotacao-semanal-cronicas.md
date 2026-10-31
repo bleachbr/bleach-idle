@@ -56,7 +56,8 @@ export interface ChronicleProgress {
 }
 ```
 - A chave `activeWeekKey` guarda a semana em que a missão foi aceita.
-- Se `currentWeekKey() !== p.prog.chronicle.activeWeekKey`, o servidor detecta automaticamente a virada de semana e reinicia o contador de tarefas sem necessidade de rotina batch de banco de dados.
+- Se `currentWeekKey() !== p.prog.chronicle.activeWeekKey`, o servidor detecta automaticamente a virada de semana e reinicia `questKills` **e** `completedAt`, sem rotina batch de banco de dados. A recompensa só é paga quando `completedAt` está vazio e `activeWeekKey` é a semana atual.
+- `newProgress()` (`shared/src/progress.ts`) precisa ganhar o campo `chronicle` com valor padrão; `fromSave` só mescla o que `newProgress()` devolve.
 
 ---
 

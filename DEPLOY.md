@@ -58,7 +58,7 @@ Libere no firewall do provedor só as portas **22** (SSH), **80** e **443**.
 ```bash
 npm install
 npm run build
-npm start          # abre em http://localhost:2567
+NODE_ENV=production npm start   # abre em http://localhost:2567
 ```
 
 ## O que ainda não foi testado

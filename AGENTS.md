@@ -11,7 +11,7 @@ Bleach Idle é um MMORPG 2D com visão top-down e progressão idle/ativa ambient
 ### Pilares Arquiteturais
 1. **Servidor Autoritativo (Zero-Trust Client):**
    - O servidor (`server/`) é a autoridade absoluta em estado, combate, inventário, dano, drops, colisão e pathfinding.
-   - O cliente (`client/`) é puramente visual: envia intenções (`move`, `target`, `skill`, `use`, `bankai`) e renderiza o estado sincronizado pelo Colyseus.
+   - O cliente (`client/`) é puramente visual: envia intenções (`move`, `target`, `skill`, `useItem`, `transform`) e renderiza o estado sincronizado pelo Colyseus.
    - O tick de simulação do servidor é de **100 ms** (`TICK_MS = 100`).
 
 2. **Código Compartilhado (`shared/`):**
@@ -41,7 +41,8 @@ bleach-idle/
 ├── .claude/settings.json      # Permissões compartilhadas do Claude Code
 ├── .gitleaks.toml             # Configuração da varredura de segredos
 ├── vitest.config.ts           # Configuração de testes automatizados Vitest
-├── docs/                      # Documentação técnica e de produto
+├── .github/                   # CI (workflows/ci.yml) e modelo de PR
+├── docs/                      # Documentação técnica e de produto (features/ guarda PRD e ADRs de cada funcionalidade)
 │   ├── roadmap.md             # Roadmap centralizado: IDs, ordem, dependências, status e fluxo de trabalho
 │   ├── aprendizados.md        # Lições técnicas aprendidas no projeto
 │   ├── baseline.md            # Linha de base medida de qualidade e desempenho
@@ -100,7 +101,7 @@ Ao implementar código ou refatorar no Bleach Idle, o agente deve obrigatoriamen
   - **Evite** `setTimeout` ou delays arbitrários (como `sleep(300ms)`). Eles causam testes instáveis (*flaky*) no CI do GitHub Actions.
   - **Prefira** esperar por eventos (`onMessage`), mudanças de estado observadas pelo Colyseus Schema ou funções auxiliares de espera com timeout seguro.
   - Bots de teste criados em cenários devem ter nível e atributos compatíveis com os monstros enfrentados.
-  - **Não dependa do relógio.** O XP vale em dobro aos sábados e domingos (Brasília); calcule o esperado com `xpWeekend(Date.now())`.
+  - **Isole o relógio.** O XP vale em dobro aos sábados e domingos (Brasília). Lógica de data recebe `ms` e tem teste com instantes fixos; em cenário ao vivo, calcule o esperado com `xpWeekend`, no início e no fim.
   - Detalhes: skill `testes-deterministicos`.
 
 ### 4.4. Gestão de Assets e Sprites
@@ -108,7 +109,7 @@ Ao implementar código ou refatorar no Bleach Idle, o agente deve obrigatoriamen
 - Ao criar variações de sprite ou modos visuais (Modo HD vs Pixel Art), certifique-se de manter as dimensões relativas para evitar distorção ou encolhimento de escala.
 
 ### 4.5. Git e Branches
-- Branches de funcionalidade seguem o prefixo `feat/`, correções `fix/`, testes `test/` e documentação `docs/`.
+- Branches de funcionalidade seguem o prefixo `feat/`, correções `fix/`, testes `test/`, documentação `docs/` e manutenção `chore/`.
 - Sempre execute `npm run typecheck` e `npm test` antes de considerar uma tarefa concluída. Se mexeu em lógica do servidor, rode também os cenários afetados (`npm run test:scripts`).
 - Um resultado por PR e um assunto por commit. Mensagens em português, no estilo `tipo: o que mudou`. Código escrito com IA leva `Co-Authored-By` com o modelo usado.
 - Quem escreveu não aprova o próprio PR (skill `revisar-pr`). O merge na `main` é decisão de uma pessoa; agente não faz push nem merge sem pedido explícito.
@@ -135,10 +136,10 @@ O projeto cresce com código escrito por pessoas e por agentes. Estas regras man
 3. **Duas tentativas, depois pare.** Se um conserto falhou duas vezes, relate o que tentou e espere direção.
 4. **Hipóteses antes de investigar.** Liste as causas possíveis, descarte cada uma com evidência (`arquivo:linha` ou trecho de log) e só diga "causa raiz" com a prova na mão.
 5. **Relate só o que rodou.** Diga quais verificações executou, o resultado e o que ficou sem rodar. Teste que não foi executado não "passa".
-6. **Conserto de passagem vai em commit separado.** Teste quebrado ou erro achado no caminho é corrigido, mas fora do commit da tarefa.
+6. **Conserto de passagem vai em commit separado.** Conserto pequeno que destrava o CI fica no mesmo PR, em commit próprio; qualquer outro vira PR separado.
 7. **Pare e pergunte** quando a mudança: apagar dados, `.sqlite` ou backups; reescrever histórico; mexer em permissão ou segredo; subir major de dependência (por exemplo Colyseus); regenerar mapas editados no Tiled; ou publicar algo (push, PR, deploy).
 8. **Segredos nunca entram** em código, log, commit, mensagem de PR ou resposta. Não abra `.env` nem arquivos `.sqlite`.
-9. **Revise antes de publicar.** Nada vai para o remoto sem revisão adversarial (skill `revisar-pr`) feita por quem não escreveu o código, e PR só é mesclado com o CI verde. O fluxo completo, com IDs de itens e definição de pronto, está em `docs/roadmap.md`.
+9. **Revise antes de publicar.** Nada vai para o remoto sem revisão adversarial (skill `revisar-pr`) feita por quem não escreveu o código, e PR só é mesclado com o CI verde. É um combinado entre as pessoas: o GitHub não o impõe neste plano (F-07 do roadmap). O fluxo completo, com IDs de itens e definição de pronto, está em `docs/roadmap.md`.
 
 ## 7. Skills do projeto
 
@@ -152,4 +153,4 @@ Ficam em `.claude/skills/` (o Claude Code lê direto; `.kiro/skills/` tem links 
 | `revisar-pr` | revisar PR (de pessoa ou de IA) antes do merge |
 | `performance-servidor` | mexer no tick, pathfinding, saves, ranking, schema, broadcast, bundle ou assets |
 
-Para criar uma skill nova: pasta com o nome em minúsculas e hífens, `SKILL.md` com `name` igual ao da pasta e `description` de até 1.024 caracteres dizendo quando usar. Registre-a nesta tabela e crie o link em `.kiro/skills/`: `ln -s ../../.claude/skills/NOME .kiro/skills/NOME`. Escreva só o que foi conferido neste repositório.
+Sem suporte a link simbólico (Windows sem modo desenvolvedor), copie as pastas para `.kiro/skills/`. Para criar uma skill nova: pasta com o nome em minúsculas e hífens, `SKILL.md` com `name` igual ao da pasta e `description` de até 1.024 caracteres dizendo quando usar. Registre-a nesta tabela e crie o link em `.kiro/skills/`: `ln -s ../../.claude/skills/NOME .kiro/skills/NOME`. Escreva só o que foi conferido neste repositório.

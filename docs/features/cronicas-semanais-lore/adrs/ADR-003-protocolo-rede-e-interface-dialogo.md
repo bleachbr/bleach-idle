@@ -26,7 +26,7 @@ Definiremos 3 mensagens principais:
 
 1. **`interact` (Cliente → Servidor):**
    - Payload: `{ kind: "npc", id: string }`
-   - O servidor verifica se o jogador está vivo, não congelado e a uma distância `<= INTERACT_RANGE` (2 tiles). Se estiver mais longe, calcula o caminho A* até o NPC e abre o diálogo na chegada.
+   - O servidor verifica se o jogador está vivo e a uma distância `<= INTERACT_RANGE` (2 tiles); "congelado" só entra com os status de M2. Valida o `id` com `Object.hasOwn` no catálogo. Se estiver mais longe, calcula o caminho (busca em largura) até o NPC e abre o diálogo na chegada.
 
 2. **`npc_dialog` (Servidor → Cliente):**
    - Payload:
@@ -47,8 +47,8 @@ Definiremos 3 mensagens principais:
    ```
 
 3. **`npc_action` (Cliente → Servidor):**
-   - Payload: `{ npcId: string, action: string, nextId?: string }`
-   - Disparado quando o jogador clica em um botão de ação ou opção de resposta do diálogo.
+   - Payload: `{ npcId: string, option: number }`, onde `option` é o **índice** da opção do nó atual.
+   - O servidor guarda o nó atual de cada jogador, aceita só índices inteiros dentro do nó e deriva a ação (`next`, `quest_accept`, `quest_claim`, `close`) do catálogo. O cliente nunca escolhe o próximo nó nem a ação, para não pular etapas (por exemplo, ir direto a `quest_claim`).
 
 ---
 

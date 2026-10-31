@@ -58,7 +58,7 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 
 | Item | Situação Atual | Impacto / Necessidade |
 | :--- | :--- | :--- |
-| **Migração Completa para Vitest** | O projeto possui 76 testes rápidos no Vitest e 31 scripts de integração em `server/scripts/test.ts`. | Consolidar os 31 cenários legados no Vitest para unificar a execução em um único runner padronizado. |
+| **Migração Completa para Vitest** | O projeto possui 83 testes rápidos no Vitest e 31 scripts de integração em `server/scripts/test.ts`. | Consolidar os 31 cenários legados no Vitest para unificar a execução em um único runner padronizado. |
 | **Testes de Interface (Playwright)** | O cliente Phaser 3 não possui testes de regressão visual ou de cliques automatizados. | Implementar testes E2E com Playwright para validar a tela de login, menus e HUD. |
 
 ---
@@ -69,14 +69,14 @@ Cada item foi reproduzido num servidor isolado (porta própria, banco temporári
 
 | ID | Item | Evidência | Prioridade | Correção proposta |
 | :-- | :--- | :--- | :--- | :--- |
-| S1 | **Modo Dev ligado por omissão.** `DEV_MODE` em `WorldRoom.ts` liga quando `NODE_ENV` não é `production` | Executado: servidor iniciado sem `NODE_ENV` respondeu à mensagem `dev` com "nível 300" e "+1.000.000 kan"; com `production`, o handler não existe. O `Dockerfile` define `production`; README e DEPLOY.md mandam `npm start` fora do Docker | Alta | Ligar só com `BI_DEV=1`. Exportar `BI_DEV=1` em `server/scripts/test.ts` (os cenários `dev` e `endgame` dependem do handler) |
+| S1 | **Modo Dev ligado por omissão.** `DEV_MODE` em `WorldRoom.ts` liga quando `NODE_ENV` não é `production` | Executado: servidor iniciado sem `NODE_ENV` respondeu à mensagem `dev` com "nível 300" e "+1.000.000 kan"; com `production`, o handler não existe. O `Dockerfile` define `production`; README e DEPLOY.md mandam `npm start` fora do Docker | Alta | Ligar só com `BI_DEV=1` (e `BI_DEBUG` só com `1`). Exportar `BI_DEV=1` em `server/scripts/test.ts` (os cenários `dev` e `endgame` dependem do handler). Mitigação imediata: `NODE_ENV=production npm start` ou `BI_DEV=0` |
 | S2 | **Chaves de protótipo aceitas.** `CHARS[m?.charId]` e outras buscas em objeto comum | Executado: `create` com `constructor`, `__proto__`, `toString` e `hasOwnProperty` cria personagem; entrar com ele falha; `shopBuy` lança `NOT NULL constraint failed: wallets.crystals`; `questAccept` com `constructor` aceita a missão "Object". Servidor segue vivo | Média | `Object.hasOwn` antes de indexar; teste de regressão por handler |
-| S3 | **Limite de login por IP é compartilhado atrás do proxy.** `auth.ts` usa o IP da conexão | Executado: 30 falhas de logins diferentes e o pedido seguinte de outra pessoa levou 429. Não testado com o Caddy; pelo código ele não repassa o IP real ao jogo | Média | Ler `X-Forwarded-For` só de proxy confiável |
+| S3 | **Limite de login por IP é compartilhado atrás do proxy.** `LobbyRoom.onAuth` (linha 34) lê o IP da conexão | Executado: 30 falhas de logins diferentes e o pedido seguinte de outra pessoa levou 429. Não testado com o Caddy: o `reverse_proxy` do Caddy 2 envia `X-Forwarded-For` por padrão (documentação do Caddy), e o jogo ignora o cabeçalho | Média | Ler `X-Forwarded-For` só de proxy confiável |
 | S4 | **Cristais por personagem, carteira por conta.** Diária e conquistas | Diária executada: 2 personagens da mesma conta, saldo 5 depois 10. Conquistas lidas no código. Limite de 5 personagens por conta | Decidido | **D-001 (31/10/2026): a trava fica por personagem.** Sem mudança de código; recompensa nova conta com até 5 personagens por conta |
-| S5 | **Dependência com advisory alto** (`nanoid`, via Colyseus 0.15) | `npm audit --omit=dev`: 1 alto e 2 moderados. O Colyseus chama `nanoid` com tamanho fixo nos pontos lidos | Baixa | Upgrade maior do Colyseus em PR próprio, com a bateria completa. Não usar `npm audit fix --force` |
+| S5 | **Dependência com advisory alto** (`nanoid`, via Colyseus 0.15) | `npm audit --omit=dev`: 1 alto e 2 moderados. O Colyseus chama `nanoid` com tamanho fixo nos pontos lidos | Baixa | Upgrade maior do Colyseus em PR próprio, com a bateria completa. Não usar `npm audit fix --force`. O alto (GHSA-xwg4-73v4-xw9w) só é explorável com `size` de 2^31 ou mais vindo do usuário |
 | S6 | **`createAccount` e `createChar` tratam qualquer exceção como "já existe"** | Lido em `db.ts` | Baixa | Capturar só a violação de `UNIQUE` |
 | S7 | **Sem CSP nem cabeçalhos de segurança**; sessão de 30 dias em `localStorage` | Nenhum cabeçalho em `http.ts`, `index.html` ou `deploy/Caddyfile` | Baixa | CSP no Caddy; manter o rigor de `escHtml` e `textContent` |
-| S8 | **`main` sem proteção de branch** | API do GitHub: `protected: false`. Não consegui ler Dependabot nem varredura de segredos | Média | Exigir CI verde e uma revisão antes do merge |
+| S8 | **`main` sem proteção de branch** | API do GitHub: `protected: false`; proteção de branch e rulesets respondem 403 ("Upgrade to GitHub Pro or make this repository public"). Não consegui ler Dependabot nem varredura de segredos | Média | Plano pago, repositório público, ou combinado escrito mais hook `pre-push` local (F-07) |
 | S9 | **Contêiner roda como root** | Executado: `id -un` devolveu `root` na imagem | Baixa | `USER node` no `Dockerfile`, com o volume `/data` acessível a ele |
 
 ## 8. Qualidade de testes e CI
@@ -88,7 +88,7 @@ Cada item foi reproduzido num servidor isolado (porta própria, banco temporári
 | Q3 | Ruído `colyseus.js: onMessage() not registered` na saída do Vitest | Visto em `npm test` | Baixa | Registrar os tipos no helper |
 | Q4 | CI sem `permissions` e com actions em tag móvel | Lido em `ci.yml` | Média | **Corrigido neste PR**: `contents: read`, SHAs fixados (v4.4.0) e `timeout-minutes: 25` |
 | Q5 | Actions em Node 20 (aviso do GitHub: serão forçadas ao Node 24) | Anotação do run do PR #2 | Baixa | Subir para checkout v7 e setup-node v7 em PR próprio e conferir o CI |
-| Q6 | `DEPLOY.md` diz que a imagem Docker nunca foi construída | Executado: ela constrói e responde 200 | Baixa | Atualizar o `DEPLOY.md`. Continua sem teste: HTTPS atrás do Caddy |
+| Q6 | `DEPLOY.md` diz que a imagem Docker nunca foi construída | Executado: ela constrói e responde 200 | Baixa | **Corrigido neste PR** (`DEPLOY.md`). Continua sem teste: HTTPS atrás do Caddy |
 | Q7 | Hooks de commit | Nenhum hook ativo em `.git/hooks` | Baixa | Opcional: rodar `gitleaks` antes de cada commit |
 
 ## 9. Desempenho
