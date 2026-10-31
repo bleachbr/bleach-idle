@@ -33,7 +33,7 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 | 3 | F-14 | Limite de criação de contas por IP | P | F-03 (feito) | não | |
 | 4 | F-05 | Contêiner roda como `node`, não root | P | — | não | Conferir permissão de `/data` |
 | 5 | F-06 | CSP e cabeçalhos de segurança no Caddy | P | — | não | |
-| 6 | F-08 | Métrica da duração do tick, aviso acima de 50 ms | P | — | não | Antes de qualquer trabalho de desempenho |
+| 6 | F-08 | Métrica da duração do tick, aviso acima de 50 ms | P | — | não | **Feito** (`feat/f-08-metrica-tick`) |
 | 7 | F-09 | Ranking sem bloquear o tick | M | F-08 | não | |
 | 8 | F-11 | CI: gitleaks, `ubuntu-24.04`, Node 22 e 24, actions v7 | M | — | não | |
 | 9 | F-15 | Balanceamento dos mapas avançados (`balance.ts`) | M | — | não | |

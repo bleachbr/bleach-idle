@@ -121,3 +121,10 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 ### Corrida no Registro de `onMessage` do Colyseus (`welcome` e `fx`)
 - `WorldRoom.onJoin` envia `welcome` imediatamente ao conectar e transmite `fx` a cada tick de combate, enquanto `GameScene.create()` só registra seus listeners depois que `GameScene.preload()` termina de baixar os sprites e mapas.
 - **Solução:** Registrar listeners iniciais de `welcome` e `fx` imediatamente após `client.joinOrCreate("world")` em `client/src/main.ts` antes do carregamento assíncrono do Phaser.
+
+---
+
+## 9. Telemetria do Tick sem Alocação (`F-08`)
+
+- Para medir o tick de `100 ms` sem introduzir pressão de Garbage Collector no próprio loop de simulação, `server/src/tickStats.ts` grava as últimas 100 amostras (10 s) num `Float64Array` estático em anel e só ordena a janela quando `/healthz` consulta `getTickStats()`.
+- Quando um tick ultrapassa `50 ms` (`WARN_TICK_MS`), `recordTick` incrementa `slowTicks` e emite aviso no console com intervalo mínimo de 5 s (`WARN_COOLDOWN_MS`) para evitar tempestade de logs sob pico contínuo.

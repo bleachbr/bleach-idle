@@ -25,6 +25,7 @@ import { MAPS, HOME, TEMPLE, SPAWNS, tileKey } from "./maps";
 import * as guilds from "./guilds";
 import * as market from "./market";
 import { flagOn } from "./flags";
+import { recordTick } from "./tickStats";
 
 const GUILD_COST = 500;
 /** Modo Dev (botão que libera tudo para testar): nasce DESLIGADO e só liga com BI_DEV=1 (`npm run dev` já define). */
@@ -86,7 +87,11 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.setState(new WorldState());
     SPAWNS.forEach((s, i) => { for (let k = 0; k < s.count; k++) this.spawnMonster(i); });
     this.restoreWorld();
-    this.setSimulationInterval(() => this.tick(), TICK_MS);
+    this.setSimulationInterval(() => {
+      const t0 = performance.now();
+      this.tick();
+      recordTick(performance.now() - t0);
+    }, TICK_MS);
     // save frequente e em transação: numa queda se perdem no máximo ~10 s
     this.clock.setInterval(() => this.saveAll(), 10_000);
     this.scheduleInvasion(Number(process.env.INVASION_FIRST_MS) || INVASION.firstMs);
