@@ -36,8 +36,6 @@ describe("E2E: segurança do servidor", () => {
     const { ticket } = await once<{ ticket: string }>(lobby, "ticket");
     await lobby.leave();
     const world = await client.join("world", { ticket });
-    // sem onMessage("*"): o curinga dispara no lugar do listener específico e o `once` nunca resolveria
-    for (const tipo of ["log", "tutorial", "chat", "account", "fx", "dailyReady", "season", "crystals", "death", "market"]) world.onMessage(tipo, () => {});
     // o servidor envia `quests` e `inv` ao entrar e a cada mudança: guarda sempre a última
     let missoes: { active: Record<string, number> } | undefined;
     let inv: { gold: number } | undefined;

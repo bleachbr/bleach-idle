@@ -68,37 +68,50 @@ describe("E2E: Lobby e World", () => {
   const randomLetters = (len = 4) =>
     Array.from({ length: len }, () => String.fromCharCode(97 + Math.floor(Math.random() * 26))).join("");
 
-  it("cria personagem, emite ticket e entra no mundo", async () => {
-    const client = new Client(url);
-    const login = `play_${Date.now().toString(36)}`;
-    const charName = `Hero ${randomLetters(5)}`;
+  it("cria personagem, emite ticket e entra no mundo sem avisos de onMessage não registrado (F-10)", async () => {
+    const warnSpy = vi.spyOn(console, "warn");
+    try {
+      const client = new Client(url);
+      const login = `play_${Date.now().toString(36)}`;
+      const charName = `Hero ${randomLetters(5)}`;
 
-    const lobby = await client.joinOrCreate("lobby", {
-      action: "register",
-      login,
-      password: "senha_valida_123",
-    });
+      const lobby = await client.joinOrCreate("lobby", {
+        action: "register",
+        login,
+        password: "senha_valida_123",
+      });
 
-    // Aguarda lista inicial de chars
-    await once<any[]>(lobby, "chars");
+      // Aguarda lista inicial de chars
+      await once<any[]>(lobby, "chars");
 
-    // Cria personagem
-    lobby.send("create", { name: charName, charId: "ichigo" });
-    const charsAfterCreate = await once<any[]>(lobby, "chars");
-    expect(charsAfterCreate.some((c) => c.name.toLowerCase() === charName.toLowerCase())).toBe(true);
+      // Cria personagem
+      lobby.send("create", { name: charName, charId: "ichigo" });
+      const charsAfterCreate = await once<any[]>(lobby, "chars");
+      expect(charsAfterCreate.some((c) => c.name.toLowerCase() === charName.toLowerCase())).toBe(true);
 
-    // Solicita ticket para jogar
-    lobby.send("play", { id: charName.toLowerCase() });
-    const { ticket } = await once<{ ticket: string }>(lobby, "ticket");
-    expect(ticket).toBeTypeOf("string");
+      // Solicita ticket para jogar
+      lobby.send("play", { id: charName.toLowerCase() });
+      const { ticket } = await once<{ ticket: string }>(lobby, "ticket");
+      expect(ticket).toBeTypeOf("string");
 
-    await lobby.leave();
+      await lobby.leave();
 
-    // Conecta no World usando o ticket emitido
-    const world = await client.join("world", { ticket });
-    expect(world.id).toBeTruthy();
+      // Conecta no World usando o ticket emitido
+      const world = await client.join("world", { ticket });
+      expect(world.id).toBeTruthy();
+      const pong = once(world, "time");
+      world.send("time");
+      await pong;
 
-    await world.leave();
+      const colyseusWarns = warnSpy.mock.calls
+        .map((args) => String(args[0] ?? ""))
+        .filter((msg) => msg.includes("colyseus.js: onMessage() not registered"));
+      expect(colyseusWarns).toEqual([]);
+
+      await world.leave();
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it("rejeita ingresso inválido no mundo", async () => {

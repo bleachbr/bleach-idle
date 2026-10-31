@@ -180,3 +180,8 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Solução (`shared/src/chronicles.ts`):**
   1. `weekNumber(now)` deriva a semana exclusivamente por aritmética inteira sobre o timestamp UTC relativo à âncora `CHRONICLE_EPOCH = Date.UTC(2026, 9, 26, 3, 0, 0)` (segunda-feira 00:00 BRT), garantindo que `weekNumber`, `weekIndex` e `currentWeekKey` virem no exato mesmo milissegundo em qualquer `TZ`.
   2. `syncChronicleProgress(prog, now)` (M1-05) compara `prog.chronicle?.activeWeekKey` com `currentWeekKey(now)` e reinicia `{ activeWeekKey, questKills: 0 }` (removendo `completedAt`) de forma preguiçosa ao interagir/salvar, sem precisar de cron jobs ou varreduras em lote no SQLite.
+
+## 18. Eliminação de Ruído `onMessage() not registered` no Colyseus Client em Testes E2E (F-10 / Q3)
+
+- **Causa raiz:** `LobbyRoom.onJoin` e `WorldRoom.onJoin` enviam mensagens imediatamente na conexão (`account`, `chars`, `welcome`, `inv`, `quests`, `tutorial`, `guild`, `dailyReady`, `season`). Se os handlers forem registrados somente depois do `await client.join(...)`, os frames iniciais já chegaram no WebSocket e o `colyseus.js` imprime `console.warn("colyseus.js: onMessage() not registered for type ...")`.
+- **Solução (`server/test/helpers/testServer.ts`):** Interceptamos `Client.prototype.createRoom` no helper de testes para registrar handlers `noop` em `KNOWN_ROOM_MESSAGES` no exato momento em que a instância de `Room` é criada (antes de abrir o WebSocket), e atualizamos `once(room, type)` para desregistrar seu callback ao resolver. Como `room.onMessageHandlers` é um `EventEmitter`, os listeners específicos de cada teste continuam recebendo todas as mensagens normalmente e a suíte Vitest roda com zero avisos espúrios.
