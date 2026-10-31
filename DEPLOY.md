@@ -71,5 +71,5 @@ NODE_ENV=production npm start   # abre em http://localhost:2567
 ## Antes de abrir para o público (não é obrigatório para testar com amigos)
 - **Senha:** recuperação por e-mail (hoje não existe).
 - **Abuso:** moderação de chat (silenciar, banir). O limite de criação de contas por IP (`REGISTER_MAX_IP`, 5/h) já está ativo.
-- **Jogo:** balanceamento dos mapas mais avançados.
+- **Jogo:** balanceamento dos mapas até o nível 150 (`lasnoches`, `falsa`, `wandenreich`) calibrado e validado via `server/scripts/balance.ts` e `server/test/balance-progression.test.ts`.
 - **Direitos:** sem monetização, o risco de direitos autorais (Bleach é da Shueisha) é baixo; com monetização, espere pedidos de remoção.

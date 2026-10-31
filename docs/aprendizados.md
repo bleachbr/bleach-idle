@@ -111,6 +111,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Compartilhar o mesmo contador `ip:` (30 tentativas / 1 min) entre senhas erradas e criação de contas (`register`) permitia criar até 30 contas por minuto pelo mesmo IP e fazia com que cadastros bloqueassem logins de contas existentes na mesma rede (e vice-versa).
 - **Solução:** Balde próprio `reg:<ip>` com janela de 1 hora (`3_600_000 ms`) e limite configurável via `REGISTER_MAX_IP` (padrão `5`), verificado em `LobbyRoom.onAuth` antes do `hashPassword` (poupando CPU de `scrypt` sob abuso) e com relógio injetável (`now`) para testes determinísticos.
 
+### Curva de Progressão e Balanceamento entre Hueco Mundo, Las Noches, Karakura Falsa e Wandenreich (`F-15`)
+- Quando `falsa` (nível 60+) e `wandenreich` (nível 95+) foram adicionados após `lasnoches` (nível 45+), os monstros de Las Noches (`arrancar_numeros`, `exequias`, `fraccion`) permaneceram com atributos de fim de jogo (`hp: 2300..4300, atk: 60..78, def: 17..24`), superiores aos da Karakura Falsa (`fraccion_espada` com `hp: 2600, atk: 56, def: 18`), além de `balance.ts` ignorar o `minLevel` dos mapas em `TRAVEL` e parar no nível 60.
+- Isso fazia a curva ótima de caça pular completamente `arrancar` (em Hueco Mundo) e todos os monstros de Las Noches (`exequias`, `fraccion`).
+- **Solução:** Recalibramos `adjuchas`, `arrancar`, `arrancar_numeros`, `exequias`, `fraccion` e `privaron` em `shared/src/data.ts` para formar uma escada estritamente crescente em `hp`, `atk`, `def`, `exp` e `exp/hp` do nível 25 ao 150, atualizamos `server/scripts/balance.ts` para respeitar `MAP_MIN_LEVEL` até o nível 150 e blindamos a curva com `server/test/balance-progression.test.ts`.
+
 ---
 
 ## 8. Jogador-IA (Cradle) e Correções de UX/Motor (`F-16`)
