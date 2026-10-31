@@ -1,5 +1,6 @@
 // Passe de temporada (pontos, prêmios, cosmético exclusivo) e chefe mundial (prêmio para quem acertou).
-import { expForLevel, nearestWalkable, SEASON, SEASON_PTS, seasonId } from "../../shared/src";
+// Eventos narrados (R-12): o chefe mundial manda uma linha de lore no chat e um banner (`event`) a todos.
+import { expForLevel, nearestWalkable, SEASON, SEASON_PTS, seasonId, WORLD_BOSS, EVENT_LORE, type EventBanner } from "../../shared/src";
 import { HOME } from "../src/maps";
 import { play, patchSave, sleep, ok, done } from "./lib";
 
@@ -7,11 +8,14 @@ const until = async (f: () => unknown, ms = 8000) => { for (let t = 0; t < ms &&
 
 const logs: string[] = [];
 const chat: string[] = [];
+const lore: string[] = [];
+const events: EventBanner[] = [];
 let season: any = null, shop: any = null, inv: any = null;
 const room = await play("Temp Tina", "ichigo", (id) => patchSave(id, { map: "karakura", ...nearestWalkable(HOME, 38, 8), level: 60, exp: expForLevel(60), hp: 9999, rei: 9999, gold: 0 }),
   (r) => {
     r.onMessage("log", (m) => logs.push(m.text));
-    r.onMessage("chat", (m) => chat.push(m.text));
+    r.onMessage("chat", (m) => { chat.push(m.text); if (m.ch === "lore") lore.push(m.text); });
+    r.onMessage("event", (m) => events.push(m));
     r.onMessage("season", (m) => (season = m));
     r.onMessage("shopData", (m) => (shop = m));
     r.onMessage("inv", (m) => (inv = m));
@@ -38,8 +42,12 @@ room.send("daily");
 ok(`recompensa diária soma ${SEASON_PTS.daily} pontos`, await until(() => season.pts === before + SEASON_PTS.daily));
 
 // chefe mundial (no teste ele tem pouca vida)
+const t0 = Date.now();
 room.send("debugWorldBoss");
 ok("o chefe mundial aparece e avisa todo mundo", await until(() => chat.some((t) => t.includes("Menos Ancião apareceu"))));
+ok("o chat narra a chegada com uma linha de lore", await until(() => lore.some((t) => EVENT_LORE.bossSpawn.includes(t))));
+ok("o banner do chefe vale até ele ir embora", await until(() => events.some((e) =>
+  e.kind === "worldBoss" && e.phase === "bossSpawn" && e.until >= t0 + WORLD_BOSS.durationMs - 1000)));
 const boss = () => [...room.state.monsters.values()].find((m: any) => m.kind === "menos_anciao");
 ok("ele está no mapa", !!boss());
 const pts = season.pts;
@@ -48,6 +56,8 @@ room.send("target", { id: boss()?.id });
 ok("derrotar o chefe dá prêmio a quem acertou", await until(() => logs.some((l) => l.includes("Chefe mundial derrotado")), 60000));
 ok(`e ${SEASON_PTS.worldBoss} pontos de passe`, await until(() => season.pts >= pts + SEASON_PTS.worldBoss));
 ok("anuncia quem deu o golpe final", await until(() => chat.some((t) => t.includes("deu o golpe final"))));
+ok("o chat narra a queda do chefe", await until(() => lore.some((t) => EVENT_LORE.bossKilled.includes(t))));
+ok("o banner troca para a vitória", await until(() => events.some((e) => e.kind === "worldBoss" && e.phase === "bossKilled")));
 room.send("auto", { autoTarget: false, autoHunt: false });
 await room.leave();
 done();

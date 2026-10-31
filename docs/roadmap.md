@@ -26,7 +26,7 @@ A divisão do trabalho entre Waldir e Rafael está em [`roadmap-duplas.md`](road
 - **Progressão de longo prazo:** renascimento com bônus permanente, marcos de nível, bestiário em 3 estágios, 21 conquistas, 23 missões do Kisuke, missões diárias e recompensa diária de 7 dias.
 - **Economia:** 45 itens (26 de equipamento), 7 espaços de equipamento, conjuntos com bônus, forja até +10, 32 cosméticos na Loja de Cristais e mercado entre jogadores com anúncios de 7 dias.
 - **Automação:** Auto Helper (alvo, caçada, cura, treino, venda), caçada offline de até 12 horas que sobrevive a reinício do servidor.
-- **Eventos:** passe de temporada mensal grátis, chefe mundial a cada 2 h, invasões de Hollows a cada 3 h e XP em dobro aos sábados e domingos (Brasília).
+- **Eventos:** passe de temporada mensal grátis, chefe mundial a cada 2 h, invasões de Hollows a cada 3 h (as duas com lore no chat e banner no topo da tela, R-12) e XP em dobro aos sábados e domingos (Brasília).
 - **Qualidade:** 83 testes Vitest e 31 cenários de integração no CI, cinco skills de projeto e uma [linha de base medida](baseline.md).
 
 ## Ordem de execução
@@ -132,6 +132,14 @@ Todos `Precisa de spec`, e depois de F-12. **M4-01** salas instanciadas para a p
 ## M5: Contas e infraestrutura
 
 Todos `Precisa de spec`. **M5-01** recuperação de senha por e-mail com token assinado; **M5-02** limite de tentativas persistente (SQLite ou Redis, se houver mais de um processo); **M5-03** testes de ponta a ponta no navegador com Playwright; **M5-04** partição do mundo por mapa para centenas de jogadores (hoje um processo só; limites medidos em [`baseline.md`](baseline.md)).
+
+## Itens das filas em dupla (R-## e W-##)
+
+Descrição, ordem e dependências em [`roadmap-duplas.md`](roadmap-duplas.md). Aqui entra o status de cada item quando alguém o pega.
+
+| ID | Entrega | Tam. | Depende de | Status |
+| :-- | :--- | :-- | :--- | :--- |
+| R-12 | Eventos narrados: linha de lore no chat (canal `lore`) e banner no topo da tela durante a invasão de Hollows e o chefe mundial (`shared/src/events.ts`) | P | | Feito |
 
 ## Sem marco
 
