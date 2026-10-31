@@ -32,7 +32,7 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 | 2 | F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | — | não | **Feito** (`fix/f-04-unique-db`) |
 | 3 | F-14 | Limite de criação de contas por IP | P | F-03 (feito) | não | **Feito** (`feat/f-14-limite-contas-ip`) |
 | 4 | F-05 | Contêiner roda como `node`, não root | P | — | não | **Feito** (`fix/f-05-docker-user-node`) |
-| 5 | F-06 | CSP e cabeçalhos de segurança no Caddy | P | — | não | |
+| 5 | F-06 | CSP e cabeçalhos de segurança no Caddy | P | — | não | **Feito** (`feat/f-06-caddy-csp-headers`) |
 | 6 | F-08 | Métrica da duração do tick, aviso acima de 50 ms | P | — | não | **Feito** (`feat/f-08-metrica-tick`) |
 | 7 | F-09 | Ranking sem bloquear o tick | M | F-08 | não | **Feito** (`perf/f-09-ranking-incremental`) |
 | 8 | F-11 | CI: gitleaks, `ubuntu-24.04`, Node 22 e 24, actions v7 | M | — | não | |

@@ -116,6 +116,10 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Além disso, executar `chown -R node:node /app` num `RUN` separado após `COPY` duplica todas as camadas copiadas (incluindo `node_modules`) no OverlayFS.
 - **Solução:** Usar `COPY --chown=node:node --from=build ...` no estágio final, seguido de `RUN mkdir -p /data/backups && chown -R node:node /data && chown node:node /app` **antes** de `VOLUME /data` e `USER node`.
 
+### Cabeçalhos CSP e `X-Content-Type-Options: nosniff` com Assets `.webp`/`.jpg` (`F-06`)
+- Ao ativar `X-Content-Type-Options: nosniff` em `deploy/Caddyfile` e `server/src/http.ts`, qualquer extensão ausente no mapa `TYPES` do servidor HTTP nativo cai em `application/octet-stream`, fazendo navegadores estritos recusarem imagens com MIME incompatível.
+- Como o cliente usa `login_bg.jpg` e sprites/tiles HD em `.webp`, além de texturas `blob:`/`data:` geradas pelo Phaser 3, adicionamos `.jpg`/`.jpeg` (`image/jpeg`) e `.webp` (`image/webp`) em `TYPES` e configuramos `Content-Security-Policy` restritiva (`script-src 'self'; object-src 'none'; frame-ancestors 'none'`) permitindo `img-src`/`media-src` `'self' data: blob:` e `connect-src 'self' ws: wss:`.
+
 ---
 
 ## 8. Jogador-IA (Cradle) e Correções de UX/Motor (`F-16`)
