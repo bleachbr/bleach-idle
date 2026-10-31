@@ -120,6 +120,10 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Ao ativar `X-Content-Type-Options: nosniff` em `deploy/Caddyfile` e `server/src/http.ts`, qualquer extensão ausente no mapa `TYPES` do servidor HTTP nativo cai em `application/octet-stream`, fazendo navegadores estritos recusarem imagens com MIME incompatível.
 - Como o cliente usa `login_bg.jpg` e sprites/tiles HD em `.webp`, além de texturas `blob:`/`data:` geradas pelo Phaser 3, adicionamos `.jpg`/`.jpeg` (`image/jpeg`) e `.webp` (`image/webp`) em `TYPES` e configuramos `Content-Security-Policy` restritiva (`script-src 'self'; object-src 'none'; frame-ancestors 'none'`) permitindo `img-src`/`media-src` `'self' data: blob:` e `connect-src 'self' ws: wss:`.
 
+### Endurecimento do CI: Actions v7 por SHA, `ubuntu-24.04`, Matriz Node 22/24 e Gitleaks por SHA-256 (`F-11`)
+- Em vez de usar actions de terceiros para o Gitleaks (que ampliam a superfície de supply-chain), o job `gitleaks` em `.github/workflows/ci.yml` baixa diretamente o tarball oficial `gitleaks_8.30.1_linux_x64.tar.gz`, valida o hash SHA-256 (`551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb`) via `sha256sum -c` e executa `gitleaks git --redact -c .gitleaks.toml .` sobre `fetch-depth: 0`.
+- O runner foi fixado em `ubuntu-24.04`, `actions/checkout` (`v7.0.1`) e `actions/setup-node` (`v7.1.0`) foram atualizadas com SHA de 40 caracteres e o job `test` passou a rodar em matriz `["22.x", "24.x"]` (cobrindo tanto o ambiente de dev quanto a versão do `Dockerfile`).
+
 ---
 
 ## 8. Jogador-IA (Cradle) e Correções de UX/Motor (`F-16`)

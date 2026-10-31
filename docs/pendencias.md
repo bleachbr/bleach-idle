@@ -90,12 +90,12 @@ Cada item foi reproduzido num servidor isolado (porta própria, banco temporári
 | Q2 | `sleep` fixo nos testes | 0 chamadas no Vitest (3 trocadas por `vi.waitFor` em F-16) e 213 nos cenários | Média | Trocar por `vi.waitFor` ou `once` ao mexer em cada cenário (skill `testes-deterministicos`) |
 | Q3 | Ruído `colyseus.js: onMessage() not registered` na saída do Vitest | Visto em `npm test` | Baixa | Registrar os tipos no helper |
 | Q4 | CI sem `permissions` e com actions em tag móvel | Lido em `ci.yml` | Média | **Corrigido neste PR**: `contents: read`, SHAs fixados (v4.4.0) e `timeout-minutes: 25` |
-| Q5 | Actions em Node 20 (aviso do GitHub: serão forçadas ao Node 24) | Anotação do run do PR #2 | Baixa | Subir para checkout v7 e setup-node v7 em PR próprio e conferir o CI |
+| Q5 | Actions em Node 20 (aviso do GitHub: serão forçadas ao Node 24) | Anotação do run do PR #2 | Corrigido | **Corrigido em `ci/f-11-ci-gitleaks-matrix`.** `actions/checkout` v7.0.1 (`3d3c42e5...`) e `actions/setup-node` v7.1.0 (`949feb24...`) fixadas por SHA |
 | Q6 | `DEPLOY.md` diz que a imagem Docker nunca foi construída | Executado: ela constrói e responde 200 | Baixa | **Corrigido neste PR** (`DEPLOY.md`). Continua sem teste: HTTPS atrás do Caddy |
 | Q7 | Hooks de commit | Nenhum hook ativo em `.git/hooks` | Baixa | Opcional: rodar `gitleaks` antes de cada commit |
-| Q8 | CI sem varredura de segredos (`gitleaks` só roda se alguém lembrar) | Lido em `ci.yml` | Média | F-11: job de gitleaks com binário fixado e verificado por hash |
-| Q9 | `ubuntu-latest` migra para o Ubuntu 26 (aviso do GitHub no run do PR #2) | Anotação do run 41209911669 | Baixa | F-11: fixar `ubuntu-24.04` |
-| Q10 | CI testa Node 22 e o `Dockerfile` roda Node 24 | `ci.yml` e `Dockerfile`; typecheck, Vitest e a bateria completa passam nos dois (medido) | Baixa | F-11: matriz com os dois |
+| Q8 | CI sem varredura de segredos (`gitleaks` só roda se alguém lembrar) | Lido em `ci.yml` | Corrigido | **Corrigido em `ci/f-11-ci-gitleaks-matrix`.** Job `gitleaks` com `fetch-depth: 0` e binário `v8.30.1` verificado por SHA-256 (`551f6fc8...`) |
+| Q9 | `ubuntu-latest` migra para o Ubuntu 26 (aviso do GitHub no run do PR #2) | Anotação do run 41209911669 | Corrigido | **Corrigido em `ci/f-11-ci-gitleaks-matrix`.** `runs-on: ubuntu-24.04` fixado em todos os jobs |
+| Q10 | CI testa Node 22 e o `Dockerfile` roda Node 24 | `ci.yml` e `Dockerfile`; typecheck, Vitest e a bateria completa passam nos dois (medido) | Corrigido | **Corrigido em `ci/f-11-ci-gitleaks-matrix`.** Matriz `node-version: ["22.x", "24.x"]` com `fail-fast: false` |
 
 ## 9. Desempenho
 
