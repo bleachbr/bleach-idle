@@ -62,7 +62,7 @@ npm start          # abre em http://localhost:2567
 ```
 
 ## O que ainda não foi testado
-- **A imagem Docker não foi construída aqui:** o Docker não está instalado nesta máquina. O modo de produção sem Docker (`npm run build` + `npm start`) foi testado: página, mapas, manifesto, `/healthz`, backup e proteção contra caminhos com `..`.
+- **A imagem Docker foi construída e testada em 31/10/2026:** ela constrói (675 MB) e, num contêiner descartável, `/healthz`, a página, um mapa e o manifesto respondem 200. Roda como root (F-05 do [roadmap](docs/roadmap.md)). O `docker compose` completo, com o Caddy, continua sem teste. O modo de produção sem Docker (`npm run build` + `npm start`) também foi testado: página, mapas, manifesto, `/healthz`, backup e proteção contra caminhos com `..`.
 - **Nunca rodou atrás de HTTPS de verdade:** o Caddy segue a configuração padrão dele, mas só vai ser exercitado no primeiro deploy.
 
 ## Antes de abrir para o público (não é obrigatório para testar com amigos)

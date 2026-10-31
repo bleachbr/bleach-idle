@@ -42,7 +42,7 @@ bleach-idle/
 ├── .gitleaks.toml             # Configuração da varredura de segredos
 ├── vitest.config.ts           # Configuração de testes automatizados Vitest
 ├── docs/                      # Documentação técnica e de produto
-│   ├── roadmap.md             # Visão de futuro, marcos e próximas features
+│   ├── roadmap.md             # Roadmap centralizado: IDs, ordem, dependências, status e fluxo de trabalho
 │   ├── aprendizados.md        # Lições técnicas aprendidas no projeto
 │   ├── baseline.md            # Linha de base medida de qualidade e desempenho
 │   └── pendencias.md          # Débitos técnicos e pendências registradas
@@ -138,6 +138,7 @@ O projeto cresce com código escrito por pessoas e por agentes. Estas regras man
 6. **Conserto de passagem vai em commit separado.** Teste quebrado ou erro achado no caminho é corrigido, mas fora do commit da tarefa.
 7. **Pare e pergunte** quando a mudança: apagar dados, `.sqlite` ou backups; reescrever histórico; mexer em permissão ou segredo; subir major de dependência (por exemplo Colyseus); regenerar mapas editados no Tiled; ou publicar algo (push, PR, deploy).
 8. **Segredos nunca entram** em código, log, commit, mensagem de PR ou resposta. Não abra `.env` nem arquivos `.sqlite`.
+9. **Revise antes de publicar.** Nada vai para o remoto sem revisão adversarial (skill `revisar-pr`) feita por quem não escreveu o código, e PR só é mesclado com o CI verde. O fluxo completo, com IDs de itens e definição de pronto, está em `docs/roadmap.md`.
 
 ## 7. Skills do projeto
 
