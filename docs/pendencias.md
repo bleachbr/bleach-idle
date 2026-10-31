@@ -60,3 +60,45 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 | :--- | :--- | :--- |
 | **Migração Completa para Vitest** | O projeto possui 76 testes rápidos no Vitest e 31 scripts de integração em `server/scripts/test.ts`. | Consolidar os 31 cenários legados no Vitest para unificar a execução em um único runner padronizado. |
 | **Testes de Interface (Playwright)** | O cliente Phaser 3 não possui testes de regressão visual ou de cliques automatizados. | Implementar testes E2E com Playwright para validar a tela de login, menus e HUD. |
+
+---
+
+## 7. Segurança e integridade (verificado em 31/10/2026)
+
+Cada item foi reproduzido num servidor isolado (porta própria, banco temporário) ou lido no código, como indicado. Nenhum foi corrigido neste PR: são mudanças em código de produção, que merecem PR próprio (`fix/seguranca-servidor`). Checklist de revisão: skill `seguranca-servidor`.
+
+| ID | Item | Evidência | Prioridade | Correção proposta |
+| :-- | :--- | :--- | :--- | :--- |
+| S1 | **Modo Dev ligado por omissão.** `DEV_MODE` em `WorldRoom.ts` liga quando `NODE_ENV` não é `production` | Executado: servidor iniciado sem `NODE_ENV` respondeu à mensagem `dev` com "nível 300" e "+1.000.000 kan"; com `production`, o handler não existe. O `Dockerfile` define `production`; README e DEPLOY.md mandam `npm start` fora do Docker | Alta | Ligar só com `BI_DEV=1`. Exportar `BI_DEV=1` em `server/scripts/test.ts` (os cenários `dev` e `endgame` dependem do handler) |
+| S2 | **Chaves de protótipo aceitas.** `CHARS[m?.charId]` e outras buscas em objeto comum | Executado: `create` com `constructor`, `__proto__`, `toString` e `hasOwnProperty` cria personagem; entrar com ele falha; `shopBuy` lança `NOT NULL constraint failed: wallets.crystals`; `questAccept` com `constructor` aceita a missão "Object". Servidor segue vivo | Média | `Object.hasOwn` antes de indexar; teste de regressão por handler |
+| S3 | **Limite de login por IP é compartilhado atrás do proxy.** `auth.ts` usa o IP da conexão | Executado: 30 falhas de logins diferentes e o pedido seguinte de outra pessoa levou 429. Não testado com o Caddy; pelo código ele não repassa o IP real ao jogo | Média | Ler `X-Forwarded-For` só de proxy confiável |
+| S4 | **Cristais por personagem, carteira por conta.** Diária e conquistas | Diária executada: 2 personagens da mesma conta, saldo 5 depois 10. Conquistas lidas no código. Limite de 5 personagens por conta | Decisão de design | Travar por conta ou aceitar o multiplicador (afeta as Crônicas Semanais) |
+| S5 | **Dependência com advisory alto** (`nanoid`, via Colyseus 0.15) | `npm audit --omit=dev`: 1 alto e 2 moderados. O Colyseus chama `nanoid` com tamanho fixo nos pontos lidos | Baixa | Upgrade maior do Colyseus em PR próprio, com a bateria completa. Não usar `npm audit fix --force` |
+| S6 | **`createAccount` e `createChar` tratam qualquer exceção como "já existe"** | Lido em `db.ts` | Baixa | Capturar só a violação de `UNIQUE` |
+| S7 | **Sem CSP nem cabeçalhos de segurança**; sessão de 30 dias em `localStorage` | Nenhum cabeçalho em `http.ts`, `index.html` ou `deploy/Caddyfile` | Baixa | CSP no Caddy; manter o rigor de `escHtml` e `textContent` |
+| S8 | **`main` sem proteção de branch** | API do GitHub: `protected: false`. Não consegui ler Dependabot nem varredura de segredos | Média | Exigir CI verde e uma revisão antes do merge |
+| S9 | **Contêiner roda como root** | Executado: `id -un` devolveu `root` na imagem | Baixa | `USER node` no `Dockerfile`, com o volume `/data` acessível a ele |
+
+## 8. Qualidade de testes e CI
+
+| ID | Item | Evidência | Prioridade | Situação |
+| :-- | :--- | :--- | :--- | :--- |
+| Q1 | Cenários `social` e `rebirth` falham aos sábados e domingos | CI do PR #2 (run 41209911669) e execução local em 31/10/2026: XP 66 em vez de 33 e 132 em vez de 66, por causa de `xpWeekend` | Alta | **Corrigido neste PR** (commit `test:`); 29 verificações dos dois cenários passam num sábado |
+| Q2 | `sleep` fixo nos testes | 3 chamadas no Vitest e 213 nos cenários | Média | Trocar por `vi.waitFor` ou `once` ao mexer em cada teste (skill `testes-deterministicos`) |
+| Q3 | Ruído `colyseus.js: onMessage() not registered` na saída do Vitest | Visto em `npm test` | Baixa | Registrar os tipos no helper |
+| Q4 | CI sem `permissions` e com actions em tag móvel | Lido em `ci.yml` | Média | **Corrigido neste PR**: `contents: read`, SHAs fixados (v4.4.0) e `timeout-minutes: 25` |
+| Q5 | Actions em Node 20 (aviso do GitHub: serão forçadas ao Node 24) | Anotação do run do PR #2 | Baixa | Subir para checkout v7 e setup-node v7 em PR próprio e conferir o CI |
+| Q6 | `DEPLOY.md` diz que a imagem Docker nunca foi construída | Executado: ela constrói e responde 200 | Baixa | Atualizar o `DEPLOY.md`. Continua sem teste: HTTPS atrás do Caddy |
+| Q7 | Hooks de commit | Nenhum hook ativo em `.git/hooks` | Baixa | Opcional: rodar `gitleaks` antes de cada commit |
+
+## 9. Desempenho
+
+Números e método em [`baseline.md`](baseline.md). Skill: `performance-servidor`.
+
+| ID | Item | Evidência | Prioridade |
+| :-- | :--- | :--- | :--- |
+| P1 | Reconstrução do ranking bloqueia o tick | `db.allChars()` com 1.000 personagens: p50 26 ms, p99 57 ms (tick de 100 ms) | Média, cresce com a base |
+| P2 | Salvamento em lote é síncrono | `saveMany` de 200 saves: p50 5,5 ms, p99 17,5 ms, a cada 10 s | Baixa hoje |
+| P3 | Não há métrica da duração do tick | Nenhuma ocorrência no código | Média: sem ela, as demais são estimativas |
+| P4 | Schema sem filtro e `broadcast` global | 31 `broadcast` no `WorldRoom`; estado de todos os mapas vai a todos os clientes | Média, cresce com o número de jogadores |
+| P5 | Um único JavaScript de 1,67 MB | Build do Vite avisa acima de 500 kB | Baixa |
