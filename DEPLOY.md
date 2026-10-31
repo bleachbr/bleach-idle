@@ -38,7 +38,7 @@ Tudo o que o código precisa para ir ao ar já está pronto. O que falta é **co
 curl -fsSL https://get.docker.com | sh
 
 # 2. baixar o jogo (repositório privado: use um token ou chave de deploy do GitHub)
-git clone https://github.com/rafael2267/bleach-idle.git && cd bleach-idle
+git clone https://github.com/bleachbr/bleach-idle.git && cd bleach-idle
 
 # 3. apontar o domínio para o IP do servidor (no DuckDNS ou no seu provedor) e subir
 DOMINIO=seu-dominio.duckdns.org docker compose up -d --build
