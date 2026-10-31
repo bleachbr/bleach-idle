@@ -131,7 +131,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const p = this.me(c);
       if (!p) return;
       const list = [...this.state.monsters.values()]
-        .filter((mo) => sameMap(p, mo) && (!mo.owner || mo.owner === p.id) && chebyshev(p.x, p.y, mo.x, mo.y) <= VIEW)
+        .filter((mo) => sameMap(p, mo) && (!mo.owner || mo.owner === p.id) && !MONSTERS[mo.kind]?.dummy && chebyshev(p.x, p.y, mo.x, mo.y) <= VIEW)
         .sort((a, b) => chebyshev(p.x, p.y, a.x, a.y) - chebyshev(p.x, p.y, b.x, b.y));
       if (!list.length) return;
       const i = list.findIndex((mo) => mo.id === p.targetId);

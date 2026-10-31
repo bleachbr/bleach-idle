@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { Client, type Room } from "colyseus.js";
-import { startTestServer, stopTestServer, once, sleep } from "./helpers/testServer";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { Client } from "colyseus.js";
+import { startTestServer, stopTestServer, once } from "./helpers/testServer";
 
 describe("E2E: Lobby e World", () => {
   let url: string;
@@ -137,10 +137,8 @@ describe("E2E: Lobby e World", () => {
     // Segunda conexão no mundo para o mesmo personagem
     const world2 = await client.join("world", { ticket: t2 });
 
-    await sleep(200);
-
-    // A primeira janela deve ter caído com código 4001
-    expect(leaveCode).toBe(4001);
+    // A primeira janela deve cair com código 4001
+    await vi.waitFor(() => expect(leaveCode).toBe(4001), { timeout: 5000, interval: 25 });
 
     await world2.leave();
   });

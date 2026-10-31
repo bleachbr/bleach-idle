@@ -13,6 +13,8 @@ export interface SpriteDef {
   frame: number;
   /** quadros de andar por direção: 4 (padrão) ou 8 (ciclo completo, art/walk8.py) */
   cols?: number;
+  /** sem folha em client/public/assets/sprites_hd/ (ex.: boneco de treino estático) */
+  noHd?: boolean;
 }
 export const SPRITES: Record<string, SpriteDef> = {
   ichigo_shikai: { frame: 48, cols: 8 },
@@ -23,7 +25,7 @@ export const SPRITES: Record<string, SpriteDef> = {
   adjuchas: { frame: 96, cols: 8 },
   gillian: { frame: 96, cols: 8 },
   arrancar: { frame: 48, cols: 8 },
-  boneco: { frame: 48 },
+  boneco: { frame: 48, noHd: true },
   fishbone: { frame: 96, cols: 8 },
   rukia_bankai: { frame: 48, cols: 8 },
   renji_bankai: { frame: 48, cols: 8 },

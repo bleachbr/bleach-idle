@@ -101,3 +101,23 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 ### Identificação de IP Atrás de Proxy Reverso
 - Tentar inferir "endereço privado" para confiar em `X-Forwarded-For` é falho em redes NAT, CGNAT (`100.64.0.0/10`) e em contêineres Docker bridge.
 - **Solução:** Uso explícito de `net.BlockList` com os CIDRs dos proxies confiáveis configurados pelo operador via `TRUST_PROXY` (ex.: `172.28.0.0/24` no Docker Compose). Conexões vindas de fora da lista nunca têm seu cabeçalho `X-Forwarded-For` considerado, impedindo IP spoofing.
+
+---
+
+## 8. Jogador-IA (Cradle) e Correções de UX/Motor (`F-16`)
+
+### Fallback SPA do Vite e Sprites sem Versão HD (`hd:boneco`)
+- Em servidores SPA (como o Vite em desenvolvimento), requisições para arquivos inexistentes (ex.: `/assets/sprites_hd/boneco.webp`) retornam `200 OK` com o HTML do `index.html` em vez de `404`. O carregador de spritesheets do Phaser tenta decodificar o HTML como imagem e emite erro no console (`Failed to process file: ... spritesheet hd:boneco`).
+- **Solução:** Adicionada a flag `noHd?: boolean` em `SpriteDef` (`shared/src/data.ts`), ignorada pelo `setHd` do `GameScene.ts` e validada por teste automatizado em `shared/test/items.test.ts` (que garante que todo `SPRITES` sem `noHd` possui arquivo `.webp` físico em `client/public/assets/sprites_hd`).
+
+### Alvo Manual (`Tab` / `nextTarget`) vs. Bonecos de Treino (`dummy`)
+- Enquanto `nearestMonster` (usado pelo Auto Alvo) filtrava monstros com `MONSTERS[m.kind].dummy`, o handler `nextTarget` (tecla `Tab`) selecionava qualquer monstro vivo no alcance `VIEW`, fazendo jogadores na base da Soul Society travarem o foco nos bonecos de treino em vez dos Hollows reais.
+- **Solução:** Filtrar `!MONSTERS[mo.kind]?.dummy` também em `nextTarget` (`server/src/WorldRoom.ts`), mantendo o ataque ao boneco exclusivo para clique direto ou Auto Treino.
+
+### Sobreposição de Janelas Flutuantes (`z-index: 15`) e Tecla `Escape`
+- As janelas `#ranking`, `#book`, `#pass`, `#dev`, `#shop` e `#modal` compartilhavam a mesma região da tela (`top: 22px`, `z-index: 15`). Abrir uma sem fechar as anteriores empilhava painéis e bloqueava cliques nos botões de fechar (`✕`) das janelas de baixo; além disso, a tecla `Escape` fechava apenas `#modal`.
+- **Solução:** Função central `closeWindows(keep?)` em `client/src/main.ts` que fecha todas as janelas flutuantes concorrentes ao abrir uma nova, alternância (toggle) ao clicar novamente no mesmo botão do topo e fechamento unificado no `Escape`.
+
+### Corrida no Registro de `onMessage` do Colyseus (`welcome` e `fx`)
+- `WorldRoom.onJoin` envia `welcome` imediatamente ao conectar e transmite `fx` a cada tick de combate, enquanto `GameScene.create()` só registra seus listeners depois que `GameScene.preload()` termina de baixar os sprites e mapas.
+- **Solução:** Registrar listeners iniciais de `welcome` e `fx` imediatamente após `client.joinOrCreate("world")` em `client/src/main.ts` antes do carregamento assíncrono do Phaser.

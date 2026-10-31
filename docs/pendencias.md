@@ -87,7 +87,7 @@ Cada item foi reproduzido num servidor isolado (porta própria, banco temporári
 | ID | Item | Evidência | Prioridade | Situação |
 | :-- | :--- | :--- | :--- | :--- |
 | Q1 | Cenários `social` e `rebirth` falham aos sábados e domingos | CI do PR #2 (run 41209911669) e execução local em 31/10/2026: XP 66 em vez de 33 e 132 em vez de 66, por causa de `xpWeekend` | Alta | **Corrigido neste PR** (commit `test:`); 29 verificações dos dois cenários passam num sábado |
-| Q2 | `sleep` fixo nos testes | 3 chamadas no Vitest e 213 nos cenários | Média | Trocar por `vi.waitFor` ou `once` ao mexer em cada teste (skill `testes-deterministicos`) |
+| Q2 | `sleep` fixo nos testes | 0 chamadas no Vitest (3 trocadas por `vi.waitFor` em F-16) e 213 nos cenários | Média | Trocar por `vi.waitFor` ou `once` ao mexer em cada cenário (skill `testes-deterministicos`) |
 | Q3 | Ruído `colyseus.js: onMessage() not registered` na saída do Vitest | Visto em `npm test` | Baixa | Registrar os tipos no helper |
 | Q4 | CI sem `permissions` e com actions em tag móvel | Lido em `ci.yml` | Média | **Corrigido neste PR**: `contents: read`, SHAs fixados (v4.4.0) e `timeout-minutes: 25` |
 | Q5 | Actions em Node 20 (aviso do GitHub: serão forçadas ao Node 24) | Anotação do run do PR #2 | Baixa | Subir para checkout v7 e setup-node v7 em PR próprio e conferir o CI |

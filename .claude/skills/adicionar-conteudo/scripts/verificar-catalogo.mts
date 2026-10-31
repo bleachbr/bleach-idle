@@ -20,7 +20,7 @@ for (const m of monstros) {
 }
 for (const k of Object.keys(S.SPRITES)) {
   if (!existsSync(arte(`sprites/${k}.png`))) erros.push(`SPRITES.${k}: falta client/public/assets/sprites/${k}.png`);
-  if (!existsSync(arte(`sprites_hd/${k}.webp`))) avisos.push(`SPRITES.${k}: falta a versão HD (sprites_hd/${k}.webp)`);
+  if (!S.SPRITES[k].noHd && !existsSync(arte(`sprites_hd/${k}.webp`))) avisos.push(`SPRITES.${k}: falta a versão HD (sprites_hd/${k}.webp)`);
 }
 for (const [id, tabela] of Object.entries<any>(S.LOOT)) {
   if (!S.MONSTERS[id]) erros.push(`LOOT.${id}: monstro inexistente`);
