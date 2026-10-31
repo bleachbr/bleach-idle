@@ -6,14 +6,21 @@ on:
   pull_request:
     branches: [main]
 
+# O CI só lê o repositório: nenhum passo precisa de escrita.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    # a bateria completa leva cerca de 9 min; o limite impede que um travamento gaste 6 h de execução
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      # actions fixadas por SHA (v4.4.0): a tag móvel v4 pode apontar para outro código sem aviso
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22.x
           cache: "npm"
