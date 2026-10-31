@@ -40,8 +40,8 @@ Definiremos 3 mensagens principais:
      text: string;
      options: {
        label: string;
+       // só para exibição (ícone e estilo do botão): o cliente devolve apenas o índice da opção
        action: "next" | "quest_accept" | "quest_claim" | "close";
-       nextId?: string;
      }[];
    }
    ```

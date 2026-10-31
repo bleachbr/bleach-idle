@@ -12,9 +12,9 @@ Atualizado em 31/10/2026.
 4. Siga o [fluxo de trabalho](#fluxo-de-trabalho) e confira a [definição de pronto](#definição-de-pronto).
 5. Item **Precisa de spec** não começa sem PRD e ADR aprovados. O modelo está em [`features/cronicas-semanais-lore/`](features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md).
 
-Status: `Feito` · `Em andamento (PR #N)` · `Pronto` · `Bloqueado por X` · `Precisa de spec` · `Decisão pendente (quem decide)`. "Em andamento" significa que existe PR aberto, ou rascunho, citando o ID (`gh pr list`); não é preciso commit só para marcar isso.
+Status: `Feito` · `Em andamento (PR #N)` · `Pronto` · `Bloqueado por X` · `Precisa de spec` · `Decisão pendente (quem decide)`. "Em andamento" significa que existe PR aberto citando o ID (`gh pr list`). Antes do PR, avise a outra pessoa por conversa; ninguém publica branch só para reservar um item.
 
-Ordem de pegada: com itens `Pronto` em mais de um bloco, pegue F antes de M. M1-01 e M1-02 são exceção por mexerem só em `shared/` sem tocar em segurança.
+Ordem de pegada: com itens `Pronto` em mais de um bloco, pegue F antes de M.
 Tamanho: **P** cabe num PR pequeno; **M** exige alguns PRs ou mexe em cliente e servidor; **G** precisa ser fatiado antes de começar.
 
 Onde fica cada informação: este arquivo guarda ID, ordem, dependência e status. O detalhe de cada débito fica em [`pendencias.md`](pendencias.md), as lições em [`aprendizados.md`](aprendizados.md), as medições em [`baseline.md`](baseline.md) e a especificação de cada funcionalidade grande em `docs/features/<nome>/`. Número que aparece em mais de um arquivo vale o do `baseline.md`. `RELATORIO-NOITE.md` é registro histórico de 29/10/2026 e pode estar defasado.
@@ -46,7 +46,7 @@ A ordem é de prioridade, não de dependência técnica, salvo onde a coluna "De
 
 ## Fluxo de trabalho
 
-1. **Escolha** um item `Pronto` e avise a outra pessoa (conversa ou PR rascunho com o ID no título).
+1. **Escolha** um item `Pronto` (confira `gh pr list` para ver se alguém já está nele) e avise a outra pessoa por conversa.
 2. **Branch** a partir da `main` atualizada: `feat/`, `fix/`, `test/`, `docs/` ou `chore/` + ID + assunto.
 3. **Implemente em passos pequenos**, com teste (skill `testes-deterministicos`) e a skill do assunto (`seguranca-servidor`, `adicionar-conteudo`, `performance-servidor`).
 4. **Verifique localmente:** `npm run typecheck`, `npm test`, os cenários afetados e `gitleaks git --redact -c .gitleaks.toml .`.
@@ -92,7 +92,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-08 | Métrica da duração do tick, com aviso acima de 50 ms | P | | Pronto | P3 |
 | F-09 | Ranking sem bloquear o tick | M | F-08 | Bloqueado por F-08 | P1 |
 | F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once`; limpar o ruído do Vitest. Rotina: ao mexer num teste com `sleep`, troque-o | M | | Pronto | Q2, Q3 |
-| F-11 | CI: job de gitleaks, `ubuntu-24.04` fixo, Node 22 e 24 e `actions` na v7 | M | | Pronto | Q5 |
+| F-11 | CI: job de gitleaks, `ubuntu-24.04` fixo, Node 22 e 24 e `actions` na v7 | M | | Pronto | Q5, Q8, Q9, Q10 |
 | F-12 | Upgrade maior do Colyseus (0.15 para 0.18) | G | spec | Precisa de spec | S5 |
 | F-13 | Primeiro deploy com HTTPS atrás do Caddy e restauração de backup testada | M | | Decisão pendente (servidor e domínio) | DEPLOY.md |
 | F-14 | Limite de criação de contas por IP | P | F-03 | Bloqueado por F-03 | DEPLOY.md |
@@ -112,7 +112,7 @@ Especificação: [PRD](features/cronicas-semanais-lore/PRD-cronicas-semanais-sei
 | M1-03 | NPCs no `soul.tmj` (objeto `npc` na camada `logica`), leitura em `parseMap` e `mapcheck` | M | M1-02 | Bloqueado por M1-02 |
 | M1-04 | Servidor: `interact` com `kind: "npc"`, `npc_dialog` e `npc_action` por índice de opção, com o nó atual guardado no servidor e a distância validada | M | M1-02, M1-03 | Bloqueado por M1-03 |
 | M1-05 | Persistência: `newProgress()` e `Progress.chronicle` com padrão; a virada da semana zera `questKills` e `completedAt` | P | M1-01 | Bloqueado por M1-01 |
-| M1-06 | Missão semanal e recompensa uma vez por semana, por personagem (D-001). Antes: fazer a conta de cristais por semana com 1 e 5 personagens (diária: 35 por semana por personagem; crônica: 15 a 30) | M | M1-00, M1-04, M1-05 | Bloqueado por M1-04 e M1-05 |
+| M1-06 | Missão semanal e recompensa uma vez por semana, por personagem (D-001). Antes: fazer a conta de cristais por semana com 1 e 5 personagens (diária: 55 por semana com a sequência completa de 7 dias, 5 nos dias comuns e 25 no sétimo; crônica: 15 a 30; conquistas: 10 cada, uma vez) | M | M1-00, M1-04, M1-05 | Bloqueado por M1-04 e M1-05 |
 | M1-07 | Cliente: janela de diálogo no `#modal` (teclado, toque e `Esc`) | M | M1-04 | Bloqueado por M1-04 |
 | M1-08 | Textos e conteúdo das 5 crônicas | M | M1-00 | Bloqueado por M1-00 |
 | M1-09 | Cenário `cronicas.ts` e testes de rotação, diálogo e entrega | M | M1-06, M1-07 | Bloqueado por M1-06 e M1-07 |

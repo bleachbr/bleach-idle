@@ -5,7 +5,7 @@ description: Revisa e escreve código seguro no servidor autoritativo do Bleach 
 
 # Segurança do servidor autoritativo
 
-Tudo que chega pelo WebSocket é hostil até o servidor validar. O cliente só envia intenções (AGENTS.md §1 e §4.2). Abaixo, o que revisar e o que já foi provado neste repositório em 31/10/2026 (servidores isolados, porta própria, banco temporário).
+Mudança de segurança só é aprovada pela outra pessoa do projeto; o veredito de um agente revisor é insumo. Tudo que chega pelo WebSocket é hostil até o servidor validar. O cliente só envia intenções (AGENTS.md §1 e §4.2). Abaixo, o que revisar e o que já foi provado neste repositório em 31/10/2026 (servidores isolados, porta própria, banco temporário).
 
 ## Antes de começar
 1. Liste a superfície: `grep -n 'this.handle(' server/src/*.ts` (54 no `WorldRoom`, 5 no `LobbyRoom`).
@@ -43,7 +43,7 @@ Tudo que chega pelo WebSocket é hostil até o servidor validar. O cliente só e
 
 **R8. Economia atômica e sem duplicação.**
 - Mova dinheiro, itens e cristais numa operação só (modelos: `db.changeCrystals` com `BEGIN IMMEDIATE`; `market.remove()` devolve boolean e barra compra dupla).
-- A recompensa de cristais trava por personagem e paga na carteira da conta. Provado com a diária: dois personagens da mesma conta, saldo 5 depois 10; o limite é 5 personagens por conta. Conquistas pagam do mesmo jeito (lido no código, não executado). Decisão D-001 (31/10/2026, `docs/roadmap.md`): a trava fica por personagem. Recompensa nova segue essa regra, e o balanceamento conta com até 5 personagens por conta.
+- A recompensa de cristais trava por personagem e paga na carteira da conta. Provado com a diária: dois personagens da mesma conta, saldo 5 depois 10; o limite é 5 personagens por conta. Conquistas pagam do mesmo jeito (lido no código, não executado). Decisão D-001 (31/10/2026, `docs/roadmap.md`; decidida por Waldir, aguarda o Rafael): a trava fica por personagem. Recompensa nova segue essa regra, e o balanceamento conta com até 5 personagens por conta.
 
 **R9. Erro não vira mentira.** `db.createAccount` e `db.createChar` devolvem falha para qualquer exceção, e o chamador responde "login já existe" ou "nome em uso". Um erro de disco apareceria assim. Capture só o erro esperado (UNIQUE) e deixe o resto subir.
 

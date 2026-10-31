@@ -50,8 +50,13 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 - **Solução:** Implementação de um timer de desistência (`p.stuckSince`, em `WorldRoom.ts`). Se não existe caminho até o alvo por mais de 3 segundos, o monstro é ignorado por 20 segundos (`skipId` e `skipUntil`) e o Auto Hunt seleciona o próximo alvo disponível.
 
 ### Escolha de Alvo
-- `nearestMonster` (`WorldRoom.ts`) escolhe o monstro mais próximo (distância de Chebyshev) dentro do alcance, no mesmo mapa, ignorando bonecos de treino, monstros de outro jogador e o alvo que o Auto Helper acabou de abandonar (`skipId` e `skipUntil`).
-- Não existe escolha por "rota navegável": o caminho é calculado depois de escolhido o alvo, e é por isso que o timer de desistência acima é necessário.
+Ordem real em `updatePlayer` (`WorldRoom.ts`), para o Auto Target e o Auto Hunt:
+1. Revidar quem atacou nos últimos 5 segundos (inclusive caçando offline).
+2. Com Auto Hunt, durante uma invasão, o invasor mais próximo.
+3. Com Auto Hunt, o monstro mais próximo das missões de caça ativas.
+4. O mais próximo (`nearestMonster`, distância de Chebyshev), no raio de caça do Auto Hunt ou no de visão do Auto Target. Ignora bonecos de treino, monstros de outro jogador e o alvo que o Auto Helper acabou de abandonar (`skipId` e `skipUntil`).
+
+Não existe escolha por "rota navegável": o caminho é calculado depois de escolhido o alvo, e é por isso que o timer de desistência acima é necessário.
 
 ---
 

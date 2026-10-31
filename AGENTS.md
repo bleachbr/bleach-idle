@@ -139,7 +139,7 @@ O projeto cresce com código escrito por pessoas e por agentes. Estas regras man
 6. **Conserto de passagem vai em commit separado.** Conserto pequeno que destrava o CI fica no mesmo PR, em commit próprio; qualquer outro vira PR separado.
 7. **Pare e pergunte** quando a mudança: apagar dados, `.sqlite` ou backups; reescrever histórico; mexer em permissão ou segredo; subir major de dependência (por exemplo Colyseus); regenerar mapas editados no Tiled; ou publicar algo (push, PR, deploy).
 8. **Segredos nunca entram** em código, log, commit, mensagem de PR ou resposta. Não abra `.env` nem arquivos `.sqlite`.
-9. **Revise antes de publicar.** Nada vai para o remoto sem revisão adversarial (skill `revisar-pr`) feita por quem não escreveu o código, e PR só é mesclado com o CI verde. É um combinado entre as pessoas: o GitHub não o impõe neste plano (F-07 do roadmap). O fluxo completo, com IDs de itens e definição de pronto, está em `docs/roadmap.md`.
+9. **Revise antes de publicar.** Nada vai para o remoto sem revisão adversarial (skill `revisar-pr`) feita por quem não escreveu o código, e PR só é mesclado com o CI verde. Em mudança de segurança (handler, login, sessão, `innerHTML`, dependências, Dockerfile, CI, segredos), a aprovação é da outra pessoa; o veredito de agente é só insumo. É um combinado entre as pessoas: o GitHub não o impõe neste plano (F-07 do roadmap). O fluxo completo, com IDs de itens e definição de pronto, está em `docs/roadmap.md`.
 
 ## 7. Skills do projeto
 
@@ -153,4 +153,4 @@ Ficam em `.claude/skills/` (o Claude Code lê direto; `.kiro/skills/` tem links 
 | `revisar-pr` | revisar PR (de pessoa ou de IA) antes do merge |
 | `performance-servidor` | mexer no tick, pathfinding, saves, ranking, schema, broadcast, bundle ou assets |
 
-Sem suporte a link simbólico (Windows sem modo desenvolvedor), copie as pastas para `.kiro/skills/`. Para criar uma skill nova: pasta com o nome em minúsculas e hífens, `SKILL.md` com `name` igual ao da pasta e `description` de até 1.024 caracteres dizendo quando usar. Registre-a nesta tabela e crie o link em `.kiro/skills/`: `ln -s ../../.claude/skills/NOME .kiro/skills/NOME`. Escreva só o que foi conferido neste repositório.
+Sem suporte a link simbólico (Windows sem modo desenvolvedor), o Git grava os links como arquivos de texto: copie as pastas só no seu computador, sem commitar a cópia, e avise o Rafael ou o Waldir. Para criar uma skill nova: pasta com o nome em minúsculas e hífens, `SKILL.md` com `name` igual ao da pasta e `description` de até 1.024 caracteres dizendo quando usar. Registre-a nesta tabela e crie o link em `.kiro/skills/`: `ln -s ../../.claude/skills/NOME .kiro/skills/NOME`. Escreva só o que foi conferido neste repositório.

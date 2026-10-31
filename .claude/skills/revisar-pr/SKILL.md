@@ -9,7 +9,7 @@ Quem escreveu (pessoa ou IA) não aprova o próprio PR. Esta skill é o segundo 
 
 ## 1. Contexto
 Há dois pontos de partida, e a revisão adversarial acontece **antes** do push:
-- **Branch local, antes de publicar:** `git fetch origin`, `git log origin/main..HEAD`, `git diff origin/main...HEAD --stat` e `git diff origin/main...HEAD`. Revise essas referências, sem trocar de branch nem alterar arquivos; rode os testes numa cópia (`git archive HEAD | tar -x -C /tmp/rev`) se precisar executar algo.
+- **Branch local, antes de publicar:** `git fetch origin`, `git log origin/main..HEAD`, `git diff origin/main...HEAD --stat` e `git diff origin/main...HEAD`. Revise essas referências, sem trocar de branch nem alterar arquivos; para executar algo, use uma cópia: `mkdir -p /tmp/rev && git archive HEAD | tar -x -C /tmp/rev && cd /tmp/rev && npm ci`.
 - **PR já aberto:** `gh pr view N --json title,body,headRefName,files,statusCheckRollup`, `gh pr diff N`, `gh pr checks N`.
 - **CI vermelho** (só existe com PR aberto): ache a causa antes de opinar (`gh run view ID --log-failed`) e compare com a `main`. Não aprove com CI vermelho, e não culpe o PR sem evidência (já aconteceu: PR só de documentação ficou vermelho por um cenário que depende do dia da semana).
 - Rode `git status` e leia as seções 1 e 4 do AGENTS.md.
