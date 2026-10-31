@@ -102,6 +102,12 @@ export function prevDay(key: string): string {
   return dayKey(Date.parse(`${key}T12:00:00Z`) + 3 * 3600_000 - 24 * 3600_000);
 }
 
+export interface ChronicleProgress {
+  activeWeekKey: string;
+  questKills: number;
+  completedAt?: number;
+}
+
 export interface Progress {
   bestiary: Record<string, number>;
   ach: string[];
@@ -118,6 +124,8 @@ export interface Progress {
   dgBest?: number;
   /** passe de temporada */
   season?: import("./season").SeasonState;
+  /** progresso da crônica semanal (M1-05) */
+  chronicle?: ChronicleProgress;
 }
 
 // ---------- desafio do Dangai (torre sem fim) ----------
@@ -180,7 +188,14 @@ export const TUTORIAL: { id: TutorialId; text: string; reward: { gold: number; i
 /** personagem que já passou deste nível não vê o guia */
 export const TUTORIAL_MAX_LEVEL = 15;
 
-export const newProgress = (): Progress => ({ bestiary: {}, ach: [], daily: { last: "", streak: 0 }, kills: 0, bossKills: 0 });
+export const newProgress = (): Progress => ({
+  bestiary: {},
+  ach: [],
+  daily: { last: "", streak: 0 },
+  kills: 0,
+  bossKills: 0,
+  chronicle: { activeWeekKey: "", questKills: 0 },
+});
 
 export function stagesSum(bestiary: Record<string, number>): number {
   return Object.entries(bestiary).reduce((s, [k, n]) => s + bestiaryStage(k, n), 0);

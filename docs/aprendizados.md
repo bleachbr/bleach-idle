@@ -161,3 +161,10 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - A reconstrução anterior do ranking chamava `db.allChars()`, lendo do SQLite e fazendo `JSON.parse()` do `SaveData` completo (3,7 KB) + `powerOf()` de todos os personagens a cada 15 s (`p50 = 10,29 ms`, `máx = 27,82 ms` para 1.000 personagens).
 - Como personagens offline só mudam quando passam por `db.createChar`, `db.save`, `db.saveMany` ou `db.deleteChar`, extraímos `server/src/ranking.ts`: ele semeia o mapa `savedEntries` uma única vez (`ensureSeeded`), recebe atualizações O(1) via `db.onCharWrite` e sobrepõe apenas os jogadores ativos em `state.players`.
 - **Resultado medido (`bench.mts 1000`):** `buildRanking()` caiu de `p50 = 10,29 ms` para **`p50 = 0,10 ms`** (`p95 = 0,20 ms`, `máx = 0,45 ms`), uma redução de **100x** no tempo de CPU síncrono.
+
+## 16. Rotação Semanal Determinística de Crônicas Sem Depender de `TZ` (M1-01 e M1-05)
+
+- **Contexto:** Funções de data do JavaScript (`getDay`, `setHours`, `getFullYear`) usam o fuso horário (`TZ`) do processo, fazendo a semana virar em instantes diferentes no Linux em UTC vs máquinas locais em `America/Sao_Paulo` ou `Asia/Tokyo`.
+- **Solução (`shared/src/chronicles.ts`):**
+  1. `weekNumber(now)` deriva a semana exclusivamente por aritmética inteira sobre o timestamp UTC relativo à âncora `CHRONICLE_EPOCH = Date.UTC(2026, 9, 26, 3, 0, 0)` (segunda-feira 00:00 BRT), garantindo que `weekNumber`, `weekIndex` e `currentWeekKey` virem no exato mesmo milissegundo em qualquer `TZ`.
+  2. `syncChronicleProgress(prog, now)` (M1-05) compara `prog.chronicle?.activeWeekKey` com `currentWeekKey(now)` e reinicia `{ activeWeekKey, questKills: 0 }` (removendo `completedAt`) de forma preguiçosa ao interagir/salvar, sem precisar de cron jobs ou varreduras em lote no SQLite.

@@ -10,3 +10,4 @@ export * from "./evolution";
 export * from "./shop";
 export * from "./season";
 export * from "./lookup";
+export * from "./chronicles";

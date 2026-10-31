@@ -37,8 +37,8 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 | 7 | F-09 | Ranking sem bloquear o tick | M | F-08 | não | **Feito** (`perf/f-09-ranking-incremental`) |
 | 8 | F-11 | CI: gitleaks, `ubuntu-24.04`, Node 22 e 24, actions v7 | M | — | não | **Feito** (`ci/f-11-ci-gitleaks-matrix`) |
 | 9 | F-15 | Balanceamento dos mapas avançados (`balance.ts`) | M | — | não | **Feito** (`feat/f-15-balanceamento-mapas`) |
-| 10 | M1-01 | `shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) + testes de borda | P | M1-00 (Rafael) | PRD/ADRs das Crônicas | |
-| 11 | M1-05 | `newProgress()` e `Progress.chronicle`; virada de semana zera `questKills`/`completedAt` | P | M1-01 | idem | |
+| 10 | M1-01 | `shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) + testes de borda | P | M1-00 (Rafael) | PRD/ADRs das Crônicas | **Feito** (`feat/m1-01-05-chronicles-core`) |
+| 11 | M1-05 | `newProgress()` e `Progress.chronicle`; virada de semana zera `questKills`/`completedAt` | P | M1-01 | idem | **Feito** (`feat/m1-01-05-chronicles-core`) |
 | 12 | M1-04 | Servidor: `interact`, `npc_dialog`, `npc_action` com nó no servidor e distância validada | M | M1-02 e M1-03 (Rafael) | idem | Handler novo: skill `seguranca-servidor` |
 | 13 | M1-08 | Textos e conteúdo das 5 crônicas | M | M1-00 | idem | Conteúdo narrativo: lado "jogo" da fila |
 | 14 | M1-06 | Missão semanal e recompensa por personagem | M | M1-00, M1-04, M1-05 | idem | Fazer antes a conta de cristais (D-001) |
