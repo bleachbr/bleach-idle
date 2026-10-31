@@ -1,0 +1,75 @@
+# Aprendizados Técnicos do Projeto (Bleach Idle)
+
+Este documento reúne lições práticas, decisões arquiteturais e armadilhas superadas ao longo da construção do **Bleach Idle**. O objetivo é preservar o conhecimento acumulado e evitar que futuras sessões ou agentes repitam erros já solucionados.
+
+---
+
+## 1. Arquitetura de Servidor Autoritativo e Tick de 100 ms
+
+### Lição: O Cliente Nunca Deve Decidir o Estado
+- Em jogos de visão de cima em tempo real, qualquer concessão de autoridade ao cliente (como cálculo de colisão, cooldown ou dano) abre brechas e gera desincronias graves (rubberbanding).
+- **Abordagem adotada:** O cliente emite intenções leves (`move`, `step`, `target`, `skill`, `use`, `bankai`). O servidor avalia se o personagem pode agir no tick atual (`trySkill`, `tryStep`, `tryAttack`), aplica custos e dispara eventos de feedback (`fx`, `hit`, `state`).
+
+### Movimento Fluido Sem "Anda e Trava"
+- Com ticks de 100 ms, se o cliente apenas teleportar o personagem a cada atualização do servidor, o movimento fica travado e desagradável.
+- **Solução:** O cliente realiza interpolação suave (glide) baseada na velocidade do personagem e na direção do passo, combinada com animações de caminhada sincronizadas com o `stepMs` da forma atual. Ao ficar parado, o personagem reproduz uma respiração suave em vez de congelar.
+
+---
+
+## 2. Caçada Offline e Persistência Resiliente
+
+### Desacoplamento da Conexão e Entidade do Mundo
+- O jogador com **Auto Hunt** ou **Auto Treino** ativado não é removido do mundo quando fecha o navegador.
+- O objeto `Player` permanece ativo no `WorldRoom` como um bot autônomo por até 12 horas.
+- Ao reconectar, a nova sessão reassume a entidade existente sem duplicar estado ou reiniciar contadores.
+
+### Persistência com SQLite WAL e Transações Periódicas
+- Fazer `UPDATE` no banco a cada golpe ou item recebido gera contenção extrema de I/O em disco, mesmo com poucos jogadores.
+- **Solução:** O estado vive em memória RAM durante o jogo. Um save transacional em lote é executado a cada 10 segundos, além de saves pontuais em momentos críticos (login, logout, morte).
+- Modo **WAL (`PRAGMA journal_mode = WAL`)** permitiu leituras assíncronas do lobby enquanto o mundo salva em lote sem bloqueios de tabela.
+- Corpos no chão com loot derrubado e sacolas possuem tabela própria (`ground_items`) para garantir que sobrevivem mesmo a uma queda ou reinício forçado do servidor.
+
+---
+
+## 3. Testes Automatizados e Eliminação de Flakiness no CI
+
+### A Armadilha dos Delays Arbitrários (`sleep(300)`)
+- Em testes locais, aguardar `sleep(300ms)` parecia suficiente para uma animação ou Bankai terminar. No entanto, no runner do GitHub Actions (onde recursos de CPU são compartilhados e instáveis), esse tempo frequentemente estourava, tornando o CI instável.
+- **Regra de ouro aprendida:** **Nunca use `sleep` com tempo fixo em testes assíncronos**. Sempre implemente espera ativa baseada em predicado (ex.: esperar o atributo `p.form === 1` mudar ou o evento de confirmação chegar com timeout máximo seguro de 5 segundos).
+
+### Personagens de Teste Devem ser Adequados ao Ambiente
+- Durante a implementação de testes de missões, um bot de teste chamado "Ana" falhava intermitentemente porque nascia no nível 8 e morria para Hollows agressivos antes de conseguir cumprir a contagem da missão.
+- **Solução:** Cenários de teste automatizados que validam progressão ou entrega de missões devem instanciar o bot com nível e equipamento suficientes para sobreviver à área do teste (ex.: nível 25 com poções).
+
+---
+
+## 4. Automação Inteligente (Auto Helper) e Pathfinding
+
+### Timeout de Perseguição no Pathfinding A*
+- Se um monstro visível estivesse atrás de uma barreira sólida ou sem rota navegável até ele, o Auto Hunt entrava em loop tentando recalcular a rota a cada ciclo, paralisando a caçada.
+- **Solução:** Implementação de um timer de desistência (`targetGiveUpMs = 3000`). Se em 3 segundos o personagem não diminuir a distância em direção ao alvo, o monstro é ignorado temporariamente e o Auto Hunt seleciona o próximo alvo disponível.
+
+### Priorização Determinística de Metas
+- Para maximizar a eficiência do jogador e dos testes, o Auto Target segue uma hierarquia estrita:
+  1. Monstros prioritários da missão ativa do Kisuke ou da diária de caça.
+  2. Monstros mais próximos com rota navegável.
+  3. Descarte de monstros pertencentes a outros jogadores (evitando roubo de loot/kill sharing injusto).
+
+---
+
+## 5. Spritesheets, Escalas e Ciclos de Animação
+
+### Detecção Dinâmica de Colunas (4 vs 8 Quadros)
+- O projeto começou com sprites de 4 colunas de caminhada. Mais tarde, foi gerada uma nova leva de sprites em alta fidelidade com 8 colunas (`art/walk8.py`).
+- Em vez de reescrever todo o código para forçar 8 colunas, criamos a função `spriteCols(key)` que inspeciona a folha. O jogo calcula frames de repouso e de movimento automaticamente de acordo com as dimensões de cada asset.
+
+### Evitando Encolhimento de Sprite ao Virar de Costas ou Lado
+- Sprites assimétricos sofriam leve encolhimento ou distorção de escala quando o Phaser aplicava `flipX` com origens não centralizadas na base dos pés.
+- **Solução:** Padronização da origem dos sprites em `(0.5, 1.0)` (centro horizontal, base dos pés) e profundidade de desenho vinculada à coordenada `y` do chão (`setDepth(y)`), garantindo ordenação perfeita de profundidade (Z-indexing) entre jogadores, monstros e árvores.
+
+---
+
+## 6. Compartilhamento Total de Lógica (`shared/`)
+
+- Ao colocar as definições dos mapas, fórmulas matemáticas de atributos (ataque, defesa, HP, reiatsu), dados de evolução e itens em `shared/`, eliminamos qualquer possibilidade de divergência entre a lógica simulada no servidor e a interface desenhada no cliente.
+- A função `parseMap` lê o mesmo JSON exportado pelo Tiled tanto no servidor Node quanto no navegador, garantindo que o mapa colidível seja idêntico ao mapa visual.
