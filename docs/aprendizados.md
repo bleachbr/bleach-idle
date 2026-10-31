@@ -41,6 +41,11 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 - Durante a implementação de testes de missões, um bot de teste chamado "Ana" falhava intermitentemente porque nascia no nível 8 e morria para Hollows agressivos antes de conseguir cumprir a contagem da missão.
 - **Solução:** Cenários de teste automatizados que validam progressão ou entrega de missões devem instanciar o bot com nível e equipamento suficientes para sobreviver à área do teste (ex.: nível 25 com poções).
 
+### Ruído e Esperas no Vitest (F-10)
+- **O curinga do `colyseus.js` é reserva, não interceptador.** `Room.dispatchMessage` entrega ao listener do tipo; só sem ele cai no `onMessage("*")`; só sem os dois imprime `onMessage() not registered`. Por isso `quiet()` (registra `"*"` logo ao entrar) cala o aviso sem roubar a mensagem de um `once` registrado depois. Um comentário antigo de `e2e-seguranca.test.ts` dizia o contrário e obrigava a listar os tipos à mão (a lista já estava incompleta: `guild` e `welcome` escapavam).
+- **O agente não vê o que a pessoa vê.** Sob agente de IA, o Vitest usa o reporter `minimal`, que esconde o console dos testes que passam; o aviso parecia ter sumido e não tinha. Antes de afirmar "a saída está limpa", rode `npx vitest run --reporter=default`.
+- **Espera abaixo do `testTimeout`.** Com `vi.waitFor` de 5 s e `testTimeout` padrão de 5 s, a falha aparecia como "Test timed out" e o `waitFor` seguia consultando durante o teste seguinte. O `testTimeout` agora é 10 s.
+
 ---
 
 ## 4. Automação Inteligente (Auto Helper) e Pathfinding
