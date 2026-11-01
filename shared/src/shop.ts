@@ -1,7 +1,7 @@
 // Loja de Cristais: moeda premium da conta (vale para todos os personagens) e cosméticos.
 // Nada aqui dá vantagem em combate: é visual, título e história do mundo.
 
-export type CosKind = "aura" | "fx" | "title" | "name" | "pet" | "lore";
+export type CosKind = "aura" | "fx" | "title" | "name" | "pet" | "outfit" | "lore";
 
 export interface Cosmetic {
   id: string;
@@ -17,6 +17,8 @@ export interface Cosmetic {
   /** crônica: o texto que a compra libera para ler (e o título que vem junto) */
   text?: string[];
   title?: string;
+  /** traje: o visual que troca a folha da forma base (<base>__<look>, OUTFIT_OK em data.ts) */
+  look?: string;
   /** prêmio do passe de temporada: não se compra */
   season?: boolean;
 }
@@ -27,6 +29,7 @@ export const COS_KINDS: { kind: CosKind; label: string; hint: string }[] = [
   { kind: "title", label: "Títulos", hint: "Um título acima do nome, que todos veem." },
   { kind: "name", label: "Nomes", hint: "Cor do nome em cima do personagem." },
   { kind: "pet", label: "Borboletas", hint: "Uma borboleta do inferno que acompanha você pelo mapa." },
+  { kind: "outfit", label: "Trajes", hint: "Troca a roupa do personagem na forma base, no lugar do visual do equipamento. Ao liberar a lâmina, a forma liberada aparece como sempre." },
   { kind: "lore", label: "Crônicas", hint: "Pedaços da história do mundo. Cada crônica lida dá um título." },
 ];
 
@@ -63,6 +66,10 @@ export const COSMETICS: Cosmetic[] = [
   c("pet_inferno", "pet", "Borboleta do Inferno", 150, 0x18101a, "A mensageira negra que guia as almas entre os mundos.", { color2: 0xff3050 }),
   c("pet_dourada", "pet", "Borboleta Dourada", 250, 0xffd34a, "Rara: dizem que só aparece para quem já chegou ao topo.", { color2: 0xfff2b0 }),
   c("pet_gelo", "pet", "Borboleta de Gelo", 200, 0x9ae8ff, "Feita de reiatsu congelado, nunca derrete.", { color2: 0xffffff }),
+  // trajes (R-13): valem na forma base; quem já é capitão não tem outro haori para vestir
+  c("traje_karakura", "outfit", "Uniforme do Colégio Karakura", 150, 0xb8bcc8, "O blazer cinza da escola de Karakura. Muito Shinigami já se escondeu nele.", { color2: 0xd03040, look: "karakura" }),
+  c("traje_capitao", "outfit", "Haori de Capitão", 250, 0xffffff, "O haori branco de quem comanda uma divisão. Os capitães de verdade já vestem o deles.", { color2: 0x202020, look: "capitao" }),
+  c("traje_vizard", "outfit", "Máscara Vizard", 300, 0xe6e6e6, "A máscara de quem aprendeu a usar o Hollow interior sem se perder nele.", { color2: 0xd02030, look: "vizard" }),
   // prêmios do passe de temporada (não estão à venda)
   c("aura_eclipse", "aura", "Aura do Eclipse", 0, 0x3a1a6a, "Prêmio do nível 10 do passe de temporada.", { color2: 0xffb04a, season: true }),
   c("tit_temporada", "title", "Veterano da Temporada", 0, 0xffb04a, "Prêmio do nível 20 do passe de temporada.", { season: true }),

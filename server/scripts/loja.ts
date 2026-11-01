@@ -1,17 +1,18 @@
 // Loja de Cristais: cristais grátis na diária, compra, equipar e tirar, crônica com título,
-// técnica com visual comprado, e cosmético que continua equipado depois de sair e voltar.
+// técnica com visual comprado, traje que troca o visual (e não muda quem já é capitão),
+// e cosmético que continua equipado depois de sair e voltar.
 import { expForLevel, nearestWalkable, COSMETIC, FREE_CRYSTALS } from "../../shared/src";
 import { HOME } from "../src/maps";
 import { play, patchSave, grantCrystals, sleep, ok, done } from "./lib";
 
 const until = async (f: () => unknown, ms = 8000) => { for (let t = 0; t < ms && !f(); t += 100) await sleep(100); return !!f(); };
 
-async function bot(name: string) {
+async function bot(name: string, charId = "ichigo") {
   const logs: string[] = [];
   const fx: any[] = [];
   let shop: any = null;
   let crystals = -1;
-  const room = await play(name, "ichigo", (id) => patchSave(id, { map: "karakura", ...nearestWalkable(HOME, 38, 8), level: 60, exp: expForLevel(60), hp: 9999, rei: 9999 }),
+  const room = await play(name, charId, (id) => patchSave(id, { map: "karakura", ...nearestWalkable(HOME, 38, 8), level: 60, exp: expForLevel(60), hp: 9999, rei: 9999 }),
     (r) => {
       r.onMessage("log", (m) => logs.push(m.text));
       r.onMessage("fx", (m) => fx.push(m));
@@ -56,10 +57,30 @@ await until(() => !!a.me().targetId);
 for (let i = 0; i < 20 && !a.fx.some((f) => f.t === "skill" && f.skin); i++) { a.room.send("skill", { slot: 1 }); await sleep(400); }
 ok("técnica sai com o visual comprado", a.fx.some((f) => f.t === "skill" && f.skin && f.color === COSMETIC.fx_raio.color));
 a.room.send("auto", { autoTarget: false });
+
+// R-13: traje troca o visual de todos (look), cobre o do equipamento e volta a ele ao tirar
+const gearLook = a.me().look;
+a.room.send("shopBuy", { id: "traje_capitao" });
+ok("compra o haori de capitão e o visual troca", await until(() => a.me().look === "capitao"));
+a.room.send("shopEquip", { kind: "outfit" });
+ok("tira o traje e volta o visual do equipamento", await until(() => a.me().look === gearLook && a.shop()?.equip.outfit === undefined));
+a.room.send("shopEquip", { id: "traje_capitao" });
+ok("veste de novo", await until(() => a.me().look === "capitao"));
 await a.room.leave();
 await sleep(500);
 
 const b = await bot("Loja Lia");
 ok("cosméticos continuam equipados depois de voltar", b.me().cosAura === "aura_sakura" && b.me().cosTitle === "lore_karakura" && b.me().cosFx === "fx_raio");
+ok("o traje também continua", b.me().look === "capitao");
 await b.room.leave();
+
+// capitão já veste o próprio haori: o traje não muda nada nele e o aviso diz isso; o uniforme muda
+const t = await bot("Loja Toshiro", "hitsugaya");
+const tLook = t.me().look;
+grantCrystals("loja toshiro", 400);
+t.room.send("shopBuy", { id: "traje_capitao" });
+ok("haori de capitão não muda o Hitsugaya", await until(() => t.logs.some((l) => l.includes("não muda o visual de"))) && t.me().look === tLook);
+t.room.send("shopBuy", { id: "traje_karakura" });
+ok("o uniforme de Karakura muda", await until(() => t.me().look === "karakura"));
+await t.room.leave();
 done();
