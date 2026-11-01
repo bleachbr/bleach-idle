@@ -188,6 +188,12 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Solução (`server/test/helpers/testServer.ts`):** Interceptamos `Client.prototype.createRoom` no helper de testes para registrar handlers `noop` em `KNOWN_ROOM_MESSAGES` no exato momento em que a instância de `Room` é criada (antes de abrir o WebSocket), e atualizamos `once(room, type)` para desregistrar seu callback ao resolver. Como `room.onMessageHandlers` é um `EventEmitter`, os listeners específicos de cada teste continuam recebendo todas as mensagens normalmente e a suíte Vitest roda com zero avisos espúrios.
 
 
-### 19. Moderação de chat com filtro anti-spam híbrido e silêncio persistente (M3-05)
+## 19. Moderação de chat com filtro anti-spam híbrido e silêncio persistente (M3-05)
+
 - **Problema:** O chat global e os canais `/pm`, `/p` e `/g` não possuíam proteção contra flood de mensagens, repetição da mesma frase nem silenciamento administrativo que sobrevivesse a reconexões.
 - **Solução (`server/src/moderation.ts`):** Extraímos o motor de moderação para um módulo dedicado com janela deslizante em memória (`5` mensagens em `5 s`), bloqueio de mensagem repetida consecutiva em `10 s` e auto-silêncio de `30 s` quando o jogador acumula 3 infrações seguidas. Já os silêncios administrativos (`/silenciar <nome> [min] [motivo]`) são persistidos em `meta` (`chat_mutes`) via `db.setMeta`, sobrevivendo a reinícios do servidor e reconexões do jogador.
+
+## 20. Rate limit persistente em SQLite e token assinado de uso único para recuperação de senha (M5-01 e M5-02)
+
+- **Problema:** Contadores de brute-force (`auth.ts`) ficavam apenas em memória e zeravam a cada reinício do processo; além disso, não havia mecanismo de recuperação de senha assinado e de uso único.
+- **Solução (`server/src/db.ts`, `server/src/auth.ts`, `server/src/LobbyRoom.ts`):** Movemos o armazenamento de `fail()`, `blocked()` e `clearFails()` para a tabela `auth_limits` do SQLite via prepared statements síncronos em modo WAL. Para a recuperação de senha (`M5-01`), combinamos assinatura HMAC-SHA256 (`timingSafeEqual`) no formato `<accountId>.<exp>.<nonce>.<sig>` com consumo atômico de `sha256(nonce)` na tabela `password_resets` (expiração de 15 min) e revogação automática de todas as sessões anteriores da conta.

@@ -78,7 +78,19 @@ db.exec(`
   );
   CREATE TABLE IF NOT EXISTS players (id TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at INTEGER NOT NULL);
   CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+  CREATE TABLE IF NOT EXISTS auth_limits (
+    key TEXT PRIMARY KEY,
+    n INTEGER NOT NULL,
+    since INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS password_resets (
+    nonce_hash TEXT PRIMARY KEY,
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    expires_at INTEGER NOT NULL
+  );
 `);
+const accCols = (db.prepare("PRAGMA table_info(accounts)").all() as { name: string }[]).map((c) => c.name);
+if (!accCols.includes("email")) db.exec("ALTER TABLE accounts ADD COLUMN email TEXT");
 // migração da tabela do protótipo anterior (personagens sem conta ficam órfãos)
 const cols = (db.prepare("PRAGMA table_info(players)").all() as { name: string }[]).map((c) => c.name);
 if (!cols.includes("account_id")) db.exec("ALTER TABLE players ADD COLUMN account_id INTEGER REFERENCES accounts(id)");
@@ -109,8 +121,49 @@ export function createAccount(login: string, passHash: string): number | null {
   }
 }
 
-export function getAccount(login: string): { id: number; login: string; pass: string } | undefined {
-  return db.prepare("SELECT id, login, pass FROM accounts WHERE login = ?").get(login) as any;
+export function getAccount(login: string): { id: number; login: string; pass: string; email?: string | null } | undefined {
+  return db.prepare("SELECT id, login, pass, email FROM accounts WHERE login = ?").get(login) as any;
+}
+
+export function getAccountById(accountId: number): { id: number; login: string; pass: string; email?: string | null } | undefined {
+  return db.prepare("SELECT id, login, pass, email FROM accounts WHERE id = ?").get(accountId) as any;
+}
+
+export function setAccountEmail(accountId: number, email: string | null): void {
+  db.prepare("UPDATE accounts SET email = ? WHERE id = ?").run(email, accountId);
+}
+
+// ---------- limites de tentativas persistentes (M5-02) e tokens de recuperação (M5-01) ----------
+
+const getLimitStmt = db.prepare("SELECT n, since FROM auth_limits WHERE key = ?");
+const setLimitStmt = db.prepare(
+  "INSERT INTO auth_limits (key, n, since) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET n = excluded.n, since = excluded.since",
+);
+const delLimitStmt = db.prepare("DELETE FROM auth_limits WHERE key = ?");
+
+export function getAuthLimit(key: string): { n: number; since: number } | undefined {
+  return getLimitStmt.get(key) as { n: number; since: number } | undefined;
+}
+
+export function setAuthLimit(key: string, n: number, since: number): void {
+  setLimitStmt.run(key, n, since);
+}
+
+export function deleteAuthLimit(key: string): void {
+  delLimitStmt.run(key);
+}
+
+export function saveResetNonce(nonce: string, accountId: number, expiresAt: number, now = Date.now()): void {
+  db.prepare("DELETE FROM password_resets WHERE expires_at < ?").run(now);
+  db.prepare("INSERT INTO password_resets (nonce_hash, account_id, expires_at) VALUES (?, ?, ?)").run(sha(nonce), accountId, expiresAt);
+}
+
+export function consumeResetNonce(nonce: string, accountId: number, now = Date.now()): boolean {
+  db.prepare("DELETE FROM password_resets WHERE expires_at < ?").run(now);
+  const r = db
+    .prepare("DELETE FROM password_resets WHERE nonce_hash = ? AND account_id = ? AND expires_at >= ?")
+    .run(sha(nonce), accountId, now);
+  return r.changes > 0;
 }
 
 /** Cria uma sessão para "lembrar login"; só o hash do token fica no banco. */

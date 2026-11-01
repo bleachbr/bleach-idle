@@ -132,7 +132,7 @@ Todos `Precisa de spec`, e depois de F-12. **M4-01** salas instanciadas para a p
 
 ## M5: Contas e infraestrutura
 
-Todos `Precisa de spec`. **M5-01** recuperação de senha por e-mail com token assinado; **M5-02** limite de tentativas persistente (SQLite ou Redis, se houver mais de um processo); **M5-03** testes de ponta a ponta no navegador com Playwright; **M5-04** partição do mundo por mapa para centenas de jogadores (hoje um processo só; limites medidos em [`baseline.md`](baseline.md)).
+Todos `Precisa de spec`. **M5-01** recuperação de senha por e-mail com token assinado (`Feito`, spec em `docs/features/seguranca-contas/`); **M5-02** limite de tentativas persistente em SQLite (`Feito`, spec em `docs/features/seguranca-contas/`); **M5-03** testes de ponta a ponta no navegador com Playwright; **M5-04** partição do mundo por mapa para centenas de jogadores (hoje um processo só; limites medidos em [`baseline.md`](baseline.md)).
 
 ## Sem marco
 
