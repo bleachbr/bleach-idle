@@ -108,7 +108,7 @@ export const SPRITES: Record<string, SpriteDef> = {
 export const OUTFIT_BASES = ["ichigo_shikai", "rukia", "renji"];
 export const OUTFIT_LOOKS = ["haori", "mask", "haori_mask"];
 const OUTFIT_OK: Record<string, string[]> = { ichigo_shikai: ["haori", "mask", "haori_mask"], rukia: ["haori"], renji: ["haori"] };
-for (const b of OUTFIT_BASES) for (const l of OUTFIT_OK[b]) SPRITES[`${b}__${l}`] = { frame: 48 };
+for (const b of OUTFIT_BASES) for (const l of OUTFIT_OK[b]) SPRITES[`${b}__${l}`] = { frame: 48, cols: 8 };
 
 export const spriteCols = (key: string) => SPRITES[key]?.cols ?? 4;
 /** quadro "parado" de uma direção: o de passagem, com as pernas juntas */
