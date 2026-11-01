@@ -3,13 +3,17 @@
 // (abre a gaveta no celular, rola até ela, destaca e põe o foco no título).
 import { isInventoryKey, isTypingTarget } from "./hotkeys";
 
+/** Rolagem suave só para quem não pediu menos movimento ao sistema (o destaque já respeita no theme.css). */
+export const scrollBehavior = (reduceMotion: boolean): ScrollBehavior => (reduceMotion ? "auto" : "smooth");
+
 export function initInventoryShortcut() {
   const side = document.querySelector<HTMLElement>("#side")!;
   const gear = document.querySelector<HTMLElement>("#gear")!;
   const title = document.querySelector<HTMLElement>("#inv-title")!;
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const reveal = () => {
     side.classList.add("open"); // gaveta do celular (touch.ts); no computador a classe não muda nada
-    gear.scrollIntoView({ block: "start", behavior: "smooth" });
+    gear.scrollIntoView({ block: "start", behavior: scrollBehavior(reduceMotion.matches) });
     // reinicia a animação de destaque mesmo com cliques seguidos
     gear.classList.remove("flash");
     void gear.offsetWidth;

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { INVENTORY_KEYS, isInventoryKey, isTypingTarget } from "../src/hotkeys";
+import { scrollBehavior } from "../src/inventoryShortcut";
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 const key = (code: string, extra: Partial<KeyboardEvent> = {}) => ({ code, repeat: false, ctrlKey: false, metaKey: false, altKey: false, ...extra });
@@ -24,6 +25,14 @@ describe("atalho do inventário (issue #25)", () => {
     expect(isTypingTarget({ tagName: "DIV", isContentEditable: true })).toBe(true);
     expect(isTypingTarget({ tagName: "BUTTON" })).toBe(false);
     expect(isTypingTarget(null)).toBe(false);
+  });
+
+  it("rola sem animação quando o sistema pede menos movimento (prefers-reduced-motion)", () => {
+    expect(scrollBehavior(true)).toBe("auto");
+    expect(scrollBehavior(false)).toBe("smooth");
+    const src = read("../src/inventoryShortcut.ts");
+    expect(src).toMatch(/matchMedia\("\(prefers-reduced-motion: reduce\)"\)/);
+    expect(src).not.toMatch(/behavior:\s*"smooth"/);
   });
 
   it("não colide com os atalhos de combate do GameScene", () => {
