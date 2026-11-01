@@ -83,11 +83,11 @@ Itens herdados do roadmap e das pendências:
 | Ordem | ID | Entrega | Tam. | Depende de | Spec | Obs. |
 | :-- | :-- | :--- | :-- | :--- | :-- | :--- |
 | 1 | ~~M1-00~~ | ~~Aprovar PRD e 3 ADRs das Crônicas; fechar pontos abertos do PRD §8~~ | P | — | é a própria spec | Decisão das duas pessoas; Rafael dirige |
-| 2 | M1-02 | `shared/src/npcs.ts`: tipos e catálogo de NPCs | P | M1-00 | idem | |
+| 2 | ~~M1-02~~ | ~~`shared/src/npcs.ts`: tipos e catálogo de NPCs~~ | P | M1-00 | idem | |
 | 3 | M1-03 | NPCs no `soul.tmj`, leitura em `parseMap` e `mapcheck` | M | M1-02 | idem | `parseMap`/`mapcheck` mexe em `shared/src/map.ts` (zona de atrito) |
 | 4 | M1-07 | Janela de diálogo no `#modal` (teclado, toque, `Esc`) | M | M1-04 (Waldir) | idem | |
 | 5 | M2-07 | Tempo de recarga numérico no HUD | P | — | spec de M2 | Independente do motor; pode sair antes |
-| 6 | M2-06 | Efeitos visuais de status (cor no sprite, ícone, número de dano contínuo) | M | M2-01 (Waldir) | spec de M2 | Fatia de cliente do pacote M2 |
+| 6 | ~~M2-06~~ | ~~Efeitos visuais de status (cor no sprite, ícone, número de dano contínuo)~~ | M | M2-01 (Waldir) | spec de M2 | Fatia de cliente do pacote M2 |
 | 7 | ~~F-10~~ | ~~Trocar `sleep` fixo por `vi.waitFor`/`once` e limpar ruído do Vitest~~ | M | — | não | Feito no Vitest; nos cenários segue como rotina, junto com cada teste que tocar |
 | 8 | M3-02 | Abas de chat (Geral, Combate, Party, Guilda, Privado) | M | — | sim | |
 | 9 | M3-01 | Troca direta 1v1, duas confirmações, mesmo mapa e alcance | M | — | sim | Servidor + UI; handler sensível: skill `seguranca-servidor`, revisão do Waldir |
@@ -106,7 +106,7 @@ Backlog novo (IDs R-##) — narrativa, QoL e social com partes de servidor:
 | 17 | R-10 | **Minimapa e marcadores** — minimapa por zona com ícones de NPC, portal, PZ e alvo de missão | M | M1-03 | não |
 | 18 | ~~R-12~~ | ~~**Eventos narrados** — invasões e chefes mundiais com textos de lore no chat e banner no HUD~~ | P | — | não |
 | 19 | R-09 | **Codex / enciclopédia de lore** — bestiário expandido com fichas de personagens, facções e eventos | M | M1-06 (só as fichas das Crônicas Semanais) | sim (rascunho em `features/codex-lore/`, aguardando aprovação) |
-| 20 | R-14 | **Acessibilidade e QoL do cliente** — escala de fonte, alto contraste, re-mapeamento de teclas, modo uma mão no toque | M | — | sim |
+| 20 | R-14 | **Acessibilidade e QoL do cliente** — escala de fonte, alto contraste, re-mapeamento de teclas, modo uma mão no toque | M | — | sim (rascunho em `features/acessibilidade-qol/`, aguardando aprovação) |
 | 21 | R-07 | **Companion: Mod Soul** — Kon e afins acompanham o personagem, coletam loot cosmético, progressão própria (entidade seguidora no servidor + visual no cliente) | M | M1-04 | sim |
 | 22 | R-13 | **Cosméticos sazonais** — uniforme Karakura, haori de divisões, máscaras Vizard na Loja de Cristais | M | arte nova (uniforme, haori por divisão); decisão de lore (máscara fora do Ichigo) | não |
 | 23 | R-04 | **Expansão Wandenreich** — Sternritter como chefes de elite rotativos, Volständig visual para Ishida | M | W-04 recomendado | sim |
