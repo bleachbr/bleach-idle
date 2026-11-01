@@ -2,7 +2,7 @@
 // O agente nunca recebe nada além do que uma pessoa veria; o estado técnico (`window.__bi`,
 // só existe em dev) vai como contexto auxiliar para detectar inconsistências.
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
-import { existsSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, rmdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 
@@ -91,7 +91,7 @@ export function compressVideoToMp4(rawWebmPath: string, targetMp4Path: string): 
     if (existsSync(targetMp4Path) && statSync(targetMp4Path).size > 0) {
       unlinkSync(rawWebmPath);
       const parentDir = dirname(rawWebmPath);
-      try { rmSync(parentDir, { recursive: true, force: true }); } catch {}
+      try { rmdirSync(parentDir); } catch {}
       console.log(`vídeo comprimido (WhatsApp MP4): ${targetMp4Path} (${(statSync(targetMp4Path).size / 1e6).toFixed(1)} MB)`);
       return true;
     }

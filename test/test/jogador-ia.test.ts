@@ -1,10 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdirSync, writeFileSync, existsSync, statSync, rmSync } from "node:fs";
+import { mkdirSync, writeFileSync, existsSync, statSync, rmSync, mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import { Game, compressVideoToMp4 } from "../src/game.js";
 import { prepareSource } from "../src/source.js";
+
+function hasFfmpeg(): boolean {
+  try {
+    execFileSync("ffmpeg", ["-version"], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 test("Game configura baseUrl padrão para localhost e aceita targetUrl remoto", () => {
   const localGame = new Game("/tmp/mock-src", "/tmp/mock.sqlite");
@@ -39,24 +49,30 @@ test("Game startServers em modo remoto inicializa apenas o browser sem processos
   await remoteGame.stop();
 });
 
-test("compressVideoToMp4 comprime WebM para MP4 WhatsApp e apaga o original", () => {
-  const tmp = "/tmp/test-jogador-ia-video";
-  rmSync(tmp, { recursive: true, force: true });
+test("compressVideoToMp4 comprime WebM para MP4 WhatsApp e apaga o original", (t) => {
+  if (!hasFfmpeg()) {
+    t.skip("ffmpeg não disponível no ambiente");
+    return;
+  }
+
+  const tmp = mkdtempSync(join(tmpdir(), "bi-video-test-"));
   const rawDir = join(tmp, "video", "explorar");
   mkdirSync(rawDir, { recursive: true });
   const rawWebm = join(rawDir, "dummy.webm");
   const targetMp4 = join(tmp, "video", "explorar.mp4");
 
-  // Cria um webm de 1s de teste via lavfi
-  execFileSync("ffmpeg", ["-y", "-f", "lavfi", "-i", "color=c=black:s=320x240:d=1", "-c:v", "libvpx-vp9", rawWebm], { stdio: "ignore" });
-  assert.ok(existsSync(rawWebm), "rawWebm deve existir");
+  try {
+    // Cria um webm de 1s de teste via lavfi
+    execFileSync("ffmpeg", ["-y", "-f", "lavfi", "-i", "color=c=black:s=320x240:d=1", "-c:v", "libvpx-vp9", rawWebm], { stdio: "ignore" });
+    assert.ok(existsSync(rawWebm), "rawWebm deve existir");
 
-  const ok = compressVideoToMp4(rawWebm, targetMp4);
-  assert.equal(ok, true, "compressVideoToMp4 deve retornar true");
-  assert.ok(existsSync(targetMp4), "targetMp4 deve existir");
-  assert.ok(statSync(targetMp4).size > 0, "targetMp4 deve ter tamanho > 0");
-  assert.equal(existsSync(rawWebm), false, "rawWebm original deve ter sido apagado");
-  assert.equal(existsSync(rawDir), false, "pasta temporária explorar/ deve ter sido removida");
-
-  rmSync(tmp, { recursive: true, force: true });
+    const ok = compressVideoToMp4(rawWebm, targetMp4);
+    assert.equal(ok, true, "compressVideoToMp4 deve retornar true");
+    assert.ok(existsSync(targetMp4), "targetMp4 deve existir");
+    assert.ok(statSync(targetMp4).size > 0, "targetMp4 deve ter tamanho > 0");
+    assert.equal(existsSync(rawWebm), false, "rawWebm original deve ter sido apagado");
+    assert.equal(existsSync(rawDir), false, "pasta temporária explorar/ deve ter sido removida");
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
 });
