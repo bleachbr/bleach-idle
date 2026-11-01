@@ -15,3 +15,4 @@ export * from "./chronicles";
 export * from "./combatStatus";
 export * from "./bossPhases";
 export * from "./patrols";
+export * from "./offlineReport";

@@ -118,8 +118,9 @@ Ao implementar código ou refatorar no Bleach Idle, o agente deve obrigatoriamen
   2. **Organização de código:** funções curtas e coesas, nomes claros e expressivos, extração para módulos dedicados em vez de inflar arquivos grandes (como `WorldRoom.ts`).
   3. **Documentação e memória do projeto:** atualize `docs/roadmap.md`, `docs/roadmap-duplas.md`, `docs/pendencias.md` (quando aplicável) e registre a lição técnica em `docs/aprendizados.md`.
 - Sempre execute `npm run typecheck` e `npm test` antes de considerar uma tarefa concluída. Se mexeu em lógica do servidor, rode também os cenários afetados (`npm run test:scripts`).
+- **Uma branch e um PR por entrega (decisão de Waldir, 31/10/2026):** cada item do roadmap sai do seu worktree com `git push -u origin <branch>` e `gh pr create` (modelo em `.github/pull_request_template.md`), sem push direto na `main` e sem juntar várias entregas numa branch só. O merge continua sendo decisão de uma pessoa.
 - Um resultado por PR e um assunto por commit. Mensagens em português, no estilo `tipo: o que mudou`. Código escrito com IA leva `Co-Authored-By` com o modelo usado.
-- Quem escreveu não aprova o próprio PR (skill `revisar-pr`). O merge na `main` é decisão de uma pessoa; agente não faz push nem merge sem pedido explícito.
+- Quem escreveu não aprova o próprio PR (skill `revisar-pr`). O merge na `main` é decisão de uma pessoa; agente não faz merge sem pedido explícito e só faz push de branch de entrega (nunca da `main`) para abrir o PR.
 
 ---
 
@@ -146,7 +147,7 @@ O projeto cresce com código escrito por pessoas e por agentes. Estas regras man
 6. **Conserto de passagem vai em commit separado.** Conserto pequeno que destrava o CI fica no mesmo PR, em commit próprio; qualquer outro vira PR separado.
 7. **Pare e pergunte** quando a mudança: apagar dados, `.sqlite` ou backups; reescrever histórico; mexer em permissão ou segredo; subir major de dependência (por exemplo Colyseus); regenerar mapas editados no Tiled; ou publicar algo (push, PR, deploy).
 8. **Segredos nunca entram** em código, log, commit, mensagem de PR ou resposta. Não abra `.env` nem arquivos `.sqlite`.
-9. **Revise antes de publicar.** Nada vai para o remoto sem revisão adversarial (skill `revisar-pr`) feita por quem não escreveu o código, e PR só é mesclado com o CI verde. Em mudança de segurança (handler, login, sessão, `innerHTML`, dependências, Dockerfile, CI, segredos), a aprovação é da outra pessoa; o veredito de agente é só insumo. É um combinado entre as pessoas: o GitHub não o impõe neste plano (F-07 do roadmap). O fluxo completo, com IDs de itens e definição de pronto, está em `docs/roadmap.md`.
+9. **Revise antes de publicar.** Nada vai para o remoto sem revisão adversarial (skill `revisar-pr`) feita por quem não escreveu o código, e PR só é mesclado com o CI verde. Em mudança de segurança (handler, login, sessão, `innerHTML`, dependências, Dockerfile, CI, segredos), a aprovação é da outra pessoa; o veredito de agente é só insumo. A `main` pública tem o ruleset ativo `protect-main`, sem bypass, com PR, aprovação atualizada, conversas resolvidas e checks `gitleaks`, `test (22.x)` e `test (24.x)` do GitHub Actions obrigatórios. A exigência de Code Owners depende de `.github/CODEOWNERS` já estar na branch base; mudanças sensíveis devem ter aprovação humana. O CodeRabbit só pode aprovar automaticamente mudanças de baixo risco fora dos caminhos sensíveis, nunca fazer merge nem atender comando de autoaprovação do autor. O fluxo completo, com IDs de itens e definição de pronto, está em `docs/roadmap.md`.
 
 ## 7. Skills do projeto
 

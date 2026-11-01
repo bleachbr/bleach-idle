@@ -110,6 +110,17 @@ GAME_SPRITES = {
         ("kenpachi", 1.16), ("kenpachi_shikai", (1.16, 2)),
         ("kenpachi_sem_tapa", (rel_like("kenpachi_sem_tapa", "kenpachi", 1.16), 2)), ("kenpachi_kendo", (rel_like("kenpachi_kendo", "kenpachi", 1.16), 2)),
         ("kenpachi_bankai", (rel_like("kenpachi_bankai", "kenpachi", 1.16), 2)),
+        # R-01: Yoruichi esguia e um pouco mais baixa; Ukitake alto e magro; Shunsui alto, com o chapéu de palha.
+        # Com algo acima da cabeça (selo de kidō, braço de sombra do Mimihagi):
+        # célula de 2 tiles e a altura do desenho base, senão o corpo encolhe
+        ("yoruichi", 0.92), ("yoruichi_onmitsu", 0.92), ("yoruichi_shunko", 0.92), ("yoruichi_raijin", 0.92), ("yoruichi_raijujin", 0.92),
+        ("ukitake", 1.06), ("ukitake_shikai", 1.06), ("ukitake_kotowari", 1.06),
+        ("ukitake_kido", (rel_like("ukitake_kido", "ukitake", 1.06), 2)),
+        ("ukitake_mimihagi", (rel_like("ukitake_mimihagi", "ukitake", 1.06), 2)),
+        # o chapéu de palha do Shunsui é o ponto mais alto: rel 1.04 é o máximo que cabe em 48 px (45/43);
+        # sem o chapéu (Capitão-Comandante), a altura do desenho base, senão o corpo cresce
+        ("shunsui", 1.04), ("shunsui_shikai", 1.04), ("shunsui_kageoni", 1.04), ("shunsui_bankai", 1.04),
+        ("shunsui_soutaichou", rel_like("shunsui_soutaichou", "shunsui", 1.04)),
     ) if (Path(__file__).parent / "raw" / "walk8" / f"{id_}_down.png").exists()},
     # níveis 60–150: Karakura Falsa e Wandenreich
     **{id_: (f"walk8/{id_}_sheet.png", 4, 8, rel, tiles) for id_, rel, tiles in (
@@ -336,7 +347,7 @@ def lift_darks(colors):
     return out
 
 
-PLAYER_IDS = ("ichigo", "rukia", "renji", "ishida", "sado", "hitsugaya", "byakuya", "kenpachi")
+PLAYER_IDS = ("ichigo", "rukia", "renji", "ishida", "sado", "hitsugaya", "byakuya", "kenpachi", "yoruichi", "ukitake", "shunsui")
 
 
 def even_rows(cells, fname, name):

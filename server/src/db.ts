@@ -46,7 +46,7 @@ export interface SaveData {
   /** cosméticos equipados neste personagem */
   cos?: import("../../shared/src").CosEquip;
   /** presente enquanto o personagem caça offline (para o relatório e o limite de 12 h) */
-  offline?: { since: number; expAtLeave: number; goldAtLeave: number; zanAtLeave?: number; reiAtLeave?: number; deaths?: import("./schema").DeathReport[]; kills?: number; items?: Record<string, number> };
+  offline?: { since: number; expAtLeave: number; goldAtLeave: number; zanAtLeave?: number; reiAtLeave?: number; deaths?: import("./schema").DeathReport[]; kills?: number; kinds?: Record<string, number>; items?: Record<string, number> };
 }
 
 export interface CharRow {

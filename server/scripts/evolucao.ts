@@ -63,8 +63,9 @@ ok(`e a técnica 1 vira Shiten Kōsō (${hs?.name ?? h.logs.slice(-2).join(" | "
 h.room.send("auto", { autoTarget: false });
 await h.room.leave();
 
-// Byakuya e Kenpachi jogáveis: no nível 100, T leva ao último estágio da obra
-for (const [cid, last] of [["byakuya", "Shūkei: Hakuteiken"], ["kenpachi", "Bankai"]] as const) {
+// Byakuya e Kenpachi jogáveis, e o bloco R (R-01): no nível 100, T leva ao último estágio da obra
+for (const [cid, last] of [["byakuya", "Shūkei: Hakuteiken"], ["kenpachi", "Bankai"], ["yoruichi", "Shunkō: Raijū Senkei"],
+  ["ukitake", "Kamikake: Mimihagi"], ["shunsui", "Capitão-Comandante"]] as const) {
   const k = await bot(`Evo ${cid}`, { level: 100, exp: expForLevel(100), hp: 99999, rei: 99999 }, cid);
   k.room.send("transform");
   ok(`${CHARS[cid].name} jogável: no nível 100, T vai a ${last}`, await until(() => k.me()?.form === 4) && CHARS[cid].forms[4].label === last);

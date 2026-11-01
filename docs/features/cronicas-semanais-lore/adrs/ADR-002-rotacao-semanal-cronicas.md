@@ -2,7 +2,7 @@
 
 | Metadado | Detalhe |
 | :--- | :--- |
-| **Status** | Proposto |
+| **Status** | Proposto. Falta a aprovação das duas pessoas para "Aceito" (pontos do PRD §8 decididos em 31/10/2026) |
 | **Data** | 2026-10-31 |
 | **Autor** | Time de Engenharia Bleach Idle |
 | **Contexto Técnico** | Cronograma de eventos, sincronia temporal e persistência |
@@ -58,6 +58,7 @@ export interface ChronicleProgress {
 - A chave `activeWeekKey` guarda a semana em que a missão foi aceita.
 - Se `currentWeekKey() !== p.prog.chronicle.activeWeekKey`, o servidor detecta automaticamente a virada de semana e reinicia `questKills` **e** `completedAt`, sem rotina batch de banco de dados. A recompensa só é paga quando `completedAt` está vazio e `activeWeekKey` é a semana atual.
 - `newProgress()` (`shared/src/progress.ts`) precisa ganhar o campo `chronicle` com valor padrão; `fromSave` só mescla o que `newProgress()` devolve.
+- **Objetivos além de abates (decisão do PRD §8, 31/10/2026).** As semanas 1, 2 e 5 pedem também entrega de item (`garra`, `tentaculo`, `pedra_reishi`), a semana 2 conta só abates da Metastacia e a semana 5 pede uma sessão de treino. A entrega usa o mesmo fluxo do `collect` das missões do Kisuke (`shared/src/quests.ts`): conta o item no inventário e o consome só ao entregar; não precisa de campo novo. Abates contam em `questKills` só para os ids da semana (lista no catálogo das crônicas). A sessão de treino ganha um campo `trained?: boolean` em `ChronicleProgress`, zerado na virada como os outros.
 
 ---
 

@@ -21,6 +21,7 @@ import {
   applyStatus, tickStatuses, canEntityMove, canEntityAct, effectiveStepMs, formatStatusFlags, clearStatuses, type SkillStatusDef,
   evaluateBossPhase,
   PATROL_SECTORS, PATROL_DURATIONS, calculatePatrolRewards, canClaimPatrol, patrolRemainingMs, type PatrolState,
+  OFFLINE_MAX_MS, buildOfflineReport,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -29,12 +30,14 @@ import { MAPS, HOME, TEMPLE, SPAWNS, tileKey } from "./maps";
 import * as guilds from "./guilds";
 import * as market from "./market";
 import * as mailbox from "./mailbox";
+import { snapshotOffline, restoreOffline } from "./offlineState";
 import { flagOn } from "./flags";
 import { recordTick } from "./tickStats";
 import { recordSave, setWorldMetricsProvider } from "./metrics";
 import { getRanking, invalidateRankingCache } from "./ranking";
 import { claimServerMilestone } from "./milestones";
 import { checkChatMessage, isGm, mutePlayer, sanitizeChatText, unmutePlayer } from "./moderation";
+import { recordAudit } from "./economyAudit";
 
 const GUILD_COST = 500;
 /** Modo Dev (botão que libera tudo para testar): nasce DESLIGADO e só liga com BI_DEV=1 (`npm run dev` já define). */
@@ -52,7 +55,6 @@ const HELP = [
   "/ignorar Nome — liga ou desliga as mensagens dessa pessoa · /ignorar — mostra a lista",
 ];
 
-const OFFLINE_MAX_MS = 12 * 3600_000;
 const AGGRO = 5;
 const LEASH = 10;
 const VIEW = 8;
@@ -282,12 +284,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.accountId = row.accountId ?? 0;
       this.state.players.set(id, p);
       if (row.data.offline) {
-        p.offlineSince = row.data.offline.since;
-        p.expAtLeave = row.data.offline.expAtLeave;
-        p.goldAtLeave = row.data.offline.goldAtLeave;
-        p.offlineDeaths = row.data.offline.deaths ?? [];
-        p.offKills = row.data.offline.kills ?? 0;
-        p.offItems = row.data.offline.items ?? {};
+        restoreOffline(p, row.data.offline, { zan: p.zanjutsu, rei: p.reiryoku });
         this.sendOfflineReport(client, p);
       }
       p.online = true;
@@ -325,7 +322,9 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.zanAtLeave = p.zanjutsu;
       p.reiAtLeave = p.reiryoku;
       p.offKills = 0;
+      p.offKinds = {};
       p.offItems = {};
+      p.offlineDeaths = [];
       db.save(p.id, this.toSave(p), true);
     } else {
       db.save(p.id, this.toSave(p), false);
@@ -409,13 +408,8 @@ export class WorldRoom extends GameRoom<WorldState> {
       const p = this.fromSave(row.id, row.data);
       p.accountId = row.accountId ?? 0;
       p.online = false;
-      p.offlineSince = since;
-      p.expAtLeave = row.data.offline?.expAtLeave ?? p.exp;
-      p.goldAtLeave = row.data.offline?.goldAtLeave ?? p.gold;
-      p.zanAtLeave = row.data.offline?.zanAtLeave ?? p.zanjutsu;
-      p.reiAtLeave = row.data.offline?.reiAtLeave ?? p.reiryoku;
-      p.offKills = row.data.offline?.kills ?? 0;
-      p.offItems = row.data.offline?.items ?? {};
+      restoreOffline(p, { since, ...row.data.offline, expAtLeave: row.data.offline?.expAtLeave ?? p.exp, goldAtLeave: row.data.offline?.goldAtLeave ?? p.gold },
+        { zan: p.zanjutsu, rei: p.reiryoku });
       this.state.players.set(p.id, p);
       n++;
     }
@@ -901,16 +895,23 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private sendOfflineReport(client: Client, p: Player) {
+    const report = buildOfflineReport({
+      since: p.offlineSince, now: Date.now(),
+      expAtLeave: p.expAtLeave, exp: p.exp, goldAtLeave: p.goldAtLeave, gold: p.gold,
+      zanAtLeave: p.zanAtLeave, zan: p.zanjutsu, reiAtLeave: p.reiAtLeave, rei: p.reiryoku,
+      level: p.level, kinds: p.offKinds, items: p.offItems, deaths: p.offlineDeaths,
+    });
     client.send("offline", {
-      minutes: Math.round((Date.now() - p.offlineSince) / 60000),
-      exp: p.exp - p.expAtLeave, gold: p.gold - p.goldAtLeave, level: p.level, deaths: p.offlineDeaths,
-      zanjutsu: p.zanjutsu, zanGain: p.zanjutsu - p.zanAtLeave, reiryoku: p.reiryoku, reiGain: p.reiryoku - p.reiAtLeave,
+      minutes: report.huntMinutes, exp: report.exp, gold: report.gold, level: p.level, deaths: p.offlineDeaths,
+      zanjutsu: p.zanjutsu, zanGain: report.zanGain, reiryoku: p.reiryoku, reiGain: report.reiGain,
       kills: p.offKills,
-      items: Object.entries(p.offItems).sort((a, b) => b[1] - a[1]).map(([id, n]) => `${n}x ${ITEMS[id]?.name ?? id}`),
+      items: report.items.map((i) => `${i.qty}x ${i.name}`),
+      report,
     });
     p.offlineSince = 0;
     p.offlineDeaths = [];
     p.offKills = 0;
+    p.offKinds = {};
     p.offItems = {};
   }
 
@@ -1095,6 +1096,16 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (spaceFor(p.inv, def.id) < qty) return this.log(p, "Inventário sem espaço.");
       p.gold -= cost;
       addItem(p.inv, def.id, qty);
+      recordAudit({
+        accountId: p.accountId,
+        charId: p.name,
+        currency: "kan",
+        delta: -cost,
+        balanceAfter: p.gold,
+        reason: "shop_buy",
+        itemId: def.id,
+        details: { qty },
+      });
       this.log(p, `Comprou ${qty}x ${def.name} por ${cost} kan.`);
       this.sendInv(p);
     });
@@ -1107,6 +1118,16 @@ export class WorldRoom extends GameRoom<WorldState> {
       const gain = ITEMS[s.id].sell * s.qty;
       p.gold += gain;
       p.inv[i] = null;
+      recordAudit({
+        accountId: p.accountId,
+        charId: p.name,
+        currency: "kan",
+        delta: gain,
+        balanceAfter: p.gold,
+        reason: "shop_sell",
+        itemId: s.id,
+        details: { qty: s.qty },
+      });
       this.log(p, `Vendeu ${s.qty}x ${ITEMS[s.id].name} por ${gain} kan.`);
       this.sendInv(p);
     });
@@ -1124,6 +1145,17 @@ export class WorldRoom extends GameRoom<WorldState> {
       });
       this.log(p, n ? `Vendeu ${n} itens de loot por ${gain} kan.` : "Nenhum loot para vender.");
       p.gold += gain;
+      if (gain > 0) {
+        recordAudit({
+          accountId: p.accountId,
+          charId: p.name,
+          currency: "kan",
+          delta: gain,
+          balanceAfter: p.gold,
+          reason: "sell_loot",
+          details: { count: n },
+        });
+      }
       this.sendInv(p);
     });
   }
@@ -1534,6 +1566,15 @@ export class WorldRoom extends GameRoom<WorldState> {
         const ng = guilds.createGuild(arg, p.id);
         if (!ng) return this.log(p, "Já existe uma guilda com esse nome.");
         p.gold -= GUILD_COST;
+        recordAudit({
+          accountId: p.accountId,
+          charId: p.name,
+          currency: "kan",
+          delta: -GUILD_COST,
+          balanceAfter: p.gold,
+          reason: "guild_create",
+          details: { guildName: ng.name, guildId: ng.id },
+        });
         this.sendInv(p);
         this.joinedGuild(p, ng);
         return this.broadcast("chat", { from: "", text: `${p.name} fundou a guilda ${ng.name} [${ng.tag}].`, ch: "sys" });
@@ -2319,6 +2360,24 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (p.gold < cost.gold) return this.log(p, `Faltam ${cost.gold - p.gold} kan.`);
       removeItem(p.inv, "pedra_reishi", cost.stones);
       p.gold -= cost.gold;
+      recordAudit({
+        accountId: p.accountId,
+        charId: p.name,
+        currency: "kan",
+        delta: -cost.gold,
+        balanceAfter: p.gold,
+        reason: "forge_fee",
+        details: { slot, stones: cost.stones, targetLv: lv + 1 },
+      });
+      recordAudit({
+        accountId: p.accountId,
+        charId: p.name,
+        currency: "item",
+        delta: -cost.stones,
+        reason: "forge_material",
+        itemId: "pedra_reishi",
+        details: { slot },
+      });
       this.dailyStep(p, "forge");
       if (Math.random() < FORGE_CHANCE[lv]) {
         p.forge[slot] = lv + 1;
@@ -2345,7 +2404,10 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.dailyStep(p, "any");
     this.dailyStep(p, "kill", 1, kind);
     if (BOSSES.has(kind)) this.dailyStep(p, "boss");
-    if (!p.online) p.offKills++;
+    if (!p.online) {
+      p.offKills++;
+      p.offKinds[kind] = (p.offKinds[kind] ?? 0) + 1;
+    }
     if (BOSSES.has(kind)) pr.bossKills++;
     if (kind === "yhwach") this.awardMilestone(p, "first_yhwach");
     this.seasonKill(p, BOSSES.has(kind));
@@ -2654,7 +2716,16 @@ export class WorldRoom extends GameRoom<WorldState> {
   private giveCrystals(p: Player, n: number, reason: string) {
     if (!p.accountId || n <= 0) return;
     db.changeCrystals(p.accountId, n, reason);
-    this.sendTo(p, "crystals", { crystals: db.wallet(p.accountId).crystals });
+    const balanceAfter = db.wallet(p.accountId).crystals;
+    recordAudit({
+      accountId: p.accountId,
+      charId: p.name,
+      currency: "crystals",
+      delta: n,
+      balanceAfter,
+      reason,
+    });
+    this.sendTo(p, "crystals", { crystals: balanceAfter });
   }
 
   private sendShop(p: Player) {
@@ -2692,6 +2763,16 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (w.owned.includes(item.id)) return this.log(p, `${item.name} já é seu.`);
       if (w.crystals < item.price) return this.log(p, `Faltam ${item.price - w.crystals} cristais para ${item.name}.`);
       if (!db.changeCrystals(p.accountId, -item.price, `compra ${item.id}`, item.id)) return this.log(p, "Não deu para comprar agora. Tente de novo.");
+      const balanceAfter = db.wallet(p.accountId).crystals;
+      recordAudit({
+        accountId: p.accountId,
+        charId: p.name,
+        currency: "crystals",
+        delta: -item.price,
+        balanceAfter,
+        reason: "shop_buy",
+        itemId: item.id,
+      });
       // já sai equipado (a crônica equipa o título dela)
       this.equipCos(p, item.id);
       this.log(p, item.kind === "lore" ? `Crônica liberada: ${item.name}. Você ganhou o título "${item.title}".` : `Você comprou ${item.name}!`);
@@ -2816,8 +2897,30 @@ export class WorldRoom extends GameRoom<WorldState> {
     const trial = p.inv.map((sl) => (sl ? { ...sl } : null));
     for (const s of mail.items) if (addItem(trial, s.id, s.qty) < s.qty) return this.log(p, "Inventário sem espaço para o anexo.");
     if (!mailbox.take(mail.id, p.id)) return;
-    for (const s of mail.items) addItem(p.inv, s.id, s.qty);
-    p.gold += mail.gold;
+    for (const s of mail.items) {
+      addItem(p.inv, s.id, s.qty);
+      recordAudit({
+        accountId: p.accountId,
+        charId: p.name,
+        currency: "item",
+        delta: s.qty,
+        reason: "mail_take",
+        itemId: s.id,
+        details: { mailId: mail.id, from: mail.from },
+      });
+    }
+    if (mail.gold > 0) {
+      p.gold += mail.gold;
+      recordAudit({
+        accountId: p.accountId,
+        charId: p.name,
+        currency: "kan",
+        delta: mail.gold,
+        balanceAfter: p.gold,
+        reason: "mail_take",
+        details: { mailId: mail.id, from: mail.from },
+      });
+    }
     this.log(p, `Carta recebida: ${mail.subject}${mail.gold ? `, +${mail.gold} kan` : ""}${mail.items.map((s) => `, ${s.qty}x ${ITEMS[s.id]?.name ?? s.id}`).join("")}.`);
     this.sendInv(p);
     this.showMail(p, false);
@@ -2840,10 +2943,20 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (!Number.isInteger(qty) || qty < 1 || qty > sl.qty) return this.log(p, "Quantidade inválida.");
       if (!Number.isInteger(price) || price < 1 || price > market.MAX_PRICE) return this.log(p, `Preço por unidade: de 1 a ${market.MAX_PRICE} kan.`);
       if (market.countBy(p.id) >= market.MAX_LISTINGS) return this.log(p, `No máximo ${market.MAX_LISTINGS} anúncios ao mesmo tempo.`);
+      const sellItemId = sl.id;
       sl.qty -= qty;
       if (sl.qty <= 0) p.inv[i] = null;
-      market.add(p.id, p.name, sl.id, qty, price);
-      this.log(p, `Anunciou ${qty}x ${ITEMS[sl.id].name} por ${price} kan cada.`);
+      market.add(p.id, p.name, sellItemId, qty, price);
+      recordAudit({
+        accountId: p.accountId,
+        charId: p.name,
+        currency: "item",
+        delta: -qty,
+        reason: "market_list",
+        itemId: sellItemId,
+        details: { price, unitPrice: price },
+      });
+      this.log(p, `Anunciou ${qty}x ${ITEMS[sellItemId].name} por ${price} kan cada.`);
       this.sendInv(p);
       show(p);
     });
@@ -2859,6 +2972,24 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (!market.remove(l.id)) return show(p); // alguém comprou antes
       p.gold -= total;
       addItem(p.inv, l.item, l.qty);
+      recordAudit({
+        accountId: p.accountId,
+        charId: p.name,
+        currency: "kan",
+        delta: -total,
+        balanceAfter: p.gold,
+        reason: "market_buy",
+        details: { listingId: l.id, seller: l.sellerName, item: l.item, qty: l.qty, price: l.price },
+      });
+      recordAudit({
+        accountId: p.accountId,
+        charId: p.name,
+        currency: "item",
+        delta: l.qty,
+        reason: "market_buy",
+        itemId: l.item,
+        details: { listingId: l.id, seller: l.sellerName },
+      });
       const income = total - Math.floor(total * market.MARKET_FEE);
       this.creditSeller(l.seller, income, `Mercado: ${p.name} comprou ${l.qty}x ${ITEMS[l.item].name}. Você recebeu ${income} kan (taxa de ${market.MARKET_FEE * 100}%).`);
       this.log(p, `Comprou ${l.qty}x ${ITEMS[l.item].name} de ${l.sellerName} por ${total} kan.`);
@@ -2873,6 +3004,15 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (spaceFor(p.inv, l.item) < l.qty) return this.log(p, "Inventário sem espaço para receber de volta.");
       if (!market.remove(l.id)) return show(p);
       addItem(p.inv, l.item, l.qty);
+      recordAudit({
+        accountId: p.accountId,
+        charId: p.name,
+        currency: "item",
+        delta: l.qty,
+        reason: "market_cancel",
+        itemId: l.item,
+        details: { listingId: l.id },
+      });
       this.log(p, `Anúncio cancelado: ${l.qty}x ${ITEMS[l.item].name} voltou ao inventário.`);
       this.sendInv(p);
       show(p);
@@ -2906,6 +3046,14 @@ export class WorldRoom extends GameRoom<WorldState> {
     const x = this.state.players.get(id);
     if (x) {
       x.gold += amount;
+      recordAudit({
+        accountId: x.accountId,
+        charId: x.name,
+        currency: "kan",
+        delta: amount,
+        balanceAfter: x.gold,
+        reason: "market_sale_proceeds",
+      });
       this.sendInv(x);
       this.log(x, text);
       return;
@@ -2914,6 +3062,14 @@ export class WorldRoom extends GameRoom<WorldState> {
     if (!row) return;
     row.data.gold = (row.data.gold ?? 0) + amount;
     db.save(id, row.data, row.inWorld);
+    recordAudit({
+      accountId: row.accountId ?? undefined,
+      charId: id,
+      currency: "kan",
+      delta: amount,
+      balanceAfter: row.data.gold,
+      reason: "market_sale_proceeds",
+    });
   }
 
   // ---------- utilidades ----------
@@ -2933,7 +3089,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
       autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil, rebirths: p.rebirths, prog: p.prog, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
       autoTrain: p.autoTrain, autoSell: p.autoSell, ignore: p.ignore, huntSpot: p.huntSpot, autoReturn: p.autoReturn, autoRei: p.autoRei, autoBankai: p.autoBankai, autoBox: p.autoBox, autoRestock: p.autoRestock, cos: this.cosOf(p), zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
-      offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, zanAtLeave: p.zanAtLeave, reiAtLeave: p.reiAtLeave, deaths: p.offlineDeaths, kills: p.offKills, items: p.offItems },
+      offline: p.online ? undefined : snapshotOffline(p),
     };
   }
 
