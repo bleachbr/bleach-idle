@@ -230,6 +230,15 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 - **Problema:** itens e kan só chegavam com o jogador online; anúncio expirado com depot cheio ficava preso no mercado.
 - **Solução (`server/src/mailbox.ts`):** tabela `mailbox` própria; `take()` usa `DELETE` condicional e só entrega o anexo se apagou a linha, o que impede duplicação por retirada repetida. O `WorldRoom` valida espaço numa cópia do inventário antes de retirar. O mercado usa o correio como destino quando o depot está cheio.
+
+## 24. Arena de duelos 1v1 ranqueada com Rating Elo e anti-cheat de velocidade (W-01)
+
+- **Problema:** O PvP do jogo estava restrito ao mundo aberto com penalidades severas de perda de itens, EXP e marcação de assassino (`skullUntil`), o que impedia duelos competitivos justos, sem risco de perda de inventário e balanceados por poder/habilidade.
+- **Solução (`shared/src/arena.ts`, `server/src/arenaManager.ts`, `server/src/WorldRoom.ts`):**
+  1. **Fórmulas Puras e Rating Elo Determinístico:** Sistema Elo padrão ($K=32$) com base de 1000 pontos (`DEFAULT_ARENA_RATING`) e divisões competitivas (Bronze a Capitão) calculadas em módulo compartilhado coberto por testes unitários determinísticos.
+  2. **Pareamento Dinâmico em Memória:** Fila em memória (`arenaManager.ts`) com expansão de tolerância a cada 10 s (`100 + 50 * floor(t / 10s)` até 500) para garantir partidas rápidas mesmo com densidade variável de jogadores.
+  3. **Isolamento Total do PvP de Arena:** Duelos ocorrem na área reservada de Dangai com contagem regressiva de 3 s; durante a contagem, passos e técnicas são travados. O combate em arena não marca `skullUntil` nem `pvpUntil`. O golpe fatal é interceptado como nocaute (KO), curando ambos os duelistas a 100% de HP/Rei e teleportando-os de volta com segurança (sem perda de inventário ou EXP).
+  4. **Anti-Cheat de Velocidade no Servidor:** Validação estrita autoritativa de intervalo entre passos (`validateStepInterval` contra `effectiveStepMs` com botas e status ativos) descartando tentativas de manipulação de velocidade ou teleporte pelo cliente.
 ---
 
 ## 8. Eventos Globais no Cliente sem Campo Novo no Schema

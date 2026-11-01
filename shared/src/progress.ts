@@ -2,6 +2,7 @@
 // recompensa diária com sequência. Tudo conta também na hunt offline.
 
 import { MONSTERS } from "./data";
+import { newArenaProgress, type ArenaProgress } from "./arena";
 
 // ---------- bestiário ----------
 
@@ -128,6 +129,8 @@ export interface Progress {
   titles?: string[];
   /** progresso da crônica semanal (M1-05) */
   chronicle?: ChronicleProgress;
+  /** progresso na arena 1v1 ranqueada (W-01) */
+  arena?: ArenaProgress;
   /** patrulha idle ativa (W-13) */
   patrol?: import("./patrols").PatrolState | null;
 }
@@ -217,6 +220,7 @@ export const newProgress = (): Progress => ({
   kills: 0,
   bossKills: 0,
   chronicle: { activeWeekKey: "", questKills: 0 },
+  arena: newArenaProgress(),
 });
 
 export function stagesSum(bestiary: Record<string, number>): number {

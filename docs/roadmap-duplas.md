@@ -67,7 +67,7 @@ Backlog novo (IDs W-##) — motor, operação e conteúdo de mundo misturados:
 | 28 | W-08 | **Auditoria de economia** — trilha imutável de kan/cristais/itens (anti-dupe, suporte) | M | — | **Feito** (`feat/w-08-auditoria-economia`) | Spec em `docs/features/auditoria-economia/` |
 | 29 | W-13 | **Patrulhas idle de Hollows** — jogador/party em patrulha por X horas retorna com recompensa | M | — | **Feito** (`feat/w-13-patrulhas-idle`) | Spec em `docs/features/patrulhas-idle/` |
 | 30 | W-14 | **Personagens novos (bloco W)** — Orihime (barreira/suporte), Urahara, Mayuri; 5 estágios e 4 técnicas cada | M cada | — | skill `adicionar-conteudo`; Orihime exige mecânica nova de barreira no motor |
-| 31 | W-01 | **Arena de duelos 1v1 ranqueada** — fila por reiatsu, rating Elo, anti-cheat de velocidade | G | M2-01 recomendado | sim |
+| 31 | W-01 | **Arena de duelos 1v1 ranqueada** — fila por reiatsu, rating Elo, anti-cheat de velocidade | G | M2-01 recomendado | **Feito** (`feat/w-01-arena-duelos-1v1`) |
 | 32 | W-10 | **Anti-abuso de automação** — heurística de bot com flag de revisão, sem ban automático | M | W-09 recomendado | sim |
 | 33 | W-15 | **Arco Fullbringer (pacote completo)** — mapa Xcution, monstros, itens, Ginjo/Tsukishima como chefe/NPC | G | W-04 recomendado | sim |
 | 34 | W-16 | **Mundo Interior da Zanpakutō** — instância solo que desbloqueia Shikai/Bankai por prova de combate | G | F-12 e M4-01 | sim |
