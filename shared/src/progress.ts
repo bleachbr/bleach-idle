@@ -131,6 +131,8 @@ export interface Progress {
   chronicle?: ChronicleProgress;
   /** progresso na arena 1v1 ranqueada (W-01) */
   arena?: ArenaProgress;
+  /** patrulha idle ativa (W-13) */
+  patrol?: import("./patrols").PatrolState | null;
 }
 
 // ---------- marcos históricos do servidor (W-06) ----------

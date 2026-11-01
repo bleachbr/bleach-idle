@@ -525,3 +525,7 @@ Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square ce
 ```text
 Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells) of animated visual effects: each ROW is ONE effect animated over 4 frames from left to right (start, grow, peak, fade). In every cell the effect is centered and fully inside the cell with magenta padding; no characters, no ground. Row 1: a huge explosion of black and crimson spirit energy bursting outward in a ring with a tall column in the middle (a powerful transformation release). Row 2: the same release in white and pale cyan with ice shards. Row 3: the same release in crimson red and orange flames. Row 4: the same release in bright light-blue energy. Style: crisp pixel art matching the reference, bright glowing colors, no anti-aliasing, no dithering. Background: 100% solid flat magenta #FF00FF, no text.
 ```
+
+# Rodada R-01: Yoruichi, Ukitake e Shunsui (31/10/2026)
+
+Script `art/gen_r01.py` (Python, porque o Windows não tem bash; os textos de estilo e ciclo são cópia dos de `work/gen_walk8.sh`, script local fora do git). As três bases usaram `walk8/byakuya_down.png` como referência de estilo; cada estágio usou a base do próprio personagem. As descrições de cada estágio estão no dicionário `BASES`/`STAGES` do script. As 45 imagens (15 estágios x frente, perfil e costas) saíram na 1ª tentativa, sem recusas, com cerca de 24 mil tokens do Codex por imagem.

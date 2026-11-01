@@ -15,3 +15,5 @@ export * from "./chronicles";
 export * from "./combatStatus";
 export * from "./bossPhases";
 export * from "./arena";
+export * from "./patrols";
+export * from "./offlineReport";

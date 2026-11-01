@@ -97,6 +97,8 @@ export class Player extends Schema {
   offlineDeaths: DeathReport[] = [];
   /** abates e loot da caçada offline, para o relatório da volta */
   offKills = 0;
+  /** abates da caçada offline por tipo de monstro, para o relatório da volta */
+  offKinds: Record<string, number> = {};
   /** horários das últimas mortes (trava do voltar a caçar) e próximas checagens do Auto Helper */
   deathTimes: number[] = [];
   helperAt = 0;

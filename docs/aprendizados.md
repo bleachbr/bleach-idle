@@ -4,6 +4,18 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ---
 
+## Repositório público, rulesets e revisores automáticos (F-07)
+
+Ao tornar o repositório público, a API passou a permitir ruleset ativo: PR obrigatório, uma aprovação descartada com novos commits, aprovação do último push por outra conta, conversas resolvidas e checks vinculados ao app GitHub Actions. Os nomes dos checks devem refletir o workflow atual (`gitleaks`, `test (22.x)`, `test (24.x)`); exigir o antigo `test` deixaria a nova matriz sem satisfazer a regra. O ruleset não tem bypass, inclusive para administradores.
+
+Administrador de repositório não é necessariamente owner da organização; a instalação inicial do app exigiu acesso do owner. CodeRabbit já publicou review e check reais no repositório. Pela decisão D-004, a aprovação automática vale também para CI, deploy e segurança, após revisão completa do HEAD atual e resolução dos bloqueios, sem atalhos de aprovação. `max_merge_risk: low` exige avaliação atual: risco material deve ser corrigido, não aprovado à força. CODEOWNERS serve para indicar responsáveis; a exigência de aprovação humana foi desativada, mantendo uma aprovação obrigatória do último push por outro ator e os checks do GitHub Actions e do app CodeRabbit. Aprovação do bot não faz merge. Aprovação no chat não substitui `APPROVED` registrado no GitHub.
+
+Repositório público aumenta a exposição de código e histórico, não libera segredos: secret scanning, push protection e alertas de dependências foram habilitados; workflows de forks externos passaram a exigir aprovação. `.env.*` também precisa ser ignorado e excluído do contexto Docker. Gitleaks limpo reduz risco, mas não substitui rotação de qualquer segredo que já tenha sido exposto.
+
+## Deploy em VPS compartilhada (F-13)
+
+A inspeção somente leitura confirmou Nginx nas portas 80/443, Docker Compose e Certbot disponíveis. O Compose original com Caddy disputaria essas portas. A configuração específica para VPS deve publicar o jogo apenas em loopback e persistir SQLite em volume próprio. O workflow prepara a imagem no runner, evitando build concorrente com os outros sites na VPS, e só publica push da `main` depois dos testes. O arquivo Nginx é provisionado separadamente; não se altera o proxy compartilhado a cada release. A identidade SSH deve ser fixada, não descoberta cegamente durante o deploy. O provisionamento foi validado com HTTPS e handshake WebSocket; os 24 arquivos dos outros sites mantiveram os mesmos hashes. O fluxo completo pelo GitHub e a restauração de backup ainda precisam de validação. No Mac ARM, o build amd64 falhou no runtime Go do esbuild sob emulação; o build nativo na VPS passou, limitado a 1 CPU e 1,5 GB. Essa exceção inicial não muda o workflow: releases seguintes são construídas no runner amd64.
+
 ## 1. Arquitetura de Servidor Autoritativo e Tick de 100 ms
 
 ### Lição: O Cliente Nunca Deve Decidir o Estado
@@ -237,3 +249,34 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - O prazo no cliente sai de `left` (ms que faltam) somado ao relógio do aparelho, e não de `until` com `serverNow()`: o banner de quem entra chega antes da resposta do `time` (`clock.ts`), e um aparelho adiantado apagaria o banner na hora.
 - Os textos ficam em `shared/src/events.ts`, e o servidor manda só a fase. O cliente busca o texto com `own(EVENT_BANNER, fase)`: mesmo vindo do servidor, a chave chega pela rede.
 - Os avisos de sistema com números (vida, XP, minutos) continuam iguais e a lore vai numa linha separada (canal `lore`), porque os cenários `invasion` e `temporada` conferem trechos desses avisos.
+
+## 9. Arte com o Codex no Windows (R-01)
+
+### Gerar sem bash
+- Os scripts antigos de geração (`art/work/gen_*.sh`, só na máquina de quem gerou: `art/work/` fica fora do git) pedem bash, que o Windows deste projeto não tem. O `art/gen_r01.py` faz o mesmo em Python: `codex exec -s workspace-write -C art -i <referência>` com o prompt de `gen_walk8.sh` copiado nele, 9 em paralelo. As 45 imagens dos três personagens saíram na 1ª tentativa, cerca de 1 min cada.
+- Rodar o gerador como processo em segundo plano da ferramenta do agente não funcionou (o processo sumia sem log). `Start-Process python -ArgumentList "-u","gen_r01.py" -RedirectStandardOutput ...` funcionou.
+
+### A paleta compartilhada mexe em todas as folhas
+- `process.py game` monta uma paleta de 64 cores com todas as folhas. Folha nova muda a paleta, e as ~70 folhas antigas saem com pixels diferentes (no Byakuya, metade dos pixels opacos), sem mudança que se veja.
+- **Solução no R-01:** commitar só as folhas novas e voltar as antigas com `git checkout`. As novas ficam com a paleta desta rodada; a próxima pessoa que rodar `process.py` regenera tudo junto (pendência em `pendencias.md` §2).
+- `hd.py` refaz todas as folhas HD e levou mais de 25 min. Para regerar só algumas, chame `hd.sheet_hd(*process.GAME_SPRITES[id], name=id)` para cada id (51 s para 6 folhas).
+- `process.py` escala pela altura total do desenho: na célula de 48 px, `rel` acima de ~1,04 corta o topo (o chapéu de palha do Shunsui saiu cortado com 1,1). Confira a linha 0 de cada quadro antes de commitar.
+
+## 24. Caçada Offline v2 com Relatório Estruturado e Persistência Unificada (W-05)
+
+- **Problema:** Ao reconectar após caçada offline, o relatório não informava quais monstros foram abatidos, taxas de rendimento por hora nem separava perdas de mortes de ganhos líquidos; além disso, a lógica de snapshot e restauração ficava dispersa em `onLeave`, `restoreWorld` e `onJoin`.
+- **Solução (`shared/src/offlineReport.ts`, `server/src/offlineState.ts`, `server/src/WorldRoom.ts`):** Extraímos o cálculo puro de rendimento para `buildOfflineReport`, limitando o tempo ao teto de 12 horas (`OFFLINE_MAX_MS`) e fornecendo `topKills`, `expPerHour`, `killsPerHour` e perdas detalhadas. Unificamos a captura de snapshot e restauração do save em `offlineState.ts`, salvando `offKinds` em `SaveData.offline` com compatibilidade retroativa para saves antigos.
+
+## 25. Trilha imutável de auditoria econômica e anti-duplicação (W-08)
+
+- **Problema:** Movimentações de alto valor de kan, cristais e itens (mercado entre jogadores, correio com anexos, forja do Kisuke, compras de loja e recompensas) não tinham registro histórico persistente. Em caso de relatos de itens sumidos, suspeita de duplicação ou desbalanceamento da economia por injeção excessiva de moeda, não existia uma trilha contábil para auditar o fluxo de bens.
+- **Solução (`server/src/economyAudit.ts`, `server/src/WorldRoom.ts`):** Criamos a tabela append-only `economy_audit` no SQLite com prepared statements rápidos indexados por `char_id`, `currency` e `created_at`. Cada transação relevante registra `(accountId, charId, currency, delta, balanceAfter, reason, itemId, details, createdAt)`. O módulo oferece `recordAudit` para inserção atômica, `getAuditTrail(charId, limit)` para suporte ao jogador e `queryEconomyFlow(since, until)` para consolidação agregada de entradas e saídas de kan/cristais da economia.
+
+## 26. Patrulhas idle de Hollows com cálculo determinístico e despacho assíncrono (W-13)
+
+- **Problema:** A progressão offline dependia unicamente de deixar o personagem parado no mapa combatendo monstros em loop (Auto Hunt). Não havia como escolher setores temáticos, despachar expedições de vigília em intervalos de 1h a 12h ou receber bônus de cooperação de grupo de forma desacoplada de ticks ativos de combate.
+- **Solução (`shared/src/patrols.ts`, `server/src/WorldRoom.ts`):** Extraímos o catálogo de setores (`PATROL_SECTORS`), as durações válidas (`[1, 4, 8, 12]` h com bônus de eficiência progressivo de até +25%) e o cálculo de recompensas para o pacote compartilhado `shared/src/patrols.ts`. O cálculo de recompensas (`calculatePatrolRewards`) é uma função pura e determinística com gerador pseudo-aleatório baseado em semente (`startedAt`), garantindo que EXP, Kan, fragmentos de Hollow e drops temáticos sejam gerados sem depender do relógio do sistema. No servidor, o estado reside em `Progress.patrol` sem timers em segundo plano — a validação de conclusão ocorre apenas sob demanda no resgate (`patrolClaim`), economizando CPU e memória.
+
+## Fluxo de publicação: uma branch e um PR por entrega
+
+- **Regra (Waldir, 31/10/2026):** depois de acumular 38 commits na `main` local e publicá-los direto, a decisão passou a ser publicar cada entrega em branch própria com PR. Reduz o raio de conflito (o remoto já divergia com o F-10 duplicado) e dá o ponto de revisão adversarial previsto no fluxo do roadmap.

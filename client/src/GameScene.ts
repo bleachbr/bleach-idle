@@ -59,11 +59,14 @@ const MOB_FX: Record<string, string> = {
   gillian: "cero", menos_anciao: "cero", arrancar: "cero", arrancar_numeros: "cero", privaron: "cero",
 };
 /** explosão da liberação (Bankai e afins) de cada personagem */
-const RELEASE: Record<string, string> = { ichigo: "rel_ichigo", rukia: "rel_rukia", renji: "rel_renji", ishida: "rel_blue", sado: "rel_renji", hitsugaya: "rel_rukia", byakuya: "rel_rukia", kenpachi: "rel_renji" };
+const RELEASE: Record<string, string> = { ichigo: "rel_ichigo", rukia: "rel_rukia", renji: "rel_renji", ishida: "rel_blue", sado: "rel_renji", hitsugaya: "rel_rukia", byakuya: "rel_rukia", kenpachi: "rel_renji",
+  yoruichi: "rel_blue", ukitake: "rel_rukia", shunsui: "rel_renji" };
 /** aura do Bankai (ou forma liberada) de cada personagem */
-const AURA: Record<string, string> = { ichigo: "aura_ichigo", rukia: "aura_rukia", renji: "aura_renji", ishida: "aura_blue", sado: "aura_renji", hitsugaya: "aura_rukia", byakuya: "aura_rukia", kenpachi: "aura_renji" };
-/** cor por cima dos efeitos que o personagem divide com outro (pétalas rosa do Byakuya, reiatsu amarelo do Kenpachi) */
-const CHAR_TINT: Record<string, number> = { byakuya: 0xffa8d0, kenpachi: 0xffd040 };
+const AURA: Record<string, string> = { ichigo: "aura_ichigo", rukia: "aura_rukia", renji: "aura_renji", ishida: "aura_blue", sado: "aura_renji", hitsugaya: "aura_rukia", byakuya: "aura_rukia", kenpachi: "aura_renji",
+  yoruichi: "aura_blue", ukitake: "aura_rukia", shunsui: "aura_renji" };
+/** cor por cima dos efeitos que o personagem divide com outro (pétalas rosa do Byakuya, reiatsu amarelo do Kenpachi,
+ * relâmpago da Yoruichi, flores do Shunsui) */
+const CHAR_TINT: Record<string, number> = { byakuya: 0xffa8d0, kenpachi: 0xffd040, yoruichi: 0xfff0a0, shunsui: 0xff9fc4 };
 /** habilidade de cada personagem: projétil que voa até o alvo, ou explosão no alvo */
 const SKILL_FX: Record<string, { anim: string; fly: boolean }> = {
   ichigo: { anim: "getsuga", fly: true },
@@ -74,6 +77,9 @@ const SKILL_FX: Record<string, { anim: string; fly: boolean }> = {
   hitsugaya: { anim: "ice", fly: false },
   byakuya: { anim: "blast", fly: false },
   kenpachi: { anim: "slash", fly: false },
+  yoruichi: { anim: "punch", fly: false },
+  ukitake: { anim: "blast", fly: true },
+  shunsui: { anim: "slash", fly: false },
 };
 
 /** O servidor anda em ticks de 100 ms: um passo de 260 ms acontece, na prática, a cada 300 ms.
