@@ -60,4 +60,26 @@ describe("intenção de interagir some quando o jogador escolhe outra ação (#2
     expect(sp.pendingInteract).toBe("");
     await world.leave();
   });
+
+  it("Tab (nextTarget) também desiste do depot clicado antes", async () => {
+    const { world, room, sp } = await join();
+    const opened: string[] = [];
+    const realOpen = room.open.bind(room);
+    room.open = (p: any, kind: string) => { if (p === sp) opened.push(kind); return realOpen(p, kind); };
+    let ticks = 0;
+    const realUpdate = room.updatePlayer.bind(room);
+    room.updatePlayer = (p: any, now: number) => { if (p === sp) ticks++; return realUpdate(p, now); };
+
+    sp.x = 10; sp.y = 16; sp.path = [];
+    world.send("interact", { kind: "depot" });
+    await vi.waitFor(() => expect(sp.pendingInteract).toBe("depot"), { timeout: 5000, interval: 25 });
+    world.send("nextTarget");
+    // o caminho até o depot continua; sem a intenção, chegar lá não abre a janela
+    await vi.waitFor(() => expect(sp.path.length).toBe(0), { timeout: 5000, interval: 25 });
+    const at = ticks;
+    await vi.waitFor(() => expect(ticks).toBeGreaterThanOrEqual(at + 2), { timeout: 5000, interval: 25 });
+    expect(opened).toEqual([]);
+    expect(sp.pendingInteract).toBe("");
+    await world.leave();
+  });
 });
