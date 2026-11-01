@@ -128,3 +128,11 @@ Números e método em [`baseline.md`](baseline.md). Skill: `performance-servidor
 | [#25](https://github.com/bleachbr/bleach-idle/issues/25) | UX | Adicionar acesso direto e evidente ao Inventário na barra principal/superior |
 | [#26](https://github.com/bleachbr/bleach-idle/issues/26) | UX | Melhorar interação com NPC Kisuke (loja) e evitar abertura acidental de Depot |
 | [#27](https://github.com/bleachbr/bleach-idle/issues/27) | UX | Desmembrar mensagem genérica de habilidade indisponível ("recarga, reiatsu ou alcance") |
+| [#34](https://github.com/bleachbr/bleach-idle/issues/34) | UX | Cards de recompensas do Passe de Temporada sem interação ou explicação de resgate |
+| [#35](https://github.com/bleachbr/bleach-idle/issues/35) | UX | Substituir `window.confirm()` nativo no Renascimento (Rebirth) por modal do jogo |
+| [#36](https://github.com/bleachbr/bleach-idle/issues/36) | UX | Adicionar tela/modal de atributos e estatísticas detalhadas ao clicar no perfil da barra lateral |
+| [#37](https://github.com/bleachbr/bleach-idle/issues/37) | UX | Adicionar placeholders informativos e explicações nas abas vazias do Ranking |
+| [#38](https://github.com/bleachbr/bleach-idle/issues/38) | UX | Adicionar navegação de retorno (Voltar) e indicador de "Lido" nas Crônicas da Loja de Cristais |
+| [#39](https://github.com/bleachbr/bleach-idle/issues/39) | Balance | Avaliar atenuante para penalidade de morte por perda de itens e XP na Invasão de Hollows |
+| [#40](https://github.com/bleachbr/bleach-idle/issues/40) | UX | Adicionar confirmação ou feedback visual imediato ao usar "Zerar contagem" na Caçada do Livro |
+| [#41](https://github.com/bleachbr/bleach-idle/issues/41) | UX | Exibir feedback visual no HUD ao tentar usar poções com HP ou Reiatsu cheios |
