@@ -40,6 +40,8 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 | **Janela de duplicação entre módulos** | Conferido na revisão da spec do social (01/11/2026): `/guilda depositar` e `marketSell`/`marketBuy` gravam o banco da guilda ou o anúncio na hora, mas o personagem só no `saveAll` (10 s). Uma queda nesse intervalo duplica kan ou item. Cada módulo abre a própria conexão SQLite, então não há transação entre eles. | ADR-001 e ADR-004 de `features/social-avancado/`: conexão única com `transaction(fn)` e save do personagem na mesma transação. |
 | **Auditoria de economia incompleta** | `recordAudit` usa `charId: p.name` (nome de exibição) na maioria das chamadas e o id no `creditSeller` offline; depósito e saque de guilda, reembolso de guilda, `bagTake`, `depot`, `giveLoot` e a Auto Venda não auditam. | Padronizar o id do personagem e auditar as entradas e saídas que faltam (W-08). |
 | **Moderação e Segurança no Chat** | A moderação se resume ao comando `/ignorar Nome`. | Falta filtro automático de spam, mute temporário e comandos de administração para Game Masters (GM). |
+| **Preços dos trajes sem revisão do Waldir (R-13)** | Uniforme do Colégio Karakura 150 cristais, haori de capitão 250, máscara Vizard 300 (as auras vão de 180 a 500). Fora do R-13 por decisão: haori de cada divisão e braçadeira de tenente, porque o detalhe não aparece em 48 px. | Revisão de preços pela outra pessoa (regra 6 do `roadmap-duplas.md`). |
+| **Folha de traje que falha no download (R-13)** | `GameScene.loadLazy` pede cada folha uma vez só. Se o download falha (rede, offline), o personagem fica com a folha da forma base até recarregar a página. | Tentar de novo com espera crescente, se aparecer reclamação. Tentar a cada atualização de estado inundaria a rede. |
 
 ---
 
@@ -60,6 +62,7 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 | :--- | :--- | :--- |
 | **Filtros Customizados de Loot** | O Auto Helper recolhe tudo e converte em kan via Auto Venda apenas o excedente. | Jogadores de nível alto gostariam de ignorar lixo de monstros fracos e pegar apenas itens raros ou consumíveis específicos. |
 | **Interiores de Edifícios e Andares** | Os edifícios nos mapas são sólidos sem entrada ou interiores exploráveis. | Quartéis do Seireitei, loja do Kisuke e palácios poderiam ter mapas internos dedicados. |
+| **Minimapa sem o alvo das diárias e da Crônica (R-10)** | O minimapa marca só o alvo das missões do Kisuke. O alvo da missão diária de caça fica no servidor (`prog.dm`; o `book` manda só o texto), e o estado da Crônica Semanal ainda não chega ao cliente (M1-04/M1-06). | Mandar o `target` da diária na mensagem que já existe e, quando a Crônica tiver estado no cliente, somar as espécies dela em `questTargetKinds`. |
 | **Atalhos que vazam do foco (R-14)** | `GameScene.bindKeys` só ignora teclas com foco em `input`: com o `<select id="hunt-spot">` focado, setas, dígitos, T e R chegam ao jogo, e um `range` do Auto Helper focado bloqueia os atalhos. O `#chatin` tira o foco antes de o evento subir: o Esc também fecha as janelas, e o Enter que envia volta a focar o chat (os dois deduzidos da ordem de propagação em `main.ts`, sem teste no navegador). | Consertar no 1º PR da R-14 (RF-08 da spec em `docs/features/acessibilidade-qol/`). |
 
 ---

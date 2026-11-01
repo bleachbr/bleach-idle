@@ -178,7 +178,8 @@ body.touch #touch { bottom: 120px; }
 }
 
 /* ---------- minimapa ---------- */
-#minimap { position: absolute; top: 8px; right: 8px; width: 128px; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 4px; background: #000; z-index: 9; cursor: crosshair; opacity: .9; }
+/* o canvas é desenhado 4x maior que o mapa (já pixelado, R-10): a redução na tela fica suave, sem perder as linhas finas */
+#minimap { position: absolute; top: 8px; right: 8px; width: 128px; border: 1px solid var(--line); border-radius: 4px; background: #000; z-index: 9; cursor: crosshair; opacity: .9; }
 @media (max-width: 720px) { #minimap { width: 96px; top: 56px; } }
 
 /* ---------- mercado ---------- */

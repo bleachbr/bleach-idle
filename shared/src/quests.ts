@@ -140,6 +140,16 @@ export const QUESTS: QuestDef[] = [
 
 export const QUEST_BY_ID: Record<string, QuestDef> = Object.fromEntries(QUESTS.map((q) => [q.id, q]));
 
+/** Espécies que as missões de caça ativas ainda pedem (as completas saem). Servidor (Auto Hunt) e minimapa usam a mesma regra. */
+export function huntKinds(active: Record<string, number>): Set<string> {
+  const kinds = new Set<string>();
+  for (const [id, have] of Object.entries(active)) {
+    const g = Object.hasOwn(QUEST_BY_ID, id) ? QUEST_BY_ID[id].goal : undefined;
+    if (g?.type === "kill" && have < g.count) for (const k of g.monsters) kinds.add(k);
+  }
+  return kinds;
+}
+
 export interface QuestState {
   /** id -> progresso (abates; nas de entrega o progresso é o que está no inventário) */
   active: Record<string, number>;

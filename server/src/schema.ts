@@ -55,6 +55,8 @@ export class Player extends Schema {
 
   // só no servidor (não sincronizado)
   statuses: StatusMap = {};
+  /** traje da Loja de Cristais (R-13): não vai no estado, todos o veem pelo `look` */
+  cosOutfit = "";
   accountId = 0; // conta dona do personagem (carteira de cristais)
   path: { x: number; y: number }[] = [];
   follow = false;

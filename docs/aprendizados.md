@@ -262,6 +262,12 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - `hd.py` refaz todas as folhas HD e levou mais de 25 min. Para regerar só algumas, chame `hd.sheet_hd(*process.GAME_SPRITES[id], name=id)` para cada id (51 s para 6 folhas).
 - `process.py` escala pela altura total do desenho: na célula de 48 px, `rel` acima de ~1,04 corta o topo (o chapéu de palha do Shunsui saiu cortado com 1,1). Confira a linha 0 de cada quadro antes de commitar.
 
+### Traje como edição da folha base (R-13)
+- Para trocar só a roupa, o `art/gen_r13.py` manda a folha da forma base (`raw/walk8/<base>_<dir>.png`) com `-i` e pede uma EDIÇÃO: mesma grade, mesmas poses, mesma linha dos pés, só a roupa muda. As 54 imagens saíram na 1ª tentativa, com as poses batendo quadro a quadro com a base.
+- A escala do `process.py` usa o ponto mais alto do desenho. Quando o traje tira o que ficava no topo (o chapéu do Shunsui no uniforme), o corpo cresce; `rel_like` (altura do desenho comparada com a base) resolve, como já se fazia no Capitão-Comandante.
+- Folha cosmética que pouca gente usa não precisa entrar no preload: `lazy` em `SPRITES` tira a folha do `preload` e o cliente a baixa quando um jogador aparece com o traje (`GameScene.loadLazy`). Sem isso, as 28 folhas somariam cerca de 0,6 MB aos cerca de 2,5 MB das folhas de sprite que todo jogador baixa ao entrar.
+- O teste `shared/test/spriteSheets.test.ts` lê largura e altura do cabeçalho do PNG e compara com `SPRITES`. Ele achou cinco folhas de equipamento com 8 colunas declaradas como 4. O jogo não sentia porque `GameScene.cols` lê a largura da imagem, mas `spriteCols`, `standFrame` e `portraitCss` erravam para essas chaves.
+
 ## 24. Caçada Offline v2 com Relatório Estruturado e Persistência Unificada (W-05)
 
 - **Problema:** Ao reconectar após caçada offline, o relatório não informava quais monstros foram abatidos, taxas de rendimento por hora nem separava perdas de mortes de ganhos líquidos; além disso, a lógica de snapshot e restauração ficava dispersa em `onLeave`, `restoreWorld` e `onJoin`.
@@ -276,6 +282,14 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 - **Problema:** A progressão offline dependia unicamente de deixar o personagem parado no mapa combatendo monstros em loop (Auto Hunt). Não havia como escolher setores temáticos, despachar expedições de vigília em intervalos de 1h a 12h ou receber bônus de cooperação de grupo de forma desacoplada de ticks ativos de combate.
 - **Solução (`shared/src/patrols.ts`, `server/src/WorldRoom.ts`):** Extraímos o catálogo de setores (`PATROL_SECTORS`), as durações válidas (`[1, 4, 8, 12]` h com bônus de eficiência progressivo de até +25%) e o cálculo de recompensas para o pacote compartilhado `shared/src/patrols.ts`. O cálculo de recompensas (`calculatePatrolRewards`) é uma função pura e determinística com gerador pseudo-aleatório baseado em semente (`startedAt`), garantindo que EXP, Kan, fragmentos de Hollow e drops temáticos sejam gerados sem depender do relógio do sistema. No servidor, o estado reside em `Progress.patrol` sem timers em segundo plano — a validação de conclusão ocorre apenas sob demanda no resgate (`patrolClaim`), economizando CPU e memória.
+
+## Minimapa com marcadores: canvas maior que o mapa (R-10)
+
+- O minimapa desenhava 1 pixel por tile e o CSS esticava o canvas até 128 px. Nessa resolução um marcador é um ponto de 1 a 3 px, e forma não se distingue. Agora o fundo continua num canvas de 1 px por tile, e o minimapa o desenha `MINIMAP_K` (4) vezes maior com `imageSmoothingEnabled = false`. Os marcadores ganham forma (losango, quadrado, cruz, círculo) e não dependem só da cor.
+- Com o canvas maior que a área na tela, o CSS passa a reduzir em vez de ampliar. `image-rendering: pixelated` na redução descarta linhas inteiras de pixel (some o contorno de 1 px), então saiu do `#minimap`: o pixelado do fundo já vem do próprio canvas.
+- O clique converte pela largura do mapa (`data.width`), não pela do canvas, porque as duas deixaram de ser iguais.
+- Na praça de Karakura, loja, depot, portal e templo ficam a 2 ou 3 tiles um do outro. Com raio de 1,5 tile os ícones viravam uma mancha; com ~1 tile se separam. Conferido numa prévia offline (`art/work/minimap_preview.py`, fora do git) nas larguras de 128 e 96 px; a prévia reduz com Lanczos, não com a reamostragem do navegador, então o teste no navegador continua necessário.
+- A primeira mensagem `quests` chega antes de a cena existir: quem precisa dela depois (o minimapa) registra o ouvinte e pede de novo (`room.send("quests")`). O colyseus.js 0.15 aceita mais de um ouvinte por tipo (nanoevents).
 
 ## Foco de teclado: `blur()` no handler do campo muda o que os ouvintes de `window` veem (R-14)
 
