@@ -23,6 +23,8 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 | **Efeitos de Controle de Grupo (CC)** | Apenas dano direto e dano em área (`area`) estão implementados na `main`. | Congelamento (*Freeze* da Rukia/Hitsugaya), Sangramento (*Bleed*) e Atordoamento (*Stun*) precisam ser integrados ao motor autoritativo. |
 | **Visual de Equipamentos Restrito** | Apenas o Haori de Capitão e a Máscara Hollow alteram o sprite do personagem (e apenas em Ichigo, Rukia e Renji). | Novos equipamentos (Elmo de Osso, botas, itens de Quincy e Fullbringer) ainda não têm representação visual nos personagens. |
 | **Tempo de Recarga Numérico na UI** | A barra de técnicas mostra indicação de recarga básica. | Adicionar contagem regressiva em segundos sobre o slot da habilidade no HUD para melhor legibilidade. |
+| **Paleta das folhas fora de sincronia (R-01)** | As 15 folhas da Yoruichi, do Ukitake e do Shunsui saíram com a paleta de 64 cores recalculada no R-01; as outras ~70 continuam com a anterior (o PR voltou as antigas para não mexer nelas). Visualmente não se nota. | O próximo `python art/process.py game` regrava todas as folhas: fazer isso num PR próprio (`chore:`), sem misturar com conteúdo novo. |
+| **Números do R-01 sem revisão do Waldir** | `balance.ts` no nível 60, forma base: Yoruichi 861 mil XP/h, Shunsui 865 mil e Ukitake 761 mil, contra 763 mil (Byakuya) a 862 mil (Kenpachi) dos 8 atuais. A Yoruichi é a mais rápida em todos os estágios (`stepMs` 230 a 120). Com o motor de status do M2, o Bakudō 61 (Rikujōkōrō) atordoa por 1,5 s (o Byakurai do Byakuya atordoa por 1,2 s); o Utsusemi (esquiva na obra) só causa dano. | Revisão de números pela outra pessoa (regra 6 do `roadmap-duplas.md`). |
 
 ---
 

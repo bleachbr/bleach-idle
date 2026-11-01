@@ -233,6 +233,18 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Os textos ficam em `shared/src/events.ts`, e o servidor manda só a fase. O cliente busca o texto com `own(EVENT_BANNER, fase)`: mesmo vindo do servidor, a chave chega pela rede.
 - Os avisos de sistema com números (vida, XP, minutos) continuam iguais e a lore vai numa linha separada (canal `lore`), porque os cenários `invasion` e `temporada` conferem trechos desses avisos.
 
+## 9. Arte com o Codex no Windows (R-01)
+
+### Gerar sem bash
+- Os scripts antigos de geração (`art/work/gen_*.sh`, só na máquina de quem gerou: `art/work/` fica fora do git) pedem bash, que o Windows deste projeto não tem. O `art/gen_r01.py` faz o mesmo em Python: `codex exec -s workspace-write -C art -i <referência>` com o prompt de `gen_walk8.sh` copiado nele, 9 em paralelo. As 45 imagens dos três personagens saíram na 1ª tentativa, cerca de 1 min cada.
+- Rodar o gerador como processo em segundo plano da ferramenta do agente não funcionou (o processo sumia sem log). `Start-Process python -ArgumentList "-u","gen_r01.py" -RedirectStandardOutput ...` funcionou.
+
+### A paleta compartilhada mexe em todas as folhas
+- `process.py game` monta uma paleta de 64 cores com todas as folhas. Folha nova muda a paleta, e as ~70 folhas antigas saem com pixels diferentes (no Byakuya, metade dos pixels opacos), sem mudança que se veja.
+- **Solução no R-01:** commitar só as folhas novas e voltar as antigas com `git checkout`. As novas ficam com a paleta desta rodada; a próxima pessoa que rodar `process.py` regenera tudo junto (pendência em `pendencias.md` §2).
+- `hd.py` refaz todas as folhas HD e levou mais de 25 min. Para regerar só algumas, chame `hd.sheet_hd(*process.GAME_SPRITES[id], name=id)` para cada id (51 s para 6 folhas).
+- `process.py` escala pela altura total do desenho: na célula de 48 px, `rel` acima de ~1,04 corta o topo (o chapéu de palha do Shunsui saiu cortado com 1,1). Confira a linha 0 de cada quadro antes de commitar.
+
 ## 24. Caçada Offline v2 com Relatório Estruturado e Persistência Unificada (W-05)
 
 - **Problema:** Ao reconectar após caçada offline, o relatório não informava quais monstros foram abatidos, taxas de rendimento por hora nem separava perdas de mortes de ganhos líquidos; além disso, a lógica de snapshot e restauração ficava dispersa em `onLeave`, `restoreWorld` e `onJoin`.
