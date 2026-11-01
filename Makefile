@@ -1,6 +1,6 @@
 # Makefile — Bleach Idle
 .PHONY: help install dev build start typecheck test test-watch test-scripts secrets \
-        ia-install ia-typecheck ia-play ia-play-30m ia-play-local ia-play-fast ia-clean
+        ia-install ia-typecheck ia-test ia-play ia-play-prod ia-play-30m ia-play-local ia-play-fast ia-clean
 
 help: ## Lista todos os comandos disponíveis
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -42,14 +42,20 @@ ia-install: ## Instala dependências e Chromium da pasta independente test/
 ia-typecheck: ## Checa os tipos do Jogador-IA em test/
 	cd test && npm run typecheck
 
-ia-play: ## 4 instâncias de IA (novato, explorador, grinder, caotico) jogando por 15 min
-	cd test && npm run play -- --explorar 15
+ia-test: ## Roda os testes unitários do Jogador-IA em test/
+	cd test && npm test
+
+ia-play: ## 4 instâncias de IA (novato, explorador, grinder, caotico) jogando por 30 min (default)
+	cd test && npm run play -- --explorar 30
+
+ia-play-prod: ## 4 instâncias jogando por 30 min em produção (bleach.acoplum.com ou URL=...)
+	cd test && npm run play -- --url $(if $(URL),$(URL),https://bleach.acoplum.com) --explorar 30
 
 ia-play-30m: ## 30 min: 15 min explorando + 15 min saindo/voltando e testando novidades da main
 	cd test && npm run play -- --explorar 15 --retorno 15
 
-ia-play-local: ## 4 instâncias por 15 min testando o código local (sem usar o worktree da main)
-	cd test && npm run play -- --local --explorar 15
+ia-play-local: ## 4 instâncias por 30 min testando o código local (sem usar o worktree da main)
+	cd test && npm run play -- --local --explorar 30
 
 ia-play-fast: ## Rodada rápida (3 min) com as 4 instâncias para validação rápida
 	cd test && npm run play -- --explorar 3

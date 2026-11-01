@@ -115,3 +115,16 @@ Números e método em [`baseline.md`](baseline.md). Skill: `performance-servidor
 | P5 | Um único JavaScript de 1,67 MB | Build do Vite avisa acima de 500 kB | Baixa |
 
 - **Correio interno (W-07):** falta a janela no cliente (mensagens `mailList`/`mailTake` e `mail` já existem; hoje só `/correio`) e o envio de cartas entre jogadores, que exige limite e moderação próprios. Itens de recompensa (chefe mundial, diária) ainda pagam direto; migrar para carta quando o inventário estiver cheio.
+
+---
+
+## 10. Achados Registrados pelo Jogador-IA (Playtest de 01/11/2026)
+
+| Issue | Tipo | Descrição |
+| :--- | :--- | :--- |
+| [#22](https://github.com/bleachbr/bleach-idle/issues/22) | Bug | Handlers `arenaData` e `patrolData` ausentes no colyseus.js do cliente |
+| [#23](https://github.com/bleachbr/bleach-idle/issues/23) | Bug | Botão "Pegar a recompensa de hoje" (Diário) não coleta recompensa diária |
+| [#24](https://github.com/bleachbr/bleach-idle/issues/24) | Bug | Encoding de texto corrompido no título da Crônica ("Orônloa: A Cidade Quieta") |
+| [#25](https://github.com/bleachbr/bleach-idle/issues/25) | UX | Adicionar acesso direto e evidente ao Inventário na barra principal/superior |
+| [#26](https://github.com/bleachbr/bleach-idle/issues/26) | UX | Melhorar interação com NPC Kisuke (loja) e evitar abertura acidental de Depot |
+| [#27](https://github.com/bleachbr/bleach-idle/issues/27) | UX | Desmembrar mensagem genérica de habilidade indisponível ("recarga, reiatsu ou alcance") |

@@ -31,16 +31,24 @@ export class Game {
   private procs: ChildProcess[] = [];
   browser!: Browser;
   serverErrors: string[] = [];
+  baseUrl: string;
 
-  /** `srcDir`: raiz do código do jogo (checkout da main ou a árvore local); `dbFile`: banco persistente das contas de teste. */
-  constructor(private srcDir: string, private dbFile: string) {}
+  /** `srcDir`: raiz do código do jogo (checkout da main ou a árvore local); `dbFile`: banco persistente das contas de teste; `targetUrl`: URL remota alternativa (ex.: https://bleach.acoplum.com); `enableDev`: habilita modo Dev local (padrão desligado). */
+  constructor(private srcDir: string, private dbFile: string, public targetUrl = "", public enableDev = false) {
+    this.baseUrl = targetUrl ? targetUrl.replace(/\/+$/, "") : `http://localhost:${CLIENT_PORT}`;
+  }
 
   async startServers() {
+    if (this.targetUrl) {
+      this.browser = await chromium.launch();
+      return;
+    }
     // não repassa a chave do Gemini aos processos do jogo
     const env = { ...process.env, GEMINI_API_KEY: "" };
+    const devFlag = this.enableDev ? "1" : "0";
     const server = spawn(process.execPath, ["--import", "tsx", "src/index.ts"], {
       cwd: join(this.srcDir, "server"),
-      env: { ...env, PORT: String(SERVER_PORT), DB_FILE: this.dbFile, LOGIN_MAX_FAILS_IP: "1000000", INVASION_FIRST_MS: "999999999", WORLDBOSS_FIRST_MS: "999999999", BI_DEBUG: "1", BI_DEV: "1" },
+      env: { ...env, PORT: String(SERVER_PORT), DB_FILE: this.dbFile, LOGIN_MAX_FAILS_IP: "1000000", INVASION_FIRST_MS: "999999999", WORLDBOSS_FIRST_MS: "999999999", BI_DEBUG: devFlag, BI_DEV: devFlag },
     });
     this.procs.push(server);
     server.stdout!.on("data", (d: Buffer) => this.logServer(d));
@@ -84,7 +92,7 @@ export class Player {
     const note = (t: string) => { this.consoleErrors.push(t); this.allErrors.push(t); };
     this.page.on("console", (m) => { if (m.type() === "error" || m.type() === "warning") note(`[${m.type()}] ${m.text().slice(0, 200)}`); });
     this.page.on("pageerror", (e) => note(`[pageerror] ${String(e.message).slice(0, 200)}`));
-    await this.page.goto(`http://localhost:${CLIENT_PORT}/?login`);
+    await this.page.goto(`${this.game.baseUrl}/?login`);
     await this.page.waitForTimeout(1500);
   }
 

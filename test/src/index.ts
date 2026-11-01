@@ -16,11 +16,13 @@ requireKey();
 const arg = (name: string, def: string) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? (process.argv[i + 1] ?? def) : def; };
 const flag = (name: string) => process.argv.includes(`--${name}`);
 const num = (name: string, def: number) => { const v = Number(arg(name, String(def))); return Number.isFinite(v) && v >= 0 ? v : def; };
-const MIN_EXPLORAR = num("explorar", 15); // minutos
+const MIN_EXPLORAR = num("explorar", 30); // minutos (padrão 30 min)
 const MIN_RETORNO = num("retorno", 0);
 const MIN_CICLO = Math.max(0.5, num("ciclo", 3)); // duração de cada visita na fase de retorno
 const FORA_S = num("fora", 45); // segundos fora do jogo entre visitas
 const FOCUS = arg("focus", "");
+const TARGET_URL = arg("url", flag("prod") ? "https://bleach.acoplum.com" : "");
+const ENABLE_DEV = flag("dev");
 const PERSONAS_RUN = (arg("personas", Object.keys(PERSONAS).join(",")).split(",").map((p) => p.trim()).filter(Boolean));
 const bad = PERSONAS_RUN.filter((p) => !(p in PERSONAS));
 if (bad.length || !PERSONAS_RUN.length) { console.error(`persona inválida (${bad.join(", ")}). Use: ${Object.keys(PERSONAS).join(", ")}`); process.exit(1); }
@@ -31,11 +33,11 @@ mkdirSync(runsDir, { recursive: true });
 const stamp = new Date().toISOString().replace(/[:T]/g, "-").slice(0, 16);
 const runDir = join(runsDir, stamp);
 
-const dbFile = join(runsDir, "jogo.sqlite"); // contas persistentes entre rodadas
-const src = prepareSource(runsDir, flag("local"));
+const dbFile = join(runsDir, "jogo.sqlite"); // contas persistentes entre rodadas locais
+const src = prepareSource(runsDir, flag("local"), TARGET_URL);
 console.log(`código: ${src.origem} @ ${src.sha.slice(0, 7)}${src.previous ? ` (checkpoint ${src.previous.slice(0, 7)})` : " (sem checkpoint)"}`);
 
-const game = new Game(src.dir, dbFile);
+const game = new Game(src.dir, dbFile, TARGET_URL, ENABLE_DEV);
 const fmt = (ms: number) => `${Math.max(0, Math.round(ms / 1000))} s`;
 const ord: Record<string, number> = { alta: 0, media: 1, baixa: 2 };
 
@@ -46,7 +48,7 @@ async function runPersona(persona: string): Promise<Result> {
   const outDir = join(runDir, persona);
   mkdirSync(join(outDir, "screenshots"), { recursive: true });
   const memory = new Memoria(join(runsDir, `memoria-${persona}.json`));
-  const reused = memory.data.sessoes > 0 && existsSync(dbFile);
+  const reused = memory.data.sessoes > 0 && (TARGET_URL ? true : existsSync(dbFile));
   const agent = new Agent(persona, FOCUS, memory);
   agent.changelog = src.changelog;
   agent.accountExists = reused;
@@ -94,8 +96,8 @@ async function runPersona(persona: string): Promise<Result> {
       const abrupto = c % 2 === 0;
       const duracao = Math.min(MIN_CICLO * 60_000, fim - Date.now());
       agent.phase = c === 1
-        ? "RETORNO. Você é um jogador que VOLTA ao jogo depois de um tempo: confira se o personagem, inventário, nível, mapa e progresso estão como deixou, se apareceu relatório/mensagem de tempo offline e se está coerente. Depois TESTE AS NOVIDADES da main listadas acima (pode usar o botão DEV para liberar conteúdo avançado). Antes de terminar a visita, ligue a caçada/treino automático para acumular progresso offline."
-        : `RETORNO (visita ${c}). Confira o que aconteceu enquanto esteve fora (relatório offline, XP/ouro/itens coerentes?), se a sessão restaurou direito e continue testando as novidades da main. Antes de terminar a visita, ligue a caçada/treino automático.`;
+        ? "RETORNO. Você é um jogador que VOLTA ao jogo depois de um tempo: confira se o personagem, inventário, nível, mapa e progresso estão como deixou, se apareceu relatório/mensagem de tempo offline e se está coerente. Depois TESTE AS NOVIDADES da main listadas acima (jogando normalmente, pelas mecânicas naturais do jogo). Antes de terminar a visita, ligue a caçada/treino automático para acumular progresso offline."
+        : `RETORNO (visita ${c}). Confira o que aconteceu enquanto esteve fora (relatório offline, XP/ouro/itens coerentes?), se a sessão restaurou direito e continue testando as novidades da main pelas mecânicas naturais do jogo. Antes de terminar a visita, ligue a caçada/treino automático.`;
       await play(`retorno ${c}`, duracao, `retorno-${c}`);
       visitas.push(`Visita ${c}: saída ${abrupto ? "abrupta (aba fechada)" : "pela interface"}, ${FORA_S} s fora`);
       await player.closeSession(abrupto ? "abrupto" : "sair");
@@ -158,7 +160,7 @@ let started = false;
 try {
   await game.startServers();
   started = true;
-  console.log(`jogo no ar · ${PERSONAS_RUN.length} instâncias em paralelo (${PERSONAS_RUN.join(", ")}) · ${MIN_EXPLORAR}${MIN_RETORNO ? ` + ${MIN_RETORNO}` : ""} min · ${MODEL}`);
+  console.log(`jogo no ar · ${PERSONAS_RUN.length} instâncias em paralelo (${PERSONAS_RUN.join(", ")}) · ${MIN_EXPLORAR}${MIN_RETORNO ? ` + ${MIN_RETORNO}` : ""} min · ${MODEL}${TARGET_URL ? ` · alvo: ${TARGET_URL}` : ""}`);
   results = await Promise.all(PERSONAS_RUN.map(runPersona));
 } catch (e: any) {
   console.error("erro na rodada:", e.message);
