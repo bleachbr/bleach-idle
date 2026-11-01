@@ -15,7 +15,8 @@
 
 ## Revisão adversarial
 
-- [ ] Feita por quem não escreveu o código (pessoa, ou sessão nova de agente com a skill `revisar-pr`). Em mudança de segurança, a aprovação é da outra pessoa
+- [ ] Feita por quem não escreveu o código (pessoa, ou sessão nova de agente com a skill `revisar-pr`). Pela D-004, CodeRabbit pode aprovar inclusive CI/deploy/segurança após revisão completa sem bloqueios
+- [ ] Antes do merge pelo agente: `APPROVED` do CodeRabbit para o HEAD atual, CI verde e conversas resolvidas; sem comandos de aprovação forçada ou bypass
 
 **Veredito e achados tratados:**
 
