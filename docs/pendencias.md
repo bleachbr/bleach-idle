@@ -72,7 +72,8 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 | Item | Situação Atual | Impacto / Necessidade |
 | :--- | :--- | :--- |
 | **Migração Completa para Vitest** | O projeto possui 141 testes rápidos no Vitest e 31 scripts de integração em `server/scripts/test.ts`. | Consolidar os 31 cenários legados no Vitest para unificar a execução em um único runner padronizado. |
-| **Testes de Interface (Playwright)** | O cliente Phaser 3 não possui testes de regressão visual ou de cliques automatizados. | Implementar testes E2E com Playwright para validar a tela de login, menus e HUD. |
+| **Testes de Interface (Playwright)** | O cliente Phaser 3 não possui testes de regressão visual ou de cliques automatizados. Desde a issue #22 há um primeiro teste de regressão no navegador em `test/regressao/` (`cd test && npm run regressao`), reaproveitando o servidor isolado do Jogador-IA; ele roda só localmente, fora do CI. | Implementar testes E2E com Playwright para validar a tela de login, menus e HUD (M5-03) e levar `test/regressao/` para o workspace definido na spec. |
+| **Mensagens do servidor sem handler no cliente** | Lido em 01/11/2026: além das quatro da Arena e da patrulha (corrigidas na issue #22), o servidor manda `mail` (`showMail`, chamado por `/correio`) e `emailOk` (`LobbyRoom`, mensagem `email`) e o cliente não registra handler para elas. O `/correio` dispara o aviso do colyseus.js no console; o `emailOk` só aparece se algo mandar `email`, e o cliente de hoje não manda. `arenaMatchFound` e `arenaResult` ganharam handler na #22, mas o teste no navegador não os exercita (pedem dois jogadores pareados). | Registrar os handlers em PR próprio, com o teste de regressão no navegador cobrindo `/correio`; estender o teste com dois contextos pareados na fila e `/arena desistir`. |
 
 ---
 
