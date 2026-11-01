@@ -1,7 +1,8 @@
 // Tela de leitura de uma crônica na Loja de Cristais (aba Crônicas).
 import type { Cosmetic } from "../../shared/src";
 
-const hex = (n: number) => `#${n.toString(16).padStart(6, "0")}`;
+/** Cor 0xRRGGBB em "#rrggbb" (também usada pela Loja de Cristais no main.ts). */
+export const hex = (n: number) => `#${n.toString(16).padStart(6, "0")}`;
 
 /** HTML da leitura. O título usa a classe lore-title (fonte de texto, theme.css): na fonte pixel,
  * "Crônica" era lido como "Orônloa" (#24). `esc` escapa o texto (o escHtml do main.ts). */
