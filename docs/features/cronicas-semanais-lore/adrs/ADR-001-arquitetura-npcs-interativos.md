@@ -2,7 +2,7 @@
 
 | Metadado | Detalhe |
 | :--- | :--- |
-| **Status** | Proposto. Falta a aprovação das duas pessoas para "Aceito" (pontos do PRD §8 decididos em 31/10/2026) |
+| **Status** | Aceito em 01/11/2026 por Rafael e Waldir (M1-00; [revisão do Waldir no PR #6](https://github.com/bleachbr/bleach-idle/pull/6#pullrequestreview-5727591162)) |
 | **Data** | 2026-10-31 |
 | **Autor** | Time de Engenharia Bleach Idle |
 | **Contexto Técnico** | Expansão de NPCs no Seireitei e futuros mapas |

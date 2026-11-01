@@ -107,9 +107,9 @@ Especificação: [PRD](features/cronicas-semanais-lore/PRD-cronicas-semanais-sei
 
 | ID | Entrega | Tam. | Depende de | Status |
 | :-- | :--- | :-- | :--- | :--- |
-| M1-00 | Aprovar o PRD e os 3 ADRs (status "Aceito", com data e quem aprovou, no PR que aprova) e fechar os pontos do [PRD §8](features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md#8-pontos-em-aberto-conferidos-contra-o-código-31102026) (itens que faltam, nível de monstro, título temporário, NPC de cada semana). Os pontos do §8 foram decididos em 31/10/2026 | P | | Decisão pendente (Waldir e Rafael) |
+| M1-00 | Aprovar o PRD e os 3 ADRs (status "Aceito", com data e quem aprovou, no PR que aprova) e fechar os pontos do [PRD §8](features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md#8-pontos-em-aberto-conferidos-contra-o-código-31102026) (itens que faltam, nível de monstro, título temporário, NPC de cada semana). Os pontos do §8 foram decididos em 31/10/2026; PRD e ADRs aceitos em 01/11/2026 | P | | Feito |
 | M1-01 | `shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) com testes de borda: virada de semana, ciclo de 5 semanas, antes da âncora e `TZ` diferentes | P | M1-00 | Feito |
-| M1-02 | `shared/src/npcs.ts`: tipos e catálogo (identidade e diálogo; a posição vem do `.tmj`) | P | M1-00 | Bloqueado por M1-00 |
+| M1-02 | `shared/src/npcs.ts`: tipos e catálogo (identidade e diálogo; a posição vem do `.tmj`) | P | M1-00 | Pronto |
 | M1-03 | NPCs no `soul.tmj` (objeto `npc` na camada `logica`), leitura em `parseMap` e `mapcheck` | M | M1-02 | Bloqueado por M1-02 |
 | M1-04 | Servidor: `interact` com `kind: "npc"`, `npc_dialog` e `npc_action` por índice de opção, com o nó atual guardado no servidor e a distância validada | M | M1-02, M1-03 | Bloqueado por M1-03 |
 | M1-05 | Persistência: `newProgress()` e `Progress.chronicle` com padrão; a virada da semana zera `questKills` e `completedAt` | P | M1-01 | Feito |
