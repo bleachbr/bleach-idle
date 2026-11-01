@@ -44,7 +44,7 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 | 14 | M1-06 | Missão semanal e recompensa por personagem | M | M1-00, M1-04, M1-05 | idem | Fazer antes a conta de cristais (D-001) |
 | 15 | M1-09 | Cenário `cronicas.ts` e testes de rotação, diálogo e entrega | M | M1-06 e M1-07 (Rafael) | não | |
 | 16 | M2-01..05 | Motor de status por tick + freeze, slow, DoT, stun | G | — | **sim** | M2-06 e M2-07 (visual/HUD) são de Rafael |
-| 17 | M3-05 | Moderação de chat (filtro de spam, silenciar, comandos de GM) | M | — | **sim** | Portão G2; cliente de chat é zona de Rafael — coordenar |
+| 17 | M3-05 | Moderação de chat (filtro de spam, silenciar, comandos de GM) | M | — | **Feito** (`feat/m3-05-moderacao-chat`) | Portão G2; spec em `docs/features/moderacao-chat/` |
 | 18 | M5-01 | Recuperação de senha por e-mail com token assinado | M | — | **sim** | Portão G2 |
 | 19 | M5-02 | Limite de tentativas persistente (SQLite) | M | — | **sim** | Pode vir junto de M5-01 |
 | 20 | F-12 | Upgrade do Colyseus 0.15 para 0.18 | G | — | **sim** | Antes de M4, W-16 e W-17; PR próprio com a bateria completa |
