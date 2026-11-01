@@ -3,9 +3,9 @@
 // servidor usa (recompute, hit, monsterExp e giveLoot no WorldRoom.ts). O total de ataque e defesa
 // é o que o servidor mandou; a ficha só explica de onde ele vem.
 import {
-  CHARS, BOOST_EXP, BOOST_LOOT, POWER_TIERS, WEEKEND_EXP, expForLevel, fmtPower, gearBonus, maxHp, maxRei,
-  playerAtk, playerDef, powerTier, rebirthBonus, rebirthLevel, reiMult, setBonuses, xpWeekend, zanMult,
-  type EquipSlot,
+  CHARS, BOOST_EXP, BOOST_LOOT, POWER_TIERS, WEEKEND_EXP, attackDmgMult, expForLevel,
+  fmtPower, gearBonus, maxHp, maxRei, playerAtk, playerDef, powerTier, rebirthBonus, rebirthLevel, reiMult, setBonuses,
+  xpWeekend, zanMult, type EquipSlot,
 } from "../../shared/src";
 
 /** Campos do Player sincronizado que a ficha lê. */
@@ -59,12 +59,14 @@ export function characterSheet(p: SheetPlayer, gear: SheetGear | null, now: numb
       { label: "Ataque", value: String(gear.atk), hint: `personagem e nível ${Math.round(playerAtk(ch.atk, p.level))} + equipamento, forja e conjuntos ${g.atk}` },
       { label: "Defesa", value: String(gear.def), hint: `personagem e nível ${Math.round(playerDef(ch.def, p.level))} + equipamento, forja e conjuntos ${g.def}` },
     );
-    // mesma cadeia do WorldRoom.hit: estágio × perícia × renascimento × conjuntos (o bestiário vale por monstro)
-    const melee = form.dmgMult * zanMult(p.zanjutsu) * rb.dmg * set.dmg;
-    const tech = reiMult(p.reiryoku) * rb.dmg * set.dmg;
+    // mesma cadeia do WorldRoom.hit (shared/src/damage.ts): estágio × perícia × renascimento × conjuntos,
+    // no golpe e nas técnicas (o bestiário vale por monstro)
+    const src = { zanjutsu: p.zanjutsu, reiryoku: p.reiryoku, rebirths: p.rebirths, equip: gear.equip };
+    const melee = attackDmgMult(form.dmgMult, src, false);
+    const tech = attackDmgMult(form.dmgMult, src, true);
     combat.push(
       { label: "Dano corpo a corpo", value: mult(melee), hint: `estágio ${mult(form.dmgMult)} · Zanjutsu ${mult(zanMult(p.zanjutsu))} · renascimento ${mult(rb.dmg)} · conjuntos ${mult(set.dmg)}` },
-      { label: "Dano das técnicas", value: mult(tech), hint: `Reiryoku ${mult(reiMult(p.reiryoku))} · renascimento ${mult(rb.dmg)} · conjuntos ${mult(set.dmg)}; cada técnica ainda multiplica pela própria força` },
+      { label: "Dano das técnicas", value: mult(tech), hint: `estágio ${mult(form.dmgMult)} · Reiryoku ${mult(reiMult(p.reiryoku))} · renascimento ${mult(rb.dmg)} · conjuntos ${mult(set.dmg)}; cada técnica ainda multiplica pela própria força` },
     );
     // mesma conta do WorldRoom.monsterExp e do giveLoot (fora a invasão e a taxa do servidor)
     const exp = rb.exp * set.exp * (gear.expBoostUntil > now ? BOOST_EXP : 1) * (xpWeekend(now) ? WEEKEND_EXP : 1);

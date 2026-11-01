@@ -5,6 +5,7 @@ export * from "./items";
 export * from "./social";
 export * from "./quests";
 export * from "./training";
+export * from "./damage";
 export * from "./progress";
 export * from "./evolution";
 export * from "./shop";

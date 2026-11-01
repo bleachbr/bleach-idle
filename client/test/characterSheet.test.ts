@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { START_KIT, gearBonus, maxHp, maxRei, playerAtk, playerDef, powerOf, rebirthBonus } from "../../shared/src";
+import {
+  CHARS, START_KIT, gearBonus, maxHp, maxRei, playerAtk,
+  playerDef, powerOf, rebirthBonus, reiMult, setBonuses, zanMult,
+} from "../../shared/src";
 import { characterSheet, type SheetGear, type SheetPlayer } from "../src/characterSheet";
 
 // Ichigo nível 30 em Bankai, 2 renascimentos, uniforme inicial completo + conjunto Lua Negra e forja +3 na arma
@@ -50,12 +53,25 @@ describe("ficha do personagem (issue #36)", () => {
     // estágio 1,7 × Zanjutsu 1,2 × renascimento 1,1 × conjuntos 1,06
     expect(rowOf(s, "Dano corpo a corpo").value).toBe("×2,38");
     expect(rowOf(s, "Dano corpo a corpo").hint).toBe("estágio ×1,7 · Zanjutsu ×1,2 · renascimento ×1,1 · conjuntos ×1,06");
-    // Reiryoku 1,15 × renascimento 1,1 × conjuntos 1,06
-    expect(rowOf(s, "Dano das técnicas").value).toBe("×1,34");
+    // o hit do servidor aplica o estágio também às técnicas: 1,7 × Reiryoku 1,15 × renascimento 1,1 × conjuntos 1,06
+    expect(rowOf(s, "Dano das técnicas").value).toBe("×2,28");
+    expect(rowOf(s, "Dano das técnicas").hint).toBe("estágio ×1,7 · Reiryoku ×1,15 · renascimento ×1,1 · conjuntos ×1,06; cada técnica ainda multiplica pela própria força");
     expect(rowOf(s, "Zanjutsu").value).toBe("10 (40% para o 11)");
     expect(rowOf(s, "Reiryoku").value).toBe("5 (12% para o 6)");
     expect(rowOf(s, "Golpe").value).toBe("a cada 0,65 s");
     expect(rowOf(s, "Passo").value).toBe("170 ms por quadro");
+  });
+
+  it("técnicas levam o multiplicador do estágio em todos os personagens e estágios (CHARS reais)", () => {
+    const set = setBonuses(equip).total.dmg, rb = rebirthBonus(2).dmg;
+    const fmt = (n: number) => `×${n.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}`;
+    for (const [charId, ch] of Object.entries(CHARS)) {
+      ch.forms.forEach((f, form) => {
+        const s = characterSheet({ ...player, charId, form }, gear, WED);
+        expect(rowOf(s, "Dano das técnicas").value, `${charId}/${f.id}`).toBe(fmt(f.dmgMult * reiMult(5) * rb * set));
+        expect(rowOf(s, "Dano corpo a corpo").value, `${charId}/${f.id}`).toBe(fmt(f.dmgMult * zanMult(10) * rb * set));
+      });
+    }
   });
 
   it("XP e loot: renascimento, conjuntos, pergaminho, incenso e fim de semana", () => {
