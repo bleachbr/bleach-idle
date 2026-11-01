@@ -147,7 +147,8 @@ export class GameScene extends Phaser.Scene {
           if (!this.anims.exists(`${hk}-${d}`)) // a folha HD de um traje pode ter chegado antes pelo loadLazy
             this.anims.create({ key: `${hk}-${d}`, frames: this.anims.generateFrameNumbers(hk, { start: d * this.cols(hk), end: d * this.cols(hk) + this.cols(hk) - 1 }), repeat: -1 });
       }
-      this.applyHd(true);
+      // desligou o HD no meio do download: as folhas ficam guardadas, mas a tela continua em pixel
+      if (this.hdWanted) this.applyHd(true);
       done?.(true);
     });
     this.load.start();
