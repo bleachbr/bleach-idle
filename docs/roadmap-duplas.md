@@ -107,12 +107,12 @@ Backlog novo (IDs R-##) — narrativa, QoL e social com partes de servidor:
 | :-- | :-- | :--- | :-- | :--- | :-- |
 | 15 | ~~R-01~~ | ~~**Personagens novos (bloco R)** — Yoruichi, Ukitake, Shunsui; 5 estágios e 4 técnicas cada~~ | M cada | — | skill `adicionar-conteudo` |
 | 16 | R-08 | **Onboarding e tutorial** — primeiros 10 minutos guiados com missão introdutória do Kisuke | M | M1-07 | sim |
-| 17 | R-10 | **Minimapa e marcadores** — minimapa por zona com ícones de NPC, portal, PZ e alvo de missão | M | M1-03 | não |
+| 17 | ~~R-10~~ | ~~**Minimapa e marcadores** — minimapa por zona com ícones de NPC, portal, PZ e alvo de missão~~ | M | M1-03 | não |
 | 18 | ~~R-12~~ | ~~**Eventos narrados** — invasões e chefes mundiais com textos de lore no chat e banner no HUD~~ | P | — | não |
-| 19 | R-09 | **Codex / enciclopédia de lore** — bestiário expandido com fichas de personagens, facções e eventos | M | — | sim |
+| 19 | R-09 | **Codex / enciclopédia de lore** — bestiário expandido com fichas de personagens, facções e eventos | M | M1-06 (só as fichas das Crônicas Semanais) | sim (rascunho em `features/codex-lore/`, aguardando aprovação) |
 | 20 | R-14 | **Acessibilidade e QoL do cliente** — escala de fonte, alto contraste, re-mapeamento de teclas, modo uma mão no toque | M | — | sim (rascunho em `features/acessibilidade-qol/`, aguardando aprovação) |
 | 21 | R-07 | **Companion: Mod Soul** — Kon e afins acompanham o personagem, coletam loot cosmético, progressão própria (entidade seguidora no servidor + visual no cliente) | M | M1-04 | sim |
-| 22 | R-13 | **Cosméticos sazonais** — uniforme Karakura, haori de divisões, máscaras Vizard na Loja de Cristais | M | arte nova (uniforme, haori por divisão); decisão de lore (máscara fora do Ichigo) | não |
+| 22 | ~~R-13~~ | ~~**Cosméticos sazonais** — uniforme Karakura, haori de capitão, máscaras Vizard na Loja de Cristais~~ | M | — | não |
 | 23 | R-04 | **Expansão Wandenreich** — Sternritter como chefes de elite rotativos, Volständig visual para Ishida | M | W-04 recomendado | sim |
 | 24 | R-05 | **Kidō e Hadō** — árvore paralela de habilidades: bakudō (CC/utilidade) e hadō (dano); servidor e HUD | G | M2-01 a M2-05 (Waldir) | sim |
 | 25 | R-03 | **Mapa Hell (Jigoku)** — zona 100+ com ogres, mecânica de "pecado" (debuff por morte), drops novos | G | W-04 recomendado | sim |
