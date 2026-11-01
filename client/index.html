@@ -24,6 +24,7 @@
           <button type="submit" value="register">Criar conta</button>
         </div>
         <p class="error" id="auth-error"></p>
+        <div class="release-link"><button type="button" class="link" data-releases>Novidades</button><small data-release-version>Consultando última atualização…</small></div>
       </form>
     </div>
 
@@ -48,6 +49,7 @@
           </form>
         </details>
         <button type="button" id="logout-btn" class="link">Sair da conta</button>
+        <div class="release-link"><button type="button" class="link" data-releases>Novidades</button><small data-release-version>Consultando última atualização…</small></div>
       </div>
     </div>
 
@@ -112,6 +114,7 @@
           <label class="auto-row">Reiatsu abaixo de <input type="range" id="auto-rei" min="0" max="90" step="5" /><b id="auto-rei-val"></b></label>
           <p class="hint">Tudo continua com o jogo fechado. Arraste até 0 para desligar a poção.</p>
         </section>
+        <section class="release-link"><button type="button" class="link" data-releases>Novidades</button><small data-release-version>Consultando última atualização…</small></section>
       </aside>
       <main>
         <div id="game"></div>
@@ -179,5 +182,10 @@
       </main>
     </div>
     <script type="module" src="/src/main.ts"></script>
+    <dialog id="release-dialog" aria-labelledby="release-title" aria-describedby="release-status">
+      <header><h2 id="release-title">Novidades</h2><button type="button" id="release-close" autofocus>Fechar</button></header>
+      <p id="release-status" role="status">Consultando novidades…</p>
+      <div id="release-body"></div>
+    </dialog>
   </body>
 </html>

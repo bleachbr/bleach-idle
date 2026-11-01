@@ -12,7 +12,7 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  if (e.request.method !== "GET" || url.origin !== location.origin) return;
+  if (e.request.method !== "GET" || url.origin !== location.origin || url.pathname === "/release") return;
   const asset = url.pathname.startsWith("/assets/") || url.pathname.startsWith("/maps/") || url.pathname.startsWith("/icons/");
   if (asset) {
     // serve do cache na hora e atualiza em segundo plano: os nomes dos arquivos não mudam

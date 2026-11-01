@@ -2,7 +2,7 @@
 
 Fonte única do que existe, do que vem a seguir e em que ordem. Se algo não está aqui, não está planejado. Quem conclui um item atualiza este arquivo no mesmo PR.
 
-Atualizado em 31/10/2026.
+Atualizado em 01/11/2026.
 
 ## Como usar (para quem chega agora)
 
@@ -93,12 +93,13 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-09 | Ranking sem bloquear o tick | M | F-08 | Feito | P1 |
 | F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once`; limpar o ruído do Vitest. Rotina: ao mexer num teste com `sleep`, troque-o | M | | Feito | Q2, Q3 |
 | F-11 | CI: job de gitleaks, `ubuntu-24.04` fixo, Node 22 e 24 e `actions` na v7 | M | | Feito | Q5, Q8, Q9, Q10 |
-| F-12 | Upgrade maior do Colyseus (0.15 para 0.18) | G | spec | Precisa de spec | S5 |
+| F-12 | Upgrade maior do Colyseus (0.15 para 0.18) | G | spec | Precisa de spec (PRD/ADRs em revisão) | S5; [spec](features/colyseus-018/PRD-upgrade-colyseus-018.md) |
 | F-13 | Primeiro deploy com HTTPS atrás do proxy existente e restauração de backup testada | M | | Deploy HTTPS realizado e workflow rodando na main; falta testar restauração | DEPLOY.md; `bleach.acoplum.com` online, Nginx compartilhado e workflow após CI. O container mandava o estado do Colyseus vazio (tsx sem o `server/tsconfig.json`), corrigido em `fix/tsx-tsconfig-container` |
 | F-14 | Limite de criação de contas por IP | P | F-03 | Feito | DEPLOY.md |
 | F-15 | Balanceamento dos mapas avançados (`balance.ts`) | M | | Feito | DEPLOY.md |
 | F-16 | Pacote de correções do Jogador-IA: `noHd` no `boneco`, `Tab` (`nextTarget`) ignorando `dummy`, exclusividade de janelas flutuantes + `Esc`, confirmação ao trocar de personagem e handlers `welcome`/`fx` na entrada da sala | M | | Feito | test/ |
 | F-17 | Jogador-IA: modo Dev desligado por omissão, 30 min padrão, alvo remoto (bleach.acoplum.com) e make ia-play-prod | M | F-16 | Feito | test/ |
+| F-18 | Novidades no login, lobby e menu: histórico, indicador de leitura e metadados do deploy | P | F-13 | Feito | /release, shared/src/releases.ts |
 
 Recomendação: fazer F-12 antes de M4, porque as salas instanciadas dependem do Colyseus e é melhor não construir sobre uma versão com advisory.
 
@@ -143,8 +144,10 @@ Descrição, ordem e dependências em [`roadmap-duplas.md`](roadmap-duplas.md). 
 | :-- | :--- | :-- | :--- | :--- |
 | R-12 | Eventos narrados: linha de lore no chat (canal `lore`) e banner no topo da tela durante a invasão de Hollows e o chefe mundial (`shared/src/events.ts`) | P | | Feito |
 | R-01 | Personagens novos do bloco R: Yoruichi, Ukitake e Shunsui jogáveis, com 5 estágios da obra e 4 técnicas cada; sprites gerados pelo Codex (`art/gen_r01.py`). Números de combate na faixa dos 8 atuais (`balance.ts`); revisão do Waldir pendente | M | | Feito |
-| R-13 | Cosméticos sazonais: uniforme de Karakura, haori das divisões e máscaras Vizard na Loja de Cristais (preços em cristais com revisão do Waldir). Os cosméticos de hoje (`shared/src/shop.ts`) não mexem no sprite; roupa no corpo só existe pelo equipamento, com uma folha inteira por combinação (`<base>__<look>`, `OUTFIT_OK` em `shared/src/data.ts`). O cliente tem 5 folhas (Ichigo Shikai com haori, máscara e os dois; Rukia e Renji com haori). `art/raw/walk8` já tem arte bruta de haori e máscara para Ichigo, Rukia, Renji, Ishida e Sado, sem processar. Não existe arte do uniforme de Karakura nem de haori por divisão | M | arte nova; decisão de lore | Bloqueado por spritesheets novos (uniforme e haori por divisão) e por decisão de lore (máscara fora do Ichigo: hoje só ele é Visored, `data.ts`) |
+| R-13 | Trajes na Loja de Cristais (aba "Trajes", `kind: "outfit"` em `shared/src/shop.ts`): uniforme do Colégio Karakura (150), haori de capitão (250) e máscara Vizard (300), preços com revisão do Waldir pendente. Valem na forma base dos 11 personagens e cobrem o visual do equipamento; o haori não muda os 5 que já são capitães. 28 folhas `<base>__<look>` (18 novas pelo Codex em `art/gen_r13.py`, 10 com a arte bruta de haori e máscara que já existia); o cliente só baixa a folha quando alguém aparece com o traje (`lazy` em `SPRITES`). Haori por divisão e braçadeira de tenente ficaram de fora: não aparecem em 48 px | M | | Feito |
+| R-10 | Minimapa com marcadores: zona protegida, portal, loja, depot, templo e NPCs com formas diferentes (não só cor), e a área de spawn do alvo das missões de caça do Kisuke em tracejado dourado; com o alvo só em outro mapa, o portal ganha um anel. Só cliente (`client/src/minimapMarks.ts`) | M | M1-03 | Feito |
 | R-14 | Acessibilidade e QoL do cliente: janela de opções, escala de texto, alto contraste, menos movimento, teclas configuráveis e toque para uma mão. Só cliente, sem mensagem nova | M | | Precisa de spec: rascunho em [`features/acessibilidade-qol/`](features/acessibilidade-qol/PRD-acessibilidade-qol.md) (Proposto em 01/11/2026), falta a aprovação das duas pessoas |
+| R-09 | Codex de lore: aba no Livro com fichas de personagens, facções, inimigos, lugares e eventos, liberadas pelo progresso (bestiário, maior nível, títulos e um registro novo de mapas visitados). Sem handler novo | M | M1-06 só para as 5 fichas das Crônicas Semanais | Precisa de spec: rascunho em [`features/codex-lore/`](features/codex-lore/PRD-codex-lore.md) (Proposto em 01/11/2026), falta a aprovação das duas pessoas |
 
 ## Sem marco
 

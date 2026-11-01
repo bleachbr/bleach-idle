@@ -4,6 +4,25 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ---
 
+## Novidades vinculadas à versão servida (F-18)
+
+Um push na `main` não comprova que o deploy terminou. `/release` entrega as
+notas da própria imagem em execução e os metadados públicos injetados pelo
+`deploy.sh`: SHA da imagem e horário UTC imediatamente anterior à recriação
+do container. A interface identifica esse horário como início da atualização,
+não como término do healthcheck. Sem esses metadados, não inventa data local.
+
+As notas são editoriais em `shared/src/releases.ts`, da mais recente para a
+mais antiga, com ID estável por entrada. Novas entregas com mudanças visíveis
+ao jogador acrescentam uma entrada; commits não viram notas automaticamente.
+Um novo deploy atualiza a data/versão, mas só notas novas acionam o indicador.
+A leitura fica por navegador em `bi.releaseSeen`, independente da conta.
+
+O endpoint usa `no-store` e fica fora do service worker para não apresentar
+metadados antigos como atuais quando a rede falhar. O modal nativo contém o
+foco e fecha por Escape; o listener em captura impede que teclas do modal
+acionem técnicas no jogo. Não é necessário mudar CSP nem instalar dependências.
+
 ## Jogador-IA em produção e playtest autêntico (F-17)
 
 Testes de playtest com agentes de IA (inspirados no Cradle) só geram feedback de valor se jogarem sob as mesmas restrições e mecânicas do jogador comum:
@@ -270,6 +289,12 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - `hd.py` refaz todas as folhas HD e levou mais de 25 min. Para regerar só algumas, chame `hd.sheet_hd(*process.GAME_SPRITES[id], name=id)` para cada id (51 s para 6 folhas).
 - `process.py` escala pela altura total do desenho: na célula de 48 px, `rel` acima de ~1,04 corta o topo (o chapéu de palha do Shunsui saiu cortado com 1,1). Confira a linha 0 de cada quadro antes de commitar.
 
+### Traje como edição da folha base (R-13)
+- Para trocar só a roupa, o `art/gen_r13.py` manda a folha da forma base (`raw/walk8/<base>_<dir>.png`) com `-i` e pede uma EDIÇÃO: mesma grade, mesmas poses, mesma linha dos pés, só a roupa muda. As 54 imagens saíram na 1ª tentativa, com as poses batendo quadro a quadro com a base.
+- A escala do `process.py` usa o ponto mais alto do desenho. Quando o traje tira o que ficava no topo (o chapéu do Shunsui no uniforme), o corpo cresce; `rel_like` (altura do desenho comparada com a base) resolve, como já se fazia no Capitão-Comandante.
+- Folha cosmética que pouca gente usa não precisa entrar no preload: `lazy` em `SPRITES` tira a folha do `preload` e o cliente a baixa quando um jogador aparece com o traje (`GameScene.loadLazy`). Sem isso, as 28 folhas somariam cerca de 0,6 MB aos cerca de 2,5 MB das folhas de sprite que todo jogador baixa ao entrar.
+- O teste `shared/test/spriteSheets.test.ts` lê largura e altura do cabeçalho do PNG e compara com `SPRITES`. Ele achou cinco folhas de equipamento com 8 colunas declaradas como 4. O jogo não sentia porque `GameScene.cols` lê a largura da imagem, mas `spriteCols`, `standFrame` e `portraitCss` erravam para essas chaves.
+
 ## 24. Caçada Offline v2 com Relatório Estruturado e Persistência Unificada (W-05)
 
 - **Problema:** Ao reconectar após caçada offline, o relatório não informava quais monstros foram abatidos, taxas de rendimento por hora nem separava perdas de mortes de ganhos líquidos; além disso, a lógica de snapshot e restauração ficava dispersa em `onLeave`, `restoreWorld` e `onJoin`.
@@ -285,10 +310,24 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Problema:** A progressão offline dependia unicamente de deixar o personagem parado no mapa combatendo monstros em loop (Auto Hunt). Não havia como escolher setores temáticos, despachar expedições de vigília em intervalos de 1h a 12h ou receber bônus de cooperação de grupo de forma desacoplada de ticks ativos de combate.
 - **Solução (`shared/src/patrols.ts`, `server/src/WorldRoom.ts`):** Extraímos o catálogo de setores (`PATROL_SECTORS`), as durações válidas (`[1, 4, 8, 12]` h com bônus de eficiência progressivo de até +25%) e o cálculo de recompensas para o pacote compartilhado `shared/src/patrols.ts`. O cálculo de recompensas (`calculatePatrolRewards`) é uma função pura e determinística com gerador pseudo-aleatório baseado em semente (`startedAt`), garantindo que EXP, Kan, fragmentos de Hollow e drops temáticos sejam gerados sem depender do relógio do sistema. No servidor, o estado reside em `Progress.patrol` sem timers em segundo plano — a validação de conclusão ocorre apenas sob demanda no resgate (`patrolClaim`), economizando CPU e memória.
 
+## Minimapa com marcadores: canvas maior que o mapa (R-10)
+
+- O minimapa desenhava 1 pixel por tile e o CSS esticava o canvas até 128 px. Nessa resolução um marcador é um ponto de 1 a 3 px, e forma não se distingue. Agora o fundo continua num canvas de 1 px por tile, e o minimapa o desenha `MINIMAP_K` (4) vezes maior com `imageSmoothingEnabled = false`. Os marcadores ganham forma (losango, quadrado, cruz, círculo) e não dependem só da cor.
+- Com o canvas maior que a área na tela, o CSS passa a reduzir em vez de ampliar. `image-rendering: pixelated` na redução descarta linhas inteiras de pixel (some o contorno de 1 px), então saiu do `#minimap`: o pixelado do fundo já vem do próprio canvas.
+- O clique converte pela largura do mapa (`data.width`), não pela do canvas, porque as duas deixaram de ser iguais.
+- Na praça de Karakura, loja, depot, portal e templo ficam a 2 ou 3 tiles um do outro. Com raio de 1,5 tile os ícones viravam uma mancha; com ~1 tile se separam. Conferido numa prévia offline (`art/work/minimap_preview.py`, fora do git) nas larguras de 128 e 96 px; a prévia reduz com Lanczos, não com a reamostragem do navegador, então o teste no navegador continua necessário.
+- A primeira mensagem `quests` chega antes de a cena existir: quem precisa dela depois (o minimapa) registra o ouvinte e pede de novo (`room.send("quests")`). O colyseus.js 0.15 aceita mais de um ouvinte por tipo (nanoevents).
+
 ## Foco de teclado: `blur()` no handler do campo muda o que os ouvintes de `window` veem (R-14)
 
 - O `keydown` de um `<input>` roda antes de o evento subir até `window`. Se o handler do campo chama `blur()`, quando o ouvinte de `window` confere `document.activeElement` o campo já não está focado, e ele trata a tecla como se viesse do jogo (o Esc do chat também fecha as janelas; o Enter que envia volta a focar o chat). Para saber de onde a tecla veio, confira `e.target`, ou chame `stopPropagation` no handler do campo.
 - `e.target instanceof HTMLInputElement` como regra de "está digitando" erra para os dois lados: deixa passar `<select>` e bloqueia `input type="range"`.
+
+## 27. Mensagem do servidor sem handler no cliente (issue #22)
+
+- **Problema:** o servidor mandava `arenaData` e `patrolData` (e, no duelo, `arenaMatchFound` e `arenaResult`), mas o cliente não tinha painel de Arena nem de patrulha e não registrava handler. O colyseus.js avisa `onMessage() not registered for type ...` no console a cada mensagem; o Jogador-IA achou na rodada de 01/11/2026. Mensagem nova no servidor não quebra nada nos testes do Vitest, porque o helper `quiet` cala esse aviso de propósito.
+- **Solução (`client/src/main.ts`):** handlers vazios, registrados em `start()` junto com `welcome` e `fx`, com comentário dizendo que o texto já chega pelo chat. Toda mensagem que o servidor manda ao cliente precisa de handler no mesmo PR, mesmo que vazio enquanto a interface não existe.
+- **Teste no navegador:** `test/regressao/issue-22-arena-patrulha.ts` usa o `Game` do Jogador-IA (servidor isolado na 2578 e Vite na 5183, banco temporário), cria conta e personagem pela tela, sobe ao nível 20 pelo modo Dev (`window.__bi`) e digita `/patrulha` e `/arena entrar|sair` no chat. Além de exigir que o console não tenha o aviso, conta os frames do WebSocket que trazem cada tipo: sem isso, um upgrade que mudasse o texto do aviso deixaria o teste verde sem provar nada. Para saber que os dados já chegaram sem esperar por tempo, o teste usa o `/arena` como barreira: o servidor responde na ordem, então o log dele chega depois das mensagens anteriores. Falhou antes da correção (3 avisos) e passou depois. `arenaMatchFound` e `arenaResult` pedem dois jogadores e ficaram fora do teste.
 
 ## Fluxo de publicação: uma branch e um PR por entrega
 

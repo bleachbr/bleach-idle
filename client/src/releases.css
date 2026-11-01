@@ -1,0 +1,13 @@
+.release-link { display: grid; gap: 4px; margin-top: 12px; }
+.release-link small { color: var(--muted); overflow-wrap: anywhere; }
+#release-dialog { color: var(--text); background: var(--panel); border: 2px solid var(--line); border-radius: 8px; width: min(580px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 20px; overflow-y: auto; }
+#release-dialog::backdrop { background: #000b; }
+#release-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+#release-dialog h2 { margin: 0; color: var(--text); font-size: 20px; }
+#release-dialog h3 { margin: 0 0 4px; }
+#release-dialog button { cursor: pointer; color: var(--text); background: var(--line); border: 0; border-radius: 4px; padding: 8px 12px; }
+#release-dialog button:focus-visible, [data-releases]:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+#release-status, #release-body time { color: var(--muted); }
+#release-body section { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 16px; }
+#release-body ul { padding-left: 20px; }
+#release-body li + li { margin-top: 8px; }

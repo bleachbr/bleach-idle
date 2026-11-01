@@ -16,5 +16,7 @@ export TRUST_PROXY
 auto_gateway="$(docker network inspect bleach-interna --format '{{(index .IPAM.Config 0).Gateway}}')"
 [[ "$auto_gateway" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || exit 3
 TRUST_PROXY="$auto_gateway/32"
+export RELEASE_REVISION="$revision"
+export RELEASE_DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 docker compose -f compose.vps.yml up -d --wait --wait-timeout 120
 printf '%s\n' "$revision" > deployed-revision

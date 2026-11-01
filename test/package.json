@@ -6,6 +6,7 @@
   "scripts": {
     "play": "tsx --env-file=../.env src/index.ts",
     "test": "tsx --test test/**/*.test.ts",
+    "regressao": "tsx regressao/issue-22-arena-patrulha.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

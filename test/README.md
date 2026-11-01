@@ -1,6 +1,6 @@
 # Jogador-IA
 
-Quatro instâncias de IA (Gemini com visão) jogando **Bleach Idle** ao mesmo tempo, como jogadores reais, e entregando feedback consolidado. Não é teste de integração, E2E nem regressão: é um playtest avançado que roda na sua máquina local.
+Quatro instâncias de IA (Gemini com visão) jogando **Bleach Idle** ao mesmo tempo, como jogadores reais, e entregando feedback consolidado. Não é teste de integração, E2E nem regressão: é um playtest avançado que roda na sua máquina local (os testes de regressão de bug ficam à parte, em `regressao/`, descritos no fim).
 
 Inspirado no [Cradle](https://github.com/BAAI-Agents/Cradle): cada agente vê a captura de tela (`1280x720`), age com clique e teclado, reflete periodicamente sobre o que aprendeu e mantém memória entre sessões.
 
@@ -62,3 +62,14 @@ Modelo padrão: `gemini-3.5-flash-lite` (alterável via `IA_MODEL` no `.env`).
 - Modo Dev (`BI_DEV`) vem **desligado por padrão**: os agentes jogam como jogadores reais sem atalhos de admin.
 - Servidor de teste na porta `2578` e Vite na `5183`, usando `test/runs/jogo.sqlite` (nunca toca no `bleach-idle.sqlite` da raiz).
 - `GEMINI_API_KEY` não é repassada aos processos do servidor nem do cliente.
+
+## Regressão de bugs no navegador
+
+`regressao/` guarda testes que reproduzem um bug no Chromium antes da correção e provam o conserto depois. Usam o mesmo `Game` (servidor isolado na `2578`, Vite na `5183`), com banco temporário apagado no fim, e não precisam da `GEMINI_API_KEY`. Toda espera é por condição na página.
+
+```bash
+cd test
+npm run regressao   # issue #22: mensagens da Arena e da patrulha sem handler no cliente
+```
+
+Saída `0` quando passa e `1` quando o bug volta. Usa as mesmas portas do Jogador-IA (`--strictPort`): não rode os dois ao mesmo tempo. Fica fora do CI até o M5-03.
