@@ -166,6 +166,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.handle("nextTarget", (c) => {
       const p = this.me(c);
       if (!p) return;
+      p.pendingInteract = ""; // trocar de alvo desiste do depot/loja clicado antes, como `target` (#26)
       const list = [...this.state.monsters.values()]
         .filter((mo) => sameMap(p, mo) && (!mo.owner || mo.owner === p.id) && !MONSTERS[mo.kind]?.dummy && chebyshev(p.x, p.y, mo.x, mo.y) <= VIEW)
         .sort((a, b) => chebyshev(p.x, p.y, a.x, a.y) - chebyshev(p.x, p.y, b.x, b.y));
