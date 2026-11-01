@@ -265,7 +265,7 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 ### Traje como edição da folha base (R-13)
 - Para trocar só a roupa, o `art/gen_r13.py` manda a folha da forma base (`raw/walk8/<base>_<dir>.png`) com `-i` e pede uma EDIÇÃO: mesma grade, mesmas poses, mesma linha dos pés, só a roupa muda. As 54 imagens saíram na 1ª tentativa, com as poses batendo quadro a quadro com a base.
 - A escala do `process.py` usa o ponto mais alto do desenho. Quando o traje tira o que ficava no topo (o chapéu do Shunsui no uniforme), o corpo cresce; `rel_like` (altura do desenho comparada com a base) resolve, como já se fazia no Capitão-Comandante.
-- Folha cosmética que pouca gente usa não precisa entrar no preload: `lazy` em `SPRITES` tira a folha do `preload` e o cliente a baixa quando um jogador aparece com o traje (`GameScene.loadLazy`). Sem isso, as 28 folhas somariam cerca de 0,6 MB aos 2,4 MB que todo jogador baixa ao entrar.
+- Folha cosmética que pouca gente usa não precisa entrar no preload: `lazy` em `SPRITES` tira a folha do `preload` e o cliente a baixa quando um jogador aparece com o traje (`GameScene.loadLazy`). Sem isso, as 28 folhas somariam cerca de 0,6 MB aos cerca de 2,5 MB das folhas de sprite que todo jogador baixa ao entrar.
 - O teste `shared/test/spriteSheets.test.ts` lê largura e altura do cabeçalho do PNG e compara com `SPRITES`. Ele achou cinco folhas de equipamento com 8 colunas declaradas como 4. O jogo não sentia porque `GameScene.cols` lê a largura da imagem, mas `spriteCols`, `standFrame` e `portraitCss` erravam para essas chaves.
 
 ## 24. Caçada Offline v2 com Relatório Estruturado e Persistência Unificada (W-05)
