@@ -108,6 +108,8 @@ export class Player extends Schema {
   ignore: string[] = [];
   /** modo Dev: não morre e não gasta reiatsu */
   devGod = false;
+  /** anti-cheat de velocidade (W-01): timestamp do último passo efetuado */
+  lastStepAt = 0;
   offItems: Record<string, number> = {};
 }
 

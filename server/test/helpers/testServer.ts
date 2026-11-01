@@ -39,6 +39,10 @@ const KNOWN_ROOM_MESSAGES = [
   "offline",
   "devMode",
   "time",
+  "arenaData",
+  "arenaMatchFound",
+  "arenaCountdown",
+  "arenaResult",
 ];
 
 function registerDefaultHandlers<T extends Room>(room: T): T {

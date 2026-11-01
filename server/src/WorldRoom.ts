@@ -20,7 +20,9 @@ import {
   own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
   applyStatus, tickStatuses, canEntityMove, canEntityAct, effectiveStepMs, formatStatusFlags, clearStatuses, type SkillStatusDef,
   evaluateBossPhase,
+  newArenaProgress, getArenaTier, validateStepInterval, ARENA_MIN_LEVEL, ARENA_COUNTDOWN_SEC, ARENA_MATCH_TIMEOUT_SEC, ARENA_WIN_GOLD, ARENA_WIN_SEASON_PTS, type ArenaProgress, type DuelOutcome,
 } from "../../shared/src";
+import * as arenaMgr from "./arenaManager";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
 import { consumeTicket, type Ticket } from "./auth";
@@ -48,7 +50,11 @@ const HELP = [
   "/guilda sair · /guilda expulsar Nome · /guilda lider Nome · /guilda depositar N · /guilda sacar N (líder) · /guilda info",
   "/ranking — abre o ranking",
   "/ignorar Nome — liga ou desliga as mensagens dessa pessoa · /ignorar — mostra a lista",
+  "/arena [entrar|sair|desistir] — arena de duelos 1v1 ranqueada",
 ];
+
+const ARENA_SPAWN_P1 = { map: "dangai", x: 20, y: 13 };
+const ARENA_SPAWN_P2 = { map: "dangai", x: 26, y: 13 };
 
 const OFFLINE_MAX_MS = 12 * 3600_000;
 const AGGRO = 5;
@@ -114,10 +120,12 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.scheduleInvasion(Number(process.env.INVASION_FIRST_MS) || INVASION.firstMs);
     this.scheduleWorldBoss(Number(process.env.WORLDBOSS_FIRST_MS) || WORLD_BOSS.firstMs);
     this.clock.setInterval(() => { for (const p of this.state.players.values()) this.checkAchievements(p); }, 5000);
+    this.registerArenaMessages();
+    this.clock.setInterval(() => this.tickArena(Date.now()), 1000);
 
     this.handle("move", (c, m: { x: number; y: number }) => {
       const p = this.me(c);
-      if (!p || !Number.isInteger(m?.x) || !Number.isInteger(m?.y) || !walkable(mapOf(p), m.x, m.y)) return;
+      if (!p || this.inArenaCountdown(p) || !Number.isInteger(m?.x) || !Number.isInteger(m?.y) || !walkable(mapOf(p), m.x, m.y)) return;
       p.follow = false;
       p.path = findPath(p.x, p.y, (x, y) => x === m.x && y === m.y, (x, y) => !walkable(mapOf(p), x, y));
     });
@@ -126,7 +134,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       // só inteiro 0..3: uma string aqui ia para o campo uint8 sincronizado e a codificação
       // do estado falhava, derrubando TODOS os jogadores da sala
       const dir = m?.dir;
-      if (!p || !Number.isInteger(dir) || !(dir in DIR_VEC)) return;
+      if (!p || this.inArenaCountdown(p) || !Number.isInteger(dir) || !(dir in DIR_VEC)) return;
       const [dx, dy] = DIR_VEC[dir as Dir];
       p.follow = false;
       p.dir = dir;
@@ -311,6 +319,12 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.sessions.delete(client.sessionId);
     const p = id ? this.state.players.get(id) : undefined;
     if (!p) return;
+    arenaMgr.dequeue(p.id);
+    const duel = arenaMgr.getDuelByPlayer(p.id);
+    if (duel && duel.state !== "finished") {
+      const winnerId = duel.p1Id === p.id ? duel.p2Id : duel.p1Id;
+      this.resolveArenaDuel(duel.id, winnerId, "forfeit", Date.now());
+    }
     if (p.autoHunt || p.autoTrain) {
       p.online = false;
       p.offlineSince = Date.now();
@@ -370,6 +384,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     // saves gravados antes da correção de chaves de protótipo podem ter missão fantasma (ex.: "undefined"): descarta o que não existe
     for (const k of Object.keys(p.quests.active)) if (!own(QUEST_BY_ID, k)) delete p.quests.active[k];
     p.prog = { ...newProgress(), ...saved.prog };
+    p.prog.arena ??= newArenaProgress();
     p.prog.peak = Math.max(p.prog.peak ?? 0, saved.level);
     // quem já é veterano quando o guia chegou não precisa dele
     if (!p.prog.tut && p.level >= TUTORIAL_MAX_LEVEL) p.prog.tut = TUTORIAL.map((t) => t.id);
@@ -477,7 +492,15 @@ export class WorldRoom extends GameRoom<WorldState> {
           e.lastCombatAt = now;
           this.broadcast("fx", { t: "dmg", id: e.id, v: dotDamage, from: dotFromId, dot: true });
           const killer = this.state.players.get(dotFromId);
-          if (e.hp <= 0) this.killPlayer(e, killer?.name ?? "Sangramento", dotFromId);
+          if (e.hp <= 0) {
+            const duel = arenaMgr.getDuelByPlayer(e.id);
+            if (duel && duel.state === "fighting") {
+              const winnerId = duel.p1Id === e.id ? duel.p2Id : duel.p1Id;
+              this.resolveArenaDuel(duel.id, winnerId, "ko", now);
+            } else {
+              this.killPlayer(e, killer?.name ?? "Sangramento", dotFromId);
+            }
+          }
         }
       } else {
         const def = MONSTERS[e.kind];
@@ -690,6 +713,13 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private stepTo(e: Player | Monster, next: Pt, now: number) {
+    if (isPlayer(e)) {
+      if (!validateStepInterval(e.lastStepAt, now, effectiveStepMs(e.stepMs, e.statuses, now))) {
+        e.path = [];
+        return;
+      }
+      e.lastStepAt = now;
+    }
     const dx = next.x - e.x, dy = next.y - e.y;
     e.dir = dy > 0 ? 0 : dx < 0 ? 1 : dx > 0 ? 2 : 3;
     e.x = next.x;
@@ -728,7 +758,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private trySkill(p: Player, t: Player | Monster, now: number, auto: boolean, i = 0): boolean {
-    if (!canEntityAct(p.statuses, now)) return false;
+    if (!canEntityAct(p.statuses, now) || this.inArenaCountdown(p)) return false;
     const sk = techniqueFor(p.charId, i, p.form);
     if (!sk || p.level < (sk.minLevel ?? 1)) return false;
     if (now < p.skillReadyAt || now < p.techReady[i] || p.rei < sk.cost || inPZ(mapOf(p), p.x, p.y)) return false;
@@ -1263,6 +1293,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private travelBlocked(p: Player, now: number): string | undefined {
+    if (arenaMgr.isInDuel(p.id)) return "Você não pode viajar durante um duelo de arena.";
     if (p.skullUntil > now) {
       const m = Math.ceil((p.skullUntil - now) / 60000);
       return `Assassinos (☠) não podem viajar: faltam ${m} min de caveira.`;
@@ -1282,6 +1313,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.pendingInteract = "";
     p.x = to.x;
     p.y = to.y;
+    p.lastStepAt = 0;
     this.broadcast("fx", { t: "tp", id: p.id });
   }
 
@@ -1290,6 +1322,15 @@ export class WorldRoom extends GameRoom<WorldState> {
     if (a === v) return "Não dá para atacar a si mesmo.";
     if (v.hp <= 0) return `${v.name} já caiu.`;
     if (!sameMap(a, v)) return `${v.name} está em outro mapa.`;
+
+    const aDuel = arenaMgr.getDuelByPlayer(a.id);
+    const vDuel = arenaMgr.getDuelByPlayer(v.id);
+    if (aDuel || vDuel) {
+      if (!aDuel || !vDuel || aDuel.id !== vDuel.id) return "Você está em um duelo de arena.";
+      if (aDuel.state === "countdown") return "O duelo ainda não começou!";
+      return undefined;
+    }
+
     if (a.map === "dangai") return "Não há PvP no Dangai.";
     if (a.partyId && a.partyId === v.partyId) return `${v.name} está na sua party.`;
     if (a.level < PVP_MIN_LEVEL) return `PvP só a partir do nível ${PVP_MIN_LEVEL}.`;
@@ -1317,8 +1358,12 @@ export class WorldRoom extends GameRoom<WorldState> {
     v.lastCombatAt = p.lastCombatAt = now;
     v.lastAttackerId = p.id;
     v.lastAttackedAt = now;
+
+    const duel = arenaMgr.getDuelByPlayer(p.id);
+    const isArenaDuel = !!duel && duel.id === arenaMgr.getDuelByPlayer(v.id)?.id && duel.state === "fighting";
+
     // atacar um assassino (☠) ou quem atacou alguém há pouco (marcado) é defesa: não marca quem ataca
-    const justified = v.skullUntil > now || v.pvpUntil > now;
+    const justified = isArenaDuel || v.skullUntil > now || v.pvpUntil > now;
     if (!justified) {
       if (p.pvpUntil <= now) this.log(p, `Você atacou ${v.name}: viagem e zona de proteção bloqueadas por ${PVP_LOCK_MS / 60000} min.`);
       p.pvpUntil = now + PVP_LOCK_MS;
@@ -1326,6 +1371,11 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.broadcast("fx", { t: "dmg", id: v.id, v: dmg, from: p.id });
     if (v.hp <= 0) {
       p.targetId = "";
+      if (isArenaDuel) {
+        v.hp = 0;
+        this.resolveArenaDuel(duel.id, p.id, "ko", now);
+        return;
+      }
       this.broadcast("chat", { from: "", text: `${v.name} foi derrotado por ${p.name}.` });
       p.frags++;
       if (p.frags >= 10) this.awardMilestone(p, "first_pvp10");
@@ -1472,6 +1522,37 @@ export class WorldRoom extends GameRoom<WorldState> {
       case "guilda":
       case "guild":
         return this.guildCommand(p, rest);
+      case "arena": {
+        const sub = rest.toLowerCase().split(" ")[0];
+        if (sub === "entrar" || sub === "queue") {
+          p.prog.arena ??= newArenaProgress();
+          if (p.level < ARENA_MIN_LEVEL) return this.log(p, `A Arena 1v1 requer nível ${ARENA_MIN_LEVEL}.`);
+          if (p.hp <= 0) return this.log(p, "Você precisa estar vivo para entrar na fila.");
+          if (this.dangai.has(p.id)) return this.log(p, "Termine o desafio do Dangai antes de entrar na Arena.");
+          if (arenaMgr.isInDuel(p.id)) return this.log(p, "Você já está em duelo.");
+          if (arenaMgr.enqueue({ playerId: p.id, name: p.name, rating: p.prog.arena.rating, queuedAt: Date.now() })) {
+            this.log(p, `Entrou na fila da Arena 1v1 (Rating: ${p.prog.arena.rating}).`);
+            this.sendArenaData(p);
+          }
+          return;
+        }
+        if (sub === "sair" || sub === "leave") {
+          if (arenaMgr.dequeue(p.id)) {
+            this.log(p, "Você saiu da fila da Arena.");
+            this.sendArenaData(p);
+          }
+          return;
+        }
+        if (sub === "desistir" || sub === "surrender") {
+          const duel = arenaMgr.getDuelByPlayer(p.id);
+          if (!duel || duel.state !== "fighting") return this.log(p, "Você não está em combate de arena.");
+          const winnerId = duel.p1Id === p.id ? duel.p2Id : duel.p1Id;
+          return this.resolveArenaDuel(duel.id, winnerId, "forfeit", Date.now());
+        }
+        p.prog.arena ??= newArenaProgress();
+        const tier = getArenaTier(p.prog.arena.rating);
+        return this.log(p, `Arena 1v1: ${p.prog.arena.rating} pts (${tier.name}) | ${p.prog.arena.wins}V - ${p.prog.arena.losses}D (Streak: ${p.prog.arena.streak}). Comandos: /arena entrar | /arena sair | /arena desistir`);
+      }
       case "ranking":
         return this.sendTo(p, "ranking", this.ranking());
       default:
@@ -1882,6 +1963,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.handle("dangaiStart", (c) => {
       const p = this.me(c);
       if (!p || p.map !== "dangai") return;
+      if (arenaMgr.isInDuel(p.id)) return this.log(p, "Você está em um duelo de arena.");
       if (this.dangai.get(p.id)?.floor) return this.log(p, "Você já está num desafio.");
       this.dangaiFloorStart(p, dangaiStart(p.prog.dgBest ?? 0));
     });
@@ -2000,6 +2082,227 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.teleport(p, "dangai", back);
     const run = this.dangai.get(p.id);
     this.dangaiEnd(p.id, `${by} derrubou você no andar ${run?.floor ?? "?"} (no Dangai não se perde nada).`);
+  }
+
+  // ---------- Arena 1v1 Ranqueada (W-01) ----------
+
+  private inArenaCountdown(p: Player): boolean {
+    const duel = arenaMgr.getDuelByPlayer(p.id);
+    return !!duel && duel.state === "countdown";
+  }
+
+  private registerArenaMessages() {
+    this.handle("arenaQueue", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      if (p.level < ARENA_MIN_LEVEL) {
+        return this.log(p, `A Arena 1v1 requer nível ${ARENA_MIN_LEVEL} ou superior.`);
+      }
+      if (p.hp <= 0) {
+        return this.log(p, "Você precisa estar vivo para entrar na fila da Arena.");
+      }
+      if (this.dangai.has(p.id)) {
+        return this.log(p, "Termine o desafio do Dangai antes de entrar na Arena.");
+      }
+      if (arenaMgr.isInDuel(p.id)) {
+        return this.log(p, "Você já está em um duelo de arena.");
+      }
+      if (arenaMgr.isInQueue(p.id)) {
+        return this.log(p, "Você já está na fila da Arena.");
+      }
+      p.prog.arena ??= newArenaProgress();
+      const enqueued = arenaMgr.enqueue({
+        playerId: p.id,
+        name: p.name,
+        rating: p.prog.arena.rating,
+        queuedAt: Date.now(),
+      });
+      if (enqueued) {
+        this.log(p, `Entrou na fila da Arena 1v1 (Rating: ${p.prog.arena.rating}).`);
+        this.sendArenaData(p);
+      }
+    });
+
+    this.handle("arenaLeaveQueue", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      if (arenaMgr.dequeue(p.id)) {
+        this.log(p, "Você saiu da fila da Arena.");
+        this.sendArenaData(p);
+      }
+    });
+
+    this.handle("arenaInfo", (c) => {
+      const p = this.me(c);
+      if (p) this.sendArenaData(p);
+    });
+
+    this.handle("arenaSurrender", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      const duel = arenaMgr.getDuelByPlayer(p.id);
+      if (!duel || duel.state === "finished") return;
+      const winnerId = duel.p1Id === p.id ? duel.p2Id : duel.p1Id;
+      this.resolveArenaDuel(duel.id, winnerId, "forfeit", Date.now());
+    });
+  }
+
+  private sendArenaData(p: Player) {
+    p.prog.arena ??= newArenaProgress();
+    const status = arenaMgr.getQueueStatus(p.id);
+    this.sendTo(p, "arenaData", {
+      rating: p.prog.arena.rating,
+      tier: getArenaTier(p.prog.arena.rating),
+      wins: p.prog.arena.wins,
+      losses: p.prog.arena.losses,
+      streak: p.prog.arena.streak,
+      bestRating: p.prog.arena.bestRating,
+      queue: status,
+    });
+  }
+
+  private tickArena(now: number) {
+    const matches = arenaMgr.matchmake(now);
+    for (const [m1, m2] of matches) {
+      const p1 = this.state.players.get(m1.playerId);
+      const p2 = this.state.players.get(m2.playerId);
+
+      if (!p1 || !p1.online || p1.hp <= 0) {
+        if (p2 && p2.online && p2.hp > 0) arenaMgr.enqueue(m2);
+        continue;
+      }
+      if (!p2 || !p2.online || p2.hp <= 0) {
+        if (p1 && p1.online && p1.hp > 0) arenaMgr.enqueue(m1);
+        continue;
+      }
+
+      const duel = arenaMgr.createDuel(m1, m2, now);
+      duel.p1Return = { map: p1.map, x: p1.x, y: p1.y };
+      duel.p2Return = { map: p2.map, x: p2.x, y: p2.y };
+
+      p1.autoHunt = false;
+      p2.autoHunt = false;
+
+      this.teleport(p1, ARENA_SPAWN_P1.map, ARENA_SPAWN_P1);
+      this.teleport(p2, ARENA_SPAWN_P2.map, ARENA_SPAWN_P2);
+
+      p1.hp = p1.maxHp;
+      p1.rei = p1.maxRei;
+      p2.hp = p2.maxHp;
+      p2.rei = p2.maxRei;
+
+      p1.targetId = p2.id;
+      p2.targetId = p1.id;
+      p1.follow = true;
+      p2.follow = true;
+
+      this.sendTo(p1, "arenaMatchFound", {
+        duelId: duel.id,
+        opponentName: p2.name,
+        opponentRating: m2.rating,
+        countdownSec: ARENA_COUNTDOWN_SEC,
+      });
+      this.sendTo(p2, "arenaMatchFound", {
+        duelId: duel.id,
+        opponentName: p1.name,
+        opponentRating: m1.rating,
+        countdownSec: ARENA_COUNTDOWN_SEC,
+      });
+
+      this.sendArenaData(p1);
+      this.sendArenaData(p2);
+
+      this.broadcast("chat", {
+        from: "",
+        ch: "sys",
+        text: `⚔ [Arena 1v1] Pareamento: ${p1.name} (${m1.rating}) vs ${p2.name} (${m2.rating})! O duelo começa em ${ARENA_COUNTDOWN_SEC}s.`,
+      });
+    }
+
+    for (const duel of arenaMgr.getActiveDuels()) {
+      if (duel.state === "countdown") {
+        if (now >= duel.countdownUntil) {
+          duel.state = "fighting";
+          const p1 = this.state.players.get(duel.p1Id);
+          const p2 = this.state.players.get(duel.p2Id);
+          if (p1) this.log(p1, "⚔ O duelo começou! Lute!");
+          if (p2) this.log(p2, "⚔ O duelo começou! Lute!");
+        }
+      } else if (duel.state === "fighting") {
+        if (now >= duel.timeoutUntil) {
+          this.resolveArenaDuel(duel.id, null, "timeout", now);
+        }
+      }
+    }
+  }
+
+  private resolveArenaDuel(
+    duelId: string,
+    winnerId: string | null,
+    reason: "ko" | "timeout" | "forfeit",
+    now: number
+  ) {
+    const res = arenaMgr.resolveDuel(duelId, winnerId, reason);
+    if (!res) return;
+
+    const p1 = this.state.players.get(res.duel.p1Id);
+    const p2 = this.state.players.get(res.duel.p2Id);
+
+    const updateParticipant = (
+      p: Player | undefined,
+      id: string,
+      outcome: DuelOutcome,
+      newRating: number,
+      delta: number,
+      opponentName: string,
+      returnPos?: { map: string; x: number; y: number }
+    ) => {
+      if (p) {
+        p.prog.arena ??= newArenaProgress();
+        arenaMgr.applyArenaProgress(p.prog.arena, outcome, newRating);
+        p.hp = p.maxHp;
+        p.rei = p.maxRei;
+        p.targetId = "";
+        p.follow = false;
+        p.path = [];
+        if (outcome === "win") {
+          p.gold += res.goldReward;
+          this.seasonAdd(p, res.seasonPts, "arena 1v1");
+          this.sendInv(p);
+        }
+        this.teleport(p, returnPos?.map ?? HOME.id, returnPos ?? TEMPLE);
+        this.sendTo(p, "arenaResult", {
+          outcome,
+          winnerName: winnerId ? (winnerId === p.id ? p.name : opponentName) : null,
+          ratingDelta: delta,
+          newRating,
+          goldReward: outcome === "win" ? res.goldReward : 0,
+          seasonPts: outcome === "win" ? res.seasonPts : 0,
+        });
+        this.sendArenaData(p);
+        db.save(p.id, this.toSave(p), p.online);
+      } else {
+        const row = db.load(id);
+        if (row) {
+          row.data.prog ??= newProgress();
+          row.data.prog.arena ??= newArenaProgress();
+          arenaMgr.applyArenaProgress(row.data.prog.arena, outcome, newRating);
+          db.save(id, row.data, row.inWorld);
+        }
+      }
+    };
+
+    updateParticipant(p1, res.duel.p1Id, res.p1Outcome, res.p1NewRating, res.p1Delta, res.duel.p2Name, res.duel.p1Return);
+    updateParticipant(p2, res.duel.p2Id, res.p2Outcome, res.p2NewRating, res.p2Delta, res.duel.p1Name, res.duel.p2Return);
+
+    const textResult =
+      reason === "ko"
+        ? `⚔ [Arena 1v1] ${winnerId === res.duel.p1Id ? res.duel.p1Name : res.duel.p2Name} venceu por nocaute contra ${winnerId === res.duel.p1Id ? res.duel.p2Name : res.duel.p1Name}!`
+        : reason === "forfeit"
+        ? `⚔ [Arena 1v1] ${winnerId === res.duel.p1Id ? res.duel.p1Name : res.duel.p2Name} venceu por desistência!`
+        : `⚔ [Arena 1v1] O duelo entre ${res.duel.p1Name} e ${res.duel.p2Name} terminou em empate por tempo!`;
+
+    this.broadcast("chat", { from: "", ch: "sys", text: textResult });
   }
 
   // ---------- modo Dev ----------
