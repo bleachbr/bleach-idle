@@ -20,9 +20,10 @@ export interface SkillGateInput {
   maxRei: number;
   cost: number;
   auto: boolean;
-  inPZ: boolean;
-  /** distância de Chebyshev até o alvo */
-  dist: number;
+  /** valor ou função: a função só roda se as travas baratas anteriores passarem */
+  inPZ: boolean | (() => boolean);
+  /** distância de Chebyshev até o alvo (valor ou função, como `inPZ`) */
+  dist: number | (() => number);
   range: number;
 }
 
@@ -44,9 +45,10 @@ export function skillBlock(s: SkillGateInput): SkillBlock | null {
   const readyAt = Math.max(s.skillReadyAt, s.techReadyAt);
   if (s.now < readyAt) return { kind: "cooldown", ms: readyAt - s.now };
   if (s.rei < s.cost) return { kind: "reiatsu", need: s.cost, have: s.rei };
-  if (s.inPZ) return { kind: "pz" };
+  if (typeof s.inPZ === "function" ? s.inPZ() : s.inPZ) return { kind: "pz" };
   if (s.auto && s.rei - s.cost < s.maxRei * AUTO_REI_RESERVE) return { kind: "reserve" };
-  if (s.dist > s.range) return { kind: "range", dist: s.dist, range: s.range };
+  const dist = typeof s.dist === "function" ? s.dist() : s.dist;
+  if (dist > s.range) return { kind: "range", dist, range: s.range };
   return null;
 }
 

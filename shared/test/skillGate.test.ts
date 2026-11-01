@@ -46,6 +46,20 @@ describe("skillBlock: por que a técnica não saiu (#27)", () => {
   });
 });
 
+describe("skillBlock: curto-circuito barato (#27, Auto Hunt chama até 4 vezes por tick)", () => {
+  it("zona de proteção e distância podem vir preguiçosas e só são calculadas quando chegam a vez", () => {
+    let calls = 0;
+    const lazy = { inPZ: () => (calls++, false), dist: () => (calls++, 2) };
+    expect(skillBlock({ ...ready, ...lazy, techReadyAt: 12_000 })).toEqual({ kind: "cooldown", ms: 2000 });
+    expect(skillBlock({ ...ready, ...lazy, rei: 0 })).toMatchObject({ kind: "reiatsu" });
+    expect(calls).toBe(0);
+    expect(skillBlock({ ...ready, ...lazy })).toBeNull();
+    expect(calls).toBe(2);
+    expect(skillBlock({ ...ready, inPZ: () => true, dist: () => 9 })).toEqual({ kind: "pz" });
+    expect(skillBlock({ ...ready, dist: () => 9 })).toEqual({ kind: "range", dist: 9, range: 4 });
+  });
+});
+
 describe("skillBlockText: mensagem do chat", () => {
   it("cada causa tem texto próprio, sem a mensagem genérica", () => {
     expect(skillBlockText("Getsuga Tenshō", { kind: "cooldown", ms: 3200 })).toBe("Getsuga Tenshō em recarga (restam 4s).");

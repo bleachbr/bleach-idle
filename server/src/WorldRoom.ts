@@ -68,6 +68,8 @@ const HUNT_RADIUS = 30;
 /** "já estou no lugar de caça": até esta distância da chegada do destino */
 const HUNT_SPOT_RADIUS = 12;
 const REGEN_MS = 2000;
+/** Motivo de técnica bloqueada no Auto Hunt: ninguém lê, então não se monta o texto (#27). */
+const SKILL_BLOCKED = "auto";
 const BAG_OWNER_MS = 60_000; // prioridade de quem matou
 const BAG_TTL_MS = 5 * 60_000; // tempo até o corpo/sacola sumir
 
@@ -761,20 +763,21 @@ export class WorldRoom extends GameRoom<WorldState> {
     }
   }
 
-  /** `null` quando a técnica saiu; senão, o motivo para o chat (#27, travas em shared/src/skillGate.ts). */
+  /** `null` quando a técnica saiu; senão, o motivo para o chat (#27, travas em shared/src/skillGate.ts).
+   * No Auto Hunt (até 4 chamadas por tick por jogador) ninguém lê o motivo: devolve `SKILL_BLOCKED` sem montar texto. */
   private trySkill(p: Player, t: Player | Monster, now: number, auto: boolean, i = 0): string | null {
     const sk = techniqueFor(p.charId, i, p.form);
-    if (!sk) return "Técnica indisponível.";
-    // Auto Hunt guarda reiatsu para a liberação (AUTO_REI_RESERVE)
+    if (!sk) return auto ? SKILL_BLOCKED : "Técnica indisponível.";
+    // Auto Hunt guarda reiatsu para a liberação (AUTO_REI_RESERVE); PZ e distância só se calculam se as travas baratas passarem
     const block = skillBlock({
       now, canAct: canEntityAct(p.statuses, now), arenaCountdown: this.inArenaCountdown(p),
       level: p.level, minLevel: sk.minLevel, skillReadyAt: p.skillReadyAt, techReadyAt: p.techReady[i],
-      rei: p.rei, maxRei: p.maxRei, cost: sk.cost, auto, inPZ: inPZ(mapOf(p), p.x, p.y),
-      dist: chebyshev(p.x, p.y, t.x, t.y), range: sk.range,
+      rei: p.rei, maxRei: p.maxRei, cost: sk.cost, auto, inPZ: () => inPZ(mapOf(p), p.x, p.y),
+      dist: () => chebyshev(p.x, p.y, t.x, t.y), range: sk.range,
     });
-    if (block) return skillBlockText(sk.name, block);
+    if (block) return auto ? SKILL_BLOCKED : skillBlockText(sk.name, block);
     const pvp = isPlayer(t) ? this.cantAttack(p, t) : undefined;
-    if (pvp) return pvp;
+    if (pvp) return auto ? SKILL_BLOCKED : pvp;
     p.rei -= sk.cost;
     this.train(p, 0, sk.cost);
     p.techReady[i] = now + sk.cdMs;
