@@ -6,7 +6,8 @@ import { play, patchSave, sleep, ok, done } from "./lib";
 ok("nível exigido: 60, depois 65, 70... até 100", rebirthLevel(0) === 60 && rebirthLevel(1) === 65 && rebirthLevel(20) === 100);
 ok("marcos: kan a cada 5 níveis, caixa a cada 10", levelMilestone(15)?.gold === 900 && !levelMilestone(15)?.items && levelMilestone(20)?.items?.[0].id === "caixa_kisuke" && !levelMilestone(21));
 
-const spot = nearestWalkable(HOME, 30, 20);
+// Spawna dentro da PZ do templo (18, 14), garantindo imunidade a aggro de monstros antes do renascimento.
+const spot = nearestWalkable(HOME, 18, 14);
 async function bot(name: string, level: number, extra: Record<string, unknown> = {}) {
   const logs: string[] = [];
   const chat: string[] = [];
