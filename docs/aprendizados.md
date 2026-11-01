@@ -318,6 +318,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Na praça de Karakura, loja, depot, portal e templo ficam a 2 ou 3 tiles um do outro. Com raio de 1,5 tile os ícones viravam uma mancha; com ~1 tile se separam. Conferido numa prévia offline (`art/work/minimap_preview.py`, fora do git) nas larguras de 128 e 96 px; a prévia reduz com Lanczos, não com a reamostragem do navegador, então o teste no navegador continua necessário.
 - A primeira mensagem `quests` chega antes de a cena existir: quem precisa dela depois (o minimapa) registra o ouvinte e pede de novo (`room.send("quests")`). O colyseus.js 0.15 aceita mais de um ouvinte por tipo (nanoevents).
 
+## Teste de interface com o Playwright do `test/` (M3-02)
+
+- Mudança de cliente se confere num navegador de verdade sem infraestrutura nova: o `test/` (Jogador-IA) já traz o `playwright`. Basta `npm install` e `npx playwright install chromium` dentro de `test/`, subir o servidor do jogo servindo o build (`DB_FILE` temporário, `PORT`, `STATIC_DIR=client/dist`) e um script que importa o `playwright` de `test/`. Foi assim que as abas do chat foram conferidas (8 verificações, sem erro no console). É o caminho que o M5-03 vai formalizar.
+- Três tropeços do roteiro: nome de personagem só aceita letras e espaço (`Nome: de 3 a 16 letras (espaços permitidos)`), então um sufixo com número falha; o limite de contas por IP (F-14, padrão `REGISTER_MAX_IP` de 5 por hora) barrou a criação depois de várias rodadas no mesmo banco, então cada rodada nova usa um banco novo; e editar o roteiro com `Get-Content`/`Set-Content` do PowerShell 5 estraga os acentos (lê UTF-8 como ANSI), o que quebrou uma expressão regular com "não". O roteiro em si não está no repositório: fica para o M5-03, que define a pasta `e2e/`.
+
 ## Foco de teclado: `blur()` no handler do campo muda o que os ouvintes de `window` veem (R-14)
 
 - O `keydown` de um `<input>` roda antes de o evento subir até `window`. Se o handler do campo chama `blur()`, quando o ouvinte de `window` confere `document.activeElement` o campo já não está focado, e ele trata a tecla como se viesse do jogo (o Esc do chat também fecha as janelas; o Enter que envia volta a focar o chat). Para saber de onde a tecla veio, confira `e.target`, ou chame `stopPropagation` no handler do campo.
