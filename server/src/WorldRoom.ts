@@ -22,7 +22,7 @@ import {
   evaluateBossPhase,
   newArenaProgress, getArenaTier, validateStepInterval, ARENA_MIN_LEVEL, ARENA_COUNTDOWN_SEC, ARENA_MATCH_TIMEOUT_SEC, ARENA_WIN_GOLD, ARENA_WIN_SEASON_PTS, type ArenaProgress, type DuelOutcome,
   PATROL_SECTORS, PATROL_DURATIONS, calculatePatrolRewards, canClaimPatrol, patrolRemainingMs, type PatrolState,
-  OFFLINE_MAX_MS, buildOfflineReport,
+  OFFLINE_MAX_MS, buildOfflineReport, GUILD_COST, GUILD_MIN_LEVEL,
 } from "../../shared/src";
 import * as arenaMgr from "./arenaManager";
 import { findPath, type Pt } from "./path";
@@ -41,10 +41,8 @@ import { claimServerMilestone } from "./milestones";
 import { checkChatMessage, isGm, mutePlayer, sanitizeChatText, unmutePlayer } from "./moderation";
 import { recordAudit } from "./economyAudit";
 
-const GUILD_COST = 500;
 /** Modo Dev (botão que libera tudo para testar): nasce DESLIGADO e só liga com BI_DEV=1 (`npm run dev` já define). */
 const DEV_MODE = flagOn("BI_DEV");
-const GUILD_MIN_LEVEL = 10;
 const GUILD_NAME_RE = /^[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ]{2,19}$/;
 const HELP = [
   "Comandos:",

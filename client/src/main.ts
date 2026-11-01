@@ -11,6 +11,7 @@ import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
 import { initReleases } from "./releases";
+import { rankingEmptyText } from "./rankingEmpty";
 
 initReleases();
 
@@ -651,7 +652,8 @@ function bindGuild(room: Room<any>, closeWindows: (keep?: string) => void) {
       ? `<tr><td>${i + 1}</td><td>${escHtml(r.name)} <small>[${escHtml(r.tag)}]</small></td><td>${r.frags} abates</td><td>${r.members} membros · ${r.levels} níveis</td></tr>`
       : `<tr><td>${i + 1}</td><td>${escHtml(r.name)}${r.guild ? ` <small>[${escHtml(r.guild)}]</small>` : ""}</td><td>${CHARS[r.charId]?.name ?? ""}</td><td>${
         tab === "nivel" ? `${r.rebirths ? `✦${r.rebirths} · ` : ""}nível ${r.level}` : tab === "poder" ? `${fmtPower(r.power)} · ${POWER_TIERS[powerTier(r.power)].title}` : tab === "dangai" ? `andar ${r.dg}` : tab === "conquistas" ? `${r.ach} conquistas` : tab === "bestiario" ? `${r.stages} estágios` : `${r.frags} abates`}</td></tr>`);
-    $("#ranking-body").innerHTML = rows.length ? `<table>${rows.join("")}</table>` : `<p class="hint">Ninguém aqui ainda.</p>`;
+    if (rows.length) $("#ranking-body").innerHTML = `<table>${rows.join("")}</table>`;
+    else $("#ranking-body").replaceChildren(Object.assign(document.createElement("p"), { className: "hint", textContent: rankingEmptyText(tab) }));
   };
   room.onMessage("ranking", (d: any) => { data = d; closeWindows("#ranking"); panel.hidden = false; render(); });
   $("#ranking-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("ranking"); };
