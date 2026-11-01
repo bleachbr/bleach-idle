@@ -55,7 +55,7 @@ flowchart LR
 - **Tema:** Intrusos cruzaram a barreira de Shakonmaku! O Seireitei entra em estado de sítio contra o grupo de Ichigo, Uryū, Chad e Orihime.
 - **NPC Central:** *Maki (Cronista do Gotei 13)*, narrando pelo relato de um oficial da 11ª Divisão.
 - **Narrativa:** Descreve a quebra do céu pelos fogos de artifício da família Shiba, o duelo na ponte e a corrida contra o tempo antes da execução de Rukia.
-- **Missão Semanal:** "Patrulha de Contenção" — derrotar 50 Hollows na Soul Society (`hollow_faminto`, `hollow_acido`, `hollow_devorador`, `fishbone`) e entregar 3 Garras de Hollow (`garra`, que esses Hollows soltam).
+- **Missão Semanal:** "Patrulha de Contenção" — derrotar 50 Hollows na Soul Society (`hollow_faminto`, `hollow_acido`, `hollow_devorador`, `fishbone`) e entregar 3 Garras de Hollow (`garra`, que o Hollow Faminto e o Hollow Ácido soltam).
 - **Recompensa:** 500 kan, 15 Cristais da conta, 1 Caixa do Kisuke e Título *"Guardião do Shakonmaku"*.
 
 #### 2. Semana 2: O Julgamento do Soukyoku & A Traição de Aizen

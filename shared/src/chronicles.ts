@@ -67,10 +67,12 @@ export const CHRONICLES: ChronicleDef[] = [
     ],
     quest: {
       name: "Patrulha de Contenção",
-      desc: "Derrote 50 Hollows na Soul Society e entregue 3 Fragmentos de Máscara.",
-      monsters: ["hollow_faminto", "hollow_acido", "hollow_encouracado", "hollow_devorador", "metastacia"],
+      desc: "Derrote 50 Hollows na Soul Society e entregue 3 Garras de Hollow.",
+      // os Hollows que nascem no soul.tmj, sem o chefe (os quatro também nascem em Karakura: o M1-06 deve contar só os
+      // abates na Soul Society); a garra cai do Faminto (30%) e do Ácido (35%)
+      monsters: ["hollow_faminto", "hollow_acido", "hollow_devorador", "fishbone"],
       kills: 50,
-      items: [{ id: "fragmento", qty: 3 }],
+      items: [{ id: "garra", qty: 3 }],
     },
     reward: {
       gold: 500,
@@ -90,10 +92,10 @@ export const CHRONICLES: ChronicleDef[] = [
     ],
     quest: {
       name: "Investigação da Central 46",
-      desc: "Derrote o chefe Metastacia na Soul Society e entregue 2 Pedras de Reishi.",
+      desc: "Derrote o chefe Metastacia na Soul Society e entregue 1 Tentáculo de Metastacia como prova à Central 46.",
       monsters: ["metastacia"],
       kills: 1,
-      items: [{ id: "pedra_reishi", qty: 2 }],
+      items: [{ id: "tentaculo", qty: 1 }],
     },
     reward: {
       gold: 800,
