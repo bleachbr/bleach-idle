@@ -202,3 +202,9 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 - **Problema:** Todas as habilidades de personagens aplicavam apenas dano instantâneo, sem suporte a congelamento (`freeze`), lentidão (`slow`), sangramento/queimadura (`dot`) ou atordoamento (`stun`).
 - **Solução (`shared/src/combatStatus.ts`, `shared/src/data.ts`, `server/src/WorldRoom.ts`):** Extraímos o motor puro de status para `shared/src/combatStatus.ts` (`applyStatus`, `tickStatuses`, `canEntityMove`, `canEntityAct`, `effectiveStepMs`, `formatStatusFlags`), sincronizamos `statusFlags` no Schema (`Player` e `Monster`) para consumo pela camada visual (`M2-06`) e integramos a avaliação por tick (`100 ms`) no `WorldRoom.ts` respeitando zonas de proteção (PZ) e o boneco de treino (`dummy`).
+
+
+## 22. Motor declarativo de chefes com fases (W-04)
+
+- **Problema:** Os chefes de mapa e o Chefe Mundial mantinham ataque, defesa e velocidade constantes durante toda a luta, sem transições narrativas ou mecânicas ao perderem vida.
+- **Solução (`shared/src/bossPhases.ts`, `server/src/schema.ts`, `server/src/WorldRoom.ts`):** Criamos o motor declarativo `BOSS_PHASES` + `evaluateBossPhase(kind, currentPhase, hp, maxHp)` que avalia limiares decrescentes de HP, suporta saltos de fase em golpes altos sem re-disparar fases anteriores, escala atributos sobre `basePower` e `def.stepMs` (sem acúmulo exponencial) e emite pulsos de controle de grupo (`aoeStatus`) nos jogadores ao redor.

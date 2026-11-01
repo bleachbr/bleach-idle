@@ -18,6 +18,7 @@ import {
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
   own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
   applyStatus, tickStatuses, canEntityMove, canEntityAct, effectiveStepMs, formatStatusFlags, clearStatuses, type SkillStatusDef,
+  evaluateBossPhase,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -480,11 +481,36 @@ export class WorldRoom extends GameRoom<WorldState> {
           this.broadcast("fx", { t: "dmg", id: e.id, v: dotDamage, from: dotFromId, dot: true });
           const killer = this.state.players.get(dotFromId || e.lastHitBy);
           if (e.hp <= 0 && killer) this.killMonster(e, killer);
+          else if (e.hp > 0) this.checkBossPhase(e, now);
         }
       }
     }
     const flags = formatStatusFlags(e.statuses, now);
     if (e.statusFlags !== flags) e.statusFlags = flags;
+  }
+
+  private checkBossPhase(m: Monster, now: number) {
+    const tr = evaluateBossPhase(m.kind, m.phase, m.hp, m.maxHp);
+    if (!tr) return;
+    if (m.phase === 0) m.basePower = m.power;
+    m.phase = tr.phase;
+    const def = MONSTERS[m.kind];
+    m.power = m.basePower * tr.atkMult;
+    m.defMult = tr.defMult;
+    m.stepMs = Math.max(120, Math.round(def.stepMs * tr.stepMult));
+    this.broadcast("fx", { t: "event", text: tr.shout });
+    for (const p of this.state.players.values()) {
+      if (!sameMap(p, m) || (m.owner && m.owner !== p.id)) continue;
+      this.log(p, tr.shout);
+      if (tr.aoeStatus && tr.aoeRadius && p.hp > 0 && !inPZ(mapOf(p), p.x, p.y) && !p.devGod) {
+        if (chebyshev(p.x, p.y, m.x, m.y) <= tr.aoeRadius) {
+          applyStatus(p.statuses, tr.aoeStatus, m.id, Math.round(def.atk * m.power), now);
+          const flags = formatStatusFlags(p.statuses, now);
+          if (p.statusFlags !== flags) p.statusFlags = flags;
+          this.broadcast("fx", { t: "status", id: p.id, kind: tr.aoeStatus.kind, ms: tr.aoeStatus.durationMs });
+        }
+      }
+    }
   }
 
   private applySkillStatus(from: Player, target: Player | Monster, def: SkillStatusDef | undefined, baseDmg: number, now: number) {
@@ -690,6 +716,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     if (t.hp <= 0) {
       if (def.dummy) t.hp = t.maxHp; // boneco não morre
       else this.killMonster(t, p);
+    } else {
+      this.checkBossPhase(t, now);
     }
   }
 

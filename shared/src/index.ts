@@ -12,3 +12,4 @@ export * from "./season";
 export * from "./lookup";
 export * from "./chronicles";
 export * from "./combatStatus";
+export * from "./bossPhases";
