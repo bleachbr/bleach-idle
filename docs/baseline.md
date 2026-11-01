@@ -6,7 +6,7 @@ Medida em 31/10/2026 (sábado), sobre a `main` no commit `84e0180` mais as mudan
 | Verificação | Comando | Resultado |
 | :--- | :--- | :--- |
 | Tipos | `npm run typecheck` | sem erros (Node 22 e Node 24) |
-| Vitest | `npm test` | 30 arquivos e 185 testes passam em cerca de 1,6 s (Node 22) |
+| Vitest | `npm test` | 31 arquivos e 188 testes passam em cerca de 1,9 s (Node 22) |
 | Cenários | `npm run test:scripts` | 314 verificações OK e 0 falhas, cerca de 7 min local (Node 22) |
 | Build do cliente | `npm run build` | 4,5 s; um JavaScript de 1,67 MB (398 KB comprimido); `client/dist` com 19 MB |
 | Imagem Docker | `docker build .` | constrói (675 MB). Em contêiner descartável com volume novo em `/data`, `/healthz`, `/`, `/maps/soul.tmj` e `/manifest.webmanifest` respondem 200. Roda como `node` (não-root), com `NODE_ENV=production` e Node 24. Sem `.git`, `.claude`, `art` nem `docs` dentro |

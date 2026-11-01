@@ -19,7 +19,7 @@ import {
   EVENT_BANNER, EVENT_END_MS, eventLore, type EventBanner, type EventKind, type EventPhase,
   own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
   applyStatus, tickStatuses, canEntityMove, canEntityAct, effectiveStepMs, formatStatusFlags, clearStatuses, type SkillStatusDef,
-  evaluateBossPhase,
+  evaluateBossPhase, OFFLINE_MAX_MS, buildOfflineReport,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -28,6 +28,7 @@ import { MAPS, HOME, TEMPLE, SPAWNS, tileKey } from "./maps";
 import * as guilds from "./guilds";
 import * as market from "./market";
 import * as mailbox from "./mailbox";
+import { snapshotOffline, restoreOffline } from "./offlineState";
 import { flagOn } from "./flags";
 import { recordTick } from "./tickStats";
 import { recordSave, setWorldMetricsProvider } from "./metrics";
@@ -51,7 +52,6 @@ const HELP = [
   "/ignorar Nome — liga ou desliga as mensagens dessa pessoa · /ignorar — mostra a lista",
 ];
 
-const OFFLINE_MAX_MS = 12 * 3600_000;
 const AGGRO = 5;
 const LEASH = 10;
 const VIEW = 8;
@@ -280,12 +280,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.accountId = row.accountId ?? 0;
       this.state.players.set(id, p);
       if (row.data.offline) {
-        p.offlineSince = row.data.offline.since;
-        p.expAtLeave = row.data.offline.expAtLeave;
-        p.goldAtLeave = row.data.offline.goldAtLeave;
-        p.offlineDeaths = row.data.offline.deaths ?? [];
-        p.offKills = row.data.offline.kills ?? 0;
-        p.offItems = row.data.offline.items ?? {};
+        restoreOffline(p, row.data.offline, { zan: p.zanjutsu, rei: p.reiryoku });
         this.sendOfflineReport(client, p);
       }
       p.online = true;
@@ -320,7 +315,9 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.zanAtLeave = p.zanjutsu;
       p.reiAtLeave = p.reiryoku;
       p.offKills = 0;
+      p.offKinds = {};
       p.offItems = {};
+      p.offlineDeaths = [];
       db.save(p.id, this.toSave(p), true);
     } else {
       db.save(p.id, this.toSave(p), false);
@@ -404,13 +401,8 @@ export class WorldRoom extends GameRoom<WorldState> {
       const p = this.fromSave(row.id, row.data);
       p.accountId = row.accountId ?? 0;
       p.online = false;
-      p.offlineSince = since;
-      p.expAtLeave = row.data.offline?.expAtLeave ?? p.exp;
-      p.goldAtLeave = row.data.offline?.goldAtLeave ?? p.gold;
-      p.zanAtLeave = row.data.offline?.zanAtLeave ?? p.zanjutsu;
-      p.reiAtLeave = row.data.offline?.reiAtLeave ?? p.reiryoku;
-      p.offKills = row.data.offline?.kills ?? 0;
-      p.offItems = row.data.offline?.items ?? {};
+      restoreOffline(p, { since, ...row.data.offline, expAtLeave: row.data.offline?.expAtLeave ?? p.exp, goldAtLeave: row.data.offline?.goldAtLeave ?? p.gold },
+        { zan: p.zanjutsu, rei: p.reiryoku });
       this.state.players.set(p.id, p);
       n++;
     }
@@ -896,16 +888,23 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private sendOfflineReport(client: Client, p: Player) {
+    const report = buildOfflineReport({
+      since: p.offlineSince, now: Date.now(),
+      expAtLeave: p.expAtLeave, exp: p.exp, goldAtLeave: p.goldAtLeave, gold: p.gold,
+      zanAtLeave: p.zanAtLeave, zan: p.zanjutsu, reiAtLeave: p.reiAtLeave, rei: p.reiryoku,
+      level: p.level, kinds: p.offKinds, items: p.offItems, deaths: p.offlineDeaths,
+    });
     client.send("offline", {
-      minutes: Math.round((Date.now() - p.offlineSince) / 60000),
-      exp: p.exp - p.expAtLeave, gold: p.gold - p.goldAtLeave, level: p.level, deaths: p.offlineDeaths,
-      zanjutsu: p.zanjutsu, zanGain: p.zanjutsu - p.zanAtLeave, reiryoku: p.reiryoku, reiGain: p.reiryoku - p.reiAtLeave,
+      minutes: report.huntMinutes, exp: report.exp, gold: report.gold, level: p.level, deaths: p.offlineDeaths,
+      zanjutsu: p.zanjutsu, zanGain: report.zanGain, reiryoku: p.reiryoku, reiGain: report.reiGain,
       kills: p.offKills,
-      items: Object.entries(p.offItems).sort((a, b) => b[1] - a[1]).map(([id, n]) => `${n}x ${ITEMS[id]?.name ?? id}`),
+      items: report.items.map((i) => `${i.qty}x ${i.name}`),
+      report,
     });
     p.offlineSince = 0;
     p.offlineDeaths = [];
     p.offKills = 0;
+    p.offKinds = {};
     p.offItems = {};
   }
 
@@ -2250,7 +2249,10 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.dailyStep(p, "any");
     this.dailyStep(p, "kill", 1, kind);
     if (BOSSES.has(kind)) this.dailyStep(p, "boss");
-    if (!p.online) p.offKills++;
+    if (!p.online) {
+      p.offKills++;
+      p.offKinds[kind] = (p.offKinds[kind] ?? 0) + 1;
+    }
     if (BOSSES.has(kind)) pr.bossKills++;
     if (kind === "yhwach") this.awardMilestone(p, "first_yhwach");
     this.seasonKill(p, BOSSES.has(kind));
@@ -2932,7 +2934,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
       autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil, rebirths: p.rebirths, prog: p.prog, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
       autoTrain: p.autoTrain, autoSell: p.autoSell, ignore: p.ignore, huntSpot: p.huntSpot, autoReturn: p.autoReturn, autoRei: p.autoRei, autoBankai: p.autoBankai, autoBox: p.autoBox, autoRestock: p.autoRestock, cos: this.cosOf(p), zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
-      offline: p.online ? undefined : { since: p.offlineSince, expAtLeave: p.expAtLeave, goldAtLeave: p.goldAtLeave, zanAtLeave: p.zanAtLeave, reiAtLeave: p.reiAtLeave, deaths: p.offlineDeaths, kills: p.offKills, items: p.offItems },
+      offline: p.online ? undefined : snapshotOffline(p),
     };
   }
 

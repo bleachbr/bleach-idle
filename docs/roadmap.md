@@ -21,13 +21,13 @@ A divisão do trabalho entre Waldir e Rafael está em [`roadmap-duplas.md`](road
 
 ## Estado atual
 
-- **8 personagens jogáveis:** Ichigo, Rukia, Renji, Ishida, Sado, Hitsugaya, Byakuya e Kenpachi, cada um com 5 estágios da obra (níveis 1, 10, 30, 60 e 100) e 4 técnicas nas teclas 1, 4, 5 e 6.
+- **11 personagens jogáveis:** Ichigo, Rukia, Renji, Ishida, Sado, Hitsugaya, Byakuya, Kenpachi, Yoruichi, Ukitake e Shunsui (os três últimos no R-01), cada um com 5 estágios da obra (níveis 1, 10, 30, 60 e 100) e 4 técnicas nas teclas 1, 4, 5 e 6.
 - **7 mapas:** Karakura, Soul Society (Seireitei e Rukongai), Hueco Mundo, Las Noches, Karakura Falsa (60+), Wandenreich (95+) e Dangai (desafio sem fim).
 - **Progressão de longo prazo:** renascimento com bônus permanente, marcos de nível, bestiário em 3 estágios, 21 conquistas, 23 missões do Kisuke, missões diárias e recompensa diária de 7 dias.
 - **Economia:** 45 itens (26 de equipamento), 7 espaços de equipamento, conjuntos com bônus, forja até +10, 32 cosméticos na Loja de Cristais e mercado entre jogadores com anúncios de 7 dias.
 - **Automação:** Auto Helper (alvo, caçada, cura, treino, venda), caçada offline de até 12 horas que sobrevive a reinício do servidor.
 - **Eventos:** passe de temporada mensal grátis, chefe mundial a cada 2 h, invasões de Hollows a cada 3 h (as duas com lore no chat e banner no topo da tela, R-12) e XP em dobro aos sábados e domingos (Brasília).
-- **Qualidade:** 182 testes Vitest e 31 cenários de integração no CI, cinco skills de projeto e uma [linha de base medida](baseline.md).
+- **Qualidade:** 188 testes Vitest e 31 cenários de integração no CI, cinco skills de projeto e uma [linha de base medida](baseline.md).
 
 ## Ordem de execução
 
@@ -88,13 +88,13 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | | Feito | S6 |
 | F-05 | Contêiner roda como `node`, não como root (conferir a permissão do volume `/data`) | P | | Feito | S9 |
 | F-06 | CSP e cabeçalhos de segurança no Caddy | P | | Feito | S7 |
-| F-07 | Proteger a `main` (PR obrigatório e CI verde). O GitHub responde 403 para proteção de branch e rulesets neste plano: exige plano pago ou repositório público. Alternativa: combinado escrito mais um hook `pre-push` local | P | | Decisão pendente (Waldir e Rafael) | S8 |
+| F-07 | Proteger a `main` pública com PR, aprovação e CI obrigatório, bloqueando exclusão e force-push | P | | Proteção ativa; configuração CodeRabbit/CODEOWNERS aguarda publicação e instalação pelo owner | S8; ruleset `protect-main` (26294474), sem bypass; branch `chore/f-07-repo-publico` |
 | F-08 | Métrica da duração do tick, com aviso acima de 50 ms | P | | Feito | P3 |
 | F-09 | Ranking sem bloquear o tick | M | F-08 | Feito | P1 |
 | F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once`; limpar o ruído do Vitest. Rotina: ao mexer num teste com `sleep`, troque-o | M | | Feito | Q2, Q3 |
 | F-11 | CI: job de gitleaks, `ubuntu-24.04` fixo, Node 22 e 24 e `actions` na v7 | M | | Feito | Q5, Q8, Q9, Q10 |
 | F-12 | Upgrade maior do Colyseus (0.15 para 0.18) | G | spec | Precisa de spec | S5 |
-| F-13 | Primeiro deploy com HTTPS atrás do Caddy e restauração de backup testada | M | | Decisão pendente (servidor e domínio) | DEPLOY.md |
+| F-13 | Primeiro deploy com HTTPS atrás do proxy existente e restauração de backup testada | M | | Deploy HTTPS realizado; falta testar restauração e workflow na main | DEPLOY.md; `bleach.acoplum.com` online, Nginx compartilhado e workflow após CI na branch `chore/f-13-deploy-vps` |
 | F-14 | Limite de criação de contas por IP | P | F-03 | Feito | DEPLOY.md |
 | F-15 | Balanceamento dos mapas avançados (`balance.ts`) | M | | Feito | DEPLOY.md |
 | F-16 | Pacote de correções do Jogador-IA: `noHd` no `boneco`, `Tab` (`nextTarget`) ignorando `dummy`, exclusividade de janelas flutuantes + `Esc`, confirmação ao trocar de personagem e handlers `welcome`/`fx` na entrada da sala | M | | Feito | test/ |
@@ -107,7 +107,7 @@ Especificação: [PRD](features/cronicas-semanais-lore/PRD-cronicas-semanais-sei
 
 | ID | Entrega | Tam. | Depende de | Status |
 | :-- | :--- | :-- | :--- | :--- |
-| M1-00 | Aprovar o PRD e os 3 ADRs (status "Aceito", com data e quem aprovou, no PR que aprova) e fechar os pontos do [PRD §8](features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md#8-pontos-em-aberto-conferidos-contra-o-código-31102026) (itens que faltam, nível de monstro, título temporário, NPC de cada semana) | P | | Decisão pendente (Waldir e Rafael) |
+| M1-00 | Aprovar o PRD e os 3 ADRs (status "Aceito", com data e quem aprovou, no PR que aprova) e fechar os pontos do [PRD §8](features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md#8-pontos-em-aberto-conferidos-contra-o-código-31102026) (itens que faltam, nível de monstro, título temporário, NPC de cada semana). Os pontos do §8 foram decididos em 31/10/2026 | P | | Decisão pendente (Waldir e Rafael) |
 | M1-01 | `shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) com testes de borda: virada de semana, ciclo de 5 semanas, antes da âncora e `TZ` diferentes | P | M1-00 | Feito |
 | M1-02 | `shared/src/npcs.ts`: tipos e catálogo (identidade e diálogo; a posição vem do `.tmj`) | P | M1-00 | Bloqueado por M1-00 |
 | M1-03 | NPCs no `soul.tmj` (objeto `npc` na camada `logica`), leitura em `parseMap` e `mapcheck` | M | M1-02 | Bloqueado por M1-02 |
@@ -141,6 +141,7 @@ Descrição, ordem e dependências em [`roadmap-duplas.md`](roadmap-duplas.md). 
 | ID | Entrega | Tam. | Depende de | Status |
 | :-- | :--- | :-- | :--- | :--- |
 | R-12 | Eventos narrados: linha de lore no chat (canal `lore`) e banner no topo da tela durante a invasão de Hollows e o chefe mundial (`shared/src/events.ts`) | P | | Feito |
+| R-01 | Personagens novos do bloco R: Yoruichi, Ukitake e Shunsui jogáveis, com 5 estágios da obra e 4 técnicas cada; sprites gerados pelo Codex (`art/gen_r01.py`). Números de combate na faixa dos 8 atuais (`balance.ts`); revisão do Waldir pendente | M | | Feito |
 | R-13 | Cosméticos sazonais: uniforme de Karakura, haori das divisões e máscaras Vizard na Loja de Cristais (preços em cristais com revisão do Waldir). Os cosméticos de hoje (`shared/src/shop.ts`) não mexem no sprite; roupa no corpo só existe pelo equipamento, com uma folha inteira por combinação (`<base>__<look>`, `OUTFIT_OK` em `shared/src/data.ts`). O cliente tem 5 folhas (Ichigo Shikai com haori, máscara e os dois; Rukia e Renji com haori). `art/raw/walk8` já tem arte bruta de haori e máscara para Ichigo, Rukia, Renji, Ishida e Sado, sem processar. Não existe arte do uniforme de Karakura nem de haori por divisão | M | arte nova; decisão de lore | Bloqueado por spritesheets novos (uniforme e haori por divisão) e por decisão de lore (máscara fora do Ichigo: hoje só ele é Visored, `data.ts`) |
 
 ## Sem marco
@@ -151,7 +152,7 @@ Visual de equipamentos além do haori e da máscara, e interiores de edifícios 
 
 | ID | Data | Decisão | Quem |
 | :-- | :--- | :--- | :--- |
-| D-001 | 31/10/2026 | A trava das recompensas em cristais fica **por personagem** (comportamento atual). Cada personagem extra repete a diária e as conquistas, até 5 por conta; pelo código, o chefe mundial e o passe de temporada também pagam por personagem (não executado). Recompensa nova (como as Crônicas) segue a mesma regra, e o balanceamento deve contar com isso (M1-06). | Waldir decidiu; aguarda a confirmação do Rafael |
+| D-001 | 31/10/2026 | A trava das recompensas em cristais fica **por personagem** (comportamento atual). Cada personagem extra repete a diária e as conquistas, até 5 por conta; pelo código, o chefe mundial e o passe de temporada também pagam por personagem (não executado). Recompensa nova (como as Crônicas) segue a mesma regra, e o balanceamento deve contar com isso (M1-06). | Waldir decidiu; Rafael confirmou em 31/10/2026 |
 | D-002 | 31/10/2026 | Nada é publicado sem revisão adversarial, e PR só é mesclado com CI verde (fluxo de trabalho, passos 5 a 10). É um combinado entre as pessoas: o GitHub não o impõe neste plano (F-07). | Waldir |
 | D-003 | 31/10/2026 | Skills do projeto ficam em `.claude/skills/`, com um link por skill em `.kiro/skills/`. | Waldir |
 

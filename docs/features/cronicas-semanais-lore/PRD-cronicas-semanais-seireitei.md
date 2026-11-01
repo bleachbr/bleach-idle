@@ -3,7 +3,7 @@
 | Metadado | Detalhe |
 | :--- | :--- |
 | **Feature** | NPCs do Seireitei e Crônicas Históricas Semanais |
-| **Status** | Especificação Técnica (Pronto para Revisão) |
+| **Status** | Proposto. Pontos do §8 decididos por Rafael em 31/10/2026; falta a aprovação do PRD e dos ADRs pelas duas pessoas para "Aceito" |
 | **Autores** | Time de Engenharia & Game Design Bleach Idle |
 | **Alvo** | Milestone 1 (o repositório não usa tags de versão) |
 
@@ -36,7 +36,9 @@ Introduzir **NPCs interativos icônicos no Seireitei** (capitães, tenentes e cr
 
 ## 3. O Ciclo de Crônicas Semanais (Rotação Determinística)
 
-O servidor opera em um calendário perpétuo de **5 grandes crônicas históricas**, rotacionando a cada 7 dias (virando à meia-noite de domingo para segunda-feira no horário de Brasília / UTC-3):
+O servidor opera em um calendário perpétuo de **5 grandes crônicas históricas**, rotacionando a cada 7 dias (virando à meia-noite de domingo para segunda-feira no horário de Brasília / UTC-3).
+
+Decisões de 31/10/2026 (§8) que valem para todas as semanas: quem apresenta a crônica é sempre a **Maki** (`npc_cronista`); os outros nomes de NPC abaixo são quem narra dentro do texto, não um NPC no mapa. Os títulos das crônicas são **permanentes** (cosmético de título que não se compra, como os do passe). As recompensas em cristais valem **uma vez por semana, por personagem** (D-001).
 
 ```mermaid
 flowchart LR
@@ -51,35 +53,35 @@ flowchart LR
 
 #### 1. Semana 1: A Invasão dos Ryoka (Saga Soul Society)
 - **Tema:** Intrusos cruzaram a barreira de Shakonmaku! O Seireitei entra em estado de sítio contra o grupo de Ichigo, Uryū, Chad e Orihime.
-- **NPC Central:** *Sentinela do Portão / Oficial da 11ª Divisão*.
+- **NPC Central:** *Maki (Cronista do Gotei 13)*, narrando pelo relato de um oficial da 11ª Divisão.
 - **Narrativa:** Descreve a quebra do céu pelos fogos de artifício da família Shiba, o duelo na ponte e a corrida contra o tempo antes da execução de Rukia.
-- **Missão Semanal:** "Patrulha de Contenção" — derrotar 50 Hollows na Soul Society e coletar 3 Fragmentos de Reiatsu.
-- **Recompensa:** 500 kan, 15 Cristais da conta, 1 Caixa do Kisuke e Título temporário *"Guardião do Shakonmaku"*.
+- **Missão Semanal:** "Patrulha de Contenção" — derrotar 50 Hollows na Soul Society (`hollow_faminto`, `hollow_acido`, `hollow_devorador`, `fishbone`) e entregar 3 Garras de Hollow (`garra`, que esses Hollows soltam).
+- **Recompensa:** 500 kan, 15 Cristais da conta, 1 Caixa do Kisuke e Título *"Guardião do Shakonmaku"*.
 
 #### 2. Semana 2: O Julgamento do Soukyoku & A Traição de Aizen
 - **Tema:** A revelação mais chocante do Seireitei: o assassinato forjado do Capitão Aizen, o massacre na Central 46 e a extração do Hōgyoku.
-- **NPC Central:** *Cronista da 1ª Divisão / Capitão Tōshirō Hitsugaya*.
+- **NPC Central:** *Maki (Cronista do Gotei 13)*, com os registros da 1ª Divisão e o relato do Capitão Tōshirō Hitsugaya.
 - **Narrativa:** Relata a intervenção na lâmina de Soukyoku, o confronto de Ichigo e Byakuya, e a ascensão dos três traidores (Aizen, Gin e Tōsen) aos céus através da luz do Negación.
-- **Missão Semanal:** "Investigação da Central 46" — derrotar o chefe Metastacia no Rukongai e entregar o Relatório Lacrado.
+- **Missão Semanal:** "Investigação da Central 46" — derrotar o chefe Metastacia no Rukongai e entregar 1 Tentáculo de Metastacia (`tentaculo`, que só ela solta), a prova levada à Central 46.
 - **Recompensa:** 800 kan, 20 Cristais da conta, 1 Pergaminho de Treino (+50% XP por 1h) e Título *"Testemunha do Soukyoku"*.
 
 #### 3. Semana 3: Batalha de Karakura Falsa (Gotei 13 vs Espadas)
 - **Tema:** O mundo real é salvo pelo mecanismo de transposição de Kisuke Urahara; os capitães erguem 4 pilares e enfrentam o exército de Espadas de Aizen.
-- **NPC Central:** *Capitão Shunsui Kyōraku*.
+- **NPC Central:** *Maki (Cronista do Gotei 13)*, com o relato do Capitão Shunsui Kyōraku.
 - **Narrativa:** O duelo descontraído porém mortal de Shunsui contra Coyote Starrk, o gelo mortal de Hitsugaya contra Harribel e o poder do envelhecimento de Barragan.
-- **Missão Semanal:** "Defesa dos Pilares" — derrotar 30 monstros em Karakura Falsa ou no Hueco Mundo.
+- **Missão Semanal:** "Defesa dos Pilares" — derrotar 30 monstros em Karakura Falsa ou no Hueco Mundo, sem contar os chefes: `adjuchas`, `arrancar`, `fraccion_espada`, `arrancar_resurreccion`, `vasto_lorde`.
 - **Recompensa:** 1.000 kan, 25 Cristais da conta, 1 Incenso da Sorte (+30% loot por 1h) e Título *"Defensor dos Pilares"*.
 
 #### 4. Semana 4: A Guerra Sangrenta dos Mil Anos (Invasão Quincy)
 - **Tema:** As sombras engolem a Soul Society. O império invisível do Wandenreich surge sob os comandos de Yhwach e rouba as Bankais dos capitães.
-- **NPC Central:** *Oficial Veterano do Seireitei*.
+- **NPC Central:** *Maki (Cronista do Gotei 13)*, com o relato de um oficial veterano do Seireitei.
 - **Narrativa:** A invasão relâmpago, o sacrifício de Chōjirō Sasakibe, a fúria abrasadora de Yamamoto Genryūsai e a queda temporária do Gotei 13.
-- **Missão Semanal:** "Resistência das Sombras" — derrotar 25 Soldados do Wandenreich ou monstros de nível 50+.
+- **Missão Semanal:** "Resistência das Sombras" — derrotar 25 monstros da Karakura Falsa (60+) ou do Wandenreich (95+), sem contar os chefes: `fraccion_espada`, `arrancar_resurreccion`, `vasto_lorde`, `soldado_wandenreich`, `sternritter`, `sternritter_vollstandig`.
 - **Recompensa:** 1.200 kan, 30 Cristais da conta, 2 Caixas do Kisuke e Título *"Cinzas da Primeira Divisão"*.
 
 #### 5. Semana 5: Turn Back the Pendulum (110 Anos no Passado)
 - **Tema:** O passado secreto do Gotei 13: Kisuke Urahara como recém-nomeado Capitão da 12ª Divisão, Yoruichi capitã da 2ª, e a noite chuvosa da Hollowficação dos futuros Visored.
-- **NPC Central:** *Arquivista da Academia Shinigami*.
+- **NPC Central:** *Maki (Cronista do Gotei 13)*, com os arquivos da Academia Shinigami.
 - **Narrativa:** A criação do Instituto de Pesquisa e Desenvolvimento Espiritual (SRDI), o desaparecimento dos soldados no Rukongai e o julgamento que exilou Urahara e Tessai ao mundo humano.
 - **Missão Semanal:** "Arquivos Secretos de Reishi" — realizar 1 sessão de treino no Boneco de Treino e entregar 5 Pedras de Reishi.
 - **Recompensa:** 600 kan, 20 Cristais da conta, 1 Amuleto da Alma e Título *"Arquivista do Passado"*.
@@ -139,13 +141,15 @@ No mapa `soul.tmj`, a área segura (PZ) central ao redor do portal Senkaimon rec
 
 ## 8. Pontos em aberto, conferidos contra o código (31/10/2026)
 
+Todos fechados em 31/10/2026 por Rafael, que seguiu as sugestões da revisão (o item 1 foi ajustado na revisão adversarial). Falta a aprovação do PRD e dos ADRs pelas duas pessoas (M1-00).
+
 | # | O que o documento assume | O que o código mostra | Decisão necessária |
 | :-- | :--- | :--- | :--- |
-| 1 | Itens "Fragmentos de Reiatsu" (semana 1) e "Relatório Lacrado" (semana 2) | Não existem em `shared/src/items.ts`. Existem `pedra_reishi` (Pedra de Reishi) e `fragmento` (Fragmento de Máscara) | Criar os itens ou reaproveitar os existentes |
-| 2 | "Monstros de nível 50+" (semana 4) | `MonsterDef` não tem nível | Listar ids (`soldado_wandenreich`, `sternritter`...) ou usar o mapa `wandenreich` |
-| 3 | "Título temporário" | Os cosméticos são permanentes (`wallets.owned`) | Criar a expiração ou trocar por título permanente |
-| 4 | Recompensa em Cristais uma vez por ciclo | A trava é por personagem e a carteira é por conta. Na diária, 2 personagens da mesma conta renderam +5 cada (saldo 5, depois 10), e o limite é 5 personagens por conta | **Decidido por Waldir (D-001, 31/10/2026), aguardando a confirmação do Rafael: por personagem**, como a diária. O balanceamento conta com até 5 personagens por conta (a diária paga 55 cristais por semana por personagem com a sequência completa de 7 dias, e a crônica, de 15 a 30) |
-| 5 | NPC central diferente em cada semana (Sentinela do Portão, Cronista, Hitsugaya, Oficial Veterano, Arquivista) | A seção 4 define só 3 NPCs (Maki, Shunsui, Sentinela) | O Maki cobre todas as semanas, ou criar os NPCs que faltam |
+| 1 | Itens "Fragmentos de Reiatsu" (semana 1) e "Relatório Lacrado" (semana 2) | Não existem em `shared/src/items.ts`. Existem `pedra_reishi` (Pedra de Reishi) e `fragmento` (Fragmento de Máscara) | **Decidido (31/10/2026): reaproveitar itens que já existem**, sem item nem ícone novo. Semana 1: 3 `garra`, que cai dos Hollows da Soul Society (o `fragmento` só cai em Karakura). Semana 2: 1 `tentaculo`, que só a Metastacia solta (a `pedra_reishi` ela sempre solta, e o passo de entrega viraria automático) |
+| 2 | "Monstros de nível 50+" (semana 4) | `MonsterDef` não tem nível | **Decidido: lista de ids** dos mapas Karakura Falsa (60+) e Wandenreich (95+), sem chefes: `fraccion_espada`, `arrancar_resurreccion`, `vasto_lorde`, `soldado_wandenreich`, `sternritter`, `sternritter_vollstandig` |
+| 3 | "Título temporário" | Os cosméticos são permanentes (`wallets.owned`) | **Decidido: título permanente**, como os prêmios do passe (`season: true` em `shop.ts`: não se compra). Sem sistema de expiração |
+| 4 | Recompensa em Cristais uma vez por ciclo | A trava é por personagem e a carteira é por conta. Na diária, 2 personagens da mesma conta renderam +5 cada (saldo 5, depois 10), e o limite é 5 personagens por conta | **Decidido: por personagem (D-001)**, proposto pelo Waldir e confirmado pelo Rafael em 31/10/2026. O balanceamento conta com até 5 personagens por conta (a diária paga 55 cristais por semana por personagem com a sequência completa de 7 dias, e a crônica, de 15 a 30) |
+| 5 | NPC central diferente em cada semana (Sentinela do Portão, Cronista, Hitsugaya, Oficial Veterano, Arquivista) | A seção 4 define só 3 NPCs (Maki, Shunsui, Sentinela) | **Decidido: a Maki apresenta todas as semanas**; os outros nomes ficam como narradores dentro do texto. Sem sprite novo |
 | 6 | NPCs em (21,14), (26,13) e (23,16) no `soul.tmj` | Conferido: os três estão na zona segura (x de 14 a 33, y de 10 a 17), em tiles livres | Nenhuma |
 | 7 | Sprites `rukia__haori`, `byakuya`, `renji__haori` | Existem em `client/public/assets/sprites/` | Nenhuma |
 | 8 | Recompensas: Caixa do Kisuke, Pergaminho de Treino, Incenso da Sorte, Amuleto da Alma | Existem (`caixa_kisuke`, `pergaminho_xp`, `incenso`, `amuleto_alma`) | Nenhuma |
