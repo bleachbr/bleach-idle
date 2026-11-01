@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { parseMap, TILE, type GameMap } from "../../shared/src";
-import { interactAt, interactNear, interactHint } from "../src/interactHit";
+import { interactAt, interactNear, interactHint, pickClick } from "../src/interactHit";
 
 // mapa de verdade: na praça de Karakura a loja fica em (18,12), o depot em (14,12), o portal em (16,11) e o templo em (16,14)
 const karakura = parseMap("karakura", JSON.parse(readFileSync(new URL("../public/maps/karakura.tmj", import.meta.url), "utf8")));
@@ -38,6 +38,28 @@ describe("clique na loja, no depot e no portal (#26)", () => {
 
   it("mapa sem loja nem depot não abre nada", () => {
     expect(interactAt({}, ...center(18, 12))).toBeNull();
+  });
+});
+
+describe("ordem do clique: outro jogador, depois loja, depot e portal (#26)", () => {
+  const cx = 18 * TILE + TILE / 2, foot = 13 * TILE;
+  const nobody = () => undefined;
+
+  it("jogador ao lado do Kisuke, sob a borda do desenho da loja, abre o menu do jogador", () => {
+    const at = (wx: number) => (wx < cx - TILE / 2 ? "rukia" : undefined); // o jogador está no tile 17
+    expect(pickClick(karakura, cx - 22, foot - 10, at)).toEqual({ player: "rukia" });
+  });
+
+  it("sem jogador no ponto, a loja continua valendo, com prioridade sobre depot e portal", () => {
+    expect(pickClick(karakura, cx - 22, foot - 10, nobody)).toEqual({ interact: "shop" });
+    const m = { shop: { x: 5, y: 5, name: "Loja" }, depot: { x: 6, y: 5 } } as Pick<GameMap, "shop" | "depot" | "gate">;
+    expect(pickClick(m, 6 * TILE + 4, 5 * TILE + 16, nobody)).toEqual({ interact: "shop" });
+    expect(pickClick(karakura, ...center(14, 12), nobody)).toEqual({ interact: "depot" });
+    expect(pickClick(karakura, ...center(16, 11), nobody)).toEqual({ interact: "travel" });
+  });
+
+  it("fora de tudo não escolhe nada (o chamador segue para monstro ou andar)", () => {
+    expect(pickClick(karakura, ...center(16, 13), nobody)).toBeNull();
   });
 });
 
