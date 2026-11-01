@@ -11,7 +11,7 @@ import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
 import { initReleases } from "./releases";
-import { huntResetButton } from "./huntReset";
+import { huntResetButton, huntResetDoneLabel, isHuntEmpty } from "./huntReset";
 
 initReleases();
 
@@ -516,6 +516,8 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
   const panel = $("#book");
   let data: any = null;
   let tab = "bestiario";
+  // o jogador zerou a Caçada e nada foi contado desde então (rótulo "✔ Contagem zerada" no botão)
+  let huntJustReset = false;
   const reward = (r: { gold: number; items?: { id: string; qty: number }[] }) =>
     [r.gold ? `${r.gold} kan` : "", ...(r.items ?? []).map((i) => `${i.qty}x ${ITEMS[i.id]?.name ?? i.id}`)].filter(Boolean).join(" + ");
   const bar = (have: number, need: number) => `<div class="bar"><i style="width:${Math.min(100, (have / need) * 100)}%"></i></div>`;
@@ -544,6 +546,7 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
           <div class="hint">${a.done ? "Feita" : `${a.have}/${a.need}`} · ${reward(a.reward)}</div>${a.done ? "" : bar(a.have, a.need)}</div>`).join("");
     } else if (tab === "cacada") {
       const h = data.hunt;
+      if (!isHuntEmpty(h)) huntJustReset = false;
       const hours = Math.max((h.now - h.since) / 3600_000, 1 / 60);
       const per = (v: number) => Math.round(v / hours).toLocaleString("pt-BR");
       const dur = Math.floor((h.now - h.since) / 60000);
@@ -554,12 +557,13 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
         <tr><td>Abates</td><td>${h.kills}</td><td>${per(h.kills)}</td></tr></table>
         <p class="hint">Loot (kan acima conta o dinheiro do loot e a Auto Venda):</p>
         <div class="loot-list">${h.items.map((i: any) => `<span class="slot static" title="${escHtml(i.name)}">${iconHtml(i.icon, i.n)}</span>`).join("") || `<span class="hint">nada ainda</span>`}</div>
-        ${huntResetButton(h)}`;
+        ${huntResetButton(h, huntJustReset)}`;
       // retorno na hora; o "book" zerado que o servidor devolve mantém o botão desabilitado
       body.querySelector<HTMLButtonElement>(".claim")!.onclick = (e) => {
         const b = e.currentTarget as HTMLButtonElement;
+        huntJustReset = true;
         b.disabled = true;
-        b.textContent = "✔ Contagem zerada";
+        b.textContent = huntResetDoneLabel;
         room.send("huntReset");
       };
     } else {
