@@ -17,6 +17,7 @@ import {
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
   own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
+  applyStatus, tickStatuses, canEntityMove, canEntityAct, effectiveStepMs, formatStatusFlags, clearStatuses, type SkillStatusDef,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -457,7 +458,44 @@ export class WorldRoom extends GameRoom<WorldState> {
     }
   }
 
+  private processStatuses(e: Player | Monster, now: number) {
+    const { dotDamage, dotFromId } = tickStatuses(e.statuses, now);
+    if (dotDamage > 0 && e.hp > 0) {
+      if (isPlayer(e)) {
+        if (!inPZ(mapOf(e), e.x, e.y) && !e.devGod) {
+          e.hp -= dotDamage;
+          e.lastCombatAt = now;
+          this.broadcast("fx", { t: "dmg", id: e.id, v: dotDamage, from: dotFromId, dot: true });
+          const killer = this.state.players.get(dotFromId);
+          if (e.hp <= 0) this.killPlayer(e, killer?.name ?? "Sangramento", dotFromId);
+        }
+      } else {
+        const def = MONSTERS[e.kind];
+        if (!def.dummy) {
+          e.hp -= dotDamage;
+          if (dotFromId) e.lastHitBy = dotFromId;
+          this.broadcast("fx", { t: "dmg", id: e.id, v: dotDamage, from: dotFromId, dot: true });
+          const killer = this.state.players.get(dotFromId || e.lastHitBy);
+          if (e.hp <= 0 && killer) this.killMonster(e, killer);
+        }
+      }
+    }
+    const flags = formatStatusFlags(e.statuses, now);
+    if (e.statusFlags !== flags) e.statusFlags = flags;
+  }
+
+  private applySkillStatus(from: Player, target: Player | Monster, def: SkillStatusDef | undefined, baseDmg: number, now: number) {
+    if (!def || target.hp <= 0) return;
+    if (!isPlayer(target) && MONSTERS[target.kind]?.dummy) return;
+    applyStatus(target.statuses, def, from.id, baseDmg, now);
+    const flags = formatStatusFlags(target.statuses, now);
+    if (target.statusFlags !== flags) target.statusFlags = flags;
+    this.broadcast("fx", { t: "status", id: target.id, kind: def.kind, ms: def.durationMs });
+  }
+
   private updatePlayer(p: Player, now: number) {
+    this.processStatuses(p, now);
+    if (p.hp <= 0) return;
     const form = CHARS[p.charId].forms[p.form];
     if (form.reiDrain) {
       p.rei = Math.max(0, p.rei - (form.reiDrain * TICK_MS) / 1000);
@@ -518,7 +556,7 @@ export class WorldRoom extends GameRoom<WorldState> {
         }
       } else p.stuckSince = 0;
     }
-    if (p.path.length && now >= p.nextStepAt) {
+    if (p.path.length && now >= p.nextStepAt && canEntityMove(p.statuses, now)) {
       const next = p.path[0];
       if (this.monsterAt.has(tileKey(p.map, next.x, next.y))) p.path = [];
       else if (p.pvpUntil > now && inPZ(mapOf(p), next.x, next.y) && !inPZ(mapOf(p), p.x, p.y)) {
@@ -536,7 +574,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     }
 
     if (t && t.hp <= 0) t = undefined; // morreu pela habilidade neste mesmo tick
-    if (t && chebyshev(p.x, p.y, t.x, t.y) <= 1 && now >= p.nextAttackAt && !inPZ(mapOf(p), p.x, p.y)) {
+    if (t && chebyshev(p.x, p.y, t.x, t.y) <= 1 && now >= p.nextAttackAt && !inPZ(mapOf(p), p.x, p.y) && canEntityAct(p.statuses, now)) {
       p.nextAttackAt = now + form.attackMs;
       this.face(p, t);
       this.hit(p, t, 1, now);
@@ -544,6 +582,8 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private updateMonster(m: Monster, now: number) {
+    this.processStatuses(m, now);
+    if (m.hp <= 0 || !this.state.monsters.has(m.id)) return;
     const def = MONSTERS[m.kind];
     if (def.dummy) {
       if (now >= m.nextAttackAt) { m.nextAttackAt = now + 3000; m.hp = m.maxHp; } // cura total a cada 3 s
@@ -575,7 +615,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       }
       if (d <= 1) {
         m.path = [];
-        if (now >= m.nextAttackAt) {
+        if (now >= m.nextAttackAt && canEntityAct(m.statuses, now)) {
           m.nextAttackAt = now + def.attackMs;
           this.face(m, t);
           const ch = CHARS[t.charId];
@@ -593,7 +633,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       m.path = this.monsterPath(m, (x, y) => x === gx && y === gy, 300);
     }
 
-    if (m.path.length && now >= m.nextStepAt) {
+    if (m.path.length && now >= m.nextStepAt && canEntityMove(m.statuses, now)) {
       const next = m.path[0];
       if (this.blockedForMonster(m.map, next.x, next.y)) m.path = [];
       else {
@@ -619,7 +659,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     e.dir = dy > 0 ? 0 : dx < 0 ? 1 : dx > 0 ? 2 : 3;
     e.x = next.x;
     e.y = next.y;
-    e.nextStepAt = now + e.stepMs;
+    e.nextStepAt = now + effectiveStepMs(e.stepMs, e.statuses, now);
   }
 
   private face(e: Player | Monster, t: { x: number; y: number }) {
@@ -651,6 +691,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private trySkill(p: Player, t: Player | Monster, now: number, auto: boolean, i = 0): boolean {
+    if (!canEntityAct(p.statuses, now)) return false;
     const sk = techniqueFor(p.charId, i, p.form);
     if (!sk || p.level < (sk.minLevel ?? 1)) return false;
     if (now < p.skillReadyAt || now < p.techReady[i] || p.rei < sk.cost || inPZ(mapOf(p), p.x, p.y)) return false;
@@ -669,8 +710,14 @@ export class WorldRoom extends GameRoom<WorldState> {
       ? [...this.state.monsters.values()].filter((m) => m !== t && m.hp > 0 && sameMap(m, t) && (!m.owner || m.owner === p.id)
         && chebyshev(m.x, m.y, t.x, t.y) <= sk.area!)
       : [];
+    const hpBefore = t.hp;
     this.hit(p, t, sk.mult, now, true);
-    for (const m of splash) this.hit(p, m, sk.mult * 0.7, now, true);
+    this.applySkillStatus(p, t, sk.status, Math.max(1, hpBefore - t.hp), now);
+    for (const m of splash) {
+      const mHpBefore = m.hp;
+      this.hit(p, m, sk.mult * 0.7, now, true);
+      this.applySkillStatus(p, m, sk.status, Math.max(1, mHpBefore - m.hp), now);
+    }
     return true;
   }
 
@@ -791,6 +838,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.y = TEMPLE.y;
     p.path = [];
     p.targetId = "";
+    clearStatuses(p.statuses);
+    p.statusFlags = "";
     // volta sozinho para a hunt só com "voltar a caçar" e no máximo 3 mortes em 10 min (senão vira um loop de mortes)
     p.deathTimes = [...p.deathTimes.filter((t) => Date.now() - t < 10 * 60_000), Date.now()];
     const back = p.autoHunt && p.autoReturn && p.deathTimes.length < 3;
@@ -1190,6 +1239,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.map = map;
     p.path = [];
     p.targetId = "";
+    clearStatuses(p.statuses);
+    p.statusFlags = "";
     p.follow = false;
     p.pendingInteract = "";
     p.x = to.x;

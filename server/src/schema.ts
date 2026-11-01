@@ -1,7 +1,7 @@
 // Estado sincronizado com os clientes. defineTypes em vez de decorators para
 // não depender de configuração de decorators no tsx/esbuild.
 import { Schema, MapSchema, defineTypes } from "@colyseus/schema";
-import { INV_SIZE, DEPOT_SIZE, newProgress, type Slot, type EquipSlot, type QuestState, type Progress } from "../../shared/src";
+import { INV_SIZE, DEPOT_SIZE, newProgress, type Slot, type EquipSlot, type QuestState, type Progress, type StatusMap } from "../../shared/src";
 
 export class Player extends Schema {
   id = "";
@@ -51,8 +51,10 @@ export class Player extends Schema {
   cosTitle = "";
   cosName = "";
   cosPet = "";
+  statusFlags = ""; // status ativos separados por vírgula (ex.: "freeze,dot") para o cliente (M2)
 
   // só no servidor (não sincronizado)
+  statuses: StatusMap = {};
   accountId = 0; // conta dona do personagem (carteira de cristais)
   path: { x: number; y: number }[] = [];
   follow = false;
@@ -121,6 +123,7 @@ defineTypes(Player, {
   partyId: "string", partyLead: "boolean", pvpUntil: "number", skullUntil: "number", rebirths: "uint8", power: "uint32", guildTag: "string",
   cosAura: "string", cosFx: "string", cosTitle: "string", cosName: "string", cosPet: "string",
   autoTrain: "boolean", autoSell: "boolean", zanjutsu: "uint8", zanPct: "uint8", reiryoku: "uint8", reiPct: "uint8",
+  statusFlags: "string",
 });
 
 export class Monster extends Schema {
@@ -134,7 +137,9 @@ export class Monster extends Schema {
   hp = 1;
   maxHp = 1;
   targetId = "";
+  statusFlags = "";
 
+  statuses: StatusMap = {};
   spawnIndex = 0;
   /** monstro de invasão: não renasce e volta para a própria casa (não para um spawn do mapa) */
   invader = false;
@@ -154,7 +159,7 @@ export class Monster extends Schema {
 }
 defineTypes(Monster, {
   id: "string", kind: "string", map: "string", x: "int16", y: "int16", dir: "uint8", stepMs: "uint16",
-  hp: "int32", maxHp: "int32", targetId: "string",
+  hp: "int32", maxHp: "int32", targetId: "string", statusFlags: "string",
 });
 
 /** Corpo ou sacola no chão com itens e kan. O conteúdo só vai a quem abre (mensagem "bag"). */

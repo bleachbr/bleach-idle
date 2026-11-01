@@ -43,7 +43,7 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 | 13 | M1-08 | Textos e conteúdo das 5 crônicas | M | M1-00 | idem | **Feito** (`feat/m1-08-cronicas-conteudo`) |
 | 14 | M1-06 | Missão semanal e recompensa por personagem | M | M1-00, M1-04, M1-05 | idem | Fazer antes a conta de cristais (D-001) |
 | 15 | M1-09 | Cenário `cronicas.ts` e testes de rotação, diálogo e entrega | M | M1-06 e M1-07 (Rafael) | não | |
-| 16 | M2-01..05 | Motor de status por tick + freeze, slow, DoT, stun | G | — | **sim** | M2-06 e M2-07 (visual/HUD) são de Rafael |
+| 16 | M2-01..05 | Motor de status por tick + freeze, slow, DoT, stun | G | — | **Feito** (`feat/m2-01-05-motor-status`) | Spec em `docs/features/status-combate/`; M2-06 e M2-07 (visual/HUD) são de Rafael |
 | 17 | M3-05 | Moderação de chat (filtro de spam, silenciar, comandos de GM) | M | — | **sim** | Portão G2; cliente de chat é zona de Rafael — coordenar |
 | 18 | M5-01 | Recuperação de senha por e-mail com token assinado | M | — | **sim** | Portão G2 |
 | 19 | M5-02 | Limite de tentativas persistente (SQLite) | M | — | **sim** | Pode vir junto de M5-01 |
