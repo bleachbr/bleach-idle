@@ -232,3 +232,7 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - O prazo no cliente sai de `left` (ms que faltam) somado ao relógio do aparelho, e não de `until` com `serverNow()`: o banner de quem entra chega antes da resposta do `time` (`clock.ts`), e um aparelho adiantado apagaria o banner na hora.
 - Os textos ficam em `shared/src/events.ts`, e o servidor manda só a fase. O cliente busca o texto com `own(EVENT_BANNER, fase)`: mesmo vindo do servidor, a chave chega pela rede.
 - Os avisos de sistema com números (vida, XP, minutos) continuam iguais e a lore vai numa linha separada (canal `lore`), porque os cenários `invasion` e `temporada` conferem trechos desses avisos.
+
+## Fluxo de publicação: uma branch e um PR por entrega
+
+- **Regra (Waldir, 31/10/2026):** depois de acumular 38 commits na `main` local e publicá-los direto, a decisão passou a ser publicar cada entrega em branch própria com PR. Reduz o raio de conflito (o remoto já divergia com o F-10 duplicado) e dá o ponto de revisão adversarial previsto no fluxo do roadmap.
