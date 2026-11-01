@@ -36,7 +36,7 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 | Ordem | ID | Entrega | Tam. | Depende de | Spec | Obs. |
 | :-- | :-- | :--- | :-- | :--- | :-- | :--- |
 | 0 | F-16 | **Pacote de correções do Jogador-IA** (`boneco` sem HD, `nextTarget` ignorando `dummy`, exclusividade de janelas + `Esc`, confirmação no `#exit-btn`, `welcome`/`fx` e tooltips de botões desabilitados) | M | — | não | **Feito** — validado com testes determinísticos + simulação real do Jogador-IA (`test/`) |
-| 1 | F-13 | Primeiro deploy com HTTPS atrás do proxy existente e restauração de backup testada | M | — | não | Waldir: `bleach.acoplum.com` online com HTTPS e WebSocket; workflow em `chore/f-13-deploy-vps` aguarda CI e aprovação; restauração de backup pendente |
+| 1 | F-13 | Primeiro deploy com HTTPS atrás do proxy existente e restauração de backup testada | M | — | não | Waldir: `bleach.acoplum.com` online com HTTPS e WebSocket; workflow de deploy rodando na main; estado vazio no container corrigido em `fix/tsx-tsconfig-container`; restauração de backup pendente |
 | 2 | F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | — | não | **Feito** (`fix/f-04-unique-db`) |
 | 3 | F-14 | Limite de criação de contas por IP | P | F-03 (feito) | não | **Feito** (`feat/f-14-limite-contas-ip`) |
 | 4 | F-05 | Contêiner roda como `node`, não root | P | — | não | **Feito** (`fix/f-05-docker-user-node`) |
