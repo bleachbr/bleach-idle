@@ -8,6 +8,7 @@ describe("ambiente do Vitest", () => {
     // sem isto, auth.test, arena.test e e2e-world-gameplay.test abriam o bleach-idle.sqlite do disco (o banco
     // de quem desenvolve) em workers paralelos, e o CI falhava às vezes com "database is locked"
     expect(process.env.DB_FILE).toBe(":memory:");
-    expect(typeof db.getMeta).toBe("function");
+    // o handle aberto, não só a variável: pega também um db.ts que deixe de ler DB_FILE
+    expect(db.openDbFile()).toBe("");
   });
 });
