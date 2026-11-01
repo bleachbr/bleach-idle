@@ -2,7 +2,7 @@
 
 | Metadado | Detalhe |
 | :--- | :--- |
-| **Status** | Proposto. Falta a aprovação das duas pessoas para "Aceito" (pontos do PRD §8 decididos em 31/10/2026) |
+| **Status** | Aceito em 01/11/2026 por Rafael e Waldir (M1-00; [revisão do Waldir no PR #6](https://github.com/bleachbr/bleach-idle/pull/6#pullrequestreview-5727591162)) |
 | **Data** | 2026-10-31 |
 | **Autor** | Time de Engenharia Bleach Idle |
 | **Contexto Técnico** | Expansão de NPCs no Seireitei e futuros mapas |
@@ -26,12 +26,14 @@ Para viabilizar a presença de **capitães, tenentes, guardas e cronistas no Sei
 Adotaremos um modelo **híbrido declarativo e orientado a dados** em `shared/`:
 
 ### 2.1. Estrutura de Dados (`shared/src/npcs.ts`)
-Criaremos o catálogo canônico de NPCs:
+Catálogo canônico de NPCs, como implementado no M1-02:
 ```typescript
+export type NpcAction = "next" | "quest_accept" | "quest_claim" | "close";
+
 export interface NpcDialogOption {
   label: string;
-  action: "next" | "quest_accept" | "quest_claim" | "close";
-  nextDialogId?: string;
+  action: NpcAction;
+  nextDialogId?: string; // só com "next"
 }
 
 export interface NpcDialogNode {
@@ -46,11 +48,16 @@ export interface NpcDef {
   title: string;
   sprite: string;
   solid?: boolean;
-  defaultDialog: NpcDialogNode;
-  /** Diálogo especial da crônica semanal quando aplicável */
-  chronicleDialog?: (chronicleId: string, playerProgress: unknown) => NpcDialogNode;
+  start: string;           // nó em que toda conversa começa
+  nodes: NpcDialogNode[];  // diálogo fixo
+  chronicle?: boolean;     // apresenta a crônica da semana
 }
+
+// diálogo da crônica: nós "chr:0".."chr:N" (uma página cada) e "chr:quest", com as opções do estado da missão
+export function chronicleDialog(chronicleId: string, state: "available" | "active" | "ready" | "done", nodeId: string): NpcDialogNode | undefined;
 ```
+
+> **Ajuste de 01/11/2026 (M1-02).** A primeira versão tinha `defaultDialog` (um nó só) e `chronicleDialog` como função dentro do `NpcDef`. Ficou um conjunto de nós com `start` (os NPCs têm mais de um nó de conversa) e `chronicleDialog` como função do módulo, porque o catálogo é só dado e a crônica é a mesma para qualquer NPC com `chronicle`. Uma opção `next` para `"chr:0"` (`CHRONICLE_START`) só existe no NPC com `chronicle`, e o servidor resolve os nós `chr:*` com `chronicleDialog` e o estado da missão do personagem. Chave vinda da rede passa por `npcById` e `npcNode`.
 
 ### 2.2. Integração com Mapas (`shared/src/map.ts`)
 - **A posição de cada NPC vem do `.tmj`** (objeto `npc` na camada `logica`, com a propriedade `id`), a mesma fonte única dos demais objetos do mapa (AGENTS.md §1.3). O catálogo `NpcDef` guarda só identidade e diálogo.
