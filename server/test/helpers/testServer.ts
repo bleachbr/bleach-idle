@@ -11,6 +11,56 @@ delete process.env.BI_DEV;
 delete process.env.BI_DEBUG;
 delete process.env.TRUST_PROXY;
 
+const KNOWN_ROOM_MESSAGES = [
+  "account",
+  "chars",
+  "ticket",
+  "error",
+  "welcome",
+  "inv",
+  "quests",
+  "log",
+  "tutorial",
+  "guild",
+  "chat",
+  "fx",
+  "dailyReady",
+  "season",
+  "crystals",
+  "death",
+  "market",
+  "ranking",
+  "book",
+  "dangai",
+  "shopData",
+  "bag",
+  "open",
+  "partyInvite",
+  "offline",
+  "devMode",
+  "time",
+];
+
+function registerDefaultHandlers<T extends Room>(room: T): T {
+  const noop = () => {};
+  for (const type of KNOWN_ROOM_MESSAGES) {
+    room.onMessage(type, noop);
+  }
+  return room;
+}
+
+// Registra no-ops para todos os tipos conhecidos assim que a Room é instanciada pelo Client,
+// antes mesmo de receber os primeiros frames de onJoin (F-10 / Q3).
+const origCreateRoom = (Client.prototype as any).createRoom;
+if (typeof origCreateRoom === "function" && !(origCreateRoom as any).__silenced) {
+  const wrapped = function (this: unknown, ...args: unknown[]) {
+    const room = origCreateRoom.apply(this, args);
+    return registerDefaultHandlers(room);
+  };
+  (wrapped as any).__silenced = true;
+  (Client.prototype as any).createRoom = wrapped;
+}
+
 let serverInstance: Server | null = null;
 let serverPort = 0;
 
@@ -43,11 +93,10 @@ export async function stopTestServer() {
 export function once<T = any>(room: Room, type: string, ms = 5000): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`Timeout aguardando mensagem "${type}"`)), ms);
-    room.onMessage(type, (m: T) => {
+    const off = room.onMessage(type, (m: T) => {
       clearTimeout(timer);
+      if (typeof off === "function") off();
       resolve(m);
     });
   });
 }
-
-export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

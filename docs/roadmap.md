@@ -91,7 +91,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-07 | Proteger a `main` (PR obrigatório e CI verde). O GitHub responde 403 para proteção de branch e rulesets neste plano: exige plano pago ou repositório público. Alternativa: combinado escrito mais um hook `pre-push` local | P | | Decisão pendente (Waldir e Rafael) | S8 |
 | F-08 | Métrica da duração do tick, com aviso acima de 50 ms | P | | Feito | P3 |
 | F-09 | Ranking sem bloquear o tick | M | F-08 | Feito | P1 |
-| F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once`; limpar o ruído do Vitest. Rotina: ao mexer num teste com `sleep`, troque-o | M | | Pronto | Q2, Q3 |
+| F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once`; limpar o ruído do Vitest. Rotina: ao mexer num teste com `sleep`, troque-o | M | | Feito | Q2, Q3 |
 | F-11 | CI: job de gitleaks, `ubuntu-24.04` fixo, Node 22 e 24 e `actions` na v7 | M | | Feito | Q5, Q8, Q9, Q10 |
 | F-12 | Upgrade maior do Colyseus (0.15 para 0.18) | G | spec | Precisa de spec | S5 |
 | F-13 | Primeiro deploy com HTTPS atrás do Caddy e restauração de backup testada | M | | Decisão pendente (servidor e domínio) | DEPLOY.md |

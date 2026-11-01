@@ -39,8 +39,6 @@ describe("E2E: World Gameplay", () => {
     await lobby.leave();
 
     const world = await client.join("world", { ticket });
-    for (const tipo of ["welcome", "quests", "log", "tutorial", "account", "fx", "dailyReady", "season", "crystals", "death", "market"])
-      world.onMessage(tipo, () => {});
     return { client, world, charName: id };
   }
 
