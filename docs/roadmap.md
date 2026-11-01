@@ -111,8 +111,8 @@ Especificação: [PRD](features/cronicas-semanais-lore/PRD-cronicas-semanais-sei
 | M1-00 | Aprovar o PRD e os 3 ADRs (status "Aceito", com data e quem aprovou, no PR que aprova) e fechar os pontos do [PRD §8](features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md#8-pontos-em-aberto-conferidos-contra-o-código-31102026) (itens que faltam, nível de monstro, título temporário, NPC de cada semana). Os pontos do §8 foram decididos em 31/10/2026; PRD e ADRs aceitos em 01/11/2026 | P | | Feito |
 | M1-01 | `shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) com testes de borda: virada de semana, ciclo de 5 semanas, antes da âncora e `TZ` diferentes | P | M1-00 | Feito |
 | M1-02 | `shared/src/npcs.ts`: tipos e catálogo (identidade e diálogo; a posição vem do `.tmj`) | P | M1-00 | Feito |
-| M1-03 | NPCs no `soul.tmj` (objeto `npc` na camada `logica`), leitura em `parseMap` e `mapcheck` | M | M1-02 | Pronto |
-| M1-04 | Servidor: `interact` com `kind: "npc"`, `npc_dialog` e `npc_action` por índice de opção, com o nó atual guardado no servidor e a distância validada | M | M1-02, M1-03 | Bloqueado por M1-03 |
+| M1-03 | NPCs no `soul.tmj` (objeto `npc` na camada `logica`), leitura em `parseMap` e `mapcheck` | M | M1-02 | Feito |
+| M1-04 | Servidor: `interact` com `kind: "npc"`, `npc_dialog` e `npc_action` por índice de opção, com o nó atual guardado no servidor e a distância validada | M | M1-02, M1-03 | Pronto |
 | M1-05 | Persistência: `newProgress()` e `Progress.chronicle` com padrão; a virada da semana zera `questKills` e `completedAt` | P | M1-01 | Feito |
 | M1-06 | Missão semanal e recompensa uma vez por semana, por personagem (D-001). Antes: fazer a conta de cristais por semana com 1 e 5 personagens (diária: 55 por semana com a sequência completa de 7 dias, 5 nos dias comuns e 25 no sétimo; crônica: 15 a 30; conquistas: 10 cada, uma vez) | M | M1-00, M1-04, M1-05 | Bloqueado por M1-04 e M1-05 |
 | M1-07 | Cliente: janela de diálogo no `#modal` (teclado, toque e `Esc`) | M | M1-04 | Bloqueado por M1-04 |
@@ -121,7 +121,7 @@ Especificação: [PRD](features/cronicas-semanais-lore/PRD-cronicas-semanais-sei
 
 ## M2: Status e controle de grupo no combate
 
-Especificação: `docs/features/status-combate/`. Itens: **M2-01** motor de status no servidor (expiração por tick — `Feito`); **M2-02** congelamento (Rukia e Hitsugaya — `Feito`); **M2-03** lentidão (reduz velocidade / aumenta `stepMs` — `Feito`); **M2-04** dano ao longo do tempo (Kenpachi e chamas de Zabimaru — `Feito`); **M2-05** atordoamento (Sado e Hadō 4 — `Feito`); **M2-06** efeitos visuais (cor no sprite, ícone de status, número de dano contínuo — `Feito`, `client/src/statusFx.ts`); **M2-07** tempo de recarga numérico no HUD.
+Especificação: `docs/features/status-combate/`. Itens: **M2-01** motor de status no servidor (expiração por tick — `Feito`); **M2-02** congelamento (Rukia e Hitsugaya — `Feito`); **M2-03** lentidão (reduz velocidade / aumenta `stepMs` — `Feito`); **M2-04** dano ao longo do tempo (Kenpachi e chamas de Zabimaru — `Feito`); **M2-05** atordoamento (Sado e Hadō 4 — `Feito`); **M2-06** efeitos visuais (cor no sprite, ícone de status, número de dano contínuo — `Feito`, `client/src/statusFx.ts`); **M2-07** tempo de recarga numérico no HUD (`Feito`: a barra de técnicas mostra os segundos que faltam em cada técnica, `renderTechs` em `client/src/main.ts`; se o alvo da técnica automática ainda não tiver view no cliente no momento do fx, a contagem só atualiza no uso seguinte).
 
 ## M3: Social avançado
 
