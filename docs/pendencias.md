@@ -20,7 +20,7 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 
 | Item | Situação Atual | Impacto / Necessidade |
 | :--- | :--- | :--- |
-| **Efeitos de Controle de Grupo (CC)** | Apenas dano direto e dano em área (`area`) estão implementados na `main`. | Congelamento (*Freeze* da Rukia/Hitsugaya), Sangramento (*Bleed*) e Atordoamento (*Stun*) precisam ser integrados ao motor autoritativo. |
+| **Efeitos de Controle de Grupo (CC)** | **Feito.** Motor no servidor (M2-01 a M2-05: congelamento, lentidão, dano contínuo e atordoamento, `shared/src/combatStatus.ts`) e camada visual (M2-06: cor no sprite, ícone ao lado da barra de vida e número do dano contínuo, `client/src/statusFx.ts`). | Falta conferir no navegador a leitura dos ícones de 7 px em monstros grandes e no modo HD. |
 | **Visual de Equipamentos Restrito** | Apenas o Haori de Capitão e a Máscara Hollow alteram o sprite do personagem (e apenas em Ichigo, Rukia e Renji). | Novos equipamentos (Elmo de Osso, botas, itens de Quincy e Fullbringer) ainda não têm representação visual nos personagens. |
 | **Tempo de Recarga Numérico na UI** | A barra de técnicas mostra indicação de recarga básica. | Adicionar contagem regressiva em segundos sobre o slot da habilidade no HUD para melhor legibilidade. |
 | **Paleta das folhas fora de sincronia (R-01)** | As 15 folhas da Yoruichi, do Ukitake e do Shunsui saíram com a paleta de 64 cores recalculada no R-01; as outras ~70 continuam com a anterior (o PR voltou as antigas para não mexer nelas). Visualmente não se nota. | O próximo `python art/process.py game` regrava todas as folhas: fazer isso num PR próprio (`chore:`), sem misturar com conteúdo novo. |

@@ -280,3 +280,15 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 ## Fluxo de publicação: uma branch e um PR por entrega
 
 - **Regra (Waldir, 31/10/2026):** depois de acumular 38 commits na `main` local e publicá-los direto, a decisão passou a ser publicar cada entrega em branch própria com PR. Reduz o raio de conflito (o remoto já divergia com o F-10 duplicado) e dá o ponto de revisão adversarial previsto no fluxo do roadmap.
+
+---
+
+## 10. Camada visual do status (M2-06)
+
+### Dano contínuo não é golpe
+- O servidor manda cada tick de dano contínuo como `fx` `dmg` com `from` (quem aplicou) e `dot: true`. O cliente tratava todo `dmg` com `from` como golpe: quem aplicou o sangramento avançava sobre o alvo e o corte aparecia a cada segundo, mesmo longe.
+- **Solução:** `dotHitStyle` (`client/src/statusFx.ts`) separa o dano contínuo antes da animação de golpe; ele só mostra um número menor, na cor do sangramento, sem som (tocaria a cada segundo).
+
+### Cor de status sem brigar com a cor da forma
+- O `onChange` do jogador trocava textura e cor no mesmo `if`, comparando a cor do sprite com a da forma. Com a cor do status por cima, o clarão branco do golpe (`setTintFill`) fazia a comparação falhar no patch seguinte, e a textura era trocada no meio do clarão. A troca de textura e a de cor ficaram separadas, a cor usa `desiredTint(status, cor da forma)` (também no `restoreTint`), e nada mexe na cor enquanto `tintFill` estiver ligado.
+- A lógica que dá para testar sem Phaser (ler `statusFlags` só com os status conhecidos, prioridade da cor, estilo do número) fica num módulo puro com teste em `client/test/`. A ordem vem de `STATUS_KINDS`, exportada por `shared/src/combatStatus.ts`, e o teste confere contra `formatStatusFlags` do servidor.
