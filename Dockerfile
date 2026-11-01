@@ -13,6 +13,10 @@ RUN npm -w client run build
 FROM node:24-slim
 WORKDIR /app
 ENV NODE_ENV=production PORT=2567 DB_FILE=/data/bleach-idle.sqlite BACKUP_DIR=/data/backups
+# o tsx procura o tsconfig a partir do cwd (/app) subindo, e não acha o do servidor: sem ele,
+# useDefineForClassFields vira true, os campos de classe escondem os acessores do schema e o
+# Colyseus manda o estado vazio. Caminho absoluto: vale para qualquer cwd dentro do container
+ENV TSX_TSCONFIG_PATH=/app/server/tsconfig.json
 COPY --chown=node:node --from=build /app/package.json /app/package-lock.json ./
 COPY --chown=node:node --from=build /app/node_modules ./node_modules
 COPY --chown=node:node --from=build /app/shared ./shared
