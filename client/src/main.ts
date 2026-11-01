@@ -10,6 +10,9 @@ import { bindEvents } from "./events";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
+import { initReleases } from "./releases";
+
+initReleases();
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 // em produção o servidor entrega a página e o WebSocket no mesmo endereço (wss atrás do HTTPS);

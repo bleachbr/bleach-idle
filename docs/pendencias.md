@@ -110,7 +110,8 @@ Cada item foi reproduzido num servidor isolado (porta própria, banco temporári
 | Q8 | CI sem varredura de segredos (`gitleaks` só roda se alguém lembrar) | Lido em `ci.yml` | Corrigido | **Corrigido em `ci/f-11-ci-gitleaks-matrix`.** Job `gitleaks` com `fetch-depth: 0` e binário `v8.30.1` verificado por SHA-256 (`551f6fc8...`) |
 | Q9 | `ubuntu-latest` migra para o Ubuntu 26 (aviso do GitHub no run do PR #2) | Anotação do run 41209911669 | Corrigido | **Corrigido em `ci/f-11-ci-gitleaks-matrix`.** `runs-on: ubuntu-24.04` fixado em todos os jobs |
 | Q10 | CI testa Node 22 e o `Dockerfile` roda Node 24 | `ci.yml` e `Dockerfile`; typecheck, Vitest e a bateria completa passam nos dois (medido) | Corrigido | **Corrigido em `ci/f-11-ci-gitleaks-matrix`.** Matriz `node-version: ["22.x", "24.x"]` com `fail-fast: false` |
-| Q11 | Cenário `hunt` instável: `e não cria sacola no chão` falha às vezes | Revisão do M1-03 (01/11/2026): 2 falhas em 5 rodadas, também com o servidor da `main`; usa `sleep` fixo e roda em Karakura | Média | Trocar os `sleep` por espera por condição (rotina do Q2) |
+| Q11 | Cenário `quests` não conclui a patrulha no limite de espera | Em 01/11/2026, bateria de F-18: 332 verificações OK e 3 falhas em `quests` (6/10 abates). Reproduzido com `npx tsx scripts/test.ts quests` na `main` base `fd42553`: 4 OK e as mesmas 3 falhas (9/10). `server/scripts/quests.ts` espera até 150 s por 10 abates; entrega e missão única falham em cascata. | Alta | Investigar em entrega própria por que a caça não conclui no prazo; causa raiz ainda não determinada. Não aumentar timeout nem alterar combate junto de F-18. |
+| Q12 | Cenário `hunt` instável: `e não cria sacola no chão` falha às vezes | Revisão do M1-03 (01/11/2026): 2 falhas em 5 rodadas, também com o servidor da `main`; usa `sleep` fixo e roda em Karakura | Média | Trocar os `sleep` por espera por condição (rotina do Q2) |
 
 ## 9. Desempenho
 
