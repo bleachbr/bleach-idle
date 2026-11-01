@@ -9,6 +9,8 @@
 //     templo (ponto) · pz (retângulo) · depot (ponto) · loja (ponto; o nome aparece sobre o NPC)
 //     portal (ponto) · chegada (ponto; o nome é o id do destino de viagem)
 //     spawn (ponto; propriedades monstro, raio, quantidade)
+//     npc (ponto; propriedade id = id do catálogo em shared/src/npcs.ts; M1-03)
+import { npcById } from "./npcs";
 
 export const MAP_IDS = ["karakura", "hueco", "soul", "lasnoches", "dangai", "falsa", "wandenreich"] as const;
 export const HOME_MAP = "karakura";
@@ -33,6 +35,8 @@ export interface GameMap {
   spawns: SpawnDef[];
   /** área do desafio do Dangai (objeto "arena", com propriedade raio) */
   arena?: Pt & { radius: number };
+  /** NPCs do mapa: só a posição; nome, sprite e diálogo vêm do catálogo (npcById) */
+  npcs: (Pt & { id: string })[];
 }
 
 const FLIP_MASK = 0x1fffffff; // bits altos do gid guardam espelhamento no Tiled
@@ -40,7 +44,7 @@ const FLIP_MASK = 0x1fffffff; // bits altos do gid guardam espelhamento no Tiled
 type Prop = { name: string; value: unknown };
 const prop = (o: { properties?: Prop[] }, name: string) => o.properties?.find((p) => p.name === name)?.value;
 
-export function parseMap(id: string, json: any): GameMap {
+export function parseMap(id: string, json: any, opts: { strictNpcs?: boolean } = {}): GameMap {
   const w: number = json.width;
   const h: number = json.height;
   const tw: number = json.tilewidth;
@@ -53,7 +57,7 @@ export function parseMap(id: string, json: any): GameMap {
   }
 
   const solid = new Uint8Array(w * h);
-  const map: GameMap = { id, name: String(prop(json, "nome") ?? id), w, h, solid, pz: [], arrivals: {}, spawns: [] };
+  const map: GameMap = { id, name: String(prop(json, "nome") ?? id), w, h, solid, pz: [], arrivals: {}, spawns: [], npcs: [] };
   for (const layer of json.layers ?? []) {
     if (layer.type === "tilelayer" && layer.name !== "acima") {
       (layer.data as number[]).forEach((g, i) => { if (solidGids.has(g & FLIP_MASK)) solid[i] = 1; });
@@ -74,10 +78,19 @@ export function parseMap(id: string, json: any): GameMap {
           map: id, kind: String(prop(o, "monstro") ?? o.name), x: pt.x, y: pt.y,
           radius: Number(prop(o, "raio") ?? 3), count: Number(prop(o, "quantidade") ?? 3),
         });
+      else if (kind === "npc") {
+        // id sem catálogo ou repetido: no servidor (strictNpcs) é erro de carga (ADR-001), melhor não subir do que
+        // ter um NPC mudo no mapa. No cliente só é pulado: um .tmj velho no cache do navegador não pode travar o jogo
+        const npcId = String(prop(o, "id") ?? o.name);
+        const problem = !npcById(npcId) ? "não existe em shared/src/npcs.ts" : map.npcs.some((n) => n.id === npcId) ? "repetido" : "";
+        if (problem && opts.strictNpcs) throw new Error(`mapa ${id}: NPC "${npcId}" ${problem}`);
+        if (!problem) map.npcs.push({ id: npcId, ...pt });
+      }
     }
   }
-  // o NPC da loja ocupa o tile dele
+  // o NPC da loja ocupa o tile dele, e os NPCs sólidos do catálogo também
   if (map.shop) solid[map.shop.y * w + map.shop.x] = 1;
+  for (const n of map.npcs) if (npcById(n.id)?.solid) solid[n.y * w + n.x] = 1;
   return map;
 }
 
