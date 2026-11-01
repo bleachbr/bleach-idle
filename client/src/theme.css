@@ -273,6 +273,8 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 #pass .tier.got small::after { content: " ✔"; color: #6aff9a; }
 /* card pronto é botão: resgata como o "Pegar" de cima (#34) */
 #pass button.tier { color: inherit; font-family: inherit; text-align: left; cursor: pointer; }
+/* o <button> centraliza o conteúdo na vertical: em coluna e no topo, o número fica alinhado ao dos cards bloqueados */
+#pass button.tier { display: flex; flex-direction: column; justify-content: flex-start; }
 #pass .tier .prize { display: block; }
 #pass .tier .note { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; }
 #pass .tier.ready .note { color: var(--gold); }
