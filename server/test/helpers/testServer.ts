@@ -90,6 +90,13 @@ export async function stopTestServer() {
   }
 }
 
+/** Cala o aviso "onMessage() not registered" do colyseus.js. O curinga só recebe o tipo que não tem
+ * listener próprio (`Room.dispatchMessage` em colyseus.js/build/cjs/Room.js), então `once` continua funcionando. */
+export function quiet<R extends Room>(room: R): R {
+  room.onMessage("*", () => {});
+  return room;
+}
+
 export function once<T = any>(room: Room, type: string, ms = 5000): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`Timeout aguardando mensagem "${type}"`)), ms);
@@ -100,3 +107,6 @@ export function once<T = any>(room: Room, type: string, ms = 5000): Promise<T> {
     });
   });
 }
+
+// Sem `sleep` aqui de propósito: espere por condição (`once`, `vi.waitFor`), nunca por tempo fixo
+// (skill `testes-deterministicos`).

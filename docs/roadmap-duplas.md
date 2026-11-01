@@ -4,6 +4,8 @@ Este documento reparte o [roadmap](roadmap.md) em dois núcleos de backlog para 
 
 Atualizado em 31/10/2026.
 
+Item riscado já foi implementado (status no `roadmap.md`). Ele continua na fila para não mudar a numeração da ordem.
+
 ## As duas filas
 
 As filas são **estanques**: ninguém puxa item da fila do outro. Mas os **temas são mistos em cada uma** — os dois tocam `server/`, `client/`, `shared/` e mapas. O critério de repartição não é camada, é pacote de funcionalidade:
@@ -84,7 +86,7 @@ Itens herdados do roadmap e das pendências:
 | 4 | M1-07 | Janela de diálogo no `#modal` (teclado, toque, `Esc`) | M | M1-04 (Waldir) | idem | |
 | 5 | M2-07 | Tempo de recarga numérico no HUD | P | — | spec de M2 | Independente do motor; pode sair antes |
 | 6 | M2-06 | Efeitos visuais de status (cor no sprite, ícone, número de dano contínuo) | M | M2-01 (Waldir) | spec de M2 | Fatia de cliente do pacote M2 |
-| 7 | F-10 | Trocar `sleep` fixo por `vi.waitFor`/`once` e limpar ruído do Vitest | M | — | não | Contínuo, junto com cada teste que tocar |
+| 7 | ~~F-10~~ | ~~Trocar `sleep` fixo por `vi.waitFor`/`once` e limpar ruído do Vitest~~ | M | — | não | Feito no Vitest; nos cenários segue como rotina, junto com cada teste que tocar |
 | 8 | M3-02 | Abas de chat (Geral, Combate, Party, Guilda, Privado) | M | — | sim | |
 | 9 | M3-01 | Troca direta 1v1, duas confirmações, mesmo mapa e alcance | M | — | sim | Servidor + UI; handler sensível: skill `seguranca-servidor`, revisão do Waldir |
 | 10 | M3-03 | Filtro de loot do Auto Helper | M | — | sim | Preferências no cliente, validação no servidor |
@@ -100,11 +102,11 @@ Backlog novo (IDs R-##) — narrativa, QoL e social com partes de servidor:
 | 15 | R-01 | **Personagens novos (bloco R)** — Yoruichi, Ukitake, Shunsui; 5 estágios e 4 técnicas cada | M cada | — | skill `adicionar-conteudo` |
 | 16 | R-08 | **Onboarding e tutorial** — primeiros 10 minutos guiados com missão introdutória do Kisuke | M | M1-07 | sim |
 | 17 | R-10 | **Minimapa e marcadores** — minimapa por zona com ícones de NPC, portal, PZ e alvo de missão | M | M1-03 | não |
-| 18 | R-12 | **Eventos narrados** — invasões e chefes mundiais com textos de lore no chat e banner no HUD | P | — | não |
+| 18 | ~~R-12~~ | ~~**Eventos narrados** — invasões e chefes mundiais com textos de lore no chat e banner no HUD~~ | P | — | não |
 | 19 | R-09 | **Codex / enciclopédia de lore** — bestiário expandido com fichas de personagens, facções e eventos | M | — | sim |
 | 20 | R-14 | **Acessibilidade e QoL do cliente** — escala de fonte, alto contraste, re-mapeamento de teclas, modo uma mão no toque | M | — | sim |
 | 21 | R-07 | **Companion: Mod Soul** — Kon e afins acompanham o personagem, coletam loot cosmético, progressão própria (entidade seguidora no servidor + visual no cliente) | M | M1-04 | sim |
-| 22 | R-13 | **Cosméticos sazonais** — uniforme Karakura, haori de divisões, máscaras Vizard na Loja de Cristais | M | — | não |
+| 22 | R-13 | **Cosméticos sazonais** — uniforme Karakura, haori de divisões, máscaras Vizard na Loja de Cristais | M | arte nova (uniforme, haori por divisão); decisão de lore (máscara fora do Ichigo) | não |
 | 23 | R-04 | **Expansão Wandenreich** — Sternritter como chefes de elite rotativos, Volständig visual para Ishida | M | W-04 recomendado | sim |
 | 24 | R-05 | **Kidō e Hadō** — árvore paralela de habilidades: bakudō (CC/utilidade) e hadō (dano); servidor e HUD | G | M2-01 a M2-05 (Waldir) | sim |
 | 25 | R-03 | **Mapa Hell (Jigoku)** — zona 100+ com ogres, mecânica de "pecado" (debuff por morte), drops novos | G | W-04 recomendado | sim |

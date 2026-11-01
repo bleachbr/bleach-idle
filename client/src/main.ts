@@ -6,6 +6,7 @@ import { Client, type Room } from "colyseus.js";
 import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
+import { bindEvents } from "./events";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
@@ -203,7 +204,7 @@ function start(room: Room<any>, myId: string) {
     Object.assign(window, { __bi: { room, game, sent } });
   }
 
-  // canais: local (sem ch), pm, party, guild e sys (avisos do servidor)
+  // canais: local (sem ch), pm, party, guild, sys (avisos do servidor) e lore (narração dos eventos)
   room.onMessage("chat", (m: { from: string; text: string; ch?: string }) => {
     const prefix = m.ch === "pm" ? "[pm] " : m.ch === "party" ? "[party] " : m.ch === "guild" ? "[guilda] " : "";
     chatLine(m.from ? `${prefix}${m.from}: ${m.text}` : `${prefix}${m.text}`, m.ch && m.ch !== "sys" ? m.ch : m.from ? "" : "sys");
@@ -212,6 +213,7 @@ function start(room: Room<any>, myId: string) {
   bindBook(room, closeWindows);
   bindShop(room, closeWindows);
   bindSeason(room, closeWindows);
+  bindEvents(room);
   bindDev(room, myId, closeWindows);
   bindDangai(room, myId);
   window.addEventListener("keydown", (e) => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Client } from "colyseus.js";
 import { START_LEVEL, START_KIT } from "../../shared/src";
-import { startTestServer, stopTestServer, once } from "./helpers/testServer";
+import { startTestServer, stopTestServer, once, quiet } from "./helpers/testServer";
 
 // Regressões de segurança, contra o servidor real em memória. Cada teste falhava no código anterior.
 describe("E2E: segurança do servidor", () => {
@@ -23,7 +23,7 @@ describe("E2E: segurança do servidor", () => {
   async function registrar() {
     const client = new Client(url);
     const login = `seg_${Date.now().toString(36)}_${letras(4)}`;
-    const lobby = await client.joinOrCreate("lobby", { action: "register", login, password: SENHA });
+    const lobby = quiet(await client.joinOrCreate("lobby", { action: "register", login, password: SENHA }));
     await once(lobby, "chars");
     const nome = `Seg ${letras(5)}`;
     lobby.send("create", { name: nome, charId: "ichigo" });
@@ -35,7 +35,8 @@ describe("E2E: segurança do servidor", () => {
     lobby.send("play", { id });
     const { ticket } = await once<{ ticket: string }>(lobby, "ticket");
     await lobby.leave();
-    const world = await client.join("world", { ticket });
+    // o curinga de `quiet` só recebe o tipo sem listener próprio (colyseus.js Room.dispatchMessage): o `once` continua resolvendo
+    const world = quiet(await client.join("world", { ticket }));
     // o servidor envia `quests` e `inv` ao entrar e a cada mudança: guarda sempre a última
     let missoes: { active: Record<string, number> } | undefined;
     let inv: { gold: number } | undefined;
@@ -57,7 +58,7 @@ describe("E2E: segurança do servidor", () => {
 
   it.each(["constructor", "__proto__", "toString", "hasOwnProperty"])("o lobby recusa criar personagem com charId %s", async (charId) => {
     const client = new Client(url);
-    const lobby = await client.joinOrCreate("lobby", { action: "register", login: `lob_${Date.now().toString(36)}_${letras(4)}`, password: "senha_de_teste_1" });
+    const lobby = quiet(await client.joinOrCreate("lobby", { action: "register", login: `lob_${Date.now().toString(36)}_${letras(4)}`, password: "senha_de_teste_1" }));
     await once(lobby, "chars");
 
     const resposta = once<{ text: string }>(lobby, "error");
@@ -95,7 +96,7 @@ describe("E2E: segurança do servidor", () => {
     expect(await saiu).toBe(4002); // WS_CLOSE_WITH_ERROR do Colyseus para mensagem sem handler
 
     // reentra com a mesma conta: o personagem segue com o nível e o ouro iniciais
-    const lobby = await s1.client.joinOrCreate("lobby", { action: "login", login: s1.login, password: SENHA });
+    const lobby = quiet(await s1.client.joinOrCreate("lobby", { action: "login", login: s1.login, password: SENHA }));
     await once(lobby, "chars");
     const s2 = await abrirMundo(s1.client, lobby, s1.id);
     await s2.sincronizar();

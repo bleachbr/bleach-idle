@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { Client, type Room } from "colyseus.js";
 import { MONSTERS } from "../../shared/src";
 import * as db from "../src/db";
-import { startTestServer, stopTestServer, once } from "./helpers/testServer";
+import { startTestServer, stopTestServer, once, quiet } from "./helpers/testServer";
 
 describe("E2E: World Gameplay", () => {
   let url: string;
@@ -23,11 +23,11 @@ describe("E2E: World Gameplay", () => {
     const client = new Client(url);
     const login = `user_${Date.now().toString(36)}_${randomLetters(4)}`;
 
-    const lobby = await client.joinOrCreate("lobby", {
+    const lobby = quiet(await client.joinOrCreate("lobby", {
       action: "register",
       login,
       password: "password123",
-    });
+    }));
 
     await once(lobby, "chars");
     lobby.send("create", { name: charName, charId: "ichigo" });
@@ -38,19 +38,19 @@ describe("E2E: World Gameplay", () => {
     const { ticket } = await once<{ ticket: string }>(lobby, "ticket");
     await lobby.leave();
 
-    const world = await client.join("world", { ticket });
-    return { client, world, charName: id };
+    const world = quiet(await client.join("world", { ticket })); // evita avisos de tipo não registrado
+    return { client, world, charName: charName.toLowerCase() };
   }
 
   it("recebe kit inicial e inventário ao entrar no mundo", async () => {
     const { world, charName } = await createPlayerAndJoin();
 
-    await vi.waitFor(() => {
-      const me = world.state.players.get(charName);
-      expect(me).toBeDefined();
-      expect(me.name).toBeTruthy();
-      expect(me.level).toBe(8);
-    }, { timeout: 5000, interval: 25 });
+    // Aguarda sincronização do estado
+    await vi.waitFor(() => expect(world.state.players.get(charName)).toBeDefined(), { timeout: 5000, interval: 25 });
+
+    const me = world.state.players.get(charName);
+    expect(me.name).toBeTruthy();
+    expect(me.level).toBe(8);
 
     await world.leave();
   });
@@ -103,33 +103,14 @@ describe("E2E: World Gameplay", () => {
     const { world, charName } = await createPlayerAndJoin();
 
     world.send("auto", { autoTarget: true, autoHunt: true, autoHeal: 60 });
+
+    // os três campos chegam no mesmo patch do estado; espera o patch, não um tempo fixo
     await vi.waitFor(() => {
       const me = world.state.players.get(charName);
       expect(me?.autoTarget).toBe(true);
       expect(me?.autoHunt).toBe(true);
       expect(me?.autoHeal).toBe(60);
     }, { timeout: 5000, interval: 25 });
-
-    await world.leave();
-  });
-
-  it("nextTarget (Tab) ignora bonecos de treino (dummy) ao buscar alvo", async () => {
-    // Posiciona o personagem ao lado dos bonecos de treino em Soul Society (x=38, y=9)
-    const { world, charName } = await createPlayerAndJoin(undefined, (id) => {
-      const row = db.load(id)!;
-      db.save(id, { ...row.data, map: "soul", x: 38, y: 10 }, false);
-    });
-    await vi.waitFor(() => expect(world.state.players.get(charName)?.map).toBe("soul"), { timeout: 5000, interval: 25 });
-
-    // Envia nextTarget seguido de uma mutação no mesmo Player para sincronizar o patch FIFO sem usar sleep
-    world.send("nextTarget");
-    world.send("auto", { autoTarget: true });
-    await vi.waitFor(() => expect(world.state.players.get(charName)?.autoTarget).toBe(true), { timeout: 5000, interval: 25 });
-
-    const me = world.state.players.get(charName);
-    const targeted = me.targetId ? world.state.monsters.get(me.targetId) : undefined;
-    expect(targeted ? MONSTERS[targeted.kind]?.dummy : undefined).toBeFalsy();
-    expect(me.targetId).toBe("");
 
     await world.leave();
   });

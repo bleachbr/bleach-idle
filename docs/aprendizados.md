@@ -41,6 +41,11 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 - Durante a implementação de testes de missões, um bot de teste chamado "Ana" falhava intermitentemente porque nascia no nível 8 e morria para Hollows agressivos antes de conseguir cumprir a contagem da missão.
 - **Solução:** Cenários de teste automatizados que validam progressão ou entrega de missões devem instanciar o bot com nível e equipamento suficientes para sobreviver à área do teste (ex.: nível 25 com poções).
 
+### Ruído e Esperas no Vitest (F-10)
+- **O curinga do `colyseus.js` é reserva, não interceptador.** `Room.dispatchMessage` entrega ao listener do tipo; só sem ele cai no `onMessage("*")`; só sem os dois imprime `onMessage() not registered`. Por isso `quiet()` (registra `"*"` logo ao entrar) cala o aviso sem roubar a mensagem de um `once` registrado depois. Um comentário antigo de `e2e-seguranca.test.ts` dizia o contrário e obrigava a listar os tipos à mão (a lista já estava incompleta: `guild` e `welcome` escapavam).
+- **O agente não vê o que a pessoa vê.** Sob agente de IA, o Vitest usa o reporter `minimal`, que esconde o console dos testes que passam; o aviso parecia ter sumido e não tinha. Antes de afirmar "a saída está limpa", rode `npx vitest run --reporter=default`.
+- **Espera abaixo do `testTimeout`.** Com `vi.waitFor` de 5 s e `testTimeout` padrão de 5 s, a falha aparecia como "Test timed out" e o `waitFor` seguia consultando durante o teste seguinte. O `testTimeout` agora é 10 s.
+
 ---
 
 ## 4. Automação Inteligente (Auto Helper) e Pathfinding
@@ -213,3 +218,13 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 - **Problema:** itens e kan só chegavam com o jogador online; anúncio expirado com depot cheio ficava preso no mercado.
 - **Solução (`server/src/mailbox.ts`):** tabela `mailbox` própria; `take()` usa `DELETE` condicional e só entrega o anexo se apagou a linha, o que impede duplicação por retirada repetida. O `WorldRoom` valida espaço numa cópia do inventário antes de retirar. O mercado usa o correio como destino quando o depot está cheio.
+---
+
+## 8. Eventos Globais no Cliente sem Campo Novo no Schema
+
+### Banner de Evento por Mensagem Pontual (R-12)
+- O banner da invasão e do chefe mundial podia virar campo sincronizado no `WorldState`. Não virou: o schema não tem filtro, então todo campo novo vai a todos os clientes a cada patch (`pendencias.md`, P4), e um valor de tipo errado num campo sincronizado derruba a codificação do estado da sala inteira (comentário do handler `step` em `WorldRoom.ts`).
+- **Solução:** o servidor manda `event` (`{ kind, phase, until, left }`) só quando a fase muda e guarda o último banner de cada tipo (`banners` em `WorldRoom.ts`). Quem entra no meio recebe os banners ainda válidos em `onJoin` (`sendBanners`). O cliente apaga o banner sozinho quando o prazo passa, sem mensagem de "fim".
+- O prazo no cliente sai de `left` (ms que faltam) somado ao relógio do aparelho, e não de `until` com `serverNow()`: o banner de quem entra chega antes da resposta do `time` (`clock.ts`), e um aparelho adiantado apagaria o banner na hora.
+- Os textos ficam em `shared/src/events.ts`, e o servidor manda só a fase. O cliente busca o texto com `own(EVENT_BANNER, fase)`: mesmo vindo do servidor, a chave chega pela rede.
+- Os avisos de sistema com números (vida, XP, minutos) continuam iguais e a lore vai numa linha separada (canal `lore`), porque os cenários `invasion` e `temporada` conferem trechos desses avisos.

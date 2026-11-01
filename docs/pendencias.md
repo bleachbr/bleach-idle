@@ -10,7 +10,9 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 | :--- | :--- | :--- |
 | **Suporte a Múltiplos NPCs no Mapa** | O mapa Tiled só reconhece o tipo `loja` com sprite único `npc_shop`. | Não é possível posicionar capitães, tenentes ou instrutores com visual e falas próprias no Seireitei ou outras cidades. |
 | **Diálogos e Árvores de Conversa** | Ao interagir com a loja, abre diretamente o menu do Kisuke. | Falta um sistema de balões/janela de diálogo com opções de resposta, lore e ativação de eventos. |
-| **Eventos Semanais da Lore de Bleach** | Apenas invasões de Hollows (a cada 3h) e Chefe Mundial (a cada 2h) estão programados. | Criar um gerenciador de rotação semanal que exiba eventos históricos (Invasão de Karakura, Traição no Soukyoku, Resgate de Rukia, etc.). |
+| **Eventos Semanais da Lore de Bleach** | Apenas invasões de Hollows (a cada 3h) e Chefe Mundial (a cada 2h) estão programados. Desde o R-12 os dois têm linha de lore no chat e banner no topo da tela. | Criar um gerenciador de rotação semanal que exiba eventos históricos (Invasão de Karakura, Traição no Soukyoku, Resgate de Rukia, etc.). |
+| **Temporizador de fuga do chefe mundial e de fim da invasão** | Lido em `WorldRoom.ts`: o `setTimeout` de 15 min que chama `endWorldBoss` (agendado em `spawnWorldBoss`) não é cancelado quando o chefe morre, e o que chama `endInvasion(false)` (agendado em `startInvasion`) não é cancelado na vitória. Se outro chefe ou outra invasão começar antes de o timer antigo vencer (pelo modo Dev, `debugWorldBoss` ou `debugInvasion`), o timer antigo encerra o evento novo antes da hora e, desde o R-12, narra a fuga (`bossGone`) ou a retirada (`invLost`) e troca o banner. Pelo ciclo normal (2 h e 3 h) não acontece. | Guardar o `Delayed` de cada timer e cancelá-lo em `worldBossKilled` e na vitória da invasão. PR próprio, com cenário. |
+| **Fases sem teste automático no R-12** | O aviso do chefe (`bossWarn`) e a fuga (`bossGone`) só disparam pelo relógio (5 min antes e 15 min depois do chefe); os cenários desligam esses timers. O banner no cliente (`client/src/events.ts`: vencimento, duas linhas juntas, `left` inválido) não tem teste: o projeto não testa o cliente (ver Playwright, §6). Leitor de tela e layout no celular foram conferidos só pelo código. | Cobrir as fases quando o motor de eventos ganhar relógio injetável ou um gatilho de debug próprio; o cliente, com M5-03. |
 
 ---
 
@@ -58,7 +60,7 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 
 | Item | Situação Atual | Impacto / Necessidade |
 | :--- | :--- | :--- |
-| **Migração Completa para Vitest** | O projeto possui 83 testes rápidos no Vitest e 31 scripts de integração em `server/scripts/test.ts`. | Consolidar os 31 cenários legados no Vitest para unificar a execução em um único runner padronizado. |
+| **Migração Completa para Vitest** | O projeto possui 141 testes rápidos no Vitest e 31 scripts de integração em `server/scripts/test.ts`. | Consolidar os 31 cenários legados no Vitest para unificar a execução em um único runner padronizado. |
 | **Testes de Interface (Playwright)** | O cliente Phaser 3 não possui testes de regressão visual ou de cliques automatizados. | Implementar testes E2E com Playwright para validar a tela de login, menus e HUD. |
 
 ---
@@ -106,7 +108,7 @@ Números e método em [`baseline.md`](baseline.md). Skill: `performance-servidor
 | P1 | Reconstrução do ranking bloqueia o tick | **Corrigido em `perf/f-09-ranking-incremental`** (`server/src/ranking.ts`): p50 caiu de `10,29 ms` para `0,10 ms` (máx `0,45 ms`) com 1.000 personagens | Corrigido |
 | P2 | Salvamento em lote é síncrono | `saveMany` de 200 saves: p50 1,40 a 1,43 ms, máximo 1,7 ms, a cada 10 s (banco em memória; disco soma o fsync) | Baixa hoje |
 | P3 | Não há métrica da duração do tick | **Corrigido em `feat/f-08-metrica-tick`** (`server/src/tickStats.ts`, exposto em `/healthz` e com aviso `> 50 ms`) | Corrigido |
-| P4 | Schema sem filtro e `broadcast` global | 31 `broadcast` no `WorldRoom`; estado de todos os mapas vai a todos os clientes | Média, cresce com o número de jogadores |
+| P4 | Schema sem filtro e `broadcast` global | 33 `broadcast` no `WorldRoom` (31 antes do R-12, que soma o `chat` de lore e o `event`; os dois só saem na troca de fase de um evento); estado de todos os mapas vai a todos os clientes | Média, cresce com o número de jogadores |
 | P5 | Um único JavaScript de 1,67 MB | Build do Vite avisa acima de 500 kB | Baixa |
 
 - **Correio interno (W-07):** falta a janela no cliente (mensagens `mailList`/`mailTake` e `mail` já existem; hoje só `/correio`) e o envio de cartas entre jogadores, que exige limite e moderação próprios. Itens de recompensa (chefe mundial, diária) ainda pagam direto; migrar para carta quando o inventário estiver cheio.

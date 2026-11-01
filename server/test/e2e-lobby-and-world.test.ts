@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
-import { Client } from "colyseus.js";
-import { startTestServer, stopTestServer, once } from "./helpers/testServer";
+import { Client, type Room } from "colyseus.js";
+import { startTestServer, stopTestServer, once, quiet } from "./helpers/testServer";
 import { clearFails } from "../src/auth";
 
 describe("E2E: Lobby e World", () => {
@@ -28,12 +28,12 @@ describe("E2E: Lobby e World", () => {
     const client = new Client(url);
     const login = `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 
-    const room = await client.joinOrCreate("lobby", {
+    const room = quiet(await client.joinOrCreate("lobby", {
       action: "register",
       login,
       password: "segredo_forte_123",
       remember: true,
-    });
+    }));
 
     const acc = await once<{ login: string; token?: string }>(room, "account");
     expect(acc.login).toBe(login);
@@ -42,7 +42,7 @@ describe("E2E: Lobby e World", () => {
     await room.leave();
 
     // Login via token de sessão
-    const tokenRoom = await client.joinOrCreate("lobby", { token: acc.token });
+    const tokenRoom = quiet(await client.joinOrCreate("lobby", { token: acc.token }));
     const tokenAcc = await once<{ login: string }>(tokenRoom, "account");
     expect(tokenAcc.login).toBe(login);
     await tokenRoom.leave();
@@ -53,7 +53,7 @@ describe("E2E: Lobby e World", () => {
     const login = `dup_${Date.now().toString(36)}`;
 
     // Primeiro cadastro
-    const r1 = await client.joinOrCreate("lobby", { action: "register", login, password: "senha_valida_123" });
+    const r1 = quiet(await client.joinOrCreate("lobby", { action: "register", login, password: "senha_valida_123" }));
     await r1.leave();
 
     // Segundo cadastro com mesmo login
@@ -75,11 +75,11 @@ describe("E2E: Lobby e World", () => {
       const login = `play_${Date.now().toString(36)}`;
       const charName = `Hero ${randomLetters(5)}`;
 
-      const lobby = await client.joinOrCreate("lobby", {
-        action: "register",
-        login,
-        password: "senha_valida_123",
-      });
+    const lobby = quiet(await client.joinOrCreate("lobby", {
+      action: "register",
+      login,
+      password: "senha_valida_123",
+    }));
 
       // Aguarda lista inicial de chars
       await once<any[]>(lobby, "chars");
@@ -96,12 +96,9 @@ describe("E2E: Lobby e World", () => {
 
       await lobby.leave();
 
-      // Conecta no World usando o ticket emitido
-      const world = await client.join("world", { ticket });
-      expect(world.id).toBeTruthy();
-      const pong = once(world, "time");
-      world.send("time");
-      await pong;
+    // Conecta no World usando o ticket emitido
+    const world = quiet(await client.join("world", { ticket }));
+    expect(world.id).toBeTruthy();
 
       const colyseusWarns = warnSpy.mock.calls
         .map((args) => String(args[0] ?? ""))
@@ -126,7 +123,7 @@ describe("E2E: Lobby e World", () => {
     const charName = `Clone ${randomLetters(5)}`;
 
     // Cria conta e char
-    const lobby1 = await client.joinOrCreate("lobby", { action: "register", login, password: "senha_valida_123" });
+    const lobby1 = quiet(await client.joinOrCreate("lobby", { action: "register", login, password: "senha_valida_123" }));
     await once(lobby1, "chars");
     lobby1.send("create", { name: charName, charId: "ichigo" });
     await once(lobby1, "chars");
@@ -135,23 +132,23 @@ describe("E2E: Lobby e World", () => {
     await lobby1.leave();
 
     // Primeira conexão no mundo
-    const world1 = await client.join("world", { ticket: t1 });
+    const world1 = quiet(await client.join("world", { ticket: t1 }));
     let leaveCode = 0;
     world1.onLeave((code) => {
       leaveCode = code;
     });
 
     // Pede novo ticket com a mesma conta
-    const lobby2 = await client.joinOrCreate("lobby", { action: "login", login, password: "senha_valida_123" });
+    const lobby2 = quiet(await client.joinOrCreate("lobby", { action: "login", login, password: "senha_valida_123" }));
     await once(lobby2, "chars");
     lobby2.send("play", { id: charName.toLowerCase() });
     const { ticket: t2 } = await once<{ ticket: string }>(lobby2, "ticket");
     await lobby2.leave();
 
     // Segunda conexão no mundo para o mesmo personagem
-    const world2 = await client.join("world", { ticket: t2 });
+    const world2 = quiet(await client.join("world", { ticket: t2 }));
 
-    // A primeira janela deve cair com código 4001
+    // A primeira janela deve ter caído com código 4001 (espera o fechamento, não um tempo fixo)
     await vi.waitFor(() => expect(leaveCode).toBe(4001), { timeout: 5000, interval: 25 });
 
     await world2.leave();

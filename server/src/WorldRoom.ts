@@ -16,6 +16,7 @@ import {
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
+  EVENT_BANNER, EVENT_END_MS, eventLore, type EventBanner, type EventKind, type EventPhase,
   own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
   applyStatus, tickStatuses, canEntityMove, canEntityAct, effectiveStepMs, formatStatusFlags, clearStatuses, type SkillStatusDef,
   evaluateBossPhase,
@@ -300,6 +301,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.sendSeason(p, false);
     if (xpWeekend(Date.now())) client.send("log", { text: "Fim de semana: XP em dobro dos monstros até domingo à meia-noite!" });
     if (this.worldBoss) client.send("log", { text: `O chefe mundial ${MONSTERS[WORLD_BOSS.kind].name} está na praça de Karakura!` });
+    this.sendBanners(client);
     this.sendTutorial(p);
     this.broadcast("chat", { from: "", text: `${p.name} entrou no mundo.` });
   }
@@ -1834,6 +1836,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.state.monsters.set(m.id, m);
       this.monsterAt.add(tileKey("karakura", s.x, s.y));
     });
+    this.narrate("invStart", this.invasion.until);
     this.broadcast("chat", { from: "", ch: "sys", text: `⚠ Invasão! ${spots.length} Hollows cercam a praça de Karakura, liderados por um ${MONSTERS[INVASION.leader].name}. XP +50% e Caixas do Kisuke por 15 min. Quem for fraco, fique na zona segura.` });
     this.broadcast("fx", { t: "event", text: "Invasão de Hollows!" });
     this.clock.setTimeout(() => this.endInvasion(false), INVASION.durationMs);
@@ -1864,6 +1867,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     }
     const top = [...inv.kills.entries()].sort((a, b) => b[1] - a[1])[0];
     const name = top ? this.state.players.get(top[0])?.name ?? top[0] : "";
+    this.narrate(won ? "invWon" : "invLost", Date.now() + EVENT_END_MS);
     this.broadcast("chat", { from: "", ch: "sys", text: won
       ? `✔ Invasão repelida!${top ? ` Mais abates: ${name} (${top[1]}).` : ""}`
       : `A invasão terminou: os Hollows que sobraram voltaram para Hueco Mundo.${top ? ` Mais abates: ${name} (${top[1]}).` : ""}` });
@@ -2363,6 +2367,8 @@ export class WorldRoom extends GameRoom<WorldState> {
   private scheduleWorldBoss(ms: number) {
     // aviso antes, para dar tempo de chegar
     this.clock.setTimeout(() => {
+      // com um chefe já no mapa (modo Dev ou debug), o banner dele continua; o aviso de sistema sai como antes
+      if (!this.worldBoss) this.narrate("bossWarn", Date.now() + Math.min(ms, WORLD_BOSS.warnMs));
       this.broadcast("chat", { from: "", ch: "sys", text: `⚠ Em ${Math.round(WORLD_BOSS.warnMs / 60000)} minutos o ${MONSTERS[WORLD_BOSS.kind].name} vai aparecer perto da praça de Karakura. Juntem-se!` });
       this.broadcast("fx", { t: "event", text: "Chefe mundial chegando!" });
     }, Math.max(0, ms - WORLD_BOSS.warnMs));
@@ -2398,6 +2404,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.state.monsters.set(m.id, m);
     this.monsterAt.add(tileKey("karakura", at.x, at.y));
     this.worldBoss = { id: m.id, dmg: new Map() };
+    this.narrate("bossSpawn", Date.now() + WORLD_BOSS.durationMs);
     this.broadcast("chat", { from: "", ch: "sys", text: `⚔ O ${def.name} apareceu perto da praça de Karakura com ${m.maxHp.toLocaleString("pt-BR")} de vida! Todos que acertarem ganham prêmio. Ele vai embora em 15 min.` });
     this.broadcast("fx", { t: "event", text: `${def.name}!` });
     this.clock.setTimeout(() => this.endWorldBoss(), WORLD_BOSS.durationMs);
@@ -2425,6 +2432,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.log(p, `Chefe mundial derrotado! Você fez ${Math.round(share * 100)}% do dano (${i + 1}º lugar): ${got} e ${crystals} cristais.`);
     });
     const top = ranked.slice(0, 3).map(([id, d], i) => `${i + 1}º ${this.state.players.get(id)?.name ?? id} (${Math.round((d / total) * 100)}%)`).join(", ");
+    this.narrate("bossKilled", Date.now() + EVENT_END_MS);
     this.broadcast("chat", { from: "", ch: "sys", text: `✔ ${killer.name} deu o golpe final no ${def.name}! ${ranked.length} guerreiros participaram. ${top}` });
     this.broadcast("fx", { t: "event", text: `${def.name} derrotado!` });
   }
@@ -2435,7 +2443,35 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.worldBoss = null;
     const m = this.state.monsters.get(wb.id);
     if (m) { this.state.monsters.delete(m.id); this.monsterAt.delete(tileKey(m.map, m.x, m.y)); }
+    this.narrate("bossGone", Date.now() + EVENT_END_MS);
     this.broadcast("chat", { from: "", ch: "sys", text: `O ${MONSTERS[WORLD_BOSS.kind].name} cansou de esperar e voltou para Hueco Mundo. Fica para a próxima!` });
+  }
+
+  // ---------- eventos narrados (R-12) ----------
+
+  /** banner ativo de cada tipo de evento, para mandar a quem entra no meio */
+  private banners = new Map<EventKind, { phase: EventPhase; until: number }>();
+  /** rodízio das linhas de lore, por fase */
+  private loreSeq = new Map<EventPhase, number>();
+
+  /** Linha de lore no chat (canal "lore") e banner no topo da tela até `until` (hora do servidor). */
+  private narrate(phase: EventPhase, until: number) {
+    const n = this.loreSeq.get(phase) ?? 0;
+    this.loreSeq.set(phase, n + 1);
+    const kind = EVENT_BANNER[phase].kind;
+    this.banners.set(kind, { phase, until });
+    this.broadcast("chat", { from: "", ch: "lore", text: eventLore(phase, n) });
+    this.broadcast("event", this.bannerMsg(kind, phase, until));
+  }
+
+  private bannerMsg(kind: EventKind, phase: EventPhase, until: number): EventBanner {
+    return { kind, phase, until, left: until - Date.now() };
+  }
+
+  /** Quem entra durante um evento recebe o banner que ainda está valendo. */
+  private sendBanners(client: Client) {
+    const now = Date.now();
+    for (const [kind, b] of this.banners) if (b.until > now) client.send("event", this.bannerMsg(kind, b.phase, b.until));
   }
 
   // ---------- Loja de Cristais ----------
