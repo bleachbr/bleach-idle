@@ -10,6 +10,7 @@ const { newCharacter } = await import("../../../../server/src/LobbyRoom");
 const S: any = await import("../../../../shared/src/index");
 const { MAPS } = await import("../../../../server/src/maps");
 const { findPath } = await import("../../../../server/src/path");
+const { buildRanking } = await import("../../../../server/src/ranking");
 
 const N = Number(process.argv[2] ?? 1000);
 const AMOSTRAS = 300; // p95 só faz sentido com amostra grande; com 100 ou menos o "p99" seria o próprio máximo
@@ -50,7 +51,8 @@ console.log(`tamanho de um save de fim de jogo: ${JSON.stringify(save(0)).length
 const lote = Array.from({ length: 200 }, (_, i) => ({ id: `bench${i}`, data: save(i), inWorld: true }));
 console.log(`JSON.stringify x200 (parte do saveAll):      ${medir(() => { for (const l of lote) JSON.stringify(l.data); })}`);
 console.log(`db.saveMany(200 personagens):                ${medir(() => db.saveMany(lote))}`);
-console.log(`db.allChars() com ${N} personagens (ranking): ${medir(() => { db.allChars(); })}`);
+console.log(`db.allChars() com ${N} personagens (SQLite):  ${medir(() => { db.allChars(); })}`);
+console.log(`buildRanking() incremental (${N} personagens): ${medir(() => { buildRanking([]); })}`);
 
 for (const id of ["karakura", "falsa"] as const) {
   const m: any = MAPS[id];

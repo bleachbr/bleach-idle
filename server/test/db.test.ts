@@ -20,6 +20,11 @@ describe("db", () => {
       expect(accId2).toBeNull();
     });
 
+    it("propaga erros de banco que não são UNIQUE em createAccount", () => {
+      // Simula falha não-UNIQUE (NOT NULL em passHash) que antes era mascarada como "login já existe"
+      expect(() => dbModule.createAccount("usuario_invalido_null", null as unknown as string)).toThrow(/NOT NULL constraint failed/);
+    });
+
     it("busca conta por login", () => {
       dbModule.createAccount("busca_teste", "hash_busca");
       const acc = dbModule.getAccount("busca_teste");
@@ -70,6 +75,11 @@ describe("db", () => {
 
       expect(dbModule.createChar(accId1, "nome duplicado", baseSaveData)).toBe(true);
       expect(dbModule.createChar(accId2, "nome duplicado", baseSaveData)).toBe(false);
+    });
+
+    it("propaga erros de banco que não são UNIQUE em createChar", () => {
+      // Simula falha não-UNIQUE (FOREIGN KEY com accountId inexistente) que antes era mascarada como "nome já usado"
+      expect(() => dbModule.createChar(999_999, "personagem_orfao", baseSaveData)).toThrow(/FOREIGN KEY constraint failed/);
     });
 
     it("salva e atualiza dados do personagem", () => {

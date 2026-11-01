@@ -11,18 +11,38 @@ permissions:
   contents: read
 
 jobs:
+  gitleaks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Scan secrets with gitleaks
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  /tmp/gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks git --redact -c .gitleaks.toml .
+
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # a bateria completa leva cerca de 9 min; o limite impede que um travamento gaste 6 h de execução
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["22.x", "24.x"]
     steps:
-      # actions fixadas por SHA (v4.4.0): a tag móvel v4 pode apontar para outro código sem aviso
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      # actions fixadas por SHA (v7): a tag móvel pode apontar para outro código sem aviso
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22.x
+          node-version: ${{ matrix.node-version }}
           cache: "npm"
 
       - name: Install dependencies
@@ -39,14 +59,14 @@ jobs:
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: test
-    runs-on: ubuntu-latest
+    needs: [test, gitleaks]
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     concurrency:
       group: bleach-production
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Build production image
         run: docker build --tag "bleach-idle:$GITHUB_SHA" .
       - name: Deploy to VPS

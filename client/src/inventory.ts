@@ -430,12 +430,14 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
   return {
     /** janela de viagem aberta de qualquer lugar (botão do topo); não fecha ao andar */
     openTravel() {
+      if (open === "travel") return close();
       open = "travel";
       openedAt = null;
       $("#modal").hidden = false;
       onPanel(true);
       render();
     },
+    close,
     /** fecha a janela se o jogador se afastar do depot ou da loja */
     onMove(x: number, y: number) {
       lastPos = { x, y };

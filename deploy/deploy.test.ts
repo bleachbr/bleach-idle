@@ -51,7 +51,7 @@ describe("deploy VPS", () => {
   it("só publica push na main depois dos testes", () => {
     const workflow = read("../.github/workflows/ci.yml");
     expect(workflow).toContain("if: github.event_name == 'push' && github.ref == 'refs/heads/main'");
-    expect(workflow).toContain("needs: test");
+    expect(workflow).toContain("needs: [test, gitleaks]");
     expect(workflow).toContain("StrictHostKeyChecking=yes");
     expect(workflow).toContain("cancel-in-progress: false");
   });
