@@ -40,7 +40,7 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 | 10 | M1-01 | `shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) + testes de borda | P | M1-00 (Rafael) | PRD/ADRs das Crônicas | **Feito** (`feat/m1-01-05-chronicles-core`) |
 | 11 | M1-05 | `newProgress()` e `Progress.chronicle`; virada de semana zera `questKills`/`completedAt` | P | M1-01 | idem | **Feito** (`feat/m1-01-05-chronicles-core`) |
 | 12 | M1-04 | Servidor: `interact`, `npc_dialog`, `npc_action` com nó no servidor e distância validada | M | M1-02 e M1-03 (Rafael) | idem | Handler novo: skill `seguranca-servidor` |
-| 13 | M1-08 | Textos e conteúdo das 5 crônicas | M | M1-00 | idem | Conteúdo narrativo: lado "jogo" da fila |
+| 13 | M1-08 | Textos e conteúdo das 5 crônicas | M | M1-00 | idem | **Feito** (`feat/m1-08-cronicas-conteudo`) |
 | 14 | M1-06 | Missão semanal e recompensa por personagem | M | M1-00, M1-04, M1-05 | idem | Fazer antes a conta de cristais (D-001) |
 | 15 | M1-09 | Cenário `cronicas.ts` e testes de rotação, diálogo e entrega | M | M1-06 e M1-07 (Rafael) | não | |
 | 16 | M2-01..05 | Motor de status por tick + freeze, slow, DoT, stun | G | — | **sim** | M2-06 e M2-07 (visual/HUD) são de Rafael |
