@@ -414,7 +414,7 @@ export const CHARS: Record<string, CharDef> = {
     ],
     skill: { name: "Hadō 31: Shakkahō", range: 5, cost: 25, mult: 2.7, cdMs: 3500, color: 0xff6a3a },
     techs: [
-      { name: "Bakudō 61: Rikujōkōrō", minLevel: 25, range: 5, cost: 35, mult: 3.3, cdMs: 6000, color: 0xfff0a0 },
+      { name: "Bakudō 61: Rikujōkōrō", minLevel: 25, range: 5, cost: 35, mult: 3.3, cdMs: 6000, color: 0xfff0a0, status: { kind: "stun", durationMs: 1500 } },
       { name: "Kotowari: Onda Refletida", minLevel: 50, range: 6, cost: 45, mult: 4.6, cdMs: 9000, color: 0x9fd0ff, area: 1 },
       { name: "Kamikake", minLevel: 100, range: 6, cost: 90, mult: 9.2, cdMs: 30000, color: 0x8a6ab0, area: 3 },
     ],
