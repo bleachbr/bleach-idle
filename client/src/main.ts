@@ -3,7 +3,7 @@ import Phaser from "phaser";
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
+import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { bindEvents } from "./events";
@@ -11,6 +11,7 @@ import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
 import { initReleases } from "./releases";
+import { initRebirthDialog } from "./rebirthDialog";
 
 initReleases();
 
@@ -227,13 +228,9 @@ function start(room: Room<any>, myId: string) {
     if (e.code === "Escape" && document.activeElement !== chatin) closeWindows();
   });
   $("#travel-btn").onclick = () => inventory.openTravel();
-  $("#rebirth-btn").onclick = () => {
-    const me = room.state.players.get(myId);
-    if (!me) return;
-    const b = rebirthBonus(me.rebirths + 1);
-    const ok = confirm(`Renascer volta você ao nível 8 e leva para a praça de Karakura.\n\nVocê mantém itens, equipamento, kan, forja, bestiário, conquistas e habilidades.\n\nBônus permanentes depois deste renascimento: +${Math.round((b.exp - 1) * 100)}% de XP, +${Math.round((b.dmg - 1) * 100)}% de dano e +${Math.round((b.hp - 1) * 100)}% de vida.\n\nRenascer agora?`);
-    if (ok) room.send("rebirth");
-  };
+  // janela do jogo no lugar do window.confirm (issue #35); o servidor continua validando o renascimento
+  const rebirth = initRebirthDialog(room, () => room.state.players.get(myId));
+  $("#rebirth-btn").onclick = () => rebirth.open();
   const mute = $("#mute-btn");
   const showMute = () => { mute.dataset.ico = sfx.isMuted() ? "mute" : "sound"; mute.title = sfx.isMuted() ? "Som desligado (clique para ligar)" : "Som ligado (clique para desligar)"; };
   showMute();

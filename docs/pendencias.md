@@ -147,3 +147,5 @@ Números e método em [`baseline.md`](baseline.md). Skill: `performance-servidor
 | [#39](https://github.com/bleachbr/bleach-idle/issues/39) | Balance | Avaliar atenuante para penalidade de morte por perda de itens e XP na Invasão de Hollows |
 | [#40](https://github.com/bleachbr/bleach-idle/issues/40) | UX | Adicionar confirmação ou feedback visual imediato ao usar "Zerar contagem" na Caçada do Livro |
 | [#41](https://github.com/bleachbr/bleach-idle/issues/41) | UX | Exibir feedback visual no HUD ao tentar usar poções com HP ou Reiatsu cheios |
+
+- **`confirm()` nativo que sobrou (#35).** O renascimento passou para a janela do jogo (`client/src/rebirthDialog.ts`), mas "Trocar de personagem" (`#exit-btn`) e "excluir" personagem no lobby (`renderChars`) ainda usam `confirm()` em `client/src/main.ts`, com os mesmos problemas no celular/PWA e no Jogador-IA. A janela do renascimento só avisa dos 6 s fora de combate: o cliente não sabe do último golpe, e quem recusa é o servidor (com mensagem no chat). Layout e leitor de tela conferidos só pelo código, sem abrir no navegador.

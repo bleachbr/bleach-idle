@@ -1,0 +1,12 @@
+/* janela do renascimento (issue #35): mesmo visual do diálogo de Novidades, com o dourado do botão ✦ Renascer */
+#rebirth-dialog { color: var(--text); background: var(--panel); border: 2px solid #ffcf5a; border-radius: 8px; width: min(440px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 20px; overflow-y: auto; }
+#rebirth-dialog::backdrop { background: #000b; }
+#rebirth-dialog h2 { margin: 0 0 8px; color: #ffe7a3; font-size: 20px; text-transform: none; letter-spacing: 0; }
+#rebirth-dialog h3 { margin: 12px 0 4px; font-size: 13px; color: #ffcf5a; }
+#rebirth-dialog ul { margin: 0; padding-left: 20px; }
+#rebirth-dialog li.missing { color: #ff7a70; }
+.rebirth-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+#rebirth-dialog button { cursor: pointer; color: var(--text); background: var(--line); border: 0; border-radius: 4px; padding: 8px 12px; }
+#rebirth-dialog button.primary { background: linear-gradient(90deg, #3a2a08, #5a3f0a); color: #ffe7a3; border: 1px solid #ffcf5a; font-weight: 700; }
+#rebirth-dialog button:disabled { opacity: .5; cursor: default; }
+#rebirth-dialog button:focus-visible { outline: 2px solid #ffcf5a; outline-offset: 2px; }

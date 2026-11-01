@@ -11,7 +11,8 @@ describe("janela de renascimento (issue #35)", () => {
     expect(r.ready).toBe(true);
     expect(r.reset).toBe("Você volta ao nível 8 e vai para a praça de Karakura.");
     expect(r.bonus).toEqual(["XP: +0% → +10%", "Dano: +0% → +5%", "Vida: +0% → +5%"]);
-    expect(r.requirements).toEqual([{ text: "Nível 60 (você está no 60)", ok: true }, { text: "Estar fora de combate", ok: true }]);
+    expect(r.requirements).toEqual([{ text: "Nível 60 (você está no 60)", ok: true }]);
+    expect(r.note).toBe("Fique 6 segundos fora de combate antes de confirmar.");
     expect(r.next).toBe("O renascimento seguinte pede o nível 65.");
   });
 
