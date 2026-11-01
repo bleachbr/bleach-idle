@@ -35,6 +35,8 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 | **Troca Direta (Trade 1v1)** | Toda negociação é mediada pelo Mercado do Kisuke (anúncio público, 5% de taxa, 7 dias de validade). | Jogadores lado a lado não conseguem trocar itens ou kan de forma direta e segura. |
 | **Abas de Chat no Cliente** | Todas as mensagens (`Geral`, `/pm`, `/p`, `/g`, logs de sistema) aparecem em uma única janela de rolagem. | O chat fica poluído rapidamente em caçadas com party e eventos globais. Necessário criar abas dedicadas. |
 | **Banco e Sede de Guilda** | Apenas kan pode ser doado para a guilda. | Permitir cofre de itens compartilhado com controle de acesso por cargo (Líder, Oficial, Membro). |
+| **Janela de duplicação entre módulos** | Conferido na revisão da spec do social (01/11/2026): `/guilda depositar` e `marketSell`/`marketBuy` gravam o banco da guilda ou o anúncio na hora, mas o personagem só no `saveAll` (10 s). Uma queda nesse intervalo duplica kan ou item. Cada módulo abre a própria conexão SQLite, então não há transação entre eles. | ADR-001 e ADR-004 de `features/social-avancado/`: conexão única com `transaction(fn)` e save do personagem na mesma transação. |
+| **Auditoria de economia incompleta** | `recordAudit` usa `charId: p.name` (nome de exibição) na maioria das chamadas e o id no `creditSeller` offline; depósito e saque de guilda, reembolso de guilda, `bagTake`, `depot`, `giveLoot` e a Auto Venda não auditam. | Padronizar o id do personagem e auditar as entradas e saídas que faltam (W-08). |
 | **Moderação e Segurança no Chat** | A moderação se resume ao comando `/ignorar Nome`. | Falta filtro automático de spam, mute temporário e comandos de administração para Game Masters (GM). |
 
 ---

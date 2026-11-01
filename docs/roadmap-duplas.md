@@ -178,7 +178,7 @@ Quem escreve é o dono do item; aprovação é das duas pessoas. Ordem sugerida,
 | :-- | :--- | :--- | :--- |
 | 1 | Status e controle de grupo (M2) | Waldir | M2-01 a M2-07, R-05, W-01 |
 | 2 | Colyseus 0.18 (critérios, migração, rollback) | Waldir | F-12 → M4, W-16, W-17 |
-| 3 | Social: trade 1v1 (M3-01), abas (M3-02), filtro de loot (M3-03), banco de guilda (M3-04) | Rafael | M3 inteiro; M3-04 habilita W-17 e W-18 |
+| 3 | Social: trade 1v1 (M3-01), abas (M3-02), filtro de loot (M3-03), banco de guilda (M3-04). Rascunho em `features/social-avancado/` (01/11/2026), aguardando aprovação | Rafael | M3 inteiro; M3-04 habilita W-17 e W-18 |
 | 4 | Moderação de chat (M3-05) | Waldir | Portão G2 |
 | 5 | Contas: recuperação de senha (M5-01) e limite persistente (M5-02) | Waldir | Portão G2 |
 | 6 | Dungeons e salas instanciadas (M4) | Waldir | M4-01 a M4-03, W-16, W-17 |
