@@ -138,6 +138,7 @@ export class Monster extends Schema {
   maxHp = 1;
   targetId = "";
   statusFlags = "";
+  phase = 0;
 
   statuses: StatusMap = {};
   spawnIndex = 0;
@@ -147,6 +148,7 @@ export class Monster extends Schema {
   world = false;
   /** monstro do Dangai: só o dono vê como alvo, ataca e é atacado por ele */
   owner = "";
+  basePower = 1;
   power = 1;
   defMult = 1;
   homeX = 0;
@@ -159,7 +161,7 @@ export class Monster extends Schema {
 }
 defineTypes(Monster, {
   id: "string", kind: "string", map: "string", x: "int16", y: "int16", dir: "uint8", stepMs: "uint16",
-  hp: "int32", maxHp: "int32", targetId: "string", statusFlags: "string",
+  hp: "int32", maxHp: "int32", targetId: "string", statusFlags: "string", phase: "uint8",
 });
 
 /** Corpo ou sacola no chão com itens e kan. O conteúdo só vai a quem abre (mensagem "bag"). */
