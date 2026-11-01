@@ -10,6 +10,7 @@ import { bindEvents } from "./events";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
+import { ChatBook, CHAT_MAX, CHAT_TABS, parseTab, type ChatLineData, type ChatTab } from "./chatTabs";
 import { initReleases } from "./releases";
 
 initReleases();
@@ -214,7 +215,7 @@ function start(room: Room<any>, myId: string) {
   // canais: local (sem ch), pm, party, guild, sys (avisos do servidor) e lore (narração dos eventos)
   room.onMessage("chat", (m: { from: string; text: string; ch?: string }) => {
     const prefix = m.ch === "pm" ? "[pm] " : m.ch === "party" ? "[party] " : m.ch === "guild" ? "[guilda] " : "";
-    chatLine(m.from ? `${prefix}${m.from}: ${m.text}` : `${prefix}${m.text}`, m.ch && m.ch !== "sys" ? m.ch : m.from ? "" : "sys");
+    chatLine(m.from ? `${prefix}${m.from}: ${m.text}` : `${prefix}${m.text}`, m.ch && m.ch !== "sys" ? m.ch : m.from ? "" : "sys", "chat", m.ch, m.ch === "pm" ? m.from : "");
   });
   bindGuild(room, closeWindows);
   bindBook(room, closeWindows);
@@ -239,30 +240,41 @@ function start(room: Room<any>, myId: string) {
   showMute();
   mute.onclick = () => { sfx.setMuted(!sfx.isMuted()); showMute(); };
   bindHd(game);
-  room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log"));
+  room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log", "log"));
   room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[]; zanGain?: number; reiGain?: number; zanjutsu?: number; reiryoku?: number; kills?: number; items?: string[] }) => {
     const sign = (n: number) => (n >= 0 ? "+" : "") + n;
     const skills = [m.zanGain ? `Zanjutsu ${sign(m.zanGain)} (agora ${m.zanjutsu})` : "", m.reiGain ? `Reiryoku ${sign(m.reiGain)} (agora ${m.reiryoku})` : ""].filter(Boolean).join(", ");
-    chatLine(`Tempo offline: ${m.minutes} min, ${m.kills ?? 0} abates, ${sign(m.exp)} XP, ${sign(m.gold)} kan${skills ? `, ${skills}` : ""}. Você está no nível ${m.level}.`, "log");
-    if (m.items?.length) chatLine(`Loot offline: ${m.items.slice(0, 8).join(", ")}${m.items.length > 8 ? ` e mais ${m.items.length - 8} tipos` : ""}.`, "log");
+    chatLine(`Tempo offline: ${m.minutes} min, ${m.kills ?? 0} abates, ${sign(m.exp)} XP, ${sign(m.gold)} kan${skills ? `, ${skills}` : ""}. Você está no nível ${m.level}.`, "log", "log");
+    if (m.items?.length) chatLine(`Loot offline: ${m.items.slice(0, 8).join(", ")}${m.items.length > 8 ? ` e mais ${m.items.length - 8} tipos` : ""}.`, "log", "log");
     if (m.deaths?.length) showDeath(m.deaths, true);
   });
   room.onMessage("death", (d: DeathReport) => showDeath([d], false));
   $("#death-ok").onclick = () => ($("#death").hidden = true);
   room.onLeave((code) => chatLine(code === 4001
     ? "Este personagem entrou em outra janela. Esta sessão foi encerrada."
-    : "Conexão perdida. Recarregue a página para entrar de novo.", "sys"));
+    : "Conexão perdida. Recarregue a página para entrar de novo.", "sys", "chat", "sys"));
 
   bindAuto(room);
   bindParty(room, myId);
   syncClock(room);
   const chatin = $<HTMLInputElement>("#chatin");
+  openChatTab(chat.active);
   window.addEventListener("keydown", (e) => {
     if (e.code === "Enter" && document.activeElement !== chatin) { e.preventDefault(); chatin.focus(); }
   });
   chatin.addEventListener("keydown", (e) => {
     if (e.code === "Enter") {
-      if (chatin.value.trim()) room.send("chat", { text: chatin.value });
+      if (chatin.value.trim()) {
+        // a aba aberta decide o canal: Party vira /p, Guilda /g, Privado /pm para a última conversa
+        const out = chat.outgoing(chatin.value);
+        if ("error" in out) {
+          chat.notice({ text: out.error, cls: "sys" });
+          appendChatLine({ text: out.error, cls: "sys" });
+        } else {
+          room.send("chat", { text: out.text });
+          chat.sent(Date.now());
+        }
+      }
       chatin.value = "";
       chatin.blur();
     } else if (e.code === "Escape") chatin.blur();
@@ -774,12 +786,55 @@ function bindAuto(room: Room<any>) {
   }
 }
 
-function chatLine(text: string, cls: string) {
+function chatLine(text: string, cls: string, kind: "chat" | "log" = "chat", ch?: string, from = "") {
+  const tabs = chat.add(kind, ch, { text, cls }, Date.now(), from);
+  if (tabs.includes(chat.active)) appendChatLine({ text, cls });
+  renderChatTabs();
+}
+
+// ---------- abas do chat (M3-02) ----------
+
+const chat = new ChatBook();
+try { chat.setActive(parseTab(localStorage.getItem("bi.chatTab"))); } catch { /* sem armazenamento: começa em Geral */ }
+
+function appendChatLine(l: ChatLineData) {
   const log = $("#chatlog");
   const div = document.createElement("div");
-  if (cls) div.className = cls;
-  div.textContent = text;
+  if (l.cls) div.className = l.cls;
+  div.textContent = l.text;
   log.append(div);
-  while (log.children.length > 200) log.firstChild!.remove();
+  while (log.children.length > CHAT_MAX) log.firstChild!.remove();
   log.scrollTop = log.scrollHeight;
+}
+
+function renderChatTabs() {
+  const bar = $("#chat-tabs");
+  if (!bar.children.length) {
+    for (const t of CHAT_TABS) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("role", "tab");
+      b.dataset.tab = t.id;
+      b.onclick = () => openChatTab(t.id);
+      bar.append(b);
+    }
+  }
+  for (const b of bar.querySelectorAll<HTMLButtonElement>("button")) {
+    const t = CHAT_TABS.find((x) => x.id === b.dataset.tab)!;
+    const n = chat.unread[t.id];
+    b.textContent = n ? `${t.label} ${n > 99 ? "99+" : n}` : t.label;
+    b.setAttribute("aria-selected", String(t.id === chat.active));
+    b.classList.toggle("new", n > 0);
+  }
+}
+
+function openChatTab(tab: ChatTab) {
+  chat.setActive(tab);
+  try { localStorage.setItem("bi.chatTab", tab); } catch { /* só nesta sessão */ }
+  const log = $("#chatlog");
+  log.replaceChildren();
+  for (const l of chat.lines[tab]) appendChatLine(l);
+  renderChatTabs();
+  const label = CHAT_TABS.find((x) => x.id === tab)!.label;
+  $<HTMLInputElement>("#chatin").placeholder = tab === "geral" ? "Enter para conversar · /ajuda para comandos" : `Enter para falar em ${label} · /ajuda para comandos`;
 }
