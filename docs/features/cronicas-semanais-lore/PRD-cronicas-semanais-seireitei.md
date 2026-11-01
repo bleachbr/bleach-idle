@@ -3,7 +3,7 @@
 | Metadado | Detalhe |
 | :--- | :--- |
 | **Feature** | NPCs do Seireitei e Crônicas Históricas Semanais |
-| **Status** | Proposto. Pontos do §8 decididos por Rafael em 31/10/2026; falta a aprovação do PRD e dos ADRs pelas duas pessoas para "Aceito" |
+| **Status** | Aceito em 01/11/2026 por Rafael e Waldir: Waldir aprovou o PR #6, que pedia o aceite do PRD e dos ADRs ([revisão](https://github.com/bleachbr/bleach-idle/pull/6#pullrequestreview-5727591162)); Rafael registrou o aceite no PR que marca este status. Pontos do §8 decididos em 31/10/2026 |
 | **Autores** | Time de Engenharia & Game Design Bleach Idle |
 | **Alvo** | Milestone 1 (o repositório não usa tags de versão) |
 
@@ -141,7 +141,7 @@ No mapa `soul.tmj`, a área segura (PZ) central ao redor do portal Senkaimon rec
 
 ## 8. Pontos em aberto, conferidos contra o código (31/10/2026)
 
-Todos fechados em 31/10/2026 por Rafael, que seguiu as sugestões da revisão (o item 1 foi ajustado na revisão adversarial). Falta a aprovação do PRD e dos ADRs pelas duas pessoas (M1-00).
+Todos fechados em 31/10/2026 por Rafael, que seguiu as sugestões da revisão (o item 1 foi ajustado na revisão adversarial). PRD e ADRs aceitos pelas duas pessoas em 01/11/2026 (M1-00).
 
 | # | O que o documento assume | O que o código mostra | Decisão necessária |
 | :-- | :--- | :--- | :--- |
