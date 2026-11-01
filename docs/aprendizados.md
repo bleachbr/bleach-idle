@@ -318,6 +318,12 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Na praça de Karakura, loja, depot, portal e templo ficam a 2 ou 3 tiles um do outro. Com raio de 1,5 tile os ícones viravam uma mancha; com ~1 tile se separam. Conferido numa prévia offline (`art/work/minimap_preview.py`, fora do git) nas larguras de 128 e 96 px; a prévia reduz com Lanczos, não com a reamostragem do navegador, então o teste no navegador continua necessário.
 - A primeira mensagem `quests` chega antes de a cena existir: quem precisa dela depois (o minimapa) registra o ouvinte e pede de novo (`room.send("quests")`). O colyseus.js 0.15 aceita mais de um ouvinte por tipo (nanoevents).
 
+## Filtro de loot: a promessa da tela vale para todos os caminhos do loot (M3-03)
+
+- O filtro diz "item de missão de coleta é sempre pego", mas o loot tinha um segundo caminho que vendia: a Auto Venda do excedente com inventário cheio. A regra só vale se os dois caminhos de `giveLoot` olharem a mesma lista (`collectItems`). Ao prometer algo na tela sobre o loot, conferir `giveLoot` inteiro, não só o trecho novo.
+- Teste de dinheiro tem de olhar o saldo, não só o log: o cenário `lootfilter` soma o kan de cada linha "Loot:" com o preço de cada item vendido e compara com a diferença do `gold`. Uma linha "(vendido)" no log não prova que o kan entrou.
+- Mensagem com objeto vindo do cliente: o msgpack também entrega `Buffer` (bin), e `Object.keys` de um `Buffer` dá uma chave por byte. `parseLootRules` só aceita objeto com protótipo `Object.prototype` ou `null`.
+
 ## Teste de interface com o Playwright do `test/` (M3-02)
 
 - Mudança de cliente se confere num navegador de verdade sem infraestrutura nova: o `test/` (Jogador-IA) já traz o `playwright`. Basta `npm install` e `npx playwright install chromium` dentro de `test/`, subir o servidor do jogo servindo o build (`DB_FILE` temporário, `PORT`, `STATIC_DIR=client/dist`) e um script que importa o `playwright` de `test/`. Foi assim que as abas do chat foram conferidas (8 verificações, sem erro no console). É o caminho que o M5-03 vai formalizar.
