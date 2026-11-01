@@ -22,7 +22,7 @@ import {
   evaluateBossPhase,
   newArenaProgress, getArenaTier, validateStepInterval, ARENA_MIN_LEVEL, ARENA_COUNTDOWN_SEC, ARENA_MATCH_TIMEOUT_SEC, ARENA_WIN_GOLD, ARENA_WIN_SEASON_PTS, type ArenaProgress, type DuelOutcome,
   PATROL_SECTORS, PATROL_DURATIONS, calculatePatrolRewards, canClaimPatrol, patrolRemainingMs, type PatrolState,
-  OFFLINE_MAX_MS, buildOfflineReport, deathPenalty,
+  OFFLINE_MAX_MS, buildOfflineReport, deathPenalty, inPvpCombat,
 } from "../../shared/src";
 import * as arenaMgr from "./arenaManager";
 import { findPath, type Pt } from "./path";
@@ -874,7 +874,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     const dropped: Slot[] = [];
     // Amuleto da Alma (o "Band of Loss" daqui): protege XP, itens e dinheiro, e se desfaz
     const skulled = p.skullUntil > Date.now();
-    const pen = deathPenalty({ skulled, amulet: p.equip.amulet === "amuleto_alma", invasionMob });
+    const pvpRecent = inPvpCombat(Date.now(), p.pvpUntil, p.lastAttackedAt);
+    const pen = deathPenalty({ skulled, amulet: p.equip.amulet === "amuleto_alma", invasionMob, pvpRecent });
     const prot = pen.protected;
     const itemLoss = pen.item;
     if (prot) delete p.equip.amulet;
