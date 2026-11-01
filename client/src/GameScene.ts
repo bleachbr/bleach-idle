@@ -3,7 +3,7 @@
 import Phaser from "phaser";
 import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
-import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, titleText, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, type GameMap } from "../../shared/src";
+import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, titleText, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, npcById, type GameMap } from "../../shared/src";
 import { serverNow } from "./clock";
 import { parseStatusFlags, desiredTint, dotHitStyle, STATUS_LOOK } from "./statusFx";
 import type { StatusKind } from "../../shared/src/combatStatus";
@@ -115,6 +115,9 @@ const PIXEL_FONT = '"Pixelify Sans", system-ui, sans-serif';
 const px = (x: number) => x * TILE + TILE / 2;
 const py = (y: number) => y * TILE + TILE;
 
+/** versão dos .tmj na URL: subir junto com o CACHE de client/public/sw.js quando um mapa mudar (2: NPCs no soul.tmj, M1-03) */
+const MAP_VERSION = 2;
+
 export class GameScene extends Phaser.Scene {
   /** quadros de andar por direção (4 ou 8), pela largura da folha carregada: nunca diverge da imagem */
   private cols(key: string) {
@@ -205,6 +208,11 @@ export class GameScene extends Phaser.Scene {
       v.spr.setTexture(key, this.stand(key, v.dir)).setScale(v.baseScale / (key.startsWith(HD) ? HD_K : 1));
       if (idle) this.setIdle(v, true);
     }
+    // NPCs do mapa (M1-03) também trocam de folha
+    for (const n of this.npcSprites) {
+      const look = this.hdLook(n.sprite, undefined, 1);
+      n.spr.setTexture(look.key, this.stand(look.key, 0)).setScale(look.sprScale);
+    }
     this.startAmbient(this.mapId);
   }
 
@@ -229,6 +237,8 @@ export class GameScene extends Phaser.Scene {
   /** mapa desenhado agora (o do meu personagem) e o que pertence só a ele */
   private mapId = "";
   private mapObjects: Phaser.GameObjects.GameObject[] = [];
+  /** NPCs do mapa atual: a folha (para trocar no modo HD) e o sprite desenhado */
+  private npcSprites: { spr: Phaser.GameObjects.Sprite; sprite: string }[] = [];
 
   constructor() {
     super("game");
@@ -247,9 +257,10 @@ export class GameScene extends Phaser.Scene {
     this.load.image(SHOP_SPRITE, `/assets/sprites/${SHOP_SPRITE}.png`);
     this.load.spritesheet("items", "/assets/items.png", { frameWidth: 32, frameHeight: 32 });
     for (const [name, f] of Object.entries(FX)) this.load.spritesheet(`fx_${name}`, `/assets/fx/${name}.png`, { frameWidth: f.cell, frameHeight: f.cell });
-    // mapas do Tiled: o tileset é embutido no .tmj e a imagem fica ao lado
+    // mapas do Tiled: o tileset é embutido no .tmj e a imagem fica ao lado. O ?v= muda a URL quando um .tmj muda:
+    // o service worker antigo ainda controla a página na primeira carga depois do deploy e serviria o .tmj velho do cache
     for (const id of MAP_IDS) {
-      this.load.tilemapTiledJSON(`map_${id}`, `/maps/${id}.tmj`);
+      this.load.tilemapTiledJSON(`map_${id}`, `/maps/${id}.tmj?v=${MAP_VERSION}`);
       this.load.image(`tiles_${id}`, `/maps/${id}_tiles.png`);
     }
   }
@@ -895,6 +906,26 @@ export class GameScene extends Phaser.Scene {
         this.add.ellipse(x, y - 3, 26, 8, 0x000000, 0.3).setDepth(y - 1), spr,
         this.add.text(x, y - spr.displayHeight - 2, shop.name, {
           fontFamily: PIXEL_FONT, fontSize: "11px", color: "#ffe08a", stroke: "#000000", strokeThickness: 3, resolution: 2,
+        }).setOrigin(0.5, 1).setDepth(y),
+      );
+    }
+    // NPCs do catálogo (M1-03): parados de frente, com nome e título. Falar com eles vem no M1-04/M1-07
+    this.npcSprites = [];
+    for (const n of this.maps[id].npcs) {
+      const def = npcById(n.id);
+      if (!def) continue;
+      const look = this.hdLook(def.sprite, undefined, 1);
+      const x = px(n.x), y = py(n.y);
+      const spr = this.add.sprite(x, y, look.key, this.stand(look.key, 0)).setOrigin(0.5, 1).setScale(look.sprScale).setDepth(y);
+      this.npcSprites.push({ spr, sprite: def.sprite });
+      const top = y - spr.displayHeight;
+      this.mapObjects.push(
+        this.add.ellipse(x, y - 3, 22, 8, 0x000000, 0.3).setDepth(y - 1), spr,
+        this.add.text(x, top - 2, def.name, {
+          fontFamily: PIXEL_FONT, fontSize: "11px", color: "#ffe08a", stroke: "#000000", strokeThickness: 3, resolution: 2,
+        }).setOrigin(0.5, 1).setDepth(y),
+        this.add.text(x, top - 14, def.title, {
+          fontFamily: PIXEL_FONT, fontSize: "9px", color: "#c9c4da", stroke: "#000000", strokeThickness: 3, resolution: 2,
         }).setOrigin(0.5, 1).setDepth(y),
       );
     }

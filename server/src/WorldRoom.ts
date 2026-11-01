@@ -6,7 +6,7 @@ import { Client, ServerError } from "@colyseus/core";
 import { GameRoom } from "./GameRoom";
 import { WorldState, Player, Monster, Bag, type DeathReport, type Interact } from "./schema";
 import {
-  walkable, nearestWalkable, inPZ, type GameMap,
+  walkable, nearestWalkable, resumeAt, inPZ, type GameMap,
   PARTY_MAX, PARTY_SHARE_RANGE, PARTY_SHARE_BONUS, PARTY_LEVEL_RATIO, PARTY_INVITE_MS,
   INVASION, PVP_MIN_LEVEL, PVP_DAMAGE, PVP_LOCK_MS, SKULL_PER_KILL_MS, SKULL_MAX_MS, SKULL_ITEM_LOSS, SKULL_GOLD_LOSS, RECALL_COMBAT_MS, RECALL_COOLDOWN_MS, TRAVEL,
   CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir,
@@ -403,7 +403,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.hp = Math.max(1, Math.min(saved.hp ?? p.maxHp, p.maxHp));
     p.rei = Math.min(saved.rei ?? p.maxRei, p.maxRei);
     p.map = saved.map && MAPS[saved.map] ? saved.map : HOME.id;
-    const pos = walkable(mapOf(p), saved.x, saved.y) ? saved : (p.map = HOME.id, TEMPLE);
+    // tile salvo que virou parede (NPC sólido posto depois): o andável mais perto no mesmo mapa; sem lugar, o templo
+    const pos = resumeAt(mapOf(p), saved.x, saved.y) ?? (p.map = HOME.id, TEMPLE);
     p.x = pos.x;
     p.y = pos.y;
     return p;
