@@ -50,6 +50,10 @@ describe("morte na Invasão de Hollows (#39)", () => {
       if (spot) break;
     }
     expect(spot).toBeDefined();
+    // os outros Hollows da invasão (12 num anel em volta do templo) também correm para o jogador: tira-os,
+    // para o golpe ser do invasor escolhido e o teste não depender de quem chega primeiro
+    for (const o of [...room.state.monsters.values()] as any[])
+      if (o.invader && !o.world && o !== killer) { room.state.monsters.delete(o.id); room.monsterAt.delete(tileKey(o.map, o.x, o.y)); }
 
     // inventário cheio de poções: com a perda de 10% por espaço, algum espaço sumiria
     sp.inv = sp.inv.map(() => ({ id: "pocao_vida", qty: 5 }));
@@ -63,6 +67,7 @@ describe("morte na Invasão de Hollows (#39)", () => {
     const report = await once<{ exp: number; gold: number; items: string[]; by: string; invasion?: boolean }>(world, "death");
     // quem matou foi o invasor escolhido: se não for, a falha aponta a causa real em vez de "perdeu itens"
     expect(report.by).toBe(MONSTERS[killer.kind].name);
+    room.endInvasion(false); // o próximo teste começa uma invasão nova
     return { world, sp, report, expBefore, equipBefore };
   }
 
