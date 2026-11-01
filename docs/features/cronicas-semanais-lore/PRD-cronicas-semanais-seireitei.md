@@ -3,7 +3,7 @@
 | Metadado | Detalhe |
 | :--- | :--- |
 | **Feature** | NPCs do Seireitei e Crônicas Históricas Semanais |
-| **Status** | Proposto. Pontos do §8 decididos por Rafael em 31/10/2026; falta a aprovação do PRD e dos ADRs pelas duas pessoas para "Aceito" |
+| **Status** | Aceito em 01/11/2026 por Rafael e Waldir: Waldir aprovou o PR #6, que pedia o aceite do PRD e dos ADRs ([revisão](https://github.com/bleachbr/bleach-idle/pull/6#pullrequestreview-5727591162)); Rafael registrou o aceite no PR que marca este status. Pontos do §8 decididos em 31/10/2026 |
 | **Autores** | Time de Engenharia & Game Design Bleach Idle |
 | **Alvo** | Milestone 1 (o repositório não usa tags de versão) |
 
@@ -95,7 +95,7 @@ No mapa `soul.tmj`, a área segura (PZ) central ao redor do portal Senkaimon rec
 | NPC ID | Nome Visível | Título do NPC | Sprite Base | Posição no Mapa | Função |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `npc_cronista` | **Maki** | *Cronista do Gotei 13* | `rukia__haori` | `x: 21, y: 14` | NPC principal: apresenta a crônica semanal ativa, conta os detalhes históricos e entrega a missão da semana. |
-| `npc_shunsui` | **Shunsui Kyōraku** | *Capitão da 8ª Divisão* | `byakuya` (com tint/chapéu) | `x: 26, y: 13` | Comentários descontraídos sobre o estado do Seireitei, diálogos reflexivos sobre batalhas passadas e dicas de combate. |
+| `npc_shunsui` | **Shunsui Kyōraku** | *Capitão da 8ª Divisão* | `shunsui` (jogável desde o R-01) | `x: 26, y: 13` | Comentários descontraídos sobre o estado do Seireitei, diálogos reflexivos sobre batalhas passadas e dicas de combate. |
 | `npc_sentinela` | **Sentinela do Seireitei** | *13ª Divisão* | `renji__haori` | `x: 23, y: 16` | Informações sobre a segurança do portal Senkaimon, alertas de invasão e ambientação militar. |
 
 ---
@@ -141,7 +141,7 @@ No mapa `soul.tmj`, a área segura (PZ) central ao redor do portal Senkaimon rec
 
 ## 8. Pontos em aberto, conferidos contra o código (31/10/2026)
 
-Todos fechados em 31/10/2026 por Rafael, que seguiu as sugestões da revisão (o item 1 foi ajustado na revisão adversarial). Falta a aprovação do PRD e dos ADRs pelas duas pessoas (M1-00).
+Todos fechados em 31/10/2026 por Rafael, que seguiu as sugestões da revisão (o item 1 foi ajustado na revisão adversarial). PRD e ADRs aceitos pelas duas pessoas em 01/11/2026 (M1-00).
 
 | # | O que o documento assume | O que o código mostra | Decisão necessária |
 | :-- | :--- | :--- | :--- |
