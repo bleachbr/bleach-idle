@@ -181,8 +181,10 @@ export class WorldRoom extends GameRoom<WorldState> {
         // botão único (celular): a técnica mais forte que estiver pronta
         const t = this.targetOf(p) ?? this.nearestMonster(p, CHARS[p.charId].skill.range);
         if (!t) return this.log(p, "Nenhum alvo ao alcance.");
-        for (let i = TECH_SLOTS.length - 1; i >= 0; i--) if (this.trySkill(p, t, now, false, i) === null) return;
-        this.log(p, "Nenhuma técnica pronta (recarga, reiatsu ou alcance).");
+        // sem nenhuma pronta, mostra o motivo da última tentada (a técnica 1, que todos têm)
+        let why: string | null = null;
+        for (let i = TECH_SLOTS.length - 1; i >= 0; i--) if ((why = this.trySkill(p, t, now, false, i)) === null) return;
+        this.log(p, `Nenhuma técnica pronta. ${why}`);
       } else if (ti >= 0) {
         const tech = techniqueFor(p.charId, ti, p.form);
         if (!tech) return;
