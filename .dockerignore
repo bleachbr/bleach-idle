@@ -13,3 +13,7 @@ server/dev.env
 .git
 .claude
 .kiro
+.env
+.env.*
+**/.env
+**/.env.*

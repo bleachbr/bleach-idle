@@ -42,6 +42,7 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 | Item | Situação Atual | Impacto / Necessidade |
 | :--- | :--- | :--- |
 | **Recuperação de Senha por E-mail** | As contas possuem apenas `login` e `senha` criptografada com scrypt. | Se o jogador esquecer a senha, não há como recuperar o acesso sem intervenção manual no banco SQLite. |
+| **Operação do deploy VPS (F-13)** | HTTPS e handshake WebSocket validados; secrets configurados; workflow ainda na branch local. | Integrar na main e testar Actions; exercitar persistência entre recriações e restauração isolada; configurar cópia externa de backups e conferir fingerprint SSH pelo console do provedor. Não há rollback automático em falha de healthcheck; monitorar acúmulo de imagens. |
 | **Rate Limiter em Memória** | O bloqueio por tentativas excessivas de login reside na memória do processo Node.js. | Em caso de reinício do servidor ou clusterização com múltiplos workers, os limites de tentativas são zerados. |
 | **Multi-servidores / Sharding** | Um único processo gerencia todo o mundo e todas as conexões. | Para suportar centenas de jogadores simultâneos sem aumento de latência no tick de 100ms, será necessário particionar salas por mapa (`karakura`, `soul`, `hueco`, etc.). |
 

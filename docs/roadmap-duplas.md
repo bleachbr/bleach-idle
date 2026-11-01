@@ -29,7 +29,7 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 
 | Ordem | ID | Entrega | Tam. | Depende de | Spec | Obs. |
 | :-- | :-- | :--- | :-- | :--- | :-- | :--- |
-| 1 | F-13 | Primeiro deploy com HTTPS atrás do Caddy e restauração de backup testada | M | — | não | Destrava o portão G1; decisão de servidor e domínio pendente |
+| 1 | F-13 | Primeiro deploy com HTTPS atrás do proxy existente e restauração de backup testada | M | — | não | Waldir: `bleach.acoplum.com` online com HTTPS e WebSocket; Compose isolado e GitHub Secrets configurados. Workflow em `chore/f-13-deploy-vps` aguarda integração na main; restauração de backup ainda pendente |
 | 2 | F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | — | não | |
 | 3 | F-14 | Limite de criação de contas por IP | P | F-03 (feito) | não | |
 | 4 | F-05 | Contêiner roda como `node`, não root | P | — | não | Conferir permissão de `/data` |

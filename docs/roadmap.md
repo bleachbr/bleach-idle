@@ -94,7 +94,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once` no Vitest; limpar o ruído do Vitest. Nos cenários, rotina: ao mexer num com `sleep`, troque-o (Q2) | M | | Feito | Q2, Q3 |
 | F-11 | CI: job de gitleaks, `ubuntu-24.04` fixo, Node 22 e 24 e `actions` na v7 | M | | Pronto | Q5, Q8, Q9, Q10 |
 | F-12 | Upgrade maior do Colyseus (0.15 para 0.18) | G | spec | Precisa de spec | S5 |
-| F-13 | Primeiro deploy com HTTPS atrás do Caddy e restauração de backup testada | M | | Decisão pendente (servidor e domínio) | DEPLOY.md |
+| F-13 | Primeiro deploy com HTTPS atrás do proxy existente e restauração de backup testada | M | | Deploy HTTPS realizado; falta testar restauração e workflow na main | DEPLOY.md; `bleach.acoplum.com` online, Nginx compartilhado e workflow após CI na branch `chore/f-13-deploy-vps` |
 | F-14 | Limite de criação de contas por IP | P | F-03 | Pronto | DEPLOY.md |
 | F-15 | Balanceamento dos mapas avançados (`balance.ts`) | M | | Pronto | DEPLOY.md |
 
