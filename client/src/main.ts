@@ -3,7 +3,7 @@ import Phaser from "phaser";
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
+import { CHARS, ITEMS, isPureLoot, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { bindEvents } from "./events";
@@ -255,6 +255,7 @@ function start(room: Room<any>, myId: string) {
     : "Conexão perdida. Recarregue a página para entrar de novo.", "sys", "chat", "sys"));
 
   bindAuto(room);
+  bindLootFilter(room);
   bindParty(room, myId);
   syncClock(room);
   const chatin = $<HTMLInputElement>("#chatin");
@@ -785,6 +786,45 @@ function bindAuto(room: Room<any>) {
     r.oninput = () => ($(`#${id}-val`).textContent = r.value === "0" ? "desligado" : `${r.value}%`);
     r.onchange = () => room.send("auto", { [key]: Number(r.value) });
   }
+}
+
+// ---------- filtro de loot do Auto Helper (M3-03) ----------
+
+const LOOT_CHOICES = [["take", "Pegar"], ["sell", "Vender"], ["ignore", "Ignorar"]] as const;
+
+function bindLootFilter(room: Room<any>) {
+  let data: { rules: Record<string, string>; seen: string[]; keep: string[] } = { rules: {}, seen: [], keep: [] };
+  const list = $("#loot-list");
+  const send = (rules: Record<string, string>) => room.send("lootRules", { rules });
+  const render = () => {
+    const ids = data.seen.filter((id) => ITEMS[id]).sort((a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name, "pt-BR"));
+    if (!ids.length) {
+      list.innerHTML = `<p class="hint">Os itens aparecem aqui depois que você derrota o monstro que os deixa cair.</p>`;
+      return;
+    }
+    list.innerHTML = ids.map((id) => {
+      const it = ITEMS[id];
+      const cur = data.rules[id] ?? "take";
+      const keep = data.keep.includes(id);
+      const btns = LOOT_CHOICES.map(([v, label]) => `<button type="button" data-item="${id}" data-rule="${v}" aria-pressed="${cur === v}">${label}</button>`).join("");
+      return `<div class="loot-row">${iconHtml(it.icon)}<span class="loot-name">${escHtml(it.name)}${keep ? `<small> · missão: sempre pego</small>` : ""}</span><span class="loot-choice" role="group" aria-label="${escHtml(it.name)}">${btns}</span></div>`;
+    }).join("");
+    list.querySelectorAll<HTMLButtonElement>("[data-rule]").forEach((b) => (b.onclick = () => {
+      const rules = { ...data.rules };
+      if (b.dataset.rule === "take") delete rules[b.dataset.item!];
+      else rules[b.dataset.item!] = b.dataset.rule!;
+      send(rules);
+    }));
+  };
+  room.onMessage("lootRules", (m: typeof data) => { data = m; render(); });
+  // abrir pede a lista de novo: os itens vistos crescem a cada espécie nova abatida
+  $<HTMLDetailsElement>("#loot-filter").addEventListener("toggle", (e) => { if ((e.target as HTMLDetailsElement).open) room.send("lootRules", {}); });
+  $("#loot-sell-pure").onclick = () => {
+    const rules = { ...data.rules };
+    for (const id of data.seen) if (ITEMS[id] && isPureLoot(ITEMS[id])) rules[id] = "sell";
+    send(rules);
+  };
+  $("#loot-take-all").onclick = () => send({});
 }
 
 function chatLine(text: string, cls: string, kind: "chat" | "log" = "chat", ch?: string, from = ""): ChatTab[] {

@@ -31,6 +31,7 @@ const KNOWN_ROOM_MESSAGES = [
   "market",
   "ranking",
   "book",
+  "lootRules",
   "dangai",
   "shopData",
   "bag",

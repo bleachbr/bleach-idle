@@ -14,7 +14,7 @@ import {
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, outfitFits, QUEST_BY_ID, huntKinds, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
-  rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
+  rollLoot, addItem, isPureLoot, applyLootRules, collectItems, parseLootRules, seenLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
   EVENT_BANNER, EVENT_END_MS, eventLore, type EventBanner, type EventKind, type EventPhase,
   own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
@@ -238,6 +238,17 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (typeof m?.autoRestock === "boolean") p.autoRestock = m.autoRestock;
       if (typeof m?.autoHeal === "number") p.autoHeal = Math.max(0, Math.min(90, Math.round(m.autoHeal)));
     });
+    // filtro de loot (M3-03): o cliente manda o mapa inteiro; item fora do catálogo e valor estranho saem
+    this.handle("lootRules", (c, m: { rules?: unknown }) => {
+      const p = this.me(c);
+      if (!p) return;
+      // sem "rules": só pede a lista de novo (a janela abre e os itens vistos podem ter crescido)
+      if (m?.rules === undefined) return this.sendLootRules(p);
+      const rules = parseLootRules(m?.rules);
+      if (!rules) return this.log(p, "Filtro de loot inválido.");
+      p.lootRules = rules;
+      this.sendLootRules(p);
+    });
     this.handle("chat", (c, m: { text: string }) => {
       const p = this.me(c);
       const text = sanitizeChatText(m?.text);
@@ -302,6 +313,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.sendInv(p);
     this.sendGuild(p);
     this.sendQuests(p);
+    this.sendLootRules(p);
     client.send("dailyReady", { ready: p.prog.daily.last !== dayKey(Date.now()) });
     const unread = mailbox.unreadCount(p.id);
     if (unread) this.log(p, `Você tem ${unread} carta(s) no correio. Use /correio.`);
@@ -372,6 +384,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.rebirths = saved.rebirths ?? 0;
     p.autoTrain = !!saved.autoTrain;
     p.autoSell = !!saved.autoSell;
+    // save antigo ou adulterado: item fora do catálogo e valor estranho saem, e o resto vale
+    p.lootRules = parseLootRules(saved.lootRules) ?? {};
     p.huntSpot = TRAVEL.some((t) => t.id === saved.huntSpot) ? saved.huntSpot! : "";
     p.autoReturn = !!saved.autoReturn;
     p.autoRei = saved.autoRei ?? 0;
@@ -1200,7 +1214,12 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.dailyStep(p, "gold", loot.gold);
     const got: string[] = [];
     let overflow: Slot[] = [];
-    for (const s of loot.items) {
+    // filtro de loot (M3-03): vender vira kan na hora, ignorar fica no chão de ninguém; item de missão de coleta é sempre pego
+    const filtered = applyLootRules(loot.items, p.lootRules, collectItems(p.quests.active));
+    for (const s of filtered.sell) got.push(`${s.qty}x ${ITEMS[s.id].name} (vendido)`);
+    p.gold += filtered.gold;
+    p.hunt.gold += filtered.gold;
+    for (const s of filtered.take) {
       p.hunt.items[s.id] = (p.hunt.items[s.id] ?? 0) + s.qty;
       if (!p.online) p.offItems[s.id] = (p.offItems[s.id] ?? 0) + s.qty;
       const n = addItem(p.inv, s.id, s.qty);
@@ -1238,6 +1257,12 @@ export class WorldRoom extends GameRoom<WorldState> {
   private open(p: Player, kind: Interact) {
     if (kind === "shop") this.tutorial(p, "shop");
     for (const c of this.clients) if (this.sessions.get(c.sessionId) === p.id) c.send("open", { kind });
+  }
+
+  /** Regras do filtro de loot e os itens que o personagem já viu cair (as espécies que já abateu), para a janela. */
+  private sendLootRules(p: Player) {
+    const seen = [...new Set([...seenLoot(p.prog.bestiary), ...Object.keys(p.lootRules)])];
+    this.sendTo(p, "lootRules", { rules: p.lootRules, seen, keep: [...collectItems(p.quests.active)] });
   }
 
   private sendInv(p: Player) {
@@ -3402,7 +3427,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       name: p.name, charId: p.charId, level: p.level, exp: p.exp, hp: p.hp, rei: Math.round(p.rei), map: p.map, x: p.x, y: p.y,
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
       autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil, rebirths: p.rebirths, prog: p.prog, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
-      autoTrain: p.autoTrain, autoSell: p.autoSell, ignore: p.ignore, huntSpot: p.huntSpot, autoReturn: p.autoReturn, autoRei: p.autoRei, autoBankai: p.autoBankai, autoBox: p.autoBox, autoRestock: p.autoRestock, cos: this.cosOf(p), zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
+      autoTrain: p.autoTrain, autoSell: p.autoSell, lootRules: p.lootRules, ignore: p.ignore, huntSpot: p.huntSpot, autoReturn: p.autoReturn, autoRei: p.autoRei, autoBankai: p.autoBankai, autoBox: p.autoBox, autoRestock: p.autoRestock, cos: this.cosOf(p), zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
       offline: p.online ? undefined : snapshotOffline(p),
     };
   }
