@@ -8,11 +8,11 @@ import { WorldState, Player, Monster, Bag, type DeathReport, type Interact } fro
 import {
   walkable, nearestWalkable, resumeAt, inPZ, type GameMap,
   PARTY_MAX, PARTY_SHARE_RANGE, PARTY_SHARE_BONUS, PARTY_LEVEL_RATIO, PARTY_INVITE_MS,
-  INVASION, PVP_MIN_LEVEL, PVP_DAMAGE, PVP_LOCK_MS, SKULL_PER_KILL_MS, SKULL_MAX_MS, SKULL_ITEM_LOSS, SKULL_GOLD_LOSS, RECALL_COMBAT_MS, RECALL_COOLDOWN_MS, TRAVEL,
+  INVASION, PVP_MIN_LEVEL, PVP_DAMAGE, PVP_LOCK_MS, SKULL_PER_KILL_MS, SKULL_MAX_MS, RECALL_COMBAT_MS, RECALL_COOLDOWN_MS, TRAVEL,
   CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir,
-  expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
+  expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
-  DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, outfitFits, QUEST_BY_ID, huntKinds, MAX_ACTIVE_QUESTS,
+  lookOf, outfitFits, QUEST_BY_ID, huntKinds, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
@@ -22,7 +22,7 @@ import {
   evaluateBossPhase,
   newArenaProgress, getArenaTier, validateStepInterval, ARENA_MIN_LEVEL, ARENA_COUNTDOWN_SEC, ARENA_MATCH_TIMEOUT_SEC, ARENA_WIN_GOLD, ARENA_WIN_SEASON_PTS, type ArenaProgress, type DuelOutcome,
   PATROL_SECTORS, PATROL_DURATIONS, calculatePatrolRewards, canClaimPatrol, patrolRemainingMs, type PatrolState,
-  OFFLINE_MAX_MS, buildOfflineReport,
+  OFFLINE_MAX_MS, buildOfflineReport, deathPenalty,
 } from "../../shared/src";
 import * as arenaMgr from "./arenaManager";
 import { findPath, type Pt } from "./path";
@@ -681,7 +681,8 @@ export class WorldRoom extends GameRoom<WorldState> {
           t.hp -= dmg;
           t.lastCombatAt = now;
           this.broadcast("fx", { t: "dmg", id: t.id, v: dmg, from: m.id });
-          if (t.hp <= 0) this.killPlayer(t, def.name);
+          // Hollow da invasão ativa (não o chefe mundial, que também é `invader`): penalidade reduzida (#39)
+          if (t.hp <= 0) this.killPlayer(t, def.name, "", m.invader && !m.world && !!this.invasion);
         }
       }
     } else if (!m.path.length && now >= m.nextWanderAt) {
@@ -865,17 +866,19 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.giveLoot(killer, m.kind, m);
   }
 
-  private killPlayer(p: Player, by: string, killerId = "") {
+  /** `invasionMob`: morto direto por um Hollow da invasão ativa (atenuante do #39, `deathPenalty`) */
+  private killPlayer(p: Player, by: string, killerId = "", invasionMob = false) {
     if (p.devGod) { p.hp = p.maxHp; return; }
     if (p.map === "dangai") return this.dangaiDeath(p, by);
     const deathAt = { map: p.map, x: p.x, y: p.y };
     const dropped: Slot[] = [];
     // Amuleto da Alma (o "Band of Loss" daqui): protege XP, itens e dinheiro, e se desfaz
     const skulled = p.skullUntil > Date.now();
-    const prot = !skulled && p.equip.amulet === "amuleto_alma";
-    const itemLoss = skulled ? SKULL_ITEM_LOSS : DEATH_ITEM_LOSS;
+    const pen = deathPenalty({ skulled, amulet: p.equip.amulet === "amuleto_alma", invasionMob });
+    const prot = pen.protected;
+    const itemLoss = pen.item;
     if (prot) delete p.equip.amulet;
-    const loss = prot ? 0 : Math.floor(p.exp * DEATH_EXP_LOSS);
+    const loss = prot ? 0 : Math.floor(p.exp * pen.exp);
     const items: string[] = [];
     let goldLost = 0;
     if (!prot) {
@@ -887,7 +890,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.inv.forEach((sl, i) => {
         if (sl && Math.random() < itemLoss) { items.push(`${sl.qty}x ${ITEMS[sl.id].name}`); dropped.push({ ...sl }); p.inv[i] = null; }
       });
-      goldLost = Math.floor(p.gold * (skulled ? SKULL_GOLD_LOSS : DEATH_GOLD_LOSS));
+      goldLost = Math.floor(p.gold * pen.gold);
       p.gold -= goldLost;
       // estilo Tibia: o que se perde fica no corpo; em PvP, quem matou tem prioridade
       if (dropped.length || goldLost)
@@ -919,7 +922,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     const after = back ? "O Auto Helper volta à caça." : p.autoReturn && p.deathTimes.length >= 3 ? "3 mortes em 10 min: Auto Hunt desligado." : "Auto Hunt desligado.";
     this.log(p, prot
       ? `Você foi morto por ${by}. O Amuleto da Alma se desfez e protegeu XP e itens. ${after}`
-      : `Você foi morto por ${by}: perdeu ${loss} XP, ${goldLost} kan${items.length ? " e " + items.join(", ") : ""}. ${after}`);
+      : `Você foi morto por ${by}: perdeu ${loss} XP, ${goldLost} kan${items.length ? " e " + items.join(", ") : ""}.${pen.invasion ? " Na invasão não se perdem itens, e a XP e o kan perdidos caem pela metade." : ""} ${after}`);
     this.sendInv(p);
     db.save(p.id, this.toSave(p), true); // morte não espera o save periódico
   }

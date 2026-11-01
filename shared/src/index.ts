@@ -18,3 +18,4 @@ export * from "./bossPhases";
 export * from "./arena";
 export * from "./patrols";
 export * from "./offlineReport";
+export * from "./deathPenalty";
