@@ -6,6 +6,7 @@ import { Client, type Room } from "colyseus.js";
 import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
+import { passTierCards } from "./passTiers";
 import { bindEvents } from "./events";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
@@ -394,13 +395,15 @@ function bindSeason(room: Room<any>, closeWindows: (keep?: string) => void) {
       <p class="hint">Pontos: a cada ${SEASON_PTS.killEvery} abates +${SEASON_PTS.kill} (hoje ${st.killPts}/${st.killCap}) · chefe +${SEASON_PTS.boss} · missão diária +${SEASON_PTS.mission} · recompensa diária +${SEASON_PTS.daily} · chefe mundial +${SEASON_PTS.worldBoss}</p>
       <button type="button" class="claim" ${tier > st.claimed ? "" : `disabled title="Suba de nível no passe (${into}/${st.perTier} pontos) para liberar novos prêmios"`}>${tier > st.claimed ? `Pegar ${tier - st.claimed} ${tier - st.claimed === 1 ? "prêmio" : "prêmios"}` : "Tudo pego até agora"}</button>`;
     $("#pass-head").querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("seasonClaim");
-    const cells: string[] = [];
-    for (let t = 1; t <= st.tiers; t++) {
-      const cls = t <= st.claimed ? "got" : t <= tier ? "ready" : "";
-      cells.push(`<div class="tier ${cls}${seasonReward(t).cos ? " big" : ""}"><small>${t}</small><div>${prize(t)}</div></div>`);
-    }
-    cells.push(`<div class="tier${tier > st.tiers ? " ready" : ""}"><small>${st.tiers}+</small><div>A cada nível a mais:<br>${prize(st.tiers + 1)}</div></div>`);
+    const cells = passTierCards(st).map((c, i) => {
+      const body = `<small>${c.label}</small><span class="prize">${i < st!.tiers ? prize(i + 1) : `A cada nível a mais:<br>${prize(st!.tiers + 1)}`}</span>`;
+      const cls = `tier ${c.cls}${i < st!.tiers && seasonReward(i + 1).cos ? " big" : ""}`;
+      // pronto: botão que resgata (o mesmo seasonClaim de cima); os outros explicam no tooltip (#34)
+      return c.claimable ? `<button type="button" class="${cls}" title="${c.hint}" data-claim>${body}</button>`
+        : `<div class="${cls}" title="${c.hint}">${body}</div>`;
+    });
     $("#pass-body").innerHTML = `<div class="tiers">${cells.join("")}</div>`;
+    $("#pass-body").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = () => room.send("seasonClaim")));
     // rola até o próximo prêmio
     $("#pass-body").querySelector<HTMLElement>(".tier.ready:not(.got), .tier:not(.got)")?.scrollIntoView({ block: "nearest", inline: "center" });
   };
