@@ -1069,7 +1069,7 @@ export class GameScene extends Phaser.Scene {
     }
     ctx.setLineDash([]);
     for (const f of this.minimapFixed) if (f.kind !== "pz") this.minimapIcon(ctx, f.kind, cx(f.x), cx(f.y), f.kind === "gate" && target.elsewhere);
-    for (const m of this.room.state.monsters.values()) if (m.map === this.mapId) dot(m.x, m.y, kinds.has(m.kind) ? "#ffd84a" : "#ff4a3a");
+    for (const m of this.room.state.monsters.values()) if (m.map === this.mapId) dot(m.x, m.y, kinds.has(m.kind) && (!m.owner || m.owner === this.myId) ? "#ffd84a" : "#ff4a3a");
     for (const p of this.room.state.players.values()) {
       if (p.map !== this.mapId || p.id === this.myId) continue;
       dot(p.x, p.y, me.partyId && p.partyId === me.partyId ? "#7dff8a" : "#6cc0ff", 2);

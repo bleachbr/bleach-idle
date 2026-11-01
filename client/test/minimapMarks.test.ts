@@ -53,4 +53,10 @@ describe("alvo das missões no minimapa", () => {
     expect(areas.length).toBeGreaterThan(0);
     expect(elsewhere).toBe(false);
   });
+
+  it("uma espécie aqui e outra só em outro mapa destaca o portal", () => {
+    const { areas, elsewhere } = targetAreas(map("karakura"), maps, new Set(["hollow_menor", "adjuchas"]));
+    expect(areas.length).toBeGreaterThan(0);
+    expect(elsewhere).toBe(true);
+  });
 });
