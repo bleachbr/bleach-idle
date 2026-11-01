@@ -567,7 +567,8 @@ export class GameScene extends Phaser.Scene {
           // aplicado agora: o nome do status sobe uma vez (os ícones e a cor seguem pelo estado).
           // Sai 200 ms depois do número do dano, que chega no mesmo tick, para não nascerem sobrepostos
           const kind = parseStatusFlags(fx.kind)[0];
-          if (kind) this.time.delayedCall(200, () => { if (v?.c.visible) this.float(v, STATUS_LOOK[kind].label, STATUS_LOOK[kind].text, 10); });
+          // a view pode ter saído (morte, troca de mapa) ou estar oculta (outro mapa) nesses 200 ms
+          if (kind) this.time.delayedCall(200, () => { if (v && this.views.get(v.id) === v && v.c.visible) this.float(v, STATUS_LOOK[kind].label, STATUS_LOOK[kind].text, 10); });
         }
         break;
       case "event":
