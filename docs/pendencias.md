@@ -146,4 +146,4 @@ Números e método em [`baseline.md`](baseline.md). Skill: `performance-servidor
 | [#38](https://github.com/bleachbr/bleach-idle/issues/38) | UX | Adicionar navegação de retorno (Voltar) e indicador de "Lido" nas Crônicas da Loja de Cristais |
 | [#39](https://github.com/bleachbr/bleach-idle/issues/39) | Balance | Avaliar atenuante para penalidade de morte por perda de itens e XP na Invasão de Hollows |
 | [#40](https://github.com/bleachbr/bleach-idle/issues/40) | UX | Adicionar confirmação ou feedback visual imediato ao usar "Zerar contagem" na Caçada do Livro |
-| [#41](https://github.com/bleachbr/bleach-idle/issues/41) | UX | Exibir feedback visual no HUD ao tentar usar poções com HP ou Reiatsu cheios |
+| [#41](https://github.com/bleachbr/bleach-idle/issues/41) | UX | ~~Exibir feedback visual no HUD ao tentar usar poções com HP ou Reiatsu cheios~~ Tratada em `feat/41-pocao-cheia-feedback`: a poção recusada diz o motivo no chat ("HP cheio", "Reiatsu cheio" ou recarga) e sobe um texto curto sobre o personagem; morto, fica a mensagem genérica. |
