@@ -12,7 +12,7 @@ import {
   CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir,
   expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
-  DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
+  DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, huntKinds, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
@@ -1013,11 +1013,7 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   /** tipos de monstro que ainda faltam nas missões de caça ativas (do Kisuke e a diária) */
   private questKinds(p: Player): Set<string> | undefined {
-    const kinds = new Set<string>();
-    for (const [id, prog] of Object.entries(p.quests.active)) {
-      const g = QUEST_BY_ID[id]?.goal;
-      if (g?.type === "kill" && prog < g.count) for (const k of g.monsters) kinds.add(k);
-    }
+    const kinds = huntKinds(p.quests.active);
     // e o monstro da missão diária de caça, enquanto ela não estiver feita
     for (const m of this.dailyOf(p).list) if (m.kind === "kill" && !m.done && m.target) kinds.add(m.target);
     return kinds.size ? kinds : undefined;

@@ -57,6 +57,7 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 | :--- | :--- | :--- |
 | **Filtros Customizados de Loot** | O Auto Helper recolhe tudo e converte em kan via Auto Venda apenas o excedente. | Jogadores de nível alto gostariam de ignorar lixo de monstros fracos e pegar apenas itens raros ou consumíveis específicos. |
 | **Interiores de Edifícios e Andares** | Os edifícios nos mapas são sólidos sem entrada ou interiores exploráveis. | Quartéis do Seireitei, loja do Kisuke e palácios poderiam ter mapas internos dedicados. |
+| **Minimapa sem o alvo das diárias e da Crônica (R-10)** | O minimapa marca só o alvo das missões do Kisuke. O alvo da missão diária de caça fica no servidor (`prog.dm`; o `book` manda só o texto), e o estado da Crônica Semanal ainda não chega ao cliente (M1-04/M1-06). | Mandar o `target` da diária na mensagem que já existe e, quando a Crônica tiver estado no cliente, somar as espécies dela em `questTargetKinds`. |
 
 ---
 

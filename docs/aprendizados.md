@@ -277,6 +277,14 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Problema:** A progressão offline dependia unicamente de deixar o personagem parado no mapa combatendo monstros em loop (Auto Hunt). Não havia como escolher setores temáticos, despachar expedições de vigília em intervalos de 1h a 12h ou receber bônus de cooperação de grupo de forma desacoplada de ticks ativos de combate.
 - **Solução (`shared/src/patrols.ts`, `server/src/WorldRoom.ts`):** Extraímos o catálogo de setores (`PATROL_SECTORS`), as durações válidas (`[1, 4, 8, 12]` h com bônus de eficiência progressivo de até +25%) e o cálculo de recompensas para o pacote compartilhado `shared/src/patrols.ts`. O cálculo de recompensas (`calculatePatrolRewards`) é uma função pura e determinística com gerador pseudo-aleatório baseado em semente (`startedAt`), garantindo que EXP, Kan, fragmentos de Hollow e drops temáticos sejam gerados sem depender do relógio do sistema. No servidor, o estado reside em `Progress.patrol` sem timers em segundo plano — a validação de conclusão ocorre apenas sob demanda no resgate (`patrolClaim`), economizando CPU e memória.
 
+## Minimapa com marcadores: canvas maior que o mapa (R-10)
+
+- O minimapa desenhava 1 pixel por tile e o CSS esticava o canvas até 128 px. Nessa resolução um marcador é um ponto de 1 a 3 px, e forma não se distingue. Agora o fundo continua num canvas de 1 px por tile, e o minimapa o desenha `MINIMAP_K` (4) vezes maior com `imageSmoothingEnabled = false`. Os marcadores ganham forma (losango, quadrado, cruz, círculo) e não dependem só da cor.
+- Com o canvas maior que a área na tela, o CSS passa a reduzir em vez de ampliar. `image-rendering: pixelated` na redução descarta linhas inteiras de pixel (some o contorno de 1 px), então saiu do `#minimap`: o pixelado do fundo já vem do próprio canvas.
+- O clique converte pela largura do mapa (`data.width`), não pela do canvas, porque as duas deixaram de ser iguais.
+- Na praça de Karakura, loja, depot, portal e templo ficam a 2 ou 3 tiles um do outro. Com raio de 1,5 tile os ícones viravam uma mancha; com ~1 tile se separam. Conferido numa prévia offline (`art/work/minimap_preview.py`, fora do git) nas larguras de 128 e 96 px; a prévia reduz com Lanczos, não com a reamostragem do navegador, então o teste no navegador continua necessário.
+- A primeira mensagem `quests` chega antes de a cena existir: quem precisa dela depois (o minimapa) registra o ouvinte e pede de novo (`room.send("quests")`). O colyseus.js 0.15 aceita mais de um ouvinte por tipo (nanoevents).
+
 ## Fluxo de publicação: uma branch e um PR por entrega
 
 - **Regra (Waldir, 31/10/2026):** depois de acumular 38 commits na `main` local e publicá-los direto, a decisão passou a ser publicar cada entrega em branch própria com PR. Reduz o raio de conflito (o remoto já divergia com o F-10 duplicado) e dá o ponto de revisão adversarial previsto no fluxo do roadmap.
