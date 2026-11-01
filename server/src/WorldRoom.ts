@@ -12,7 +12,7 @@ import {
   CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir,
   expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
-  DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, QUEST_BY_ID, huntKinds, MAX_ACTIVE_QUESTS,
+  DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, outfitFits, QUEST_BY_ID, huntKinds, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
@@ -995,8 +995,14 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.hp = Math.min(p.hp, p.maxHp);
     p.rei = Math.min(p.rei, p.maxRei);
     p.stepMs = CHARS[p.charId].forms[p.form].stepMs;
-    p.look = lookOf(p.equip);
+    p.look = this.lookFor(p);
     this.updatePower(p);
+  }
+
+  /** Visual no mapa: o traje da Loja de Cristais (R-13), se o personagem tem a folha dele, cobre o do equipamento. */
+  private lookFor(p: Player): string {
+    const outfit = own(COSMETIC, p.cosOutfit)?.look;
+    return outfit && outfitFits(p.charId, outfit) ? outfit : lookOf(p.equip);
   }
 
   /** Recalcula o Poder; ao subir de título, avisa e solta o efeito na tela. */
@@ -2998,6 +3004,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     if (p.cosTitle) c.title = p.cosTitle;
     if (p.cosName) c.name = p.cosName;
     if (p.cosPet) c.pet = p.cosPet;
+    if (p.cosOutfit) c.outfit = p.cosOutfit;
     return c;
   }
 
@@ -3009,6 +3016,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.cosTitle = ok(c.title, ["title", "lore"]);
     p.cosName = ok(c.name, ["name"]);
     p.cosPet = ok(c.pet, ["pet"]);
+    p.cosOutfit = ok(c.outfit, ["outfit"]);
   }
 
   /** Cristais grátis do jogo (vão para a conta, valem para todos os personagens). */
@@ -3087,6 +3095,7 @@ export class WorldRoom extends GameRoom<WorldState> {
         const kind = typeof m?.kind === "string" ? m.kind : "";
         if (kind === "aura") p.cosAura = ""; else if (kind === "fx") p.cosFx = ""; else if (kind === "title") p.cosTitle = "";
         else if (kind === "name") p.cosName = ""; else if (kind === "pet") p.cosPet = "";
+        else if (kind === "outfit") { p.cosOutfit = ""; p.look = this.lookFor(p); }
         return this.sendShop(p);
       }
       const owned = p.accountId ? db.wallet(p.accountId).owned : [];
@@ -3103,6 +3112,12 @@ export class WorldRoom extends GameRoom<WorldState> {
     else if (kind === "title" || kind === "lore") p.cosTitle = id;
     else if (kind === "name") p.cosName = id;
     else if (kind === "pet") p.cosPet = id;
+    else if (kind === "outfit") {
+      p.cosOutfit = id;
+      p.look = this.lookFor(p);
+      const look = COSMETIC[id].look ?? "";
+      if (!outfitFits(p.charId, look)) this.log(p, `${COSMETIC[id].name} não muda o visual de ${CHARS[p.charId].name}; vale nos outros personagens da conta.`);
+    }
   }
 
   private registerBookMessages() {

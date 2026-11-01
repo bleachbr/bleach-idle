@@ -141,8 +141,10 @@ export class GameScene extends Phaser.Scene {
 
   /** Liga ou desliga o modo HD. Na primeira vez baixa as folhas (só quem liga paga o download). */
   setHd(on: boolean, done?: (ok: boolean) => void) {
+    this.hdWanted = on;
     if (!on) return this.applyHd(false), done?.(true);
-    const missing = Object.entries(SPRITES).filter(([k, d]) => !d.noHd && !this.textures.exists(HD + k));
+    // trajes (lazy) só entram quando já foram pedidos (a folha de pixel pode ainda estar baixando); os outros, todos
+    const missing = Object.entries(SPRITES).filter(([k, d]) => !d.noHd && (!d.lazy || this.lazyAsked.has(k)) && !this.textures.exists(HD + k));
     if (!missing.length) return this.applyHd(true), done?.(true);
     for (const [key, def] of missing)
       this.load.spritesheet(HD + key, `/assets/sprites_hd/${key}.webp`, { frameWidth: def.frame * HD_K, frameHeight: def.frame * HD_K });
@@ -154,11 +156,41 @@ export class GameScene extends Phaser.Scene {
         if (!this.textures.exists(hk)) continue;
         this.textures.get(hk).setFilter(Phaser.Textures.FilterMode.LINEAR);
         for (let d = 0; d < 4; d++)
-          this.anims.create({ key: `${hk}-${d}`, frames: this.anims.generateFrameNumbers(hk, { start: d * this.cols(hk), end: d * this.cols(hk) + this.cols(hk) - 1 }), repeat: -1 });
+          if (!this.anims.exists(`${hk}-${d}`)) // a folha HD de um traje pode ter chegado antes pelo loadLazy
+            this.anims.create({ key: `${hk}-${d}`, frames: this.anims.generateFrameNumbers(hk, { start: d * this.cols(hk), end: d * this.cols(hk) + this.cols(hk) - 1 }), repeat: -1 });
       }
-      this.applyHd(true);
+      // desligou o HD no meio do download: as folhas ficam guardadas, mas a tela continua em pixel
+      if (this.hdWanted) this.applyHd(true);
       done?.(true);
     });
+    this.load.start();
+  }
+
+  /** folhas lazy já pedidas (baixando, prontas ou com erro): cada uma só é pedida uma vez */
+  private lazyAsked = new Set<string>();
+  /** o jogador ligou o HD (as folhas HD podem ainda estar baixando; `hd` só vira true no fim) */
+  private hdWanted = false;
+
+  /** Baixa a folha de um traje (e a HD, com o modo HD ligado) e redesenha quem já está na tela. */
+  private loadLazy(key: string) {
+    if (this.lazyAsked.has(key)) return;
+    this.lazyAsked.add(key);
+    const def = SPRITES[key];
+    this.load.spritesheet(key, `/assets/sprites/${key}.png`, { frameWidth: def.frame, frameHeight: def.frame });
+    const keys = [key];
+    if (this.hdWanted && !def.noHd) {
+      keys.push(HD + key);
+      this.load.spritesheet(HD + key, `/assets/sprites_hd/${key}.webp`, { frameWidth: def.frame * HD_K, frameHeight: def.frame * HD_K });
+    }
+    for (const k of keys)
+      this.load.once(`filecomplete-spritesheet-${k}`, () => {
+        if (k.startsWith(HD)) this.textures.get(k).setFilter(Phaser.Textures.FilterMode.LINEAR);
+        for (let d = 0; d < 4; d++)
+          if (!this.anims.exists(`${k}-${d}`))
+            this.anims.create({ key: `${k}-${d}`, frames: this.anims.generateFrameNumbers(k, { start: d * this.cols(k), end: d * this.cols(k) + this.cols(k) - 1 }), repeat: -1 });
+        this.room.state.players.forEach((p: any, id: string) => { const v = this.views.get(id); if (v) this.refreshLook(v, p); });
+      });
+    // sem a folha (erro no download) o personagem continua com a da forma base até recarregar a página
     this.load.start();
   }
 
@@ -225,7 +257,7 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     for (const [key, def] of Object.entries(SPRITES))
-      this.load.spritesheet(key, `/assets/sprites/${key}.png`, { frameWidth: def.frame, frameHeight: def.frame });
+      if (!def.lazy) this.load.spritesheet(key, `/assets/sprites/${key}.png`, { frameWidth: def.frame, frameHeight: def.frame });
     this.load.image(SHOP_SPRITE, `/assets/sprites/${SHOP_SPRITE}.png`);
     this.load.spritesheet("items", "/assets/items.png", { frameWidth: 32, frameHeight: 32 });
     for (const [name, f] of Object.entries(FX)) this.load.spritesheet(`fx_${name}`, `/assets/fx/${name}.png`, { frameWidth: f.cell, frameHeight: f.cell });
@@ -288,6 +320,7 @@ export class GameScene extends Phaser.Scene {
     // sem a folha do estágio (arte ainda não feita), usa a do estágio anterior
     const prev = CHARS[e.charId].forms.slice(0, e.form).reverse().map((f) => f.sprite);
     const looks = [look, ...look.split("_")].filter(Boolean).map((l) => spriteKey(form.sprite, l)).filter((k) => k !== form.sprite);
+    for (const k of looks) if (SPRITES[k]?.lazy && !this.textures.exists(k)) this.loadLazy(k);
     const tries = [...looks, form.sprite, ...prev];
     return this.hdLook(tries.find((k) => this.textures.exists(k)) ?? form.sprite, form.tint, 1);
   }
@@ -337,20 +370,7 @@ export class GameScene extends Phaser.Scene {
       this.drawBar(v, e.hp, e.maxHp);
       this.setStatus(v, e.statusFlags);
       if (!isMonster) {
-        const look2 = this.spriteFor(e, false);
-        if (look2.key !== v.sprite) {
-          v.sprite = look2.key;
-          const idle = !!v.idle;
-          this.setIdle(v, false);
-          v.spr.setTexture(look2.key, this.stand(look2.key, e.dir)).setScale(look2.sprScale);
-          if (idle) this.setIdle(v, true);
-        }
-        // a cor separada da textura: com status ativo, a do status vale por cima da cor da forma.
-        // Durante o clarão branco do golpe (tintFill) não mexe: o restoreTint dele volta a cor certa
-        if (!v.spr.tintFill && desiredTint(v.statusKinds, look2.tint) !== v.spr.tintTopLeft) {
-          const tint = desiredTint(v.statusKinds, look2.tint);
-          if (tint !== 0xffffff) v.spr.setTint(tint); else v.spr.clearTint();
-        }
+        this.refreshLook(v, e);
         v.label.setAlpha(e.online ? 1 : 0.55); // offline caçando aparece meio apagado
         this.setAura(v, e.form ? e.charId : undefined);
         this.setPowerAura(v, e.power ?? 0, e.cosAura);
@@ -362,6 +382,24 @@ export class GameScene extends Phaser.Scene {
     if (id === this.myId) {
       this.cameras.main.startFollow(c, true, 0.18, 0.18, 0, 0); // segue com leve amortecimento
       this.onMe(e);
+    }
+  }
+
+  /** Troca a folha do jogador quando o visual muda (forma, equipamento, traje ou folha lazy que acabou de chegar). */
+  private refreshLook(v: View, e: any) {
+    const look = this.spriteFor(e, false);
+    if (look.key !== v.sprite) {
+      v.sprite = look.key;
+      const idle = !!v.idle;
+      this.setIdle(v, false);
+      v.spr.setTexture(look.key, this.stand(look.key, e.dir)).setScale(look.sprScale);
+      if (idle) this.setIdle(v, true);
+    }
+    // a cor separada da textura: com status ativo, a do status vale por cima da cor da forma.
+    // Durante o clarão branco do golpe (tintFill) não mexe: o restoreTint dele volta a cor certa
+    if (!v.spr.tintFill && desiredTint(v.statusKinds, look.tint) !== v.spr.tintTopLeft) {
+      const tint = desiredTint(v.statusKinds, look.tint);
+      if (tint !== 0xffffff) v.spr.setTint(tint); else v.spr.clearTint();
     }
   }
 
