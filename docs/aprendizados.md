@@ -283,6 +283,22 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 ---
 
+## 10. Camada visual do status (M2-06)
+
+### Dano contínuo não é golpe
+- O servidor manda cada tick de dano contínuo como `fx` `dmg` com `from` (quem aplicou) e `dot: true`. O cliente tratava todo `dmg` com `from` como golpe: quem aplicou o sangramento avançava sobre o alvo e o corte aparecia a cada segundo, mesmo longe.
+- **Solução:** `dotHitStyle` (`client/src/statusFx.ts`) separa o dano contínuo antes da animação de golpe; ele só mostra um número menor, na cor do sangramento, sem som (tocaria a cada segundo).
+
+### Cor de status sem brigar com a cor da forma
+- O `onChange` do jogador trocava textura e cor no mesmo `if`, comparando a cor do sprite com a da forma. Com a cor do status por cima, o clarão branco do golpe (`setTintFill`) fazia a comparação falhar no patch seguinte, e a textura era trocada no meio do clarão. A troca de textura e a de cor ficaram separadas, a cor usa `desiredTint(status, cor da forma)` (também no `restoreTint`), e nada mexe na cor enquanto `tintFill` estiver ligado.
+- A lógica que dá para testar sem Phaser (ler `statusFlags` só com os status conhecidos, prioridade da cor, estilo do número) fica num módulo puro com teste em `client/test/`. A ordem vem de `STATUS_KINDS`, exportada por `shared/src/combatStatus.ts`, e o teste confere contra `formatStatusFlags` do servidor.
+
+### `process.env` no corpo do teste chega depois dos imports
+- Em ESM, os `import` estáticos são avaliados antes do corpo do arquivo. Um teste que faz `import * as db from "../src/db"` e só depois `process.env.DB_FILE = ":memory:"` abre o `bleach-idle.sqlite` do disco. Era o caso de `auth.test`, `arena.test` e `e2e-world-gameplay.test`: três workers no mesmo arquivo, e o CI falhava às vezes com `database is locked` (run 41302928162). Rodando em casa, os testes ainda escreviam no banco de quem desenvolve.
+- **Solução:** `env: { DB_FILE: ":memory:" }` no `vitest.config.ts`, que vale em todos os workers antes de qualquer import (cobre também `guilds.ts` e `economyAudit.ts`, que leem `DB_FILE` ao carregar). `server/test/test-env.test.ts` falha sem isso.
+
+---
+
 ## 11. NPCs no mapa sem regenerar o Tiled (M1-03)
 
 - O `soul.tmj` é editado no Tiled e não pode passar pelo `build_maps.py`. Os 3 NPCs entraram como objetos `npc` na camada `logica` por edição direta do JSON (uma linha só, como o Tiled grava), com `nextobjectid` atualizado e no mesmo formato dos objetos que o Tiled grava (a abertura no Tiled não foi testada).

@@ -4,6 +4,7 @@ import {
   CHRONICLE_EPOCH,
   COSMETIC,
   ITEMS,
+  LOOT,
   MONSTERS,
   MS_PER_WEEK,
   TOTAL_CRONICAS,
@@ -140,5 +141,23 @@ describe("M1-01 & M1-05: rotação semanal e persistência de Crônicas (ADR-002
       expect(COSMETIC[c.reward.titleId].season).toBe(true);
       expect(titleText(c.reward.titleId).length).toBeGreaterThan(3);
     }
+  });
+});
+
+describe("itens de entrega das semanas 1 e 2 seguem o PRD §8 (M1-00)", () => {
+  it("todo item de entrega cai de algum monstro da própria missão", () => {
+    for (const c of CHRONICLES) {
+      for (const req of c.quest.items ?? []) {
+        const drops = c.quest.monsters.some((m) => (LOOT[m]?.items ?? []).some((d) => d.item === req.id));
+        expect(drops, `${c.id}: ${req.id}`).toBe(true);
+      }
+    }
+  });
+
+  it("semana 1 pede Garras de Hollow dos Hollows da Soul Society; semana 2, o Tentáculo da Metastacia", () => {
+    const [ryoka, soukyoku] = CHRONICLES;
+    expect(ryoka.quest.items).toEqual([{ id: "garra", qty: 3 }]);
+    expect([...ryoka.quest.monsters].sort()).toEqual(["fishbone", "hollow_acido", "hollow_devorador", "hollow_faminto"]);
+    expect(soukyoku.quest.items).toEqual([{ id: "tentaculo", qty: 1 }]);
   });
 });

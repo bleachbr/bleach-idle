@@ -120,7 +120,7 @@ Especificação: [PRD](features/cronicas-semanais-lore/PRD-cronicas-semanais-sei
 
 ## M2: Status e controle de grupo no combate
 
-Especificação: `docs/features/status-combate/`. Itens: **M2-01** motor de status no servidor (expiração por tick — `Feito`); **M2-02** congelamento (Rukia e Hitsugaya — `Feito`); **M2-03** lentidão (reduz velocidade / aumenta `stepMs` — `Feito`); **M2-04** dano ao longo do tempo (Kenpachi e chamas de Zabimaru — `Feito`); **M2-05** atordoamento (Sado e Hadō 4 — `Feito`); **M2-06** efeitos visuais (cor no sprite, ícone de status, número de dano contínuo); **M2-07** tempo de recarga numérico no HUD.
+Especificação: `docs/features/status-combate/`. Itens: **M2-01** motor de status no servidor (expiração por tick — `Feito`); **M2-02** congelamento (Rukia e Hitsugaya — `Feito`); **M2-03** lentidão (reduz velocidade / aumenta `stepMs` — `Feito`); **M2-04** dano ao longo do tempo (Kenpachi e chamas de Zabimaru — `Feito`); **M2-05** atordoamento (Sado e Hadō 4 — `Feito`); **M2-06** efeitos visuais (cor no sprite, ícone de status, número de dano contínuo — `Feito`, `client/src/statusFx.ts`); **M2-07** tempo de recarga numérico no HUD.
 
 ## M3: Social avançado
 
