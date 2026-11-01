@@ -1,0 +1,35 @@
+language: pt-BR
+reviews:
+  profile: assertive
+  fail_commit_status: true
+  auto_review:
+    enabled: true
+  auto_approvals:
+    enabled: true
+    allow_author_approval: false
+    max_merge_risk: low
+    overrides:
+      - paths:
+          - ".github/**"
+          - ".coderabbit.yaml"
+          - "AGENTS.md"
+          - "server/**"
+          - "client/src/**"
+          - "shared/src/**"
+          - "deploy/**"
+          - "Dockerfile"
+          - "docker-compose*.yml"
+          - "**/package.json"
+          - "**/package-lock.json"
+          - ".gitleaks.toml"
+          - ".gitignore"
+          - ".dockerignore"
+          - "vitest.config.*"
+          - "**/tsconfig*.json"
+          - "Makefile"
+          - ".gitattributes"
+          - "CLAUDE.md"
+          - ".claude/**"
+          - ".kiro/**"
+          - ".devin/**"
+        enabled: false

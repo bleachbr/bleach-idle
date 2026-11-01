@@ -13,3 +13,10 @@ server/dev.env
 .git
 .claude
 .kiro
+.env
+.env.*
+**/.env
+**/.env.*
+*.env
+**/*.env
+acoplum-37d98af765d7.json

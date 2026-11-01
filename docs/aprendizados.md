@@ -4,6 +4,14 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ---
 
+## Repositório público, rulesets e revisores automáticos (F-07)
+
+Ao tornar o repositório público, a API passou a permitir ruleset ativo: PR obrigatório, uma aprovação descartada com novos commits, aprovação do último push por outra conta, conversas resolvidas e checks vinculados ao app GitHub Actions. Os nomes dos checks devem refletir o workflow atual (`gitleaks`, `test (22.x)`, `test (24.x)`); exigir o antigo `test` deixaria a nova matriz sem satisfazer a regra. O ruleset não tem bypass, inclusive para administradores.
+
+Administrador de repositório não é necessariamente owner da organização: a conta autenticada é membro de `bleachbr`, enquanto o owner `rafael2267` precisa autorizar a instalação do CodeRabbit. Aprovação do bot não é merge nem prova de revisão humana. A configuração local limita aprovação automática a baixo risco, desliga o atalho do autor e a bloqueia nos caminhos sensíveis; CODEOWNERS associa esses caminhos a pessoas. Só vale após publicação na base e instalação do aplicativo. Aprovação no chat não substitui aprovação registrada no GitHub.
+
+Repositório público aumenta a exposição de código e histórico, não libera segredos: secret scanning, push protection e alertas de dependências foram habilitados; workflows de forks externos passaram a exigir aprovação. `.env.*` também precisa ser ignorado e excluído do contexto Docker. Gitleaks limpo reduz risco, mas não substitui rotação de qualquer segredo que já tenha sido exposto.
+
 ## 1. Arquitetura de Servidor Autoritativo e Tick de 100 ms
 
 ### Lição: O Cliente Nunca Deve Decidir o Estado

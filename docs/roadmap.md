@@ -88,7 +88,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | | Feito | S6 |
 | F-05 | Contêiner roda como `node`, não como root (conferir a permissão do volume `/data`) | P | | Feito | S9 |
 | F-06 | CSP e cabeçalhos de segurança no Caddy | P | | Feito | S7 |
-| F-07 | Proteger a `main` (PR obrigatório e CI verde). O GitHub responde 403 para proteção de branch e rulesets neste plano: exige plano pago ou repositório público. Alternativa: combinado escrito mais um hook `pre-push` local | P | | Decisão pendente (Waldir e Rafael) | S8 |
+| F-07 | Proteger a `main` pública com PR, aprovação e CI obrigatório, bloqueando exclusão e force-push | P | | Proteção ativa; configuração CodeRabbit/CODEOWNERS aguarda publicação e instalação pelo owner | S8; ruleset `protect-main` (26294474), sem bypass; branch `chore/f-07-repo-publico` |
 | F-08 | Métrica da duração do tick, com aviso acima de 50 ms | P | | Feito | P3 |
 | F-09 | Ranking sem bloquear o tick | M | F-08 | Feito | P1 |
 | F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once`; limpar o ruído do Vitest. Rotina: ao mexer num teste com `sleep`, troque-o | M | | Feito | Q2, Q3 |

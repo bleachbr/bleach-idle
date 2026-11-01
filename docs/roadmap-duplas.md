@@ -4,6 +4,8 @@ Este documento reparte o [roadmap](roadmap.md) em dois núcleos de backlog para 
 
 Atualizado em 31/10/2026.
 
+F-07 (Waldir): proteção efetiva da `main` pública ativada via ruleset, sem bypass; secret scanning, push protection e aprovação de workflows de forks externos habilitados. Configuração CodeRabbit e CODEOWNERS preparada em `chore/f-07-repo-publico`; instalação do aplicativo depende de `rafael2267`, owner da organização. Não confundir configuração local com aplicativo instalado.
+
 Item riscado já foi implementado (status no `roadmap.md`). Ele continua na fila para não mudar a numeração da ordem.
 
 ## As duas filas
