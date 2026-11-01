@@ -78,7 +78,19 @@ db.exec(`
   );
   CREATE TABLE IF NOT EXISTS players (id TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at INTEGER NOT NULL);
   CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+  CREATE TABLE IF NOT EXISTS auth_limits (
+    key TEXT PRIMARY KEY,
+    n INTEGER NOT NULL,
+    since INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS password_resets (
+    nonce_hash TEXT PRIMARY KEY,
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    expires_at INTEGER NOT NULL
+  );
 `);
+const accCols = (db.prepare("PRAGMA table_info(accounts)").all() as { name: string }[]).map((c) => c.name);
+if (!accCols.includes("email")) db.exec("ALTER TABLE accounts ADD COLUMN email TEXT");
 // migração da tabela do protótipo anterior (personagens sem conta ficam órfãos)
 const cols = (db.prepare("PRAGMA table_info(players)").all() as { name: string }[]).map((c) => c.name);
 if (!cols.includes("account_id")) db.exec("ALTER TABLE players ADD COLUMN account_id INTEGER REFERENCES accounts(id)");
@@ -87,19 +99,71 @@ db.exec("CREATE INDEX IF NOT EXISTS players_account ON players(account_id)");
 
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 
+// Códigos estendidos do SQLite: 1555 = SQLITE_CONSTRAINT_PRIMARYKEY, 2067 = SQLITE_CONSTRAINT_UNIQUE
+const SQLITE_UNIQUE_CODES = new Set([1555, 2067]);
+
+function isUniqueConstraintError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { errcode?: unknown; message?: unknown };
+  if (typeof e.errcode === "number" && SQLITE_UNIQUE_CODES.has(e.errcode)) return true;
+  return typeof e.message === "string" && e.message.startsWith("UNIQUE constraint failed:");
+}
+
 // ---------- contas ----------
 
 export function createAccount(login: string, passHash: string): number | null {
   try {
     const r = db.prepare("INSERT INTO accounts (login, pass, created_at) VALUES (?, ?, ?)").run(login, passHash, Date.now());
     return Number(r.lastInsertRowid);
-  } catch {
-    return null; // login já existe (UNIQUE)
+  } catch (err) {
+    if (isUniqueConstraintError(err)) return null; // login já existe (UNIQUE)
+    throw err;
   }
 }
 
-export function getAccount(login: string): { id: number; login: string; pass: string } | undefined {
-  return db.prepare("SELECT id, login, pass FROM accounts WHERE login = ?").get(login) as any;
+export function getAccount(login: string): { id: number; login: string; pass: string; email?: string | null } | undefined {
+  return db.prepare("SELECT id, login, pass, email FROM accounts WHERE login = ?").get(login) as any;
+}
+
+export function getAccountById(accountId: number): { id: number; login: string; pass: string; email?: string | null } | undefined {
+  return db.prepare("SELECT id, login, pass, email FROM accounts WHERE id = ?").get(accountId) as any;
+}
+
+export function setAccountEmail(accountId: number, email: string | null): void {
+  db.prepare("UPDATE accounts SET email = ? WHERE id = ?").run(email, accountId);
+}
+
+// ---------- limites de tentativas persistentes (M5-02) e tokens de recuperação (M5-01) ----------
+
+const getLimitStmt = db.prepare("SELECT n, since FROM auth_limits WHERE key = ?");
+const setLimitStmt = db.prepare(
+  "INSERT INTO auth_limits (key, n, since) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET n = excluded.n, since = excluded.since",
+);
+const delLimitStmt = db.prepare("DELETE FROM auth_limits WHERE key = ?");
+
+export function getAuthLimit(key: string): { n: number; since: number } | undefined {
+  return getLimitStmt.get(key) as { n: number; since: number } | undefined;
+}
+
+export function setAuthLimit(key: string, n: number, since: number): void {
+  setLimitStmt.run(key, n, since);
+}
+
+export function deleteAuthLimit(key: string): void {
+  delLimitStmt.run(key);
+}
+
+export function saveResetNonce(nonce: string, accountId: number, expiresAt: number, now = Date.now()): void {
+  db.prepare("DELETE FROM password_resets WHERE expires_at < ?").run(now);
+  db.prepare("INSERT INTO password_resets (nonce_hash, account_id, expires_at) VALUES (?, ?, ?)").run(sha(nonce), accountId, expiresAt);
+}
+
+export function consumeResetNonce(nonce: string, accountId: number, now = Date.now()): boolean {
+  db.prepare("DELETE FROM password_resets WHERE expires_at < ?").run(now);
+  const r = db
+    .prepare("DELETE FROM password_resets WHERE nonce_hash = ? AND account_id = ? AND expires_at >= ?")
+    .run(sha(nonce), accountId, now);
+  return r.changes > 0;
 }
 
 /** Cria uma sessão para "lembrar login"; só o hash do token fica no banco. */
@@ -134,6 +198,14 @@ const rowOf = (r: any): CharRow => ({
   id: r.id, accountId: r.account_id, data: JSON.parse(r.data), inWorld: !!r.in_world, updatedAt: r.updated_at,
 });
 
+let onUpsertChar: ((id: string, data: SaveData) => void) | null = null;
+let onRemoveChar: ((id: string) => void) | null = null;
+
+export function onCharWrite(upsert: (id: string, data: SaveData) => void, remove: (id: string) => void): void {
+  onUpsertChar = upsert;
+  onRemoveChar = remove;
+}
+
 export function listChars(accountId: number): CharRow[] {
   return (db.prepare("SELECT * FROM players WHERE account_id = ? ORDER BY updated_at DESC").all(accountId) as any[]).map(rowOf);
 }
@@ -142,14 +214,18 @@ export function createChar(accountId: number, id: string, data: SaveData): boole
   try {
     db.prepare("INSERT INTO players (id, account_id, data, in_world, updated_at) VALUES (?, ?, ?, 0, ?)")
       .run(id, accountId, JSON.stringify(data), Date.now());
+    onUpsertChar?.(id, data);
     return true;
-  } catch {
-    return false; // nome já usado
+  } catch (err) {
+    if (isUniqueConstraintError(err)) return false; // nome já usado (PRIMARY KEY)
+    throw err;
   }
 }
 
 export function deleteChar(accountId: number, id: string): boolean {
-  return db.prepare("DELETE FROM players WHERE id = ? AND account_id = ? AND in_world = 0").run(id, accountId).changes > 0;
+  const ok = db.prepare("DELETE FROM players WHERE id = ? AND account_id = ? AND in_world = 0").run(id, accountId).changes > 0;
+  if (ok) onRemoveChar?.(id);
+  return ok;
 }
 
 export function load(id: string): CharRow | undefined {
@@ -161,6 +237,7 @@ const putStmt = db.prepare("UPDATE players SET data = ?, in_world = ?, updated_a
 
 export function save(id: string, data: SaveData, inWorld: boolean): void {
   putStmt.run(JSON.stringify(data), inWorld ? 1 : 0, Date.now(), id);
+  onUpsertChar?.(id, data);
 }
 
 /** Vários saves numa transação só: ou grava todos, ou nenhum. */
@@ -171,6 +248,7 @@ export function saveMany(list: { id: string; data: SaveData; inWorld: boolean }[
     const now = Date.now();
     for (const s of list) putStmt.run(JSON.stringify(s.data), s.inWorld ? 1 : 0, now, s.id);
     db.exec("COMMIT");
+    for (const s of list) onUpsertChar?.(s.id, s.data);
   } catch (e) {
     db.exec("ROLLBACK");
     throw e;

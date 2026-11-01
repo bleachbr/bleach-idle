@@ -130,7 +130,7 @@ export class GameScene extends Phaser.Scene {
   /** Liga ou desliga o modo HD. Na primeira vez baixa as folhas (só quem liga paga o download). */
   setHd(on: boolean, done?: (ok: boolean) => void) {
     if (!on) return this.applyHd(false), done?.(true);
-    const missing = Object.entries(SPRITES).filter(([k]) => !this.textures.exists(HD + k));
+    const missing = Object.entries(SPRITES).filter(([k, d]) => !d.noHd && !this.textures.exists(HD + k));
     if (!missing.length) return this.applyHd(true), done?.(true);
     for (const [key, def] of missing)
       this.load.spritesheet(HD + key, `/assets/sprites_hd/${key}.webp`, { frameWidth: def.frame * HD_K, frameHeight: def.frame * HD_K });

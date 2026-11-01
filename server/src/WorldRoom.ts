@@ -17,7 +17,9 @@ import {
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
   EVENT_BANNER, EVENT_END_MS, eventLore, type EventBanner, type EventKind, type EventPhase,
-  own, isOwnKey, COSMETIC, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
+  own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
+  applyStatus, tickStatuses, canEntityMove, canEntityAct, effectiveStepMs, formatStatusFlags, clearStatuses, type SkillStatusDef,
+  evaluateBossPhase,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -25,7 +27,13 @@ import { consumeTicket, type Ticket } from "./auth";
 import { MAPS, HOME, TEMPLE, SPAWNS, tileKey } from "./maps";
 import * as guilds from "./guilds";
 import * as market from "./market";
+import * as mailbox from "./mailbox";
 import { flagOn } from "./flags";
+import { recordTick } from "./tickStats";
+import { recordSave, setWorldMetricsProvider } from "./metrics";
+import { getRanking, invalidateRankingCache } from "./ranking";
+import { claimServerMilestone } from "./milestones";
+import { checkChatMessage, isGm, mutePlayer, sanitizeChatText, unmutePlayer } from "./moderation";
 
 const GUILD_COST = 500;
 /** Modo Dev (botão que libera tudo para testar): nasce DESLIGADO e só liga com BI_DEV=1 (`npm run dev` já define). */
@@ -85,9 +93,22 @@ export class WorldRoom extends GameRoom<WorldState> {
   onCreate() {
     this.autoDispose = false;
     this.setState(new WorldState());
+    setWorldMetricsProvider(() => {
+      let online = 0;
+      for (const p of this.state.players.values()) if (p.online) online++;
+      const totalInWorld = this.state.players.size;
+      return {
+        players: { online, offlineHunt: totalInWorld - online, totalInWorld },
+        entities: { monsters: this.state.monsters.size, bags: this.state.bags.size },
+      };
+    });
     SPAWNS.forEach((s, i) => { for (let k = 0; k < s.count; k++) this.spawnMonster(i); });
     this.restoreWorld();
-    this.setSimulationInterval(() => this.tick(), TICK_MS);
+    this.setSimulationInterval(() => {
+      const t0 = performance.now();
+      this.tick();
+      recordTick(performance.now() - t0);
+    }, TICK_MS);
     // save frequente e em transação: numa queda se perdem no máximo ~10 s
     this.clock.setInterval(() => this.saveAll(), 10_000);
     this.scheduleInvasion(Number(process.env.INVASION_FIRST_MS) || INVASION.firstMs);
@@ -132,7 +153,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const p = this.me(c);
       if (!p) return;
       const list = [...this.state.monsters.values()]
-        .filter((mo) => sameMap(p, mo) && (!mo.owner || mo.owner === p.id) && chebyshev(p.x, p.y, mo.x, mo.y) <= VIEW)
+        .filter((mo) => sameMap(p, mo) && (!mo.owner || mo.owner === p.id) && !MONSTERS[mo.kind]?.dummy && chebyshev(p.x, p.y, mo.x, mo.y) <= VIEW)
         .sort((a, b) => chebyshev(p.x, p.y, a.x, a.y) - chebyshev(p.x, p.y, b.x, b.y));
       if (!list.length) return;
       const i = list.findIndex((mo) => mo.id === p.targetId);
@@ -168,6 +189,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.registerQuestMessages();
     this.registerBagMessages();
     this.registerMarketMessages();
+    this.registerMailMessages();
     this.registerBookMessages();
     this.registerShopMessages();
     this.registerSeasonMessages();
@@ -206,10 +228,12 @@ export class WorldRoom extends GameRoom<WorldState> {
     });
     this.handle("chat", (c, m: { text: string }) => {
       const p = this.me(c);
-      const text = (typeof m?.text === "string" ? m.text : "").trim().slice(0, 200);
+      const text = sanitizeChatText(m?.text);
       if (!p || !text) return;
       if (text.startsWith("/")) return this.command(p, text);
-      for (const x of this.state.players.values()) if (!x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: this.display(p), text });
+      const chk = checkChatMessage(p.id, text);
+      if (!chk.ok) return chk.reason ? this.log(p, chk.reason) : undefined;
+      for (const x of this.state.players.values()) if (!x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: this.display(p), text: chk.text });
     });
     this.handle("ranking", (c) => c.send("ranking", this.ranking()));
     // O cliente envia `devHello` a todo jogador que entra (main.ts, bindDev). Sem handler o Colyseus desconecta quem manda:
@@ -272,6 +296,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.sendGuild(p);
     this.sendQuests(p);
     client.send("dailyReady", { ready: p.prog.daily.last !== dayKey(Date.now()) });
+    const unread = mailbox.unreadCount(p.id);
+    if (unread) this.log(p, `Você tem ${unread} carta(s) no correio. Use /correio.`);
     this.sendSeason(p, false);
     if (xpWeekend(Date.now())) client.send("log", { text: "Fim de semana: XP em dobro dos monstros até domingo à meia-noite!" });
     if (this.worldBoss) client.send("log", { text: `O chefe mundial ${MONSTERS[WORLD_BOSS.kind].name} está na praça de Karakura!` });
@@ -442,7 +468,69 @@ export class WorldRoom extends GameRoom<WorldState> {
     }
   }
 
+  private processStatuses(e: Player | Monster, now: number) {
+    const { dotDamage, dotFromId } = tickStatuses(e.statuses, now);
+    if (dotDamage > 0 && e.hp > 0) {
+      if (isPlayer(e)) {
+        if (!inPZ(mapOf(e), e.x, e.y) && !e.devGod) {
+          e.hp -= dotDamage;
+          e.lastCombatAt = now;
+          this.broadcast("fx", { t: "dmg", id: e.id, v: dotDamage, from: dotFromId, dot: true });
+          const killer = this.state.players.get(dotFromId);
+          if (e.hp <= 0) this.killPlayer(e, killer?.name ?? "Sangramento", dotFromId);
+        }
+      } else {
+        const def = MONSTERS[e.kind];
+        if (!def.dummy) {
+          e.hp -= dotDamage;
+          if (dotFromId) e.lastHitBy = dotFromId;
+          this.broadcast("fx", { t: "dmg", id: e.id, v: dotDamage, from: dotFromId, dot: true });
+          const killer = this.state.players.get(dotFromId || e.lastHitBy);
+          if (e.hp <= 0 && killer) this.killMonster(e, killer);
+          else if (e.hp > 0) this.checkBossPhase(e, now);
+        }
+      }
+    }
+    const flags = formatStatusFlags(e.statuses, now);
+    if (e.statusFlags !== flags) e.statusFlags = flags;
+  }
+
+  private checkBossPhase(m: Monster, now: number) {
+    const tr = evaluateBossPhase(m.kind, m.phase, m.hp, m.maxHp);
+    if (!tr) return;
+    if (m.phase === 0) m.basePower = m.power;
+    m.phase = tr.phase;
+    const def = MONSTERS[m.kind];
+    m.power = m.basePower * tr.atkMult;
+    m.defMult = tr.defMult;
+    m.stepMs = Math.max(120, Math.round(def.stepMs * tr.stepMult));
+    this.broadcast("fx", { t: "event", text: tr.shout });
+    for (const p of this.state.players.values()) {
+      if (!sameMap(p, m) || (m.owner && m.owner !== p.id)) continue;
+      this.log(p, tr.shout);
+      if (tr.aoeStatus && tr.aoeRadius && p.hp > 0 && !inPZ(mapOf(p), p.x, p.y) && !p.devGod) {
+        if (chebyshev(p.x, p.y, m.x, m.y) <= tr.aoeRadius) {
+          applyStatus(p.statuses, tr.aoeStatus, m.id, Math.round(def.atk * m.power), now);
+          const flags = formatStatusFlags(p.statuses, now);
+          if (p.statusFlags !== flags) p.statusFlags = flags;
+          this.broadcast("fx", { t: "status", id: p.id, kind: tr.aoeStatus.kind, ms: tr.aoeStatus.durationMs });
+        }
+      }
+    }
+  }
+
+  private applySkillStatus(from: Player, target: Player | Monster, def: SkillStatusDef | undefined, baseDmg: number, now: number) {
+    if (!def || target.hp <= 0) return;
+    if (!isPlayer(target) && MONSTERS[target.kind]?.dummy) return;
+    applyStatus(target.statuses, def, from.id, baseDmg, now);
+    const flags = formatStatusFlags(target.statuses, now);
+    if (target.statusFlags !== flags) target.statusFlags = flags;
+    this.broadcast("fx", { t: "status", id: target.id, kind: def.kind, ms: def.durationMs });
+  }
+
   private updatePlayer(p: Player, now: number) {
+    this.processStatuses(p, now);
+    if (p.hp <= 0) return;
     const form = CHARS[p.charId].forms[p.form];
     if (form.reiDrain) {
       p.rei = Math.max(0, p.rei - (form.reiDrain * TICK_MS) / 1000);
@@ -503,7 +591,7 @@ export class WorldRoom extends GameRoom<WorldState> {
         }
       } else p.stuckSince = 0;
     }
-    if (p.path.length && now >= p.nextStepAt) {
+    if (p.path.length && now >= p.nextStepAt && canEntityMove(p.statuses, now)) {
       const next = p.path[0];
       if (this.monsterAt.has(tileKey(p.map, next.x, next.y))) p.path = [];
       else if (p.pvpUntil > now && inPZ(mapOf(p), next.x, next.y) && !inPZ(mapOf(p), p.x, p.y)) {
@@ -521,7 +609,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     }
 
     if (t && t.hp <= 0) t = undefined; // morreu pela habilidade neste mesmo tick
-    if (t && chebyshev(p.x, p.y, t.x, t.y) <= 1 && now >= p.nextAttackAt && !inPZ(mapOf(p), p.x, p.y)) {
+    if (t && chebyshev(p.x, p.y, t.x, t.y) <= 1 && now >= p.nextAttackAt && !inPZ(mapOf(p), p.x, p.y) && canEntityAct(p.statuses, now)) {
       p.nextAttackAt = now + form.attackMs;
       this.face(p, t);
       this.hit(p, t, 1, now);
@@ -529,6 +617,8 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private updateMonster(m: Monster, now: number) {
+    this.processStatuses(m, now);
+    if (m.hp <= 0 || !this.state.monsters.has(m.id)) return;
     const def = MONSTERS[m.kind];
     if (def.dummy) {
       if (now >= m.nextAttackAt) { m.nextAttackAt = now + 3000; m.hp = m.maxHp; } // cura total a cada 3 s
@@ -560,7 +650,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       }
       if (d <= 1) {
         m.path = [];
-        if (now >= m.nextAttackAt) {
+        if (now >= m.nextAttackAt && canEntityAct(m.statuses, now)) {
           m.nextAttackAt = now + def.attackMs;
           this.face(m, t);
           const ch = CHARS[t.charId];
@@ -578,7 +668,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       m.path = this.monsterPath(m, (x, y) => x === gx && y === gy, 300);
     }
 
-    if (m.path.length && now >= m.nextStepAt) {
+    if (m.path.length && now >= m.nextStepAt && canEntityMove(m.statuses, now)) {
       const next = m.path[0];
       if (this.blockedForMonster(m.map, next.x, next.y)) m.path = [];
       else {
@@ -604,7 +694,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     e.dir = dy > 0 ? 0 : dx < 0 ? 1 : dx > 0 ? 2 : 3;
     e.x = next.x;
     e.y = next.y;
-    e.nextStepAt = now + e.stepMs;
+    e.nextStepAt = now + effectiveStepMs(e.stepMs, e.statuses, now);
   }
 
   private face(e: Player | Monster, t: { x: number; y: number }) {
@@ -632,10 +722,13 @@ export class WorldRoom extends GameRoom<WorldState> {
     if (t.hp <= 0) {
       if (def.dummy) t.hp = t.maxHp; // boneco não morre
       else this.killMonster(t, p);
+    } else {
+      this.checkBossPhase(t, now);
     }
   }
 
   private trySkill(p: Player, t: Player | Monster, now: number, auto: boolean, i = 0): boolean {
+    if (!canEntityAct(p.statuses, now)) return false;
     const sk = techniqueFor(p.charId, i, p.form);
     if (!sk || p.level < (sk.minLevel ?? 1)) return false;
     if (now < p.skillReadyAt || now < p.techReady[i] || p.rei < sk.cost || inPZ(mapOf(p), p.x, p.y)) return false;
@@ -654,8 +747,14 @@ export class WorldRoom extends GameRoom<WorldState> {
       ? [...this.state.monsters.values()].filter((m) => m !== t && m.hp > 0 && sameMap(m, t) && (!m.owner || m.owner === p.id)
         && chebyshev(m.x, m.y, t.x, t.y) <= sk.area!)
       : [];
+    const hpBefore = t.hp;
     this.hit(p, t, sk.mult, now, true);
-    for (const m of splash) this.hit(p, m, sk.mult * 0.7, now, true);
+    this.applySkillStatus(p, t, sk.status, Math.max(1, hpBefore - t.hp), now);
+    for (const m of splash) {
+      const mHpBefore = m.hp;
+      this.hit(p, m, sk.mult * 0.7, now, true);
+      this.applySkillStatus(p, m, sk.status, Math.max(1, mHpBefore - m.hp), now);
+    }
     return true;
   }
 
@@ -776,6 +875,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.y = TEMPLE.y;
     p.path = [];
     p.targetId = "";
+    clearStatuses(p.statuses);
+    p.statusFlags = "";
     // volta sozinho para a hunt só com "voltar a caçar" e no máximo 3 mortes em 10 min (senão vira um loop de mortes)
     p.deathTimes = [...p.deathTimes.filter((t) => Date.now() - t < 10 * 60_000), Date.now()];
     const back = p.autoHunt && p.autoReturn && p.deathTimes.length < 3;
@@ -836,12 +937,16 @@ export class WorldRoom extends GameRoom<WorldState> {
         const m = levelMilestone(p.level);
         if (m) this.log(p, `Marco do nível ${p.level}: ${this.grant(p, m)}!`);
       }
+      if (p.level >= 60) this.awardMilestone(p, "first_lv60");
     }
   }
 
   private setForm(p: Player, i: number) {
     p.form = i;
-    if (i === 1) this.tutorial(p, "bankai");
+    if (i === 1) {
+      this.tutorial(p, "bankai");
+      this.awardMilestone(p, "first_bankai");
+    }
     this.recompute(p);
     this.broadcast("fx", { t: "form", id: p.id, v: i });
   }
@@ -1171,6 +1276,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.map = map;
     p.path = [];
     p.targetId = "";
+    clearStatuses(p.statuses);
+    p.statusFlags = "";
     p.follow = false;
     p.pendingInteract = "";
     p.x = to.x;
@@ -1221,6 +1328,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.targetId = "";
       this.broadcast("chat", { from: "", text: `${v.name} foi derrotado por ${p.name}.` });
       p.frags++;
+      if (p.frags >= 10) this.awardMilestone(p, "first_pvp10");
       // abate injusto: a vítima não tinha atacado ninguém (não estava marcada) nem era assassina
       if (!justified) {
         p.skullUntil = Math.min(Math.max(p.skullUntil, now) + SKULL_PER_KILL_MS, now + SKULL_MAX_MS);
@@ -1327,21 +1435,39 @@ export class WorldRoom extends GameRoom<WorldState> {
         const v = this.findPlayer(to);
         if (!v || !v.online) return this.log(p, `${to || "?"} não está online.`);
         if (!msg) return this.log(p, "Uso: /pm Nome, mensagem");
-        if (!v.ignore.includes(p.id)) this.sendTo(v, "chat", { from: p.name, text: msg, ch: "pm" });
-        return this.sendTo(p, "chat", { from: `para ${v.name}`, text: msg, ch: "pm" });
+        const chk = checkChatMessage(p.id, msg);
+        if (!chk.ok) return chk.reason ? this.log(p, chk.reason) : undefined;
+        if (!v.ignore.includes(p.id)) this.sendTo(v, "chat", { from: p.name, text: chk.text, ch: "pm" });
+        return this.sendTo(p, "chat", { from: `para ${v.name}`, text: chk.text, ch: "pm" });
       }
       case "p": {
         const party = this.parties.get(p.partyId);
         if (!party) return this.log(p, "Você não está numa party.");
+        const chk = checkChatMessage(p.id, rest);
+        if (!chk.ok) return chk.reason ? this.log(p, chk.reason) : undefined;
         for (const id of party.members) {
           const x = this.state.players.get(id);
-          if (x && !x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: p.name, text: rest, ch: "party" });
+          if (x && !x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: p.name, text: chk.text, ch: "party" });
         }
         return;
       }
       case "g": {
         if (!p.guildId) return this.log(p, "Você não está numa guilda.");
-        return this.guildSay(p.guildId, { from: p.name, text: rest, ch: "guild" }, p.id);
+        const chk = checkChatMessage(p.id, rest);
+        if (!chk.ok) return chk.reason ? this.log(p, chk.reason) : undefined;
+        return this.guildSay(p.guildId, { from: p.name, text: chk.text, ch: "guild" }, p.id);
+      }
+      case "silenciar":
+      case "mute":
+      case "dessilenciar":
+      case "unmute":
+      case "anuncio":
+        return this.gmCommand(p, cmd.toLowerCase(), rest);
+      case "correio":
+      case "mail": {
+        const [sub, arg] = rest.split(/\s+/);
+        if (sub === "retirar" || sub === "take") return this.takeMail(p, Number(arg));
+        return this.showMail(p, true);
       }
       case "guilda":
       case "guild":
@@ -1351,6 +1477,38 @@ export class WorldRoom extends GameRoom<WorldState> {
       default:
         return this.log(p, `Comando desconhecido: /${cmd}. Digite /ajuda.`);
     }
+  }
+
+  private gmCommand(p: Player, cmd: string, rest: string) {
+    if (!isGm(p.id)) return this.log(p, "Comando restrito a moderadores (GM).");
+    if (cmd === "anuncio") {
+      if (!rest) return this.log(p, "Uso: /anuncio mensagem");
+      this.broadcast("chat", { from: "", ch: "sys", text: `📢 [GM ${p.name}] ${rest}` });
+      this.broadcast("fx", { t: "event", text: rest.slice(0, 60) });
+      return;
+    }
+    if (cmd === "dessilenciar" || cmd === "unmute") {
+      const id = rest.toLowerCase().trim();
+      if (!id) return this.log(p, "Uso: /dessilenciar Nome");
+      if (!unmutePlayer(id)) return this.log(p, `${rest} não estava silenciado.`);
+      const target = this.state.players.get(id);
+      if (target) this.log(target, "Seu silenciamento no chat foi removido por um GM.");
+      return this.log(p, `Silenciamento de ${rest} removido.`);
+    }
+    // /silenciar Nome, 15, motivo  OU  /silenciar Nome 15 motivo
+    const parts = rest.includes(",") ? rest.split(",").map((s) => s.trim()) : rest.split(/\s+/);
+    const targetName = parts[0] ?? "";
+    const targetId = targetName.toLowerCase();
+    if (!targetId || (!this.state.players.has(targetId) && !db.load(targetId))) {
+      return this.log(p, "Uso: /silenciar Nome [minutos] [motivo]");
+    }
+    const minsRaw = Number(parts[1]);
+    const mins = Number.isFinite(minsRaw) && minsRaw > 0 ? Math.min(10_080, Math.round(minsRaw)) : 15;
+    const reason = (Number.isFinite(minsRaw) ? parts.slice(2) : parts.slice(1)).join(" ").trim() || "moderação";
+    mutePlayer(targetId, mins * 60_000, reason, p.name);
+    const online = this.state.players.get(targetId);
+    if (online) this.log(online, `Você foi silenciado no chat por ${mins} min (${reason}).`);
+    this.log(p, `${targetName} silenciado por ${mins} min (${reason}).`);
   }
 
   private guildCommand(p: Player, rest: string) {
@@ -1480,43 +1638,9 @@ export class WorldRoom extends GameRoom<WorldState> {
     for (const x of this.state.players.values()) if (x.guildId === guildId) this.sendGuild(x);
   }
 
-  private rankingCache: { at: number; data: ReturnType<WorldRoom["buildRanking"]> } | null = null;
-
-  /** Ranking com cache de 15 s (varre todos os personagens do banco). */
+  /** Ranking com cache de 15 s e índice incremental em memória (server/src/ranking.ts). */
   private ranking() {
-    if (!this.rankingCache || Date.now() - this.rankingCache.at > 15_000)
-      this.rankingCache = { at: Date.now(), data: this.buildRanking() };
-    return this.rankingCache.data;
-  }
-
-  /** Ranking: nível (por XP), abates em PvP e guildas (soma de abates e de níveis). */
-  private buildRanking() {
-    const rows = new Map<string, { name: string; charId: string; level: number; exp: number; frags: number; guild: string; ach: number; stages: number; rebirths: number; dg: number; power: number }>();
-    for (const r of db.allChars()) rows.set(r.id, { name: r.data.name, charId: r.data.charId, level: r.data.level, exp: r.data.exp, frags: r.data.frags ?? 0, guild: "", ach: r.data.prog?.ach.length ?? 0, stages: stagesSum(r.data.prog?.bestiary ?? {}), rebirths: r.data.rebirths ?? 0, dg: r.data.prog?.dgBest ?? 0,
-      power: powerOf({ charId: r.data.charId, level: r.data.level, rebirths: r.data.rebirths ?? 0, zanjutsu: r.data.zanjutsu ?? 0, reiryoku: r.data.reiryoku ?? 0, equip: r.data.equip ?? {}, forge: r.data.forge ?? {} }) });
-    for (const p of this.state.players.values()) rows.set(p.id, { name: p.name, charId: p.charId, level: p.level, exp: p.exp, frags: p.frags, guild: "", ach: p.prog.ach.length, stages: stagesSum(p.prog.bestiary), rebirths: p.rebirths, dg: p.prog.dgBest ?? 0, power: p.power });
-    const memberOf = guilds.memberMap();
-    const byId = new Map(guilds.all().map((g) => [g.id, g]));
-    const g = new Map<number, { name: string; tag: string; members: number; levels: number; frags: number }>();
-    for (const [id, r] of rows) {
-      const gid = memberOf.get(id);
-      const guild = gid ? byId.get(gid) : undefined;
-      if (!guild) continue;
-      r.guild = guild.tag;
-      const e = g.get(guild.id) ?? { name: guild.name, tag: guild.tag, members: 0, levels: 0, frags: 0 };
-      e.members++; e.levels += r.level; e.frags += r.frags;
-      g.set(guild.id, e);
-    }
-    const list = [...rows.values()];
-    return {
-      nivel: [...list].sort((a, b) => b.rebirths - a.rebirths || b.exp - a.exp).slice(0, 20),
-      poder: [...list].sort((a, b) => b.power - a.power).slice(0, 20),
-      abates: list.filter((r) => r.frags > 0).sort((a, b) => b.frags - a.frags).slice(0, 20),
-      guildas: [...g.values()].sort((a, b) => b.frags - a.frags || b.levels - a.levels).slice(0, 20),
-      conquistas: list.filter((r) => r.ach > 0).sort((a, b) => b.ach - a.ach || b.exp - a.exp).slice(0, 20),
-      dangai: list.filter((r) => r.dg > 0).sort((a, b) => b.dg - a.dg || b.exp - a.exp).slice(0, 20),
-      bestiario: list.filter((r) => r.stages > 0).sort((a, b) => b.stages - a.stages || b.exp - a.exp).slice(0, 20),
-    };
+    return getRanking(this.state.players.values());
   }
 
   // ---------- missões ----------
@@ -1841,6 +1965,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.log(killer, `Andar ${run.floor} limpo${record ? " (recorde!)" : ""}: ${got}.`);
     this.sendTo(killer, "fx", { t: "book", text: `Andar ${run.floor}${record ? " · recorde!" : ""}` });
     if (record && run.floor % 10 === 0) this.broadcast("chat", { from: "", ch: "sys", text: `🜂 ${killer.name} chegou ao andar ${run.floor} do Dangai.` });
+    if (run.floor >= 10) this.awardMilestone(killer, "first_dangai10");
     // com Auto Hunt, o próximo andar começa sozinho; senão espera o botão
     run.next = killer.autoHunt ? Date.now() + 3000 : 0;
     this.sendDangai(killer);
@@ -1970,6 +2095,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.broadcast("chat", { from: "", ch: "sys", text: `✦ ${p.name} renasceu pela ${p.rebirths}ª vez.` });
       this.broadcast("fx", { t: "level", id: p.id, v: p.level });
       this.sendTo(p, "fx", { t: "event", text: `Renascimento ${p.rebirths}!` });
+      this.awardMilestone(p, "first_rebirth");
       this.checkAchievements(p);
       this.sendInv(p);
     });
@@ -2067,6 +2193,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     if (BOSSES.has(kind)) this.dailyStep(p, "boss");
     if (!p.online) p.offKills++;
     if (BOSSES.has(kind)) pr.bossKills++;
+    if (kind === "yhwach") this.awardMilestone(p, "first_yhwach");
     this.seasonKill(p, BOSSES.has(kind));
     const st = bestiaryStage(kind, before + 1);
     if (st > bestiaryStage(kind, before)) {
@@ -2378,7 +2505,26 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   private sendShop(p: Player) {
     const w = p.accountId ? db.wallet(p.accountId) : { crystals: 0, owned: [] };
-    this.sendTo(p, "shopData", { crystals: w.crystals, owned: w.owned, equip: this.cosOf(p) });
+    const owned = [...new Set([...w.owned, ...(p.prog.titles ?? [])])];
+    this.sendTo(p, "shopData", { crystals: w.crystals, owned, equip: this.cosOf(p) });
+  }
+
+  /** Registra e concede um marco histórico de servidor (W-06) apenas ao primeiro a alcançá-lo. */
+  private awardMilestone(p: Player, id: string) {
+    const def = claimServerMilestone(id, p);
+    if (!def) return;
+    invalidateRankingCache();
+    const titles = (p.prog.titles ??= []);
+    if (!titles.includes(def.titleId)) titles.push(def.titleId);
+    if (p.accountId) {
+      const w = db.wallet(p.accountId);
+      if (!w.owned.includes(def.titleId)) db.changeCrystals(p.accountId, 0, `marco ${def.id}`, def.titleId);
+    }
+    if (!p.cosTitle) this.equipCos(p, def.titleId);
+    const title = titleText(def.titleId);
+    this.log(p, `Marco do servidor conquistado: ${def.name}! Você recebeu o título exclusivo « ${title} ».`);
+    this.sendTo(p, "fx", { t: "event", text: `Marco: ${title}` });
+    this.broadcast("chat", { from: "", ch: "sys", text: `👑 Marco do servidor! ${p.name} conquistou "${def.name}" e recebeu o título « ${title} »!` });
   }
 
   private registerShopMessages() {
@@ -2400,7 +2546,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     });
     this.handle("shopEquip", (c, m: { id?: string; kind?: string }) => {
       const p = this.me(c);
-      if (!p || !p.accountId) return;
+      if (!p) return;
       const id = typeof m?.id === "string" ? m.id : "";
       if (!id) {
         // tirar: o tipo vem junto
@@ -2409,7 +2555,8 @@ export class WorldRoom extends GameRoom<WorldState> {
         else if (kind === "name") p.cosName = ""; else if (kind === "pet") p.cosPet = "";
         return this.sendShop(p);
       }
-      if (!own(COSMETIC, id) || !db.wallet(p.accountId).owned.includes(id)) return this.log(p, "Esse cosmético não é da sua conta.");
+      const owned = p.accountId ? db.wallet(p.accountId).owned : [];
+      if (!own(COSMETIC, id) || (!owned.includes(id) && !(p.prog.titles ?? []).includes(id))) return this.log(p, "Esse cosmético não é da sua conta.");
       this.equipCos(p, id);
       this.sendShop(p);
     });
@@ -2487,6 +2634,41 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
 
+  // ---------- correio interno (W-07) ----------
+
+  private registerMailMessages() {
+    this.handle("mailList", (c) => { const p = this.me(c); if (p) this.showMail(p, false); });
+    this.handle("mailTake", (c, m: { id: number }) => { const p = this.me(c); if (p) this.takeMail(p, m?.id); });
+    this.clock.setInterval(() => mailbox.purgeExpired(), 3600_000);
+  }
+
+  private showMail(p: Player, asChat: boolean) {
+    const inbox = mailbox.list(p.id);
+    inbox.forEach((m) => mailbox.markRead(m.id, p.id));
+    this.sendTo(p, "mail", { inbox });
+    if (!asChat) return;
+    if (!inbox.length) return this.log(p, "Correio vazio.");
+    for (const m of inbox) {
+      const att = [m.gold ? `${m.gold} kan` : "", ...m.items.map((s) => `${s.qty}x ${ITEMS[s.id]?.name ?? s.id}`)].filter(Boolean).join(", ");
+      this.log(p, `#${m.id} de ${m.from}: ${m.subject}${att ? ` [anexo: ${att}]` : ""} (/correio retirar ${m.id})`);
+    }
+  }
+
+  /** Retira a carta: o anexo precisa caber no inventário; a carta só some se tudo foi entregue. */
+  private takeMail(p: Player, id: unknown) {
+    if (!Number.isInteger(id)) return;
+    const mail = mailbox.get(id as number, p.id);
+    if (!mail) return this.log(p, "Carta não encontrada.");
+    const trial = p.inv.map((sl) => (sl ? { ...sl } : null));
+    for (const s of mail.items) if (addItem(trial, s.id, s.qty) < s.qty) return this.log(p, "Inventário sem espaço para o anexo.");
+    if (!mailbox.take(mail.id, p.id)) return;
+    for (const s of mail.items) addItem(p.inv, s.id, s.qty);
+    p.gold += mail.gold;
+    this.log(p, `Carta recebida: ${mail.subject}${mail.gold ? `, +${mail.gold} kan` : ""}${mail.items.map((s) => `, ${s.qty}x ${ITEMS[s.id]?.name ?? s.id}`).join("")}.`);
+    this.sendInv(p);
+    this.showMail(p, false);
+  }
+
   // ---------- mercado entre jogadores (no Kisuke) ----------
 
   private registerMarketMessages() {
@@ -2543,19 +2725,25 @@ export class WorldRoom extends GameRoom<WorldState> {
     });
   }
 
-  /** Anúncios com mais de 7 dias voltam para o depot do vendedor (fica no anúncio se o depot estiver cheio). */
+  /** Anúncios com mais de 7 dias voltam para o depot do vendedor; se o depot estiver cheio, o item segue por carta. */
   private expireListings() {
     for (const l of market.expired()) {
       const x = this.state.players.get(l.seller);
       const row = x ? undefined : db.load(l.seller);
       if (row) row.data.depot = Array.from({ length: DEPOT_SIZE }, (_, i) => row.data.depot?.[i] ?? null);
       const depot = x ? x.depot : row?.data.depot;
-      if (!depot || spaceFor(depot, l.item) < l.qty) continue;
+      if (!x && !row) continue;
       if (!market.remove(l.id)) continue;
-      addItem(depot, l.item, l.qty);
-      const text = `Mercado: seu anúncio de ${l.qty}x ${ITEMS[l.item].name} expirou e voltou para o depot.`;
-      if (x) { this.log(x, text); this.sendInv(x); }
-      else if (row) db.save(l.seller, row.data, row.inWorld);
+      const item = ITEMS[l.item].name;
+      if (depot && spaceFor(depot, l.item) >= l.qty) {
+        addItem(depot, l.item, l.qty);
+        const text = `Mercado: seu anúncio de ${l.qty}x ${item} expirou e voltou para o depot.`;
+        if (x) { this.log(x, text); this.sendInv(x); }
+        else if (row) db.save(l.seller, row.data, row.inWorld);
+      } else {
+        mailbox.send(l.seller, "Mercado", "Anúncio expirado", `Seu anúncio de ${l.qty}x ${item} expirou e o depot estava cheio.`, { items: [{ id: l.item, qty: l.qty }] });
+        if (x) this.log(x, `Mercado: anúncio de ${l.qty}x ${item} expirou; o item foi para o correio (/correio).`);
+      }
     }
   }
 
@@ -2596,10 +2784,13 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private saveAll() {
-    db.saveMany([...this.state.players.values()].map((p) => ({ id: p.id, data: this.toSave(p), inWorld: true })));
+    const t0 = performance.now();
+    const list = [...this.state.players.values()].map((p) => ({ id: p.id, data: this.toSave(p), inWorld: true }));
+    db.saveMany(list);
     db.setMeta("parties", [...this.parties.values()]);
     db.setMeta("bags", [...this.state.bags.values()].map((b): SavedBag => ({
       id: b.id, map: b.map, x: b.x, y: b.y, kind: b.kind, label: b.label, owners: b.owners, ownerUntil: b.ownerUntil, expires: b.expires, gold: b.gold, items: b.items,
     })));
+    recordSave(performance.now() - t0, list.length);
   }
 }

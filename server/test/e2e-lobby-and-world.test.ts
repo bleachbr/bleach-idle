@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { Client, type Room } from "colyseus.js";
 import { startTestServer, stopTestServer, once, quiet } from "./helpers/testServer";
+import { clearFails } from "../src/auth";
 
 describe("E2E: Lobby e World", () => {
   let url: string;
@@ -67,10 +68,12 @@ describe("E2E: Lobby e World", () => {
   const randomLetters = (len = 4) =>
     Array.from({ length: len }, () => String.fromCharCode(97 + Math.floor(Math.random() * 26))).join("");
 
-  it("cria personagem, emite ticket e entra no mundo", async () => {
-    const client = new Client(url);
-    const login = `play_${Date.now().toString(36)}`;
-    const charName = `Hero ${randomLetters(5)}`;
+  it("cria personagem, emite ticket e entra no mundo sem avisos de onMessage não registrado (F-10)", async () => {
+    const warnSpy = vi.spyOn(console, "warn");
+    try {
+      const client = new Client(url);
+      const login = `play_${Date.now().toString(36)}`;
+      const charName = `Hero ${randomLetters(5)}`;
 
     const lobby = quiet(await client.joinOrCreate("lobby", {
       action: "register",
@@ -78,26 +81,34 @@ describe("E2E: Lobby e World", () => {
       password: "senha_valida_123",
     }));
 
-    // Aguarda lista inicial de chars
-    await once<any[]>(lobby, "chars");
+      // Aguarda lista inicial de chars
+      await once<any[]>(lobby, "chars");
 
-    // Cria personagem
-    lobby.send("create", { name: charName, charId: "ichigo" });
-    const charsAfterCreate = await once<any[]>(lobby, "chars");
-    expect(charsAfterCreate.some((c) => c.name.toLowerCase() === charName.toLowerCase())).toBe(true);
+      // Cria personagem
+      lobby.send("create", { name: charName, charId: "ichigo" });
+      const charsAfterCreate = await once<any[]>(lobby, "chars");
+      expect(charsAfterCreate.some((c) => c.name.toLowerCase() === charName.toLowerCase())).toBe(true);
 
-    // Solicita ticket para jogar
-    lobby.send("play", { id: charName.toLowerCase() });
-    const { ticket } = await once<{ ticket: string }>(lobby, "ticket");
-    expect(ticket).toBeTypeOf("string");
+      // Solicita ticket para jogar
+      lobby.send("play", { id: charName.toLowerCase() });
+      const { ticket } = await once<{ ticket: string }>(lobby, "ticket");
+      expect(ticket).toBeTypeOf("string");
 
-    await lobby.leave();
+      await lobby.leave();
 
     // Conecta no World usando o ticket emitido
     const world = quiet(await client.join("world", { ticket }));
     expect(world.id).toBeTruthy();
 
-    await world.leave();
+      const colyseusWarns = warnSpy.mock.calls
+        .map((args) => String(args[0] ?? ""))
+        .filter((msg) => msg.includes("colyseus.js: onMessage() not registered"));
+      expect(colyseusWarns).toEqual([]);
+
+      await world.leave();
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it("rejeita ingresso inválido no mundo", async () => {
@@ -141,5 +152,35 @@ describe("E2E: Lobby e World", () => {
     await vi.waitFor(() => expect(leaveCode).toBe(4001), { timeout: 5000, interval: 25 });
 
     await world2.leave();
+  });
+
+  it("limita criação de contas por IP sem bloquear login de contas existentes", async () => {
+    const prev = process.env.REGISTER_MAX_IP;
+    process.env.REGISTER_MAX_IP = "2";
+    for (const k of ["reg:127.0.0.1", "reg:::ffff:127.0.0.1", "reg:::1"]) clearFails(k);
+    try {
+      const client = new Client(url);
+      const l1 = `r1_${Date.now().toString(36)}`;
+      const l2 = `r2_${Date.now().toString(36)}`;
+      const l3 = `r3_${Date.now().toString(36)}`;
+
+      const r1 = await client.joinOrCreate("lobby", { action: "register", login: l1, password: "senha_valida_123" });
+      await r1.leave();
+      const r2 = await client.joinOrCreate("lobby", { action: "register", login: l2, password: "senha_valida_123" });
+      await r2.leave();
+
+      // 3º cadastro do mesmo IP excede REGISTER_MAX_IP=2
+      const erroTerceiro = await err(client.joinOrCreate("lobby", { action: "register", login: l3, password: "senha_valida_123" }));
+      expect(erroTerceiro).toContain("Muitas contas criadas");
+
+      // Mas o login normal na conta já criada continua liberado
+      const loginOk = await client.joinOrCreate("lobby", { action: "login", login: l1, password: "senha_valida_123" });
+      await once(loginOk, "account");
+      await loginOk.leave();
+    } finally {
+      if (prev === undefined) delete process.env.REGISTER_MAX_IP;
+      else process.env.REGISTER_MAX_IP = prev;
+      for (const k of ["reg:127.0.0.1", "reg:::ffff:127.0.0.1", "reg:::1"]) clearFails(k);
+    }
   });
 });

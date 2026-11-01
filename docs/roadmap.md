@@ -27,7 +27,7 @@ A divisão do trabalho entre Waldir e Rafael está em [`roadmap-duplas.md`](road
 - **Economia:** 45 itens (26 de equipamento), 7 espaços de equipamento, conjuntos com bônus, forja até +10, 32 cosméticos na Loja de Cristais e mercado entre jogadores com anúncios de 7 dias.
 - **Automação:** Auto Helper (alvo, caçada, cura, treino, venda), caçada offline de até 12 horas que sobrevive a reinício do servidor.
 - **Eventos:** passe de temporada mensal grátis, chefe mundial a cada 2 h, invasões de Hollows a cada 3 h (as duas com lore no chat e banner no topo da tela, R-12) e XP em dobro aos sábados e domingos (Brasília).
-- **Qualidade:** 141 testes Vitest e 31 cenários de integração no CI, cinco skills de projeto e uma [linha de base medida](baseline.md).
+- **Qualidade:** 182 testes Vitest e 31 cenários de integração no CI, cinco skills de projeto e uma [linha de base medida](baseline.md).
 
 ## Ordem de execução
 
@@ -47,8 +47,8 @@ A ordem é de prioridade, não de dependência técnica, salvo onde a coluna "De
 ## Fluxo de trabalho
 
 1. **Escolha** um item `Pronto` (confira `gh pr list` para ver se alguém já está nele) e avise a outra pessoa por conversa.
-2. **Branch** a partir da `main` atualizada: `feat/`, `fix/`, `test/`, `docs/` ou `chore/` + ID + assunto.
-3. **Implemente em passos pequenos**, com teste (skill `testes-deterministicos`) e a skill do assunto (`seguranca-servidor`, `adicionar-conteudo`, `performance-servidor`).
+2. **Worktree a partir da `main` atualizada (Orca IDE):** todo novo desenvolvimento nasce em um worktree próprio via `orca worktree create --name <id-assunto> --branch <prefixo/id-assunto> --base-branch main --no-parent --json` (`feat/`, `fix/`, `perf/`, `test/`, `docs/` ou `chore/` + ID + assunto), mantendo o checkout principal da `main` limpo.
+3. **Implemente em passos pequenos**, simulando primeiro o problema com teste que falha antes da correção (skill `testes-deterministicos`), mantendo funções curtas, nomes claros e módulos coesos, e aplicando a skill do assunto (`seguranca-servidor`, `adicionar-conteudo`, `performance-servidor`).
 4. **Verifique localmente:** `npm run typecheck`, `npm test`, os cenários afetados e `gitleaks git --redact -c .gitleaks.toml .`.
 5. **Revisão adversarial antes de publicar.** Quem escreveu o código não o revisa: outra pessoa, ou uma sessão nova de agente com a skill `revisar-pr` (que revisa a branch local com `git diff origin/main...HEAD`). O revisor procura o que está errado em vez de confirmar o que parece certo e confere cada afirmação contra o código. Achado BLOQUEIA ou ALTA é corrigido antes do passo seguinte. Em mudança de segurança (handler, login, sessão, `innerHTML`, dependências, Dockerfile, CI, segredos), o veredito de agente é insumo e a aprovação é da outra pessoa.
 6. **Commit e push** só depois do passo 5, em commits pequenos de um assunto só.
@@ -85,18 +85,19 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-01 | Modo Dev e `BI_DEBUG` só ligam com `=== "1"` | P | | Feito | S1 |
 | F-02 | Chave vinda do cliente não indexa objeto comum (`Object.hasOwn`) | P | | Feito | S2 |
 | F-03 | Limite de login por IP usa o IP real atrás do Caddy | P | | Feito | S3 |
-| F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | | Pronto | S6 |
-| F-05 | Contêiner roda como `node`, não como root (conferir a permissão do volume `/data`) | P | | Pronto | S9 |
-| F-06 | CSP e cabeçalhos de segurança no Caddy | P | | Pronto | S7 |
+| F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | | Feito | S6 |
+| F-05 | Contêiner roda como `node`, não como root (conferir a permissão do volume `/data`) | P | | Feito | S9 |
+| F-06 | CSP e cabeçalhos de segurança no Caddy | P | | Feito | S7 |
 | F-07 | Proteger a `main` (PR obrigatório e CI verde). O GitHub responde 403 para proteção de branch e rulesets neste plano: exige plano pago ou repositório público. Alternativa: combinado escrito mais um hook `pre-push` local | P | | Decisão pendente (Waldir e Rafael) | S8 |
-| F-08 | Métrica da duração do tick, com aviso acima de 50 ms | P | | Pronto | P3 |
-| F-09 | Ranking sem bloquear o tick | M | F-08 | Bloqueado por F-08 | P1 |
-| F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once` no Vitest; limpar o ruído do Vitest. Nos cenários, rotina: ao mexer num com `sleep`, troque-o (Q2) | M | | Feito | Q2, Q3 |
-| F-11 | CI: job de gitleaks, `ubuntu-24.04` fixo, Node 22 e 24 e `actions` na v7 | M | | Pronto | Q5, Q8, Q9, Q10 |
+| F-08 | Métrica da duração do tick, com aviso acima de 50 ms | P | | Feito | P3 |
+| F-09 | Ranking sem bloquear o tick | M | F-08 | Feito | P1 |
+| F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once`; limpar o ruído do Vitest. Rotina: ao mexer num teste com `sleep`, troque-o | M | | Feito | Q2, Q3 |
+| F-11 | CI: job de gitleaks, `ubuntu-24.04` fixo, Node 22 e 24 e `actions` na v7 | M | | Feito | Q5, Q8, Q9, Q10 |
 | F-12 | Upgrade maior do Colyseus (0.15 para 0.18) | G | spec | Precisa de spec | S5 |
 | F-13 | Primeiro deploy com HTTPS atrás do Caddy e restauração de backup testada | M | | Decisão pendente (servidor e domínio) | DEPLOY.md |
-| F-14 | Limite de criação de contas por IP | P | F-03 | Pronto | DEPLOY.md |
-| F-15 | Balanceamento dos mapas avançados (`balance.ts`) | M | | Pronto | DEPLOY.md |
+| F-14 | Limite de criação de contas por IP | P | F-03 | Feito | DEPLOY.md |
+| F-15 | Balanceamento dos mapas avançados (`balance.ts`) | M | | Feito | DEPLOY.md |
+| F-16 | Pacote de correções do Jogador-IA: `noHd` no `boneco`, `Tab` (`nextTarget`) ignorando `dummy`, exclusividade de janelas flutuantes + `Esc`, confirmação ao trocar de personagem e handlers `welcome`/`fx` na entrada da sala | M | | Feito | test/ |
 
 Recomendação: fazer F-12 antes de M4, porque as salas instanciadas dependem do Colyseus e é melhor não construir sobre uma versão com advisory.
 
@@ -107,23 +108,23 @@ Especificação: [PRD](features/cronicas-semanais-lore/PRD-cronicas-semanais-sei
 | ID | Entrega | Tam. | Depende de | Status |
 | :-- | :--- | :-- | :--- | :--- |
 | M1-00 | Aprovar o PRD e os 3 ADRs (status "Aceito", com data e quem aprovou, no PR que aprova) e fechar os pontos do [PRD §8](features/cronicas-semanais-lore/PRD-cronicas-semanais-seireitei.md#8-pontos-em-aberto-conferidos-contra-o-código-31102026) (itens que faltam, nível de monstro, título temporário, NPC de cada semana) | P | | Decisão pendente (Waldir e Rafael) |
-| M1-01 | `shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) com testes de borda: virada de semana, ciclo de 5 semanas, antes da âncora e `TZ` diferentes | P | M1-00 | Bloqueado por M1-00 |
+| M1-01 | `shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) com testes de borda: virada de semana, ciclo de 5 semanas, antes da âncora e `TZ` diferentes | P | M1-00 | Feito |
 | M1-02 | `shared/src/npcs.ts`: tipos e catálogo (identidade e diálogo; a posição vem do `.tmj`) | P | M1-00 | Bloqueado por M1-00 |
 | M1-03 | NPCs no `soul.tmj` (objeto `npc` na camada `logica`), leitura em `parseMap` e `mapcheck` | M | M1-02 | Bloqueado por M1-02 |
 | M1-04 | Servidor: `interact` com `kind: "npc"`, `npc_dialog` e `npc_action` por índice de opção, com o nó atual guardado no servidor e a distância validada | M | M1-02, M1-03 | Bloqueado por M1-03 |
-| M1-05 | Persistência: `newProgress()` e `Progress.chronicle` com padrão; a virada da semana zera `questKills` e `completedAt` | P | M1-01 | Bloqueado por M1-01 |
+| M1-05 | Persistência: `newProgress()` e `Progress.chronicle` com padrão; a virada da semana zera `questKills` e `completedAt` | P | M1-01 | Feito |
 | M1-06 | Missão semanal e recompensa uma vez por semana, por personagem (D-001). Antes: fazer a conta de cristais por semana com 1 e 5 personagens (diária: 55 por semana com a sequência completa de 7 dias, 5 nos dias comuns e 25 no sétimo; crônica: 15 a 30; conquistas: 10 cada, uma vez) | M | M1-00, M1-04, M1-05 | Bloqueado por M1-04 e M1-05 |
 | M1-07 | Cliente: janela de diálogo no `#modal` (teclado, toque e `Esc`) | M | M1-04 | Bloqueado por M1-04 |
-| M1-08 | Textos e conteúdo das 5 crônicas | M | M1-00 | Bloqueado por M1-00 |
+| M1-08 | Textos e conteúdo das 5 crônicas | M | M1-00 | Feito |
 | M1-09 | Cenário `cronicas.ts` e testes de rotação, diálogo e entrega | M | M1-06, M1-07 | Bloqueado por M1-06 e M1-07 |
 
 ## M2: Status e controle de grupo no combate
 
-Todos `Precisa de spec` (PRD e ADR primeiro). Itens: **M2-01** motor de status no servidor (expiração por tick); **M2-02** congelamento (Rukia e Hitsugaya); **M2-03** lentidão (reduz `stepMs`); **M2-04** dano ao longo do tempo (Kenpachi e chamas de capitães); **M2-05** atordoamento (interrompe conjuração); **M2-06** efeitos visuais (cor no sprite, ícone de status, número de dano contínuo); **M2-07** tempo de recarga numérico no HUD.
+Especificação: `docs/features/status-combate/`. Itens: **M2-01** motor de status no servidor (expiração por tick — `Feito`); **M2-02** congelamento (Rukia e Hitsugaya — `Feito`); **M2-03** lentidão (reduz velocidade / aumenta `stepMs` — `Feito`); **M2-04** dano ao longo do tempo (Kenpachi e chamas de Zabimaru — `Feito`); **M2-05** atordoamento (Sado e Hadō 4 — `Feito`); **M2-06** efeitos visuais (cor no sprite, ícone de status, número de dano contínuo); **M2-07** tempo de recarga numérico no HUD.
 
 ## M3: Social avançado
 
-Todos `Precisa de spec`. **M3-01** troca direta 1 contra 1, em duas confirmações, no mesmo mapa e alcance; **M3-02** abas de chat (Geral, Combate, Party, Guilda, Privado); **M3-03** filtro de loot do Auto Helper; **M3-04** banco de guilda com permissões por cargo; **M3-05** moderação de chat (filtro de spam, silenciar, comandos de GM).
+Todos `Precisa de spec`. **M3-01** troca direta 1 contra 1, em duas confirmações, no mesmo mapa e alcance; **M3-02** abas de chat (Geral, Combate, Party, Guilda, Privado); **M3-03** filtro de loot do Auto Helper; **M3-04** banco de guilda com permissões por cargo; **M3-05** moderação de chat (filtro de spam, silenciar, comandos de GM — `Feito`, spec em `docs/features/moderacao-chat/`).
 
 ## M4: Dungeons cooperativas e raids
 
@@ -131,7 +132,7 @@ Todos `Precisa de spec`, e depois de F-12. **M4-01** salas instanciadas para a p
 
 ## M5: Contas e infraestrutura
 
-Todos `Precisa de spec`. **M5-01** recuperação de senha por e-mail com token assinado; **M5-02** limite de tentativas persistente (SQLite ou Redis, se houver mais de um processo); **M5-03** testes de ponta a ponta no navegador com Playwright; **M5-04** partição do mundo por mapa para centenas de jogadores (hoje um processo só; limites medidos em [`baseline.md`](baseline.md)).
+Todos `Precisa de spec`. **M5-01** recuperação de senha por e-mail com token assinado (`Feito`, spec em `docs/features/seguranca-contas/`); **M5-02** limite de tentativas persistente em SQLite (`Feito`, spec em `docs/features/seguranca-contas/`); **M5-03** testes de ponta a ponta no navegador com Playwright; **M5-04** partição do mundo por mapa para centenas de jogadores (hoje um processo só; limites medidos em [`baseline.md`](baseline.md)).
 
 ## Itens das filas em dupla (R-## e W-##)
 

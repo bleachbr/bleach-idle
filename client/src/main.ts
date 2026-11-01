@@ -166,12 +166,25 @@ registerPWA();
 
 function start(room: Room<any>, myId: string) {
   show("app");
+  // registra logo ao entrar para o Colyseus não avisar enquanto a cena do Phaser carrega
+  room.onMessage("welcome", () => {});
+  room.onMessage("fx", () => {});
   $("#exit-btn").onclick = async () => {
+    if (!confirm("Trocar de personagem? Com Auto Hunt ligado, ele segue caçando offline.")) return;
     await room.leave(); // com Auto Hunt ligado, o personagem segue caçando offline
     location.reload();
   };
 
-  const inventory = initInventory(room, (open) => (game.scene.getScene("game") as GameScene | null)?.setPanelOpen(open),
+  const WINDOWS = ["#ranking", "#book", "#pass", "#dev", "#shop"];
+  let inventory: ReturnType<typeof initInventory>;
+  const closeWindows = (keep?: string) => {
+    if (keep !== "#modal") inventory?.close();
+    for (const w of WINDOWS) if (w !== keep) $(w).hidden = true;
+  };
+  inventory = initInventory(room, (open) => {
+    if (open) closeWindows("#modal");
+    (game.scene.getScene("game") as GameScene | null)?.setPanelOpen(open);
+  },
     () => room.state.players.get(myId)?.level ?? 1,
     () => { const p = room.state.players.get(myId); return p ? { x: p.x, y: p.y } : undefined; });
   const onMe = (p: any) => {
@@ -196,13 +209,16 @@ function start(room: Room<any>, myId: string) {
     const prefix = m.ch === "pm" ? "[pm] " : m.ch === "party" ? "[party] " : m.ch === "guild" ? "[guilda] " : "";
     chatLine(m.from ? `${prefix}${m.from}: ${m.text}` : `${prefix}${m.text}`, m.ch && m.ch !== "sys" ? m.ch : m.from ? "" : "sys");
   });
-  bindGuild(room);
-  bindBook(room);
-  bindShop(room);
-  bindSeason(room);
+  bindGuild(room, closeWindows);
+  bindBook(room, closeWindows);
+  bindShop(room, closeWindows);
+  bindSeason(room, closeWindows);
   bindEvents(room);
-  bindDev(room, myId);
+  bindDev(room, myId, closeWindows);
   bindDangai(room, myId);
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "Escape" && document.activeElement !== chatin) closeWindows();
+  });
   $("#travel-btn").onclick = () => inventory.openTravel();
   $("#rebirth-btn").onclick = () => {
     const me = room.state.players.get(myId);
@@ -345,7 +361,7 @@ function bindHd(game: Phaser.Game) {
 
 // ---------- passe de temporada ----------
 
-function bindSeason(room: Room<any>) {
+function bindSeason(room: Room<any>, closeWindows: (keep?: string) => void) {
   const panel = $("#pass");
   type Season = { open: boolean; name: string; endsAt: number; pts: number; perTier: number; tiers: number; claimed: number; killPts: number; killCap: number };
   let st: Season | null = null;
@@ -369,7 +385,7 @@ function bindSeason(room: Room<any>) {
     $("#pass-head").innerHTML = `<div class="pass-top"><b>Nível ${tier}</b> <span class="hint">${into}/${st.perTier} pontos para o próximo · termina em ${days} ${days === 1 ? "dia" : "dias"}</span></div>
       <div class="bar"><i style="width:${(into / st.perTier) * 100}%"></i></div>
       <p class="hint">Pontos: a cada ${SEASON_PTS.killEvery} abates +${SEASON_PTS.kill} (hoje ${st.killPts}/${st.killCap}) · chefe +${SEASON_PTS.boss} · missão diária +${SEASON_PTS.mission} · recompensa diária +${SEASON_PTS.daily} · chefe mundial +${SEASON_PTS.worldBoss}</p>
-      <button type="button" class="claim" ${tier > st.claimed ? "" : "disabled"}>${tier > st.claimed ? `Pegar ${tier - st.claimed} ${tier - st.claimed === 1 ? "prêmio" : "prêmios"}` : "Tudo pego até agora"}</button>`;
+      <button type="button" class="claim" ${tier > st.claimed ? "" : `disabled title="Suba de nível no passe (${into}/${st.perTier} pontos) para liberar novos prêmios"`}>${tier > st.claimed ? `Pegar ${tier - st.claimed} ${tier - st.claimed === 1 ? "prêmio" : "prêmios"}` : "Tudo pego até agora"}</button>`;
     $("#pass-head").querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("seasonClaim");
     const cells: string[] = [];
     for (let t = 1; t <= st.tiers; t++) {
@@ -381,8 +397,8 @@ function bindSeason(room: Room<any>) {
     // rola até o próximo prêmio
     $("#pass-body").querySelector<HTMLElement>(".tier.ready:not(.got), .tier:not(.got)")?.scrollIntoView({ block: "nearest", inline: "center" });
   };
-  room.onMessage("season", (m: Season) => { st = m; if (m.open) panel.hidden = false; render(); });
-  $("#season-btn").onclick = () => room.send("seasonOpen");
+  room.onMessage("season", (m: Season) => { st = m; if (m.open) { closeWindows("#pass"); panel.hidden = false; } render(); });
+  $("#season-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("seasonOpen"); };
   $("#pass-close").onclick = () => (panel.hidden = true);
   // fim de semana de XP em dobro: aviso fixo no painel
   const line = $("#event-line");
@@ -398,7 +414,7 @@ function bindSeason(room: Room<any>) {
 
 // ---------- modo Dev (o botão só aparece se o servidor estiver com BI_DEV=1) ----------
 
-function bindDev(room: Room<any>, myId: string) {
+function bindDev(room: Room<any>, myId: string, closeWindows: (keep?: string) => void) {
   const panel = $("#dev");
   const btn = $<HTMLButtonElement>("#dev-btn");
   let god = false;
@@ -414,20 +430,25 @@ function bindDev(room: Room<any>, myId: string) {
       <div class="dev-grid">${acts.map(([label], i) => `<button type="button" data-i="${i}">${label}</button>`).join("")}</div>`;
     body.querySelector<HTMLButtonElement>("[data-a=god]")!.onclick = () => room.send("dev", { a: "god" });
     body.querySelectorAll<HTMLButtonElement>("[data-i]").forEach((b) => (b.onclick = () => {
-      const [, a, n] = acts[Number(b.dataset.i)];
+      const [label, a, n] = acts[Number(b.dataset.i)];
       if (a === "level+") room.send("dev", { a: "level", n: (room.state.players.get(myId)?.level ?? 1) + 10 });
       else room.send("dev", { a, n });
+      b.textContent = `✔ ${label}`;
+      window.setTimeout(() => { b.textContent = label; }, 800);
     }));
   };
   room.onMessage("devMode", (m: { god: boolean }) => { god = m.god; btn.hidden = false; render(); });
-  btn.onclick = () => (panel.hidden = !panel.hidden);
+  btn.onclick = () => {
+    if (panel.hidden) { closeWindows("#dev"); panel.hidden = false; }
+    else panel.hidden = true;
+  };
   $("#dev-close").onclick = () => (panel.hidden = true);
   room.send("devHello");
 }
 
 // ---------- Loja de Cristais ----------
 
-function bindShop(room: Room<any>) {
+function bindShop(room: Room<any>, closeWindows: (keep?: string) => void) {
   const panel = $("#shop");
   let data: { crystals: number; owned: string[]; equip: Partial<Record<string, string>> } | null = null;
   let tab: CosKind = "aura";
@@ -453,7 +474,7 @@ function bindShop(room: Room<any>) {
         const own = data!.owned.includes(x.id);
         const on = data!.equip[slot] === x.id;
         const swatch = `<span class="swatch" style="background:${hex(x.color)};box-shadow:0 0 8px ${hex(x.color2 ?? x.color)}"></span>`;
-        const action = !own ? `<button type="button" data-buy="${x.id}" ${data!.crystals < x.price ? "disabled" : ""}>💎 ${x.price}</button>`
+        const action = !own ? `<button type="button" data-buy="${x.id}" ${data!.crystals < x.price ? `disabled title="Faltam ${x.price - data!.crystals} cristais (ganhe na recompensa diária e conquistas)"` : ""}>💎 ${x.price}</button>`
           : tab === "lore" ? `<button type="button" data-read="${x.id}">Ler</button><button type="button" data-equip="${x.id}" ${on ? "disabled" : ""}>${on ? "Título em uso" : "Usar título"}</button>`
           : on ? `<button type="button" data-off="${slot}">Tirar</button>` : `<button type="button" data-equip="${x.id}">Usar</button>`;
         const label = tab === "title" || tab === "lore" ? `<b style="color:${hex(x.color)}">« ${escHtml(titleText(x.id))} »</b>` : `<b>${escHtml(x.name)}</b>`;
@@ -470,13 +491,13 @@ function bindShop(room: Room<any>) {
     body.querySelectorAll<HTMLButtonElement>("[data-off]").forEach((b) => (b.onclick = () => room.send("shopEquip", { kind: b.dataset.off })));
     body.querySelectorAll<HTMLButtonElement>("[data-read]").forEach((b) => (b.onclick = () => { reading = b.dataset.read!; render(); }));
   };
-  room.onMessage("shopData", (d: typeof data) => { data = d; panel.hidden = false; render(); });
+  room.onMessage("shopData", (d: typeof data) => { data = d; closeWindows("#shop"); panel.hidden = false; render(); });
   room.onMessage("crystals", (m: { crystals: number }) => { if (data) { data.crystals = m.crystals; render(); } });
-  $("#shop-btn").onclick = () => room.send("shopOpen");
+  $("#shop-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("shopOpen"); };
   $("#shop-close").onclick = () => (panel.hidden = true);
 }
 
-function bindBook(room: Room<any>) {
+function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
   const panel = $("#book");
   let data: any = null;
   let tab = "bestiario";
@@ -519,7 +540,11 @@ function bindBook(room: Room<any>) {
         <p class="hint">Loot (kan acima conta o dinheiro do loot e a Auto Venda):</p>
         <div class="loot-list">${h.items.map((i: any) => `<span class="slot static" title="${escHtml(i.name)}">${iconHtml(i.icon, i.n)}</span>`).join("") || `<span class="hint">nada ainda</span>`}</div>
         <button type="button" class="claim">Zerar contagem</button>`;
-      body.querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("huntReset");
+      body.querySelector<HTMLButtonElement>(".claim")!.onclick = (e) => {
+        const b = e.currentTarget as HTMLButtonElement;
+        b.textContent = "✔ Contagem zerada";
+        room.send("huntReset");
+      };
     } else {
       const d = data.daily;
       const ms = data.missions;
@@ -528,17 +553,17 @@ function bindBook(room: Room<any>) {
       body.innerHTML = missions + `<h3>Recompensa de entrada</h3><p class="hint">Pegue uma vez por dia (o dia vira à meia-noite de Brasília). Perder um dia zera a sequência.</p>
         <div><b>Sequência: ${d.streak} ${d.streak === 1 ? "dia" : "dias"}</b></div>
         <div class="days">${d.rewards.map((r: any, i: number) => `<div class="${i < d.index || (d.claimed && i === d.index) ? "got" : ""}${i === d.index ? " today" : ""}"><b>Dia ${i + 1}</b><br>${reward(r)}</div>`).join("")}</div>
-        <button type="button" class="claim" ${d.claimed ? "disabled" : ""}>${d.claimed ? "Já pegou hoje" : "Pegar a recompensa de hoje"}</button>`;
+        <button type="button" class="claim" ${d.claimed ? `disabled title="Recompensa diária já resgatada hoje. Volte após a meia-noite de Brasília."` : ""}>${d.claimed ? "Já pegou hoje" : "Pegar a recompensa de hoje"}</button>`;
       body.querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("daily");
     }
   };
-  room.onMessage("book", (d: any) => { data = d; panel.hidden = false; render(); });
+  room.onMessage("book", (d: any) => { data = d; if (panel.hidden) { closeWindows("#book"); panel.hidden = false; } render(); });
   room.onMessage("dailyReady", (m: { ready: boolean }) => $("#book-btn").classList.toggle("ping", m.ready));
   room.onMessage("tutorial", (steps: { text: string; done: boolean }[] | null) => {
     $("#tutorial").hidden = !steps;
     if (steps) $("#tutorial-list").innerHTML = steps.map((s) => `<div class="tut${s.done ? " done" : ""}">${s.done ? "✔" : "○"} ${escHtml(s.text)}</div>`).join("");
   });
-  $("#book-btn").onclick = () => room.send("book");
+  $("#book-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("book"); };
   // a aba Caçada muda sozinha: atualiza enquanto estiver aberta
   const timer = window.setInterval(() => { if (!panel.hidden && tab === "cacada") room.send("book"); }, 5000);
   room.onLeave(() => window.clearInterval(timer));
@@ -582,7 +607,7 @@ function bindDangai(room: Room<any>, myId: string) {
 
 // ---------- guilda e ranking ----------
 
-function bindGuild(room: Room<any>) {
+function bindGuild(room: Room<any>, closeWindows: (keep?: string) => void) {
   room.onMessage("guild", (g: null | { name: string; tag: string; bank: number; leader: boolean; members: { name: string; level: number; leader: boolean; online: boolean }[] }) => {
     const body = $("#guild-body");
     if (!g) {
@@ -602,14 +627,20 @@ function bindGuild(room: Room<any>) {
   const render = () => {
     panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === tab)));
     if (!data) return;
+    if (tab === "marcos") {
+      const list = (data.marcos ?? []) as { name: string; desc: string; title: string; holder: string; charId: string }[];
+      const rows = list.map((m) => `<tr><td><b>${escHtml(m.name)}</b><div class="hint">${escHtml(m.desc)}</div></td><td>« ${escHtml(m.title)} »</td><td>${m.holder ? `<b>${escHtml(m.holder)}</b> <small>${CHARS[m.charId]?.name ?? ""}</small>` : `<span class="hint">Em aberto</span>`}</td></tr>`);
+      $("#ranking-body").innerHTML = rows.length ? `<table>${rows.join("")}</table>` : `<p class="hint">Nenhum marco definido.</p>`;
+      return;
+    }
     const rows: string[] = (data[tab] as any[]).map((r, i) => tab === "guildas"
       ? `<tr><td>${i + 1}</td><td>${escHtml(r.name)} <small>[${escHtml(r.tag)}]</small></td><td>${r.frags} abates</td><td>${r.members} membros · ${r.levels} níveis</td></tr>`
       : `<tr><td>${i + 1}</td><td>${escHtml(r.name)}${r.guild ? ` <small>[${escHtml(r.guild)}]</small>` : ""}</td><td>${CHARS[r.charId]?.name ?? ""}</td><td>${
         tab === "nivel" ? `${r.rebirths ? `✦${r.rebirths} · ` : ""}nível ${r.level}` : tab === "poder" ? `${fmtPower(r.power)} · ${POWER_TIERS[powerTier(r.power)].title}` : tab === "dangai" ? `andar ${r.dg}` : tab === "conquistas" ? `${r.ach} conquistas` : tab === "bestiario" ? `${r.stages} estágios` : `${r.frags} abates`}</td></tr>`);
     $("#ranking-body").innerHTML = rows.length ? `<table>${rows.join("")}</table>` : `<p class="hint">Ninguém aqui ainda.</p>`;
   };
-  room.onMessage("ranking", (d: any) => { data = d; panel.hidden = false; render(); });
-  $("#ranking-btn").onclick = () => room.send("ranking");
+  room.onMessage("ranking", (d: any) => { data = d; closeWindows("#ranking"); panel.hidden = false; render(); });
+  $("#ranking-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("ranking"); };
   $("#ranking-close").onclick = () => (panel.hidden = true);
   panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab!; render(); }));
 }
