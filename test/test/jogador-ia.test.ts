@@ -1,35 +1,62 @@
-import { describe, it, expect } from "vitest";
-import { Game } from "../src/game.js";
+import test from "node:test";
+import assert from "node:assert/strict";
+import { mkdirSync, writeFileSync, existsSync, statSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { execFileSync } from "node:child_process";
+import { Game, compressVideoToMp4 } from "../src/game.js";
 import { prepareSource } from "../src/source.js";
 
-describe("Jogador-IA Config e Runners", () => {
-  it("Game configura baseUrl padrão para localhost e aceita targetUrl remoto", () => {
-    const localGame = new Game("/tmp/mock-src", "/tmp/mock.sqlite");
-    expect(localGame.baseUrl).toBe("http://localhost:5183");
-    expect(localGame.enableDev).toBe(false);
-    expect(localGame.targetUrl).toBe("");
+test("Game configura baseUrl padrão para localhost e aceita targetUrl remoto", () => {
+  const localGame = new Game("/tmp/mock-src", "/tmp/mock.sqlite");
+  assert.equal(localGame.baseUrl, "http://localhost:5183");
+  assert.equal(localGame.enableDev, false);
+  assert.equal(localGame.compressVideo, true);
+  assert.equal(localGame.targetUrl, "");
 
-    const prodGame = new Game("/tmp/mock-src", "/tmp/mock.sqlite", "https://bleach.acoplum.com/");
-    expect(prodGame.baseUrl).toBe("https://bleach.acoplum.com");
-    expect(prodGame.targetUrl).toBe("https://bleach.acoplum.com/");
-    expect(prodGame.enableDev).toBe(false);
+  const prodGame = new Game("/tmp/mock-src", "/tmp/mock.sqlite", "https://bleach.acoplum.com/");
+  assert.equal(prodGame.baseUrl, "https://bleach.acoplum.com");
+  assert.equal(prodGame.targetUrl, "https://bleach.acoplum.com/");
+  assert.equal(prodGame.enableDev, false);
+  assert.equal(prodGame.compressVideo, true);
 
-    const devGame = new Game("/tmp/mock-src", "/tmp/mock.sqlite", "", true);
-    expect(devGame.enableDev).toBe(true);
-  });
+  const devGame = new Game("/tmp/mock-src", "/tmp/mock.sqlite", "", true, false);
+  assert.equal(devGame.enableDev, true);
+  assert.equal(devGame.compressVideo, false);
+});
 
-  it("prepareSource suporta targetUrl remoto sem exigir worktree local", () => {
-    const src = prepareSource("/tmp/mock-runs", false, "https://bleach.acoplum.com");
-    expect(src.origem).toBe("remoto (https://bleach.acoplum.com)");
-    expect(src.dir).toBeDefined();
-    expect(src.sha).toBeDefined();
-  });
+test("prepareSource suporta targetUrl remoto sem exigir worktree local", () => {
+  const src = prepareSource("/tmp/mock-runs", false, "https://bleach.acoplum.com");
+  assert.equal(src.origem, "remoto (https://bleach.acoplum.com)");
+  assert.ok(src.dir);
+  assert.ok(src.sha);
+});
 
-  it("Game startServers em modo remoto inicializa apenas o browser sem processos locais", async () => {
-    const remoteGame = new Game("/tmp/mock-src", "/tmp/mock.sqlite", "https://bleach.acoplum.com");
-    await remoteGame.startServers();
-    expect(remoteGame.browser).toBeDefined();
-    expect((remoteGame as any).procs.length).toBe(0);
-    await remoteGame.stop();
-  });
+test("Game startServers em modo remoto inicializa apenas o browser sem processos locais", async () => {
+  const remoteGame = new Game("/tmp/mock-src", "/tmp/mock.sqlite", "https://bleach.acoplum.com");
+  await remoteGame.startServers();
+  assert.ok(remoteGame.browser, "browser deve ser iniciado");
+  assert.equal((remoteGame as any).procs.length, 0, "nenhum processo local deve ser aberto");
+  await remoteGame.stop();
+});
+
+test("compressVideoToMp4 comprime WebM para MP4 WhatsApp e apaga o original", () => {
+  const tmp = "/tmp/test-jogador-ia-video";
+  rmSync(tmp, { recursive: true, force: true });
+  const rawDir = join(tmp, "video", "explorar");
+  mkdirSync(rawDir, { recursive: true });
+  const rawWebm = join(rawDir, "dummy.webm");
+  const targetMp4 = join(tmp, "video", "explorar.mp4");
+
+  // Cria um webm de 1s de teste via lavfi
+  execFileSync("ffmpeg", ["-y", "-f", "lavfi", "-i", "color=c=black:s=320x240:d=1", "-c:v", "libvpx-vp9", rawWebm], { stdio: "ignore" });
+  assert.ok(existsSync(rawWebm), "rawWebm deve existir");
+
+  const ok = compressVideoToMp4(rawWebm, targetMp4);
+  assert.equal(ok, true, "compressVideoToMp4 deve retornar true");
+  assert.ok(existsSync(targetMp4), "targetMp4 deve existir");
+  assert.ok(statSync(targetMp4).size > 0, "targetMp4 deve ter tamanho > 0");
+  assert.equal(existsSync(rawWebm), false, "rawWebm original deve ter sido apagado");
+  assert.equal(existsSync(rawDir), false, "pasta temporária explorar/ deve ter sido removida");
+
+  rmSync(tmp, { recursive: true, force: true });
 });

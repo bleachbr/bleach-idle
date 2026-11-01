@@ -1,8 +1,8 @@
 // Sobe o jogo como caixa-preta (servidor isolado + Vite) e controla o navegador.
 // O agente nunca recebe nada além do que uma pessoa veria; o estado técnico (`window.__bi`,
 // só existe em dev) vai como contexto auxiliar para detectar inconsistências.
-import { spawn, type ChildProcess } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { execFileSync, spawn, type ChildProcess } from "node:child_process";
+import { existsSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 
@@ -33,8 +33,8 @@ export class Game {
   serverErrors: string[] = [];
   baseUrl: string;
 
-  /** `srcDir`: raiz do código do jogo (checkout da main ou a árvore local); `dbFile`: banco persistente das contas de teste; `targetUrl`: URL remota alternativa (ex.: https://bleach.acoplum.com); `enableDev`: habilita modo Dev local (padrão desligado). */
-  constructor(private srcDir: string, private dbFile: string, public targetUrl = "", public enableDev = false) {
+  /** `srcDir`: raiz do código do jogo (checkout da main ou a árvore local); `dbFile`: banco persistente das contas de teste; `targetUrl`: URL remota alternativa (ex.: https://bleach.acoplum.com); `enableDev`: habilita modo Dev local (padrão desligado); `compressVideo`: comprime para MP4 WhatsApp e apaga o WebM original (padrão true). */
+  constructor(private srcDir: string, private dbFile: string, public targetUrl = "", public enableDev = false, public compressVideo = true) {
     this.baseUrl = targetUrl ? targetUrl.replace(/\/+$/, "") : `http://localhost:${CLIENT_PORT}`;
   }
 
@@ -74,6 +74,33 @@ export class Game {
   }
 }
 
+/** Comprime um vídeo WebM do Playwright para MP4 otimizado para WhatsApp (H.264/AAC, sob 180MB) e remove o original. */
+export function compressVideoToMp4(rawWebmPath: string, targetMp4Path: string): boolean {
+  if (!existsSync(rawWebmPath)) return false;
+  try {
+    execFileSync("ffmpeg", [
+      "-y",
+      "-i", rawWebmPath,
+      "-c:v", "libx264",
+      "-crf", "26",
+      "-preset", "faster",
+      "-pix_fmt", "yuv420p",
+      "-movflags", "+faststart",
+      targetMp4Path,
+    ], { stdio: "ignore" });
+    if (existsSync(targetMp4Path) && statSync(targetMp4Path).size > 0) {
+      unlinkSync(rawWebmPath);
+      const parentDir = dirname(rawWebmPath);
+      try { rmSync(parentDir, { recursive: true, force: true }); } catch {}
+      console.log(`vídeo comprimido (WhatsApp MP4): ${targetMp4Path} (${(statSync(targetMp4Path).size / 1e6).toFixed(1)} MB)`);
+      return true;
+    }
+  } catch (err: any) {
+    console.warn(`aviso: falha ao comprimir vídeo com ffmpeg (${err.message}). Mantendo original.`);
+  }
+  return false;
+}
+
 /** Um jogador-IA: navegador próprio (contexto isolado), com seus erros de console. */
 export class Player {
   private ctx?: BrowserContext;
@@ -99,13 +126,19 @@ export class Player {
   /** "sair": usa os botões do jogo (trocar de personagem e sair da conta); "abrupto": fecha a aba (queda de conexão). */
   async closeSession(mode: "sair" | "abrupto") {
     if (mode === "sair") {
-      await this.page.evaluate(() => (document.querySelector("#exit-btn") as HTMLElement | null)?.click()).catch(() => {});
-      await this.page.waitForTimeout(1500);
-      await this.page.evaluate(() => (document.querySelector("#logout-btn") as HTMLElement | null)?.click()).catch(() => {});
-      await this.page.waitForTimeout(800);
+      await this.page?.evaluate(() => (document.querySelector("#exit-btn") as HTMLElement | null)?.click()).catch(() => {});
+      await this.page?.waitForTimeout(1500);
+      await this.page?.evaluate(() => (document.querySelector("#logout-btn") as HTMLElement | null)?.click()).catch(() => {});
+      await this.page?.waitForTimeout(800);
     }
+    const video = this.page?.video();
     await this.ctx?.close().catch(() => {}); // finaliza o vídeo
     this.ctx = undefined;
+    const rawPath = await video?.path().catch(() => null);
+    if (rawPath && existsSync(rawPath) && this.game.compressVideo) {
+      const targetMp4 = `${dirname(rawPath)}.mp4`;
+      compressVideoToMp4(rawPath, targetMp4);
+    }
   }
 
   async screenshot() { return this.page.screenshot({ type: "png" }); }

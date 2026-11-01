@@ -23,6 +23,7 @@ const FORA_S = num("fora", 45); // segundos fora do jogo entre visitas
 const FOCUS = arg("focus", "");
 const TARGET_URL = arg("url", flag("prod") ? "https://bleach.acoplum.com" : "");
 const ENABLE_DEV = flag("dev");
+const COMPRESS_VIDEO = !flag("raw-video");
 const PERSONAS_RUN = (arg("personas", Object.keys(PERSONAS).join(",")).split(",").map((p) => p.trim()).filter(Boolean));
 const bad = PERSONAS_RUN.filter((p) => !(p in PERSONAS));
 if (bad.length || !PERSONAS_RUN.length) { console.error(`persona inválida (${bad.join(", ")}). Use: ${Object.keys(PERSONAS).join(", ")}`); process.exit(1); }
@@ -37,7 +38,7 @@ const dbFile = join(runsDir, "jogo.sqlite"); // contas persistentes entre rodada
 const src = prepareSource(runsDir, flag("local"), TARGET_URL);
 console.log(`código: ${src.origem} @ ${src.sha.slice(0, 7)}${src.previous ? ` (checkpoint ${src.previous.slice(0, 7)})` : " (sem checkpoint)"}`);
 
-const game = new Game(src.dir, dbFile, TARGET_URL, ENABLE_DEV);
+const game = new Game(src.dir, dbFile, TARGET_URL, ENABLE_DEV, COMPRESS_VIDEO);
 const fmt = (ms: number) => `${Math.max(0, Math.round(ms / 1000))} s`;
 const ord: Record<string, number> = { alta: 0, media: 1, baixa: 2 };
 

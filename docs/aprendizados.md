@@ -10,6 +10,7 @@ Testes de playtest com agentes de IA (inspirados no Cradle) só geram feedback d
 - **Modo Dev desligado por omissão:** ferramentas de admin/dev (`BI_DEV=1`) colocavam atalhos na tela que distraíam o agente da navegação real e produziam falsos achados de interface. O modo Dev agora nasce desativado por padrão tanto nos servidores locais quanto no prompt de instrução do agente (`NUNCA use o botão DEV`).
 - **Playtest contra ambientes remotos (`bleach.acoplum.com`):** desacoplar o launcher do navegador (Playwright) dos processos locais de simulação permite apontar as personas para URLs públicas/staging com `--url` ou `--prod`. O runner desativa os processos locais de Colyseus e Vite, mas preserva a coleta de vídeos, telas, console e cálculo de changelog contra `origin/main`.
 - **Duração padrão de 30 minutos:** 15 minutos cobriam bem o primeiro impacto de login e interface, mas 30 minutos permitem que as personas novato, explorador, grinder e caótico alcancem o loop médio de jogo (combate sustentado, progressão de nível, viagens e retorno de sessão).
+- **Vídeos comprimidos para WhatsApp por padrão:** gravações brutas em WebM geradas pelo Playwright consomem ~280 MB por persona de 15–30 min. O runner agora comprime automaticamente com ffmpeg para MP4 (`libx264`, `crf 26`, `preset faster`, `pix_fmt yuv420p`, `+faststart`), gerando arquivos de 25–45 MB prontos para compartilhamento no WhatsApp, e apaga o arquivo bruto original e suas pastas temporárias.
 
 ## Repositório público, rulesets e revisores automáticos (F-07)
 

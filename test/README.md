@@ -22,6 +22,7 @@ Inspirado no [Cradle](https://github.com/BAAI-Agents/Cradle): cada agente vê a 
 - **Relatórios e vídeos**:
   - Relatório individual e vídeos em `test/runs/<data-hora>/<persona>/relatorio.md`.
   - Relatório consolidado em `test/runs/<data-hora>/relatorio.md` cruzando as notas (0–10), pareceres, cobertura das 22 áreas e achados deduplicados (destacando quando mais de uma persona encontrou o mesmo problema).
+  - Vídeos são comprimidos automaticamente via ffmpeg para MP4 (H.264 / `yuv420p` / `+faststart`, <50 MB) compatível direto com WhatsApp, apagando o `.webm` original temporário (use `--raw-video` para desativar).
 
 ## Uso
 

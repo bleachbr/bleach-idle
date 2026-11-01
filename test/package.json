@@ -5,7 +5,7 @@
   "description": "IA que joga o Bleach Idle como um jogador de verdade e entrega feedback. Independente do resto do repo.",
   "scripts": {
     "play": "tsx --env-file=../.env src/index.ts",
-    "test": "vitest run test/",
+    "test": "tsx --test test/**/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
