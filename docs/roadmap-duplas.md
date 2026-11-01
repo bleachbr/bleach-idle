@@ -60,7 +60,7 @@ Backlog novo (IDs W-##) — motor, operação e conteúdo de mundo misturados:
 | 23 | W-04 | **Chefes com fases** — motor de fases de boss (Aizen, Yhwach) reutilizável por chefe mundial e M4-02 | M | — | **Feito** (`feat/w-04-chefes-fases`) |
 | 24 | W-06 | **Títulos e marcos de servidor** — por feitos (primeiro Bankai do servidor, top da arena), persistidos | M | — | **Feito** (`feat/w-06-marcos-servidor`) |
 | 25 | W-07 | **Correio interno (mailbox)** — recompensas, itens de mercado expirado, mensagens de sistema | M | — | **Feito** (`feat/w-07-correio-interno`; UI do cliente pendente) |
-| 26 | W-05 | **Caçada offline v2** — resumo detalhado ao voltar (drops, mortes, kan), simulação por lote | M | — | sim |
+| 26 | W-05 | **Caçada offline v2** — resumo detalhado ao voltar (drops, mortes, kan), simulação por lote | M | — | **Feito** (`feat/w-05-cacada-offline-v2`) | Spec em `docs/features/cacada-offline-v2/` |
 | 27 | W-09 | **Métricas de operação** — `/metrics` (tick, salas, jogadores, saves) com alerta mínimo (`feat/w-09-metricas-operacao` — **Feito**) | M | F-08 | não |
 | 28 | W-08 | **Auditoria de economia** — trilha imutável de kan/cristais/itens (anti-dupe, suporte) | M | — | sim |
 | 29 | W-13 | **Patrulhas idle de Hollows** — jogador/party em patrulha por X horas retorna com recompensa | M | — | sim |
