@@ -27,4 +27,11 @@ describe("motivo da poção recusada (#41)", () => {
     expect(potionRefusal(ITEMS.pocao_vida, { ...full, hp: 40, potionReadyAt: NOW }, NOW)).toBeNull();
     expect(potionRefusal({ name: "Caixa" }, full, NOW)).toBeNull();
   });
+
+  it("morto devolve null, mesmo com reiatsu cheio ou poção em recarga (o motivo é estar morto)", () => {
+    const dead = { ...full, hp: 0, potionReadyAt: NOW + 500, reiPotionReadyAt: NOW + 500 };
+    expect(potionRefusal(ITEMS.pocao_vida, dead, NOW)).toBeNull();
+    expect(potionRefusal(ITEMS.pocao_rei, dead, NOW)).toBeNull();
+    expect(potionRefusal(ITEMS.pocao_vida, { ...dead, hp: -5 }, NOW)).toBeNull();
+  });
 });
