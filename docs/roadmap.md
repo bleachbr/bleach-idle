@@ -27,7 +27,7 @@ A divisão do trabalho entre Waldir e Rafael está em [`roadmap-duplas.md`](road
 - **Economia:** 45 itens (26 de equipamento), 7 espaços de equipamento, conjuntos com bônus, forja até +10, 32 cosméticos na Loja de Cristais e mercado entre jogadores com anúncios de 7 dias.
 - **Automação:** Auto Helper (alvo, caçada, cura, treino, venda), caçada offline de até 12 horas que sobrevive a reinício do servidor.
 - **Eventos:** passe de temporada mensal grátis, chefe mundial a cada 2 h, invasões de Hollows a cada 3 h (as duas com lore no chat e banner no topo da tela, R-12) e XP em dobro aos sábados e domingos (Brasília).
-- **Qualidade:** 182 testes Vitest e 31 cenários de integração no CI, cinco skills de projeto e uma [linha de base medida](baseline.md).
+- **Qualidade:** 188 testes Vitest e 31 cenários de integração no CI, cinco skills de projeto e uma [linha de base medida](baseline.md).
 
 ## Ordem de execução
 
@@ -94,7 +94,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once`; limpar o ruído do Vitest. Rotina: ao mexer num teste com `sleep`, troque-o | M | | Feito | Q2, Q3 |
 | F-11 | CI: job de gitleaks, `ubuntu-24.04` fixo, Node 22 e 24 e `actions` na v7 | M | | Feito | Q5, Q8, Q9, Q10 |
 | F-12 | Upgrade maior do Colyseus (0.15 para 0.18) | G | spec | Precisa de spec | S5 |
-| F-13 | Primeiro deploy com HTTPS atrás do Caddy e restauração de backup testada | M | | Decisão pendente (servidor e domínio) | DEPLOY.md |
+| F-13 | Primeiro deploy com HTTPS atrás do proxy existente e restauração de backup testada | M | | Deploy HTTPS realizado; falta testar restauração e workflow na main | DEPLOY.md; `bleach.acoplum.com` online, Nginx compartilhado e workflow após CI na branch `chore/f-13-deploy-vps` |
 | F-14 | Limite de criação de contas por IP | P | F-03 | Feito | DEPLOY.md |
 | F-15 | Balanceamento dos mapas avançados (`balance.ts`) | M | | Feito | DEPLOY.md |
 | F-16 | Pacote de correções do Jogador-IA: `noHd` no `boneco`, `Tab` (`nextTarget`) ignorando `dummy`, exclusividade de janelas flutuantes + `Esc`, confirmação ao trocar de personagem e handlers `welcome`/`fx` na entrada da sala | M | | Feito | test/ |

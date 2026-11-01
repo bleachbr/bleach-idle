@@ -118,8 +118,9 @@ Ao implementar código ou refatorar no Bleach Idle, o agente deve obrigatoriamen
   2. **Organização de código:** funções curtas e coesas, nomes claros e expressivos, extração para módulos dedicados em vez de inflar arquivos grandes (como `WorldRoom.ts`).
   3. **Documentação e memória do projeto:** atualize `docs/roadmap.md`, `docs/roadmap-duplas.md`, `docs/pendencias.md` (quando aplicável) e registre a lição técnica em `docs/aprendizados.md`.
 - Sempre execute `npm run typecheck` e `npm test` antes de considerar uma tarefa concluída. Se mexeu em lógica do servidor, rode também os cenários afetados (`npm run test:scripts`).
+- **Uma branch e um PR por entrega (decisão de Waldir, 31/10/2026):** cada item do roadmap sai do seu worktree com `git push -u origin <branch>` e `gh pr create` (modelo em `.github/pull_request_template.md`), sem push direto na `main` e sem juntar várias entregas numa branch só. O merge continua sendo decisão de uma pessoa.
 - Um resultado por PR e um assunto por commit. Mensagens em português, no estilo `tipo: o que mudou`. Código escrito com IA leva `Co-Authored-By` com o modelo usado.
-- Quem escreveu não aprova o próprio PR (skill `revisar-pr`). O merge na `main` é decisão de uma pessoa; agente não faz push nem merge sem pedido explícito.
+- Quem escreveu não aprova o próprio PR (skill `revisar-pr`). O merge na `main` é decisão de uma pessoa; agente não faz merge sem pedido explícito e só faz push de branch de entrega (nunca da `main`) para abrir o PR.
 
 ---
 

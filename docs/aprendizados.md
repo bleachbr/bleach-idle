@@ -4,6 +4,10 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ---
 
+## Deploy em VPS compartilhada (F-13)
+
+A inspeção somente leitura confirmou Nginx nas portas 80/443, Docker Compose e Certbot disponíveis. O Compose original com Caddy disputaria essas portas. A configuração específica para VPS deve publicar o jogo apenas em loopback e persistir SQLite em volume próprio. O workflow prepara a imagem no runner, evitando build concorrente com os outros sites na VPS, e só publica push da `main` depois dos testes. O arquivo Nginx é provisionado separadamente; não se altera o proxy compartilhado a cada release. A identidade SSH deve ser fixada, não descoberta cegamente durante o deploy. O provisionamento foi validado com HTTPS e handshake WebSocket; os 24 arquivos dos outros sites mantiveram os mesmos hashes. O fluxo completo pelo GitHub e a restauração de backup ainda precisam de validação. No Mac ARM, o build amd64 falhou no runtime Go do esbuild sob emulação; o build nativo na VPS passou, limitado a 1 CPU e 1,5 GB. Essa exceção inicial não muda o workflow: releases seguintes são construídas no runner amd64.
+
 ## 1. Arquitetura de Servidor Autoritativo e Tick de 100 ms
 
 ### Lição: O Cliente Nunca Deve Decidir o Estado
@@ -229,8 +233,6 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Os textos ficam em `shared/src/events.ts`, e o servidor manda só a fase. O cliente busca o texto com `own(EVENT_BANNER, fase)`: mesmo vindo do servidor, a chave chega pela rede.
 - Os avisos de sistema com números (vida, XP, minutos) continuam iguais e a lore vai numa linha separada (canal `lore`), porque os cenários `invasion` e `temporada` conferem trechos desses avisos.
 
----
-
 ## 9. Arte com o Codex no Windows (R-01)
 
 ### Gerar sem bash
@@ -242,3 +244,12 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Solução no R-01:** commitar só as folhas novas e voltar as antigas com `git checkout`. As novas ficam com a paleta desta rodada; a próxima pessoa que rodar `process.py` regenera tudo junto (pendência em `pendencias.md` §2).
 - `hd.py` refaz todas as folhas HD e levou mais de 25 min. Para regerar só algumas, chame `hd.sheet_hd(*process.GAME_SPRITES[id], name=id)` para cada id (51 s para 6 folhas).
 - `process.py` escala pela altura total do desenho: na célula de 48 px, `rel` acima de ~1,04 corta o topo (o chapéu de palha do Shunsui saiu cortado com 1,1). Confira a linha 0 de cada quadro antes de commitar.
+
+## 24. Caçada Offline v2 com Relatório Estruturado e Persistência Unificada (W-05)
+
+- **Problema:** Ao reconectar após caçada offline, o relatório não informava quais monstros foram abatidos, taxas de rendimento por hora nem separava perdas de mortes de ganhos líquidos; além disso, a lógica de snapshot e restauração ficava dispersa em `onLeave`, `restoreWorld` e `onJoin`.
+- **Solução (`shared/src/offlineReport.ts`, `server/src/offlineState.ts`, `server/src/WorldRoom.ts`):** Extraímos o cálculo puro de rendimento para `buildOfflineReport`, limitando o tempo ao teto de 12 horas (`OFFLINE_MAX_MS`) e fornecendo `topKills`, `expPerHour`, `killsPerHour` e perdas detalhadas. Unificamos a captura de snapshot e restauração do save em `offlineState.ts`, salvando `offKinds` em `SaveData.offline` com compatibilidade retroativa para saves antigos.
+
+## Fluxo de publicação: uma branch e um PR por entrega
+
+- **Regra (Waldir, 31/10/2026):** depois de acumular 38 commits na `main` local e publicá-los direto, a decisão passou a ser publicar cada entrega em branch própria com PR. Reduz o raio de conflito (o remoto já divergia com o F-10 duplicado) e dá o ponto de revisão adversarial previsto no fluxo do roadmap.
