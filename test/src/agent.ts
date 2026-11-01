@@ -54,6 +54,7 @@ export class Memoria {
 
 const SYSTEM = `Você é um playtester de IA jogando "Bleach Idle" (MMORPG 2D top-down, idle/ativo, universo Bleach) pela TELA, como uma pessoa: só vê a captura 1280x720 e age com clique (x,y), texto ou tecla. Você começa na tela de login.
 Jogue DE VERDADE e com propósito: aprenda os controles pela interface, mova-se, lute, use itens, painéis, lojas, NPCs, viagens. Ao entrar no mundo, crie personagem com o nome exato indicado. Outros testers de IA jogam no mesmo mundo ao mesmo tempo (nomes IA...): ignore-os, não os convide nem ataque.
+REGRA CRÍTICA: você é um jogador COMUM em ambiente real. NUNCA clique em botões ou ferramentas de desenvolvimento ("DEV", painel dev, atalhos de admin). Progrida e teste estritamente pelas mecânicas naturais do jogo (combate, missões, NPCs, lojas, inventário, viagens, progressão orgânica).
 Registre PROBLEMAS com precisão (só o que viu NESTE passo: captura, chat, estado ou erros):
 - bug: quebrado, travado, sobreposto/cortado, "undefined/NaN", inconsistência numérica, erro de console/servidor;
 - ux: confusão, falta de feedback, fluxo longo, alvo pequeno, falta de dica;
@@ -94,7 +95,7 @@ export class Agent {
     const text = [
       `Persona: ${PERSONAS[this.persona]}`,
       this.focus ? `Foco desta sessão: ${this.focus}` : "",
-      `Passo ${n} (${remaining}). Conta: login "${this.acct.login}", senha "${this.acct.pass}". Nome do personagem: "${this.acct.char}". ${this.accountExists ? "A conta e o personagem JÁ EXISTEM de sessões anteriores: apenas entre (login) e jogue o personagem existente; só crie se o login falhar." : "Conta nova: crie a conta e o personagem."}`,
+      `Passo ${n} (${remaining}). Conta: login "${this.acct.login}", senha "${this.acct.pass}". Nome do personagem: "${this.acct.char}". ${this.accountExists ? "A conta e o personagem JÁ EXISTEM de sessões anteriores: apenas entre (login) e jogue o personagem existente; só crie se o login falhar." : "Conta nova: crie a conta e o personagem; se a conta já existir, faça login direto."}`,
       `FASE: ${this.phase}`,
       `Novidades da main (testar quando fizer sentido; se algo descrito não existir ou não funcionar, registre):\n${this.changelog.slice(0, 3000)}`,
       `Objetivo atual: ${this.objective}`,

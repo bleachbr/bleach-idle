@@ -11,10 +11,10 @@ const git = (cwd: string, ...args: string[]) => execFileSync("git", args, { cwd,
 
 export type Source = { dir: string; sha: string; previous?: string; changelog: string; origem: string };
 
-export function prepareSource(runsDir: string, local: boolean): Source {
-  let origem = "origin/main";
+export function prepareSource(runsDir: string, local: boolean, targetUrl = ""): Source {
+  let origem = targetUrl ? `remoto (${targetUrl})` : "origin/main";
   try { git(REPO, "fetch", "origin", "main", "--quiet"); }
-  catch { origem = "origin/main (fetch falhou: usando a última versão já baixada)"; console.log("aviso: git fetch falhou; usando origin/main local"); }
+  catch { origem = targetUrl ? `remoto (${targetUrl})` : "origin/main (fetch falhou: usando a última versão já baixada)"; console.log("aviso: git fetch falhou; usando origin/main local"); }
   const sha = git(REPO, "rev-parse", "origin/main");
   const cpFile = join(runsDir, "checkpoint.json");
   const previous: string | undefined = existsSync(cpFile) ? JSON.parse(readFileSync(cpFile, "utf8")).sha : undefined;
@@ -29,6 +29,7 @@ export function prepareSource(runsDir: string, local: boolean): Source {
     changelog = "Primeira sessão (sem checkpoint). Últimos commits da main:\n" + git(REPO, "log", "--no-merges", "-n", "15", "--format=- %h %s", sha);
   }
 
+  if (targetUrl) return { dir: REPO, sha, previous, changelog, origem };
   if (local) return { dir: REPO, sha, previous, changelog, origem: "árvore local (--local)" };
 
   // checkout isolado da main (git worktree) em tmpdir para não entrar no glob do Vitest da raiz
