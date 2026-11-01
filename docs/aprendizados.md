@@ -4,6 +4,10 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ---
 
+## Deploy em VPS compartilhada (F-13)
+
+A inspeção somente leitura confirmou Nginx nas portas 80/443, Docker Compose e Certbot disponíveis. O Compose original com Caddy disputaria essas portas. A configuração específica para VPS deve publicar o jogo apenas em loopback e persistir SQLite em volume próprio. O workflow prepara a imagem no runner, evitando build concorrente com os outros sites na VPS, e só publica push da `main` depois dos testes. O arquivo Nginx é provisionado separadamente; não se altera o proxy compartilhado a cada release. A identidade SSH deve ser fixada, não descoberta cegamente durante o deploy. O provisionamento foi validado com HTTPS e handshake WebSocket; os 24 arquivos dos outros sites mantiveram os mesmos hashes. O fluxo completo pelo GitHub e a restauração de backup ainda precisam de validação. No Mac ARM, o build amd64 falhou no runtime Go do esbuild sob emulação; o build nativo na VPS passou, limitado a 1 CPU e 1,5 GB. Essa exceção inicial não muda o workflow: releases seguintes são construídas no runner amd64.
+
 ## 1. Arquitetura de Servidor Autoritativo e Tick de 100 ms
 
 ### Lição: O Cliente Nunca Deve Decidir o Estado
