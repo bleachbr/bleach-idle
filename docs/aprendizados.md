@@ -4,6 +4,14 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ---
 
+## Repositório público, rulesets e revisores automáticos (F-07)
+
+Ao tornar o repositório público, a API passou a permitir ruleset ativo: PR obrigatório, uma aprovação descartada com novos commits, aprovação do último push por outra conta, conversas resolvidas e checks vinculados ao app GitHub Actions. Os nomes dos checks devem refletir o workflow atual (`gitleaks`, `test (22.x)`, `test (24.x)`); exigir o antigo `test` deixaria a nova matriz sem satisfazer a regra. O ruleset não tem bypass, inclusive para administradores.
+
+Administrador de repositório não é necessariamente owner da organização; a instalação inicial do app exigiu acesso do owner. CodeRabbit já publicou review e check reais no repositório. Pela decisão D-004, a aprovação automática vale também para CI, deploy e segurança, após revisão completa do HEAD atual e resolução dos bloqueios, sem atalhos de aprovação. `max_merge_risk: low` exige avaliação atual: risco material deve ser corrigido, não aprovado à força. CODEOWNERS serve para indicar responsáveis; a exigência de aprovação humana foi desativada, mantendo uma aprovação obrigatória do último push por outro ator e os checks do GitHub Actions e do app CodeRabbit. Aprovação do bot não faz merge. Aprovação no chat não substitui `APPROVED` registrado no GitHub.
+
+Repositório público aumenta a exposição de código e histórico, não libera segredos: secret scanning, push protection e alertas de dependências foram habilitados; workflows de forks externos passaram a exigir aprovação. `.env.*` também precisa ser ignorado e excluído do contexto Docker. Gitleaks limpo reduz risco, mas não substitui rotação de qualquer segredo que já tenha sido exposto.
+
 ## Deploy em VPS compartilhada (F-13)
 
 A inspeção somente leitura confirmou Nginx nas portas 80/443, Docker Compose e Certbot disponíveis. O Compose original com Caddy disputaria essas portas. A configuração específica para VPS deve publicar o jogo apenas em loopback e persistir SQLite em volume próprio. O workflow prepara a imagem no runner, evitando build concorrente com os outros sites na VPS, e só publica push da `main` depois dos testes. O arquivo Nginx é provisionado separadamente; não se altera o proxy compartilhado a cada release. A identidade SSH deve ser fixada, não descoberta cegamente durante o deploy. O provisionamento foi validado com HTTPS e handshake WebSocket; os 24 arquivos dos outros sites mantiveram os mesmos hashes. O fluxo completo pelo GitHub e a restauração de backup ainda precisam de validação. No Mac ARM, o build amd64 falhou no runtime Go do esbuild sob emulação; o build nativo na VPS passou, limitado a 1 CPU e 1,5 GB. Essa exceção inicial não muda o workflow: releases seguintes são construídas no runner amd64.
