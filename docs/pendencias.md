@@ -147,3 +147,5 @@ Números e método em [`baseline.md`](baseline.md). Skill: `performance-servidor
 | [#39](https://github.com/bleachbr/bleach-idle/issues/39) | Balance | Avaliar atenuante para penalidade de morte por perda de itens e XP na Invasão de Hollows |
 | [#40](https://github.com/bleachbr/bleach-idle/issues/40) | UX | Adicionar confirmação ou feedback visual imediato ao usar "Zerar contagem" na Caçada do Livro |
 | [#41](https://github.com/bleachbr/bleach-idle/issues/41) | UX | Exibir feedback visual no HUD ao tentar usar poções com HP ou Reiatsu cheios |
+
+- **Legibilidade da fonte pixel (resto do #24):** o PR do #24 só tirou o título da crônica da fonte pixel (Pixelify Sans). O "C" maiúsculo continua lido como "O" em outros pontos: a aba "Crônicas" aparece como "Orônioas" e o nome "IACaotico" como "IAOaotico" na captura do Jogador-IA `test/runs/2026-11-01-12-47/caotico/screenshots/passo-059.png` (diretório principal, fora do Git). Decidir entre trocar a fonte pixel, corrigir só o glifo "C" ou revisar a legibilidade geral dos rótulos em pixel (abas, nomes, cabeçalhos).
