@@ -84,9 +84,9 @@ Itens herdados do roadmap e das pendências:
 | :-- | :-- | :--- | :-- | :--- | :-- | :--- |
 | 1 | ~~M1-00~~ | ~~Aprovar PRD e 3 ADRs das Crônicas; fechar pontos abertos do PRD §8~~ | P | — | é a própria spec | Decisão das duas pessoas; Rafael dirige |
 | 2 | ~~M1-02~~ | ~~`shared/src/npcs.ts`: tipos e catálogo de NPCs~~ | P | M1-00 | idem | |
-| 3 | M1-03 | NPCs no `soul.tmj`, leitura em `parseMap` e `mapcheck` | M | M1-02 | idem | `parseMap`/`mapcheck` mexe em `shared/src/map.ts` (zona de atrito) |
+| 3 | ~~M1-03~~ | ~~NPCs no `soul.tmj`, leitura em `parseMap` e `mapcheck`~~ | M | M1-02 | idem | `parseMap`/`mapcheck` mexe em `shared/src/map.ts` (zona de atrito) |
 | 4 | M1-07 | Janela de diálogo no `#modal` (teclado, toque, `Esc`) | M | M1-04 (Waldir) | idem | |
-| 5 | M2-07 | Tempo de recarga numérico no HUD | P | — | spec de M2 | Independente do motor; pode sair antes |
+| 5 | ~~M2-07~~ | ~~Tempo de recarga numérico no HUD~~ | P | — | spec de M2 | Já existia: cada técnica mostra os segundos que faltam (`renderTechs`) |
 | 6 | ~~M2-06~~ | ~~Efeitos visuais de status (cor no sprite, ícone, número de dano contínuo)~~ | M | M2-01 (Waldir) | spec de M2 | Fatia de cliente do pacote M2 |
 | 7 | ~~F-10~~ | ~~Trocar `sleep` fixo por `vi.waitFor`/`once` e limpar ruído do Vitest~~ | M | — | não | Feito no Vitest; nos cenários segue como rotina, junto com cada teste que tocar |
 | 8 | M3-02 | Abas de chat (Geral, Combate, Party, Guilda, Privado) | M | — | sim | |

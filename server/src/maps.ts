@@ -5,8 +5,9 @@ import { MAP_IDS, HOME_MAP, parseMap, type GameMap, type Pt } from "../../shared
 
 const dir = fileURLToPath(new URL("../../client/public/maps/", import.meta.url));
 
+// o servidor não sobe com NPC fora do catálogo no mapa (ADR-001); o cliente só pula
 export const MAPS: Record<string, GameMap> = Object.fromEntries(
-  MAP_IDS.map((id) => [id, parseMap(id, JSON.parse(readFileSync(`${dir}${id}.tmj`, "utf8")))]),
+  MAP_IDS.map((id) => [id, parseMap(id, JSON.parse(readFileSync(`${dir}${id}.tmj`, "utf8")), { strictNpcs: true })]),
 );
 export const HOME = MAPS[HOME_MAP];
 if (!HOME.temple) throw new Error(`O mapa ${HOME_MAP} precisa de um objeto "templo" na camada "logica".`);
