@@ -1,6 +1,30 @@
 # Colocar o Bleach Idle online
 
-Tudo o que o código precisa para ir ao ar já está pronto. O que falta é **contratar (ou conseguir de graça) um servidor e um domínio**: essa decisão é sua, e nada aqui foi contratado.
+Há dois caminhos: o Compose original com Caddy para uma VPS exclusiva, ou o deploy abaixo para a VPS compartilhada com Nginx. Não execute o Compose original na VPS compartilhada: ele tenta ocupar as portas 80 e 443.
+
+## VPS compartilhada: bleach.acoplum.com
+
+O job `deploy` de `.github/workflows/ci.yml` roda apenas em push na `main`, depois do job `test` aprovado. PRs não recebem credenciais de deploy. O runner constrói a imagem, envia por SSH e chama `/opt/bleach-idle/deploy.sh` com o SHA do commit. A VPS não precisa acessar o repositório privado nem receber token do GitHub.
+
+Configure nos Actions secrets do repositório GitHub os secrets `VPS_HOST`, `VPS_USER`, `VPS_PORT` (opcional, padrão 22), `VPS_SSH_KEY` e `VPS_KNOWN_HOSTS`. Use uma chave dedicada; valide a identidade SSH da VPS por um canal confiável antes de cadastrar `VPS_KNOWN_HOSTS`. O usuário precisa escrever em `/opt/bleach-idle` e `/var/lock/bleach-deploy.lock` e executar Docker. Acesso ao Docker equivale a acesso administrativo: não trate o grupo `docker` como isolamento de privilégios.
+
+`deploy/compose.vps.yml` mantém somente o jogo em `127.0.0.1:2567`, no projeto Compose `bleach`, com rede `bleach-interna` e volume persistente `bleach-dados`. O script descobre o gateway dessa rede para `TRUST_PROXY`. O Nginx sobrescreve `X-Forwarded-For` com o IP da conexão, em vez de aceitar um IP escolhido pelo cliente. Não há CDN prevista nessa configuração.
+
+O primeiro provisionamento é manual e requer revisão: criar o virtual host exclusivo, validar DNS e emitir certificado para `bleach.acoplum.com` e `www.bleach.acoplum.com`. `deploy/nginx.conf` é a configuração final e pressupõe certificado existente em `/etc/letsencrypt/live/bleach.acoplum.com/`. O desafio ACME usa `/var/www/bleach-acme`; mantenha a renovação com Certbot e um hook de reload após `nginx -t`. Nunca sobrescreva um virtual host alheio.
+
+O workflow não altera Nginx nem certificados. Deploys são serializados, esperam o healthcheck do container e verificam `/healthz` por HTTPS. Falha não restaura automaticamente uma imagem antiga: mudanças futuras no esquema SQLite podem tornar rollback incompatível. O marcador `/opt/bleach-idle/deployed-revision` só é gravado após o healthcheck do container. Há desconexão breve de jogadores durante a recriação.
+
+Banco e backups ficam em `/data` no volume `bleach-dados`; não use `docker compose down -v`. As imagens anteriores permanecem na VPS; monitore o disco e remova apenas versões explicitamente escolhidas. Backups no mesmo volume não substituem cópia externa.
+
+Primeiro deploy realizado após revisão independente e autorização humana: `https://bleach.acoplum.com` responde 200; `https://www.bleach.acoplum.com` redireciona para o endereço principal. HTTP redireciona para HTTPS e o handshake WebSocket por TLS foi aceito. O container está saudável, com porta somente em loopback e volume `bleach-dados`. Os 24 arquivos de sites existentes mantiveram os mesmos hashes, e o laboratório cripto manteve a resposta 401 esperada. Não houve restart de serviços existentes, apenas reload validado do Nginx.
+
+A versão inicial da aplicação é `57e181ad5bee0f40630dae480297374e95ce6399` (a `main` local naquele momento; a configuração de deploy vem desta branch). O build inicial foi nativo na VPS, com builder legado limitado a 1 CPU e 1,5 GB, após o esbuild falhar sob emulação amd64 no Mac ARM. Os próximos builds usam o runner nativo amd64 do GitHub; não dependem do builder legado da VPS.
+
+O certificado cobre os dois nomes e vence em 29/01/2027. `certbot.timer` está ativo e habilitado; a renovação usa webroot, com o hook exclusivo `/etc/letsencrypt/renewal-hooks/deploy/bleach-nginx.sh` (fonte: `deploy/renew-certificate.sh`). O hook valida o Nginx antes de recarregar e só age no certificado do Bleach. O bootstrap HTTP usado antes da emissão está em `deploy/nginx.bootstrap.conf`. A simulação `certbot renew --cert-name bleach.acoplum.com --dry-run --non-interactive` passou. Esta versão do Certbot não aceita `--run-deploy-hooks`, então o hook foi executado separadamente com `RENEWED_LINEAGE` do Bleach; a validação e o reload passaram, preservando os hashes dos outros sites.
+
+Usuário `bleach-deploy` com chave dedicada autorizado na VPS e os cinco Actions secrets cadastrados. A chave foi testada com verificação estrita do host e acesso ao Docker. A chave de host cadastrada foi obtida do `known_hosts` local já utilizado pela conexão SSH; falta conferir o fingerprint por console do provedor. O usuário tem acesso administrativo equivalente por pertencer ao grupo Docker; a opção `restrict` em `authorized_keys` desliga encaminhamentos e PTY, mas não limita comandos remotos. O lock de deploy é recriado após reboot por `/etc/tmpfiles.d/bleach-deploy.conf`.
+
+O workflow de produção só será ativado quando estas alterações chegarem à `main`; publicar a branch e abrir o PR não dispara deploy. O PR leva somente a infraestrutura de deploy, sem os dez commits exclusivos da `main` local usados na versão inicial da VPS. O primeiro deploy automático usará o código da `main` remota após o merge, que pode diferir da versão inicialmente publicada. Ainda faltam execução real pelo GitHub Actions, teste de persistência entre recriações, restauração de backup em ambiente isolado e cópia externa dos backups.
 
 ## Como o jogo roda em produção
 - **Um processo só** (`npm start` ou o container): serve a página do jogo (`client/dist`), o WebSocket do servidor e o `/healthz` na mesma porta (2567).
@@ -65,8 +89,8 @@ NODE_ENV=production npm start   # abre em http://localhost:2567
 ```
 
 ## O que ainda não foi testado
-- **A imagem Docker foi construída e testada em 31/10/2026:** ela constrói (675 MB) e, num contêiner descartável com volume nomeado novo em `/data`, roda como `node` (não-root), grava o `.sqlite` (WAL) e `/data/backups` sem erro de permissão, e `/healthz`, a página, um mapa e o manifesto respondem 200. O `docker compose` completo, com o Caddy, continua sem teste. O modo de produção sem Docker (`npm run build` + `npm start`) também foi testado: página, mapas, manifesto, `/healthz`, backup e proteção contra caminhos com `..`.
-- **Nunca rodou atrás de HTTPS de verdade:** o Caddy segue a configuração padrão dele, mas só vai ser exercitado no primeiro deploy.
+- **A imagem Docker atual foi testada em contêiner descartável:** roda como `node` (não-root), grava SQLite e backups em volume novo e responde aos endpoints esperados. A imagem inicial da VPS ainda roda como root; o volume existente precisa de validação de permissões antes da atualização. Não altere permissões de dados sem autorização específica.
+- **HTTPS real validado com Nginx em 31/10/2026:** página, manifesto, `/healthz`, redirecionamentos e handshake WebSocket TLS responderam como esperado. O caminho alternativo com Caddy permanece sem teste de produção.
 
 ## Antes de abrir para o público (não é obrigatório para testar com amigos)
 - **Senha:** recuperação por e-mail (hoje não existe).
