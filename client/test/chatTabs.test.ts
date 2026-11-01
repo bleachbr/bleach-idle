@@ -84,7 +84,39 @@ describe("envio pela aba", () => {
     b.add("chat", "pm", { text: "Rukia: oi", cls: "pm" }, 0, "Rukia");
     expect(b.outgoing("tudo bem?")).toEqual({ text: "/pm Rukia, tudo bem?" });
     // o eco do que eu mandei chega com "para Nome"
-    b.add("chat", "pm", { text: "para Renji: e aí", cls: "pm" }, 0, "para Renji");
+    b.sent(10, "/pm Renji, e aí");
+    b.add("chat", "pm", { text: "para Renji: e aí", cls: "pm" }, 20, "para Renji");
     expect(b.outgoing("bora caçar")).toEqual({ text: "/pm Renji, bora caçar" });
+  });
+
+  it("jogador chamado \"para X\" não desvia a resposta para X", () => {
+    const b = new ChatBook();
+    b.setActive("privado");
+    // ninguém mandou /pm para Renji: "para Renji" é o nome de quem escreveu
+    b.add("chat", "pm", { text: "para Renji: oi", cls: "pm" }, 0, "para Renji");
+    expect(b.outgoing("quem é?")).toEqual({ text: "/pm para Renji, quem é?" });
+  });
+});
+
+describe("respostas fora da aba", () => {
+  it("/ajuda (chat sys) respondido em até 2 s aparece também na aba aberta", () => {
+    const b = new ChatBook();
+    b.setActive("party");
+    b.sent(1000, "/ajuda");
+    expect(b.add("chat", "sys", { text: "Comandos: ...", cls: "sys" }, 1500)).toEqual(["geral", "party"]);
+  });
+
+  it("falar pela aba Combate mostra o eco ali, e não só em Geral", () => {
+    const b = new ChatBook();
+    b.setActive("combate");
+    b.sent(1000, "oi");
+    expect(b.add("chat", undefined, { text: "Eu: oi", cls: "" }, 1100)).toEqual(["geral", "combate"]);
+  });
+
+  it("party e guilda de outros não vazam para a aba aberta", () => {
+    const b = new ChatBook();
+    b.setActive("geral");
+    b.sent(1000, "oi");
+    expect(b.add("chat", "party", { text: "Rukia: oi", cls: "party" }, 1100)).toEqual(["party"]);
   });
 });

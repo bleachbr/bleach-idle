@@ -244,13 +244,13 @@ function start(room: Room<any>, myId: string) {
   room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[]; zanGain?: number; reiGain?: number; zanjutsu?: number; reiryoku?: number; kills?: number; items?: string[] }) => {
     const sign = (n: number) => (n >= 0 ? "+" : "") + n;
     const skills = [m.zanGain ? `Zanjutsu ${sign(m.zanGain)} (agora ${m.zanjutsu})` : "", m.reiGain ? `Reiryoku ${sign(m.reiGain)} (agora ${m.reiryoku})` : ""].filter(Boolean).join(", ");
-    chatLine(`Tempo offline: ${m.minutes} min, ${m.kills ?? 0} abates, ${sign(m.exp)} XP, ${sign(m.gold)} kan${skills ? `, ${skills}` : ""}. Você está no nível ${m.level}.`, "log", "log");
-    if (m.items?.length) chatLine(`Loot offline: ${m.items.slice(0, 8).join(", ")}${m.items.length > 8 ? ` e mais ${m.items.length - 8} tipos` : ""}.`, "log", "log");
+    chatAlert(`Tempo offline: ${m.minutes} min, ${m.kills ?? 0} abates, ${sign(m.exp)} XP, ${sign(m.gold)} kan${skills ? `, ${skills}` : ""}. Você está no nível ${m.level}.`, "log", "log");
+    if (m.items?.length) chatAlert(`Loot offline: ${m.items.slice(0, 8).join(", ")}${m.items.length > 8 ? ` e mais ${m.items.length - 8} tipos` : ""}.`, "log", "log");
     if (m.deaths?.length) showDeath(m.deaths, true);
   });
   room.onMessage("death", (d: DeathReport) => showDeath([d], false));
   $("#death-ok").onclick = () => ($("#death").hidden = true);
-  room.onLeave((code) => chatLine(code === 4001
+  room.onLeave((code) => chatAlert(code === 4001
     ? "Este personagem entrou em outra janela. Esta sessão foi encerrada."
     : "Conexão perdida. Recarregue a página para entrar de novo.", "sys", "chat", "sys"));
 
@@ -268,12 +268,13 @@ function start(room: Room<any>, myId: string) {
         // a aba aberta decide o canal: Party vira /p, Guilda /g, Privado /pm para a última conversa
         const out = chat.outgoing(chatin.value);
         if ("error" in out) {
+          // o texto fica no campo: é só pôr o "/pm Nome," na frente
           chat.notice({ text: out.error, cls: "sys" });
           appendChatLine({ text: out.error, cls: "sys" });
-        } else {
-          room.send("chat", { text: out.text });
-          chat.sent(Date.now());
+          return;
         }
+        room.send("chat", { text: out.text });
+        chat.sent(Date.now(), out.text);
       }
       chatin.value = "";
       chatin.blur();
@@ -786,10 +787,18 @@ function bindAuto(room: Room<any>) {
   }
 }
 
-function chatLine(text: string, cls: string, kind: "chat" | "log" = "chat", ch?: string, from = "") {
+function chatLine(text: string, cls: string, kind: "chat" | "log" = "chat", ch?: string, from = ""): ChatTab[] {
   const tabs = chat.add(kind, ch, { text, cls }, Date.now(), from);
   if (tabs.includes(chat.active)) appendChatLine({ text, cls });
   renderChatTabs();
+  return tabs;
+}
+
+/** Aviso que ninguém pode perder (queda da conexão, relatório offline): também na aba aberta. */
+function chatAlert(text: string, cls: string, kind: "chat" | "log", ch?: string) {
+  if (chatLine(text, cls, kind, ch).includes(chat.active)) return;
+  chat.notice({ text, cls });
+  appendChatLine({ text, cls });
 }
 
 // ---------- abas do chat (M3-02) ----------
@@ -824,8 +833,14 @@ function renderChatTabs() {
     const n = chat.unread[t.id];
     b.textContent = n ? `${t.label} ${n > 99 ? "99+" : n}` : t.label;
     b.setAttribute("aria-selected", String(t.id === chat.active));
+    b.setAttribute("aria-controls", "chatlog");
     b.classList.toggle("new", n > 0);
   }
+  // o campo diz para onde vai o texto (no Privado, com quem é a conversa, que muda quando chega pm de outra pessoa)
+  const placeholder = chat.active === "privado" ? (chat.pmWith ? `Enter para responder a ${chat.pmWith}` : "Escreva /pm Nome, mensagem")
+    : chat.active === "party" || chat.active === "guilda" ? `Enter para falar em ${CHAT_TABS.find((x) => x.id === chat.active)!.label}`
+    : "Enter para conversar";
+  $<HTMLInputElement>("#chatin").placeholder = `${placeholder} · /ajuda para comandos`;
 }
 
 function openChatTab(tab: ChatTab) {
@@ -835,6 +850,4 @@ function openChatTab(tab: ChatTab) {
   log.replaceChildren();
   for (const l of chat.lines[tab]) appendChatLine(l);
   renderChatTabs();
-  const label = CHAT_TABS.find((x) => x.id === tab)!.label;
-  $<HTMLInputElement>("#chatin").placeholder = tab === "geral" ? "Enter para conversar · /ajuda para comandos" : `Enter para falar em ${label} · /ajuda para comandos`;
 }
