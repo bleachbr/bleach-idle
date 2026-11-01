@@ -21,7 +21,7 @@ A divisão do trabalho entre Waldir e Rafael está em [`roadmap-duplas.md`](road
 
 ## Estado atual
 
-- **8 personagens jogáveis:** Ichigo, Rukia, Renji, Ishida, Sado, Hitsugaya, Byakuya e Kenpachi, cada um com 5 estágios da obra (níveis 1, 10, 30, 60 e 100) e 4 técnicas nas teclas 1, 4, 5 e 6.
+- **11 personagens jogáveis:** Ichigo, Rukia, Renji, Ishida, Sado, Hitsugaya, Byakuya, Kenpachi, Yoruichi, Ukitake e Shunsui (os três últimos no R-01), cada um com 5 estágios da obra (níveis 1, 10, 30, 60 e 100) e 4 técnicas nas teclas 1, 4, 5 e 6.
 - **7 mapas:** Karakura, Soul Society (Seireitei e Rukongai), Hueco Mundo, Las Noches, Karakura Falsa (60+), Wandenreich (95+) e Dangai (desafio sem fim).
 - **Progressão de longo prazo:** renascimento com bônus permanente, marcos de nível, bestiário em 3 estágios, 21 conquistas, 23 missões do Kisuke, missões diárias e recompensa diária de 7 dias.
 - **Economia:** 45 itens (26 de equipamento), 7 espaços de equipamento, conjuntos com bônus, forja até +10, 32 cosméticos na Loja de Cristais e mercado entre jogadores com anúncios de 7 dias.
@@ -140,6 +140,7 @@ Descrição, ordem e dependências em [`roadmap-duplas.md`](roadmap-duplas.md). 
 | ID | Entrega | Tam. | Depende de | Status |
 | :-- | :--- | :-- | :--- | :--- |
 | R-12 | Eventos narrados: linha de lore no chat (canal `lore`) e banner no topo da tela durante a invasão de Hollows e o chefe mundial (`shared/src/events.ts`) | P | | Feito |
+| R-01 | Personagens novos do bloco R: Yoruichi, Ukitake e Shunsui jogáveis, com 5 estágios da obra e 4 técnicas cada; sprites gerados pelo Codex (`art/gen_r01.py`). Números de combate na faixa dos 8 atuais (`balance.ts`); revisão do Waldir pendente | M | | Feito |
 | R-13 | Cosméticos sazonais: uniforme de Karakura, haori das divisões e máscaras Vizard na Loja de Cristais (preços em cristais com revisão do Waldir). Os cosméticos de hoje (`shared/src/shop.ts`) não mexem no sprite; roupa no corpo só existe pelo equipamento, com uma folha inteira por combinação (`<base>__<look>`, `OUTFIT_OK` em `shared/src/data.ts`). O cliente tem 5 folhas (Ichigo Shikai com haori, máscara e os dois; Rukia e Renji com haori). `art/raw/walk8` já tem arte bruta de haori e máscara para Ichigo, Rukia, Renji, Ishida e Sado, sem processar. Não existe arte do uniforme de Karakura nem de haori por divisão | M | arte nova; decisão de lore | Bloqueado por spritesheets novos (uniforme e haori por divisão) e por decisão de lore (máscara fora do Ichigo: hoje só ele é Visored, `data.ts`) |
 
 ## Sem marco

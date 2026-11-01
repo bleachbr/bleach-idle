@@ -98,7 +98,7 @@ Backlog novo (IDs R-##) — narrativa, QoL e social com partes de servidor:
 
 | Ordem | ID | Entrega | Tam. | Depende de | Spec |
 | :-- | :-- | :--- | :-- | :--- | :-- |
-| 15 | R-01 | **Personagens novos (bloco R)** — Yoruichi, Ukitake, Shunsui; 5 estágios e 4 técnicas cada | M cada | — | skill `adicionar-conteudo` |
+| 15 | ~~R-01~~ | ~~**Personagens novos (bloco R)** — Yoruichi, Ukitake, Shunsui; 5 estágios e 4 técnicas cada~~ | M cada | — | skill `adicionar-conteudo` |
 | 16 | R-08 | **Onboarding e tutorial** — primeiros 10 minutos guiados com missão introdutória do Kisuke | M | M1-07 | sim |
 | 17 | R-10 | **Minimapa e marcadores** — minimapa por zona com ícones de NPC, portal, PZ e alvo de missão | M | M1-03 | não |
 | 18 | ~~R-12~~ | ~~**Eventos narrados** — invasões e chefes mundiais com textos de lore no chat e banner no HUD~~ | P | — | não |
