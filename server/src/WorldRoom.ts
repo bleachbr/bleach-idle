@@ -238,17 +238,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (typeof m?.autoRestock === "boolean") p.autoRestock = m.autoRestock;
       if (typeof m?.autoHeal === "number") p.autoHeal = Math.max(0, Math.min(90, Math.round(m.autoHeal)));
     });
-    // filtro de loot (M3-03): o cliente manda o mapa inteiro; item fora do catálogo e valor estranho saem
-    this.handle("lootRules", (c, m: { rules?: unknown }) => {
-      const p = this.me(c);
-      if (!p) return;
-      // sem "rules": só pede a lista de novo (a janela abre e os itens vistos podem ter crescido)
-      if (m?.rules === undefined) return this.sendLootRules(p);
-      const rules = parseLootRules(m?.rules);
-      if (!rules) return this.log(p, "Filtro de loot inválido.");
-      p.lootRules = rules;
-      this.sendLootRules(p);
-    });
+    this.registerLootMessages();
     this.handle("chat", (c, m: { text: string }) => {
       const p = this.me(c);
       const text = sanitizeChatText(m?.text);
@@ -1215,7 +1205,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     const got: string[] = [];
     let overflow: Slot[] = [];
     // filtro de loot (M3-03): vender vira kan na hora, ignorar fica no chão de ninguém; item de missão de coleta é sempre pego
-    const filtered = applyLootRules(loot.items, p.lootRules, collectItems(p.quests.active));
+    const keep = collectItems(p.quests.active);
+    const filtered = applyLootRules(loot.items, p.lootRules, keep);
     for (const s of filtered.sell) got.push(`${s.qty}x ${ITEMS[s.id].name} (vendido)`);
     p.gold += filtered.gold;
     p.hunt.gold += filtered.gold;
@@ -1227,10 +1218,12 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (n < s.qty) overflow.push({ id: s.id, qty: s.qty - n });
     }
     if (overflow.length && p.autoSell) {
-      // Auto Venda: loot puro que não coube vira kan (preço da loja); equipamento e consumível seguem para a sacola
+      // Auto Venda: loot puro que não coube vira kan (preço da loja); equipamento, consumível e item de missão de
+      // coleta seguem para a sacola (o filtro promete que o item de missão é sempre pego)
+      const sellable = (s: Slot) => isPureLoot(ITEMS[s.id]) && !keep.has(s.id);
       let sold = 0;
-      for (const s of overflow) if (isPureLoot(ITEMS[s.id])) { sold += ITEMS[s.id].sell * s.qty; got.push(`${s.qty}x ${ITEMS[s.id].name} (vendido)`); }
-      overflow = overflow.filter((s) => !isPureLoot(ITEMS[s.id]));
+      for (const s of overflow) if (sellable(s)) { sold += ITEMS[s.id].sell * s.qty; got.push(`${s.qty}x ${ITEMS[s.id].name} (vendido)`); }
+      overflow = overflow.filter((s) => !sellable(s));
       p.gold += sold;
       p.hunt.gold += sold;
     }
@@ -1259,9 +1252,24 @@ export class WorldRoom extends GameRoom<WorldState> {
     for (const c of this.clients) if (this.sessions.get(c.sessionId) === p.id) c.send("open", { kind });
   }
 
-  /** Regras do filtro de loot e os itens que o personagem já viu cair (as espécies que já abateu), para a janela. */
+  /** Filtro de loot do Auto Helper (M3-03): o cliente manda o mapa inteiro; item fora do catálogo e valor estranho saem. */
+  private registerLootMessages() {
+    this.handle("lootRules", (c, m: { rules?: unknown }) => {
+      const p = this.me(c);
+      if (!p) return;
+      // sem "rules": só pede a lista de novo (a janela abre e os itens vistos podem ter crescido)
+      if (m?.rules === undefined) return this.sendLootRules(p);
+      const rules = parseLootRules(m?.rules);
+      if (!rules) return this.log(p, "Filtro de loot inválido.");
+      p.lootRules = rules;
+      this.sendLootRules(p);
+    });
+  }
+
+  /** Regras do filtro de loot e os itens que o personagem já viu: o loot das espécies já abatidas e o que está no inventário. */
   private sendLootRules(p: Player) {
-    const seen = [...new Set([...seenLoot(p.prog.bestiary), ...Object.keys(p.lootRules)])];
+    const inInv = p.inv.flatMap((s) => (s ? [s.id] : []));
+    const seen = [...new Set([...seenLoot(p.prog.bestiary), ...inInv, ...Object.keys(p.lootRules)])];
     this.sendTo(p, "lootRules", { rules: p.lootRules, seen, keep: [...collectItems(p.quests.active)] });
   }
 

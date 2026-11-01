@@ -16,6 +16,9 @@ describe("parseLootRules", () => {
     expect(parseLootRules("sell")).toBeNull();
     expect(parseLootRules(null)).toBeNull();
     expect(parseLootRules(["sell"])).toBeNull();
+    expect(parseLootRules(new Uint8Array(64))).toBeNull();
+    expect(parseLootRules(new Map([["fragmento", "sell"]]))).toBeNull();
+    expect(parseLootRules(Object.assign(Object.create(null), { fragmento: "sell" }))).toEqual({ fragmento: "sell" });
     const big = Object.fromEntries(Array.from({ length: Object.keys(ITEMS).length + 1 }, (_, i) => [`x${i}`, "sell"]));
     expect(parseLootRules(big)).toBeNull();
   });

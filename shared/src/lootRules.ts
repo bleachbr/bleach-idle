@@ -13,6 +13,9 @@ export type LootRules = Record<string, LootRule>;
  */
 export function parseLootRules(raw: unknown): LootRules | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  // só objeto simples: um Buffer (bin do msgpack) daria uma chave por byte antes do limite de chaves
+  const proto = Object.getPrototypeOf(raw);
+  if (proto !== Object.prototype && proto !== null) return null;
   const keys = Object.keys(raw);
   if (keys.length > Object.keys(ITEMS).length) return null;
   const out: LootRules = {};

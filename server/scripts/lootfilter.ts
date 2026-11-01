@@ -1,8 +1,8 @@
 // Filtro de loot do Auto Helper (M3-03): ignorar e vender por item, o item de missão de coleta sempre pego,
 // regra inválida recusada e o filtro salvo no personagem.
-import { expForLevel, countItem } from "../../shared/src";
-import { TEMPLE } from "../src/maps";
-import { play, patchSave, sleep, ok, done } from "./lib";
+import { expForLevel, countItem, ITEMS, nearestWalkable } from "../../shared/src";
+import { HOME, TEMPLE } from "../src/maps";
+import { play, patchSave, playWithReport, sleep, ok, done } from "./lib";
 
 // o loot é sorteado: espera até 150 s pela queda, como o cenário hunt
 const until = async (f: () => unknown, ms = 150000) => { for (let t = 0; t < ms && !f(); t += 250) await sleep(250); return !!f(); };
@@ -38,11 +38,17 @@ ok("o servidor guarda e devolve a regra", await until(() => a.rules()?.rules.fra
 ok("caçando com o fragmento ignorado", await hunt(a, () => loots(a).length >= 12));
 ok(`fragmento ignorado não entra no inventário (${countItem(a.inv().inv, "fragmento")})`, countItem(a.inv().inv, "fragmento") === 0);
 
-// vender: vira kan na hora
+// vender: vira kan na hora, e o kan entra de verdade (loot em kan + preço da loja de cada fragmento vendido)
 a.room.send("lootRules", { rules: { fragmento: "sell" } });
 await until(() => a.rules()?.rules.fragmento === "sell", 5000);
+const gold0 = a.inv().gold, logs0 = a.logs.length;
 const sold = await hunt(a, () => a.logs.some((l) => l.includes("(vendido)")));
-ok(`com o fragmento à venda, ele aparece como vendido no loot (${loots(a).slice(-3).join(" | ")})`, sold && a.logs.some((l) => /Fragmento de M.scara \(vendido\)/.test(l)));
+await sleep(500);
+const fresh = a.logs.slice(logs0).filter((l) => l.startsWith("Loot:"));
+const lootKan = fresh.reduce((s, l) => s + Number(/^Loot: (\d+) kan/.exec(l)?.[1] ?? 0), 0);
+const soldQty = fresh.reduce((s, l) => s + [...l.matchAll(/(\d+)x Fragmento de M.scara \(vendido\)/g)].reduce((t, m) => t + Number(m[1]), 0), 0);
+ok(`com o fragmento à venda, ele aparece como vendido no loot (${fresh.slice(-2).join(" | ")})`, sold && soldQty > 0);
+ok(`o kan da venda entra no personagem (${a.inv().gold - gold0} = ${lootKan} do loot + ${soldQty} x ${ITEMS.fragmento.sell})`, a.inv().gold - gold0 === lootKan + soldQty * ITEMS.fragmento.sell);
 ok(`e continua fora do inventário (${countItem(a.inv().inv, "fragmento")})`, countItem(a.inv().inv, "fragmento") === 0);
 ok("o Hollow Menor já abatido põe o fragmento entre os itens vistos", a.rules().seen.includes("fragmento"));
 
@@ -66,4 +72,18 @@ ok("com a missão dos fragmentos ativa, o servidor avisa que o fragmento é semp
 const got = await hunt(m, () => countItem(m.inv()?.inv ?? [], "fragmento") > 0);
 ok(`e o fragmento entra no inventário (${countItem(m.inv()?.inv ?? [], "fragmento")})`, got);
 await m.room.leave();
+
+// caçada offline: o relatório da volta não lista o item ignorado (giveLoot é o mesmo caminho online e offline)
+const offName = "Filtro Offline";
+const off = await bot(offName, { ...nearestWalkable(HOME, 38, 7), level: 12, exp: expForLevel(12), lootRules: { fragmento: "ignore" } });
+off.room.send("auto", { autoHunt: true, autoHeal: 50 });
+await sleep(1500);
+await off.room.leave();
+await sleep(30000);
+const back = await playWithReport(offName);
+const rep: any = await back.report;
+ok(`relatório offline sem o fragmento ignorado (${rep.kills} abates; ${rep.items?.join(", ") || "sem itens"})`,
+  rep.kills >= 5 && !(rep.items ?? []).some((i: string) => i.includes("Fragmento")));
+back.room.send("auto", { autoHunt: false });
+await back.room.leave();
 done();
