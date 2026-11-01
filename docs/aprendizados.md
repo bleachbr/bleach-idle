@@ -208,3 +208,8 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 - **Problema:** Os chefes de mapa e o Chefe Mundial mantinham ataque, defesa e velocidade constantes durante toda a luta, sem transições narrativas ou mecânicas ao perderem vida.
 - **Solução (`shared/src/bossPhases.ts`, `server/src/schema.ts`, `server/src/WorldRoom.ts`):** Criamos o motor declarativo `BOSS_PHASES` + `evaluateBossPhase(kind, currentPhase, hp, maxHp)` que avalia limiares decrescentes de HP, suporta saltos de fase em golpes altos sem re-disparar fases anteriores, escala atributos sobre `basePower` e `def.stepMs` (sem acúmulo exponencial) e emite pulsos de controle de grupo (`aoeStatus`) nos jogadores ao redor.
+
+## 23. Correio interno com retirada atômica (W-07)
+
+- **Problema:** itens e kan só chegavam com o jogador online; anúncio expirado com depot cheio ficava preso no mercado.
+- **Solução (`server/src/mailbox.ts`):** tabela `mailbox` própria; `take()` usa `DELETE` condicional e só entrega o anexo se apagou a linha, o que impede duplicação por retirada repetida. O `WorldRoom` valida espaço numa cópia do inventário antes de retirar. O mercado usa o correio como destino quando o depot está cheio.

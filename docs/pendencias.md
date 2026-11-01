@@ -108,3 +108,5 @@ Números e método em [`baseline.md`](baseline.md). Skill: `performance-servidor
 | P3 | Não há métrica da duração do tick | **Corrigido em `feat/f-08-metrica-tick`** (`server/src/tickStats.ts`, exposto em `/healthz` e com aviso `> 50 ms`) | Corrigido |
 | P4 | Schema sem filtro e `broadcast` global | 31 `broadcast` no `WorldRoom`; estado de todos os mapas vai a todos os clientes | Média, cresce com o número de jogadores |
 | P5 | Um único JavaScript de 1,67 MB | Build do Vite avisa acima de 500 kB | Baixa |
+
+- **Correio interno (W-07):** falta a janela no cliente (mensagens `mailList`/`mailTake` e `mail` já existem; hoje só `/correio`) e o envio de cartas entre jogadores, que exige limite e moderação próprios. Itens de recompensa (chefe mundial, diária) ainda pagam direto; migrar para carta quando o inventário estiver cheio.
