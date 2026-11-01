@@ -115,6 +115,9 @@ const PIXEL_FONT = '"Pixelify Sans", system-ui, sans-serif';
 const px = (x: number) => x * TILE + TILE / 2;
 const py = (y: number) => y * TILE + TILE;
 
+/** versão dos .tmj na URL: subir junto com o CACHE de client/public/sw.js quando um mapa mudar (2: NPCs no soul.tmj, M1-03) */
+const MAP_VERSION = 2;
+
 export class GameScene extends Phaser.Scene {
   /** quadros de andar por direção (4 ou 8), pela largura da folha carregada: nunca diverge da imagem */
   private cols(key: string) {
@@ -222,9 +225,10 @@ export class GameScene extends Phaser.Scene {
     this.load.image(SHOP_SPRITE, `/assets/sprites/${SHOP_SPRITE}.png`);
     this.load.spritesheet("items", "/assets/items.png", { frameWidth: 32, frameHeight: 32 });
     for (const [name, f] of Object.entries(FX)) this.load.spritesheet(`fx_${name}`, `/assets/fx/${name}.png`, { frameWidth: f.cell, frameHeight: f.cell });
-    // mapas do Tiled: o tileset é embutido no .tmj e a imagem fica ao lado
+    // mapas do Tiled: o tileset é embutido no .tmj e a imagem fica ao lado. O ?v= muda a URL quando um .tmj muda:
+    // o service worker antigo ainda controla a página na primeira carga depois do deploy e serviria o .tmj velho do cache
     for (const id of MAP_IDS) {
-      this.load.tilemapTiledJSON(`map_${id}`, `/maps/${id}.tmj`);
+      this.load.tilemapTiledJSON(`map_${id}`, `/maps/${id}.tmj?v=${MAP_VERSION}`);
       this.load.image(`tiles_${id}`, `/maps/${id}_tiles.png`);
     }
   }
