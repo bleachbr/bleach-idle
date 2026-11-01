@@ -5,6 +5,8 @@ import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
 import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, titleText, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, type GameMap } from "../../shared/src";
 import { serverNow } from "./clock";
+import { parseStatusFlags, desiredTint, dotHitStyle, STATUS_LOOK } from "./statusFx";
+import type { StatusKind } from "../../shared/src/combatStatus";
 
 const VIEW_W = 15;
 const VIEW_H = 11;
@@ -41,6 +43,9 @@ interface View {
   idle?: Phaser.Tweens.Tween;
   /** aura do Bankai, atrás do sprite */
   aura?: Phaser.GameObjects.Sprite;
+  /** status ativos vindos do servidor (M2-06) e os ícones acima da barra de vida */
+  statusKinds: StatusKind[];
+  statusIcons: Phaser.GameObjects.Graphics;
 }
 
 // efeitos (art/raw/62 a 64 -> art/fx.py): uma linha por efeito, 4 quadros
@@ -320,8 +325,12 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5, 1);
     const bar = this.add.graphics();
     bar.y = top - 9;
-    const c = this.add.container(px(e.x), py(e.y), [shadow, spr, bar, label]);
-    const v: View = { id, c, spr, label, bar, sprite: look.key, dir: e.dir, tx: e.x, ty: e.y, lastMoveAt: 0, stepMs: e.stepMs, isMonster, baseScale: look.scale };
+    const statusIcons = this.add.graphics();
+    // à direita da barra de vida: acima ficam o nome e o título cosmético
+    statusIcons.y = top - 8;
+    const c = this.add.container(px(e.x), py(e.y), [shadow, spr, bar, label, statusIcons]);
+    const v: View = { id, c, spr, label, bar, sprite: look.key, dir: e.dir, tx: e.x, ty: e.y, lastMoveAt: 0, stepMs: e.stepMs, isMonster, baseScale: look.scale,
+      statusKinds: [], statusIcons };
     this.views.set(id, v);
     c.setDepth(c.y);
     this.setIdle(v, true);
@@ -333,6 +342,7 @@ export class GameScene extends Phaser.Scene {
     }
     if (!isMonster) { this.setAura(v, e.form ? e.charId : undefined); this.setPowerAura(v, e.power ?? 0, e.cosAura); this.setCosmetics(v, e); }
     this.drawBar(v, e.hp, e.maxHp);
+    this.setStatus(v, e.statusFlags);
 
     e.onChange(() => {
       v.stepMs = e.stepMs;
@@ -340,6 +350,7 @@ export class GameScene extends Phaser.Scene {
       else if (e.dir !== v.dir && !v.spr.anims.isPlaying) { v.dir = e.dir; v.spr.setFrame(this.stand(v.sprite, e.dir)); }
       v.dir = e.dir;
       this.drawBar(v, e.hp, e.maxHp);
+      this.setStatus(v, e.statusFlags);
       if (!isMonster) {
         this.refreshLook(v, e);
         v.label.setAlpha(e.online ? 1 : 0.55); // offline caçando aparece meio apagado
@@ -359,13 +370,19 @@ export class GameScene extends Phaser.Scene {
   /** Troca a folha do jogador quando o visual muda (forma, equipamento, traje ou folha lazy que acabou de chegar). */
   private refreshLook(v: View, e: any) {
     const look = this.spriteFor(e, false);
-    if (look.key === v.sprite && (look.tint ?? 0xffffff) === v.spr.tintTopLeft) return;
-    v.sprite = look.key;
-    const idle = !!v.idle;
-    this.setIdle(v, false);
-    v.spr.setTexture(look.key, this.stand(look.key, e.dir)).setScale(look.sprScale);
-    if (idle) this.setIdle(v, true);
-    if (look.tint) v.spr.setTint(look.tint); else v.spr.clearTint();
+    if (look.key !== v.sprite) {
+      v.sprite = look.key;
+      const idle = !!v.idle;
+      this.setIdle(v, false);
+      v.spr.setTexture(look.key, this.stand(look.key, e.dir)).setScale(look.sprScale);
+      if (idle) this.setIdle(v, true);
+    }
+    // a cor separada da textura: com status ativo, a do status vale por cima da cor da forma.
+    // Durante o clarão branco do golpe (tintFill) não mexe: o restoreTint dele volta a cor certa
+    if (!v.spr.tintFill && desiredTint(v.statusKinds, look.tint) !== v.spr.tintTopLeft) {
+      const tint = desiredTint(v.statusKinds, look.tint);
+      if (tint !== 0xffffff) v.spr.setTint(tint); else v.spr.clearTint();
+    }
   }
 
   private moveView(v: View, x: number, y: number, dir: number) {
@@ -564,7 +581,8 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({ targets: t, alpha: 0, delay: 500, duration: 400, onComplete: () => t.destroy() });
   }
 
-  private onFx(fx: { t: string; id?: string; v?: number; from?: string; to?: string; color?: number; color2?: number; skin?: boolean; name?: string; text?: string; skill?: boolean; i?: number; cd?: number; area?: number }) {
+  private onFx(fx: { t: string; id?: string; v?: number; from?: string; to?: string; color?: number; color2?: number; skin?: boolean; name?: string; text?: string; skill?: boolean; i?: number; cd?: number; area?: number;
+    dot?: boolean; kind?: string; ms?: number }) {
     const v = fx.id ? this.views.get(fx.id) : undefined;
     // som só do que envolve você: o próprio personagem ou o seu alvo
     const mine = fx.id === this.myId;
@@ -582,12 +600,27 @@ export class GameScene extends Phaser.Scene {
         sfx.chime();
         this.float(this.views.get(this.myId), fx.text!, "#ffcf5a", 12);
         break;
+      case "status":
+        {
+          // aplicado agora: o nome do status sobe uma vez (os ícones e a cor seguem pelo estado).
+          // Sai 200 ms depois do número do dano, que chega no mesmo tick, para não nascerem sobrepostos
+          const kind = parseStatusFlags(fx.kind)[0];
+          // a view pode ter saído (morte, troca de mapa) ou estar oculta (outro mapa) nesses 200 ms
+          if (kind) this.time.delayedCall(200, () => { if (v && this.views.get(v.id) === v && v.c.visible) this.float(v, STATUS_LOOK[kind].label, STATUS_LOOK[kind].text, 10); });
+        }
+        break;
       case "event":
         this.float(this.views.get(this.myId), fx.text!, "#ff6a4a", 16);
         this.cameras.main.shake(300, 0.003);
         sfx.event();
         break;
       case "dmg":
+        {
+          // dano contínuo (M2-04): número menor e na cor do sangramento; quem causou não golpeia de novo a cada tick,
+          // e sem som (tocaria a cada segundo enquanto durar)
+          const dot = dotHitStyle(fx);
+          if (dot) { this.float(v, dot.text, dot.color, 10); break; }
+        }
         {
           const target = v ? (v.isMonster ? this.room.state.monsters.get(v.id) : this.room.state.players.get(v.id)) : undefined;
           const big = !!fx.v && !!target && fx.v >= target.maxHp * 0.25;
@@ -707,9 +740,42 @@ export class GameScene extends Phaser.Scene {
   private restoreTint(v: View) {
     const def = v.isMonster ? MONSTERS[this.room.state.monsters.get(v.id)?.kind] : undefined;
     const p = v.isMonster ? undefined : this.room.state.players.get(v.id);
-    const tint = def?.tint ?? (p ? CHARS[p.charId].forms[p.form].tint : undefined);
+    const tint = desiredTint(v.statusKinds, def?.tint ?? (p ? CHARS[p.charId].forms[p.form].tint : undefined));
     v.spr.clearTint();
-    if (tint) v.spr.setTint(tint);
+    if (tint !== 0xffffff) v.spr.setTint(tint);
+  }
+
+  /** Status do servidor (M2-06): ícones acima da barra de vida e cor no sprite. Só redesenha quando muda. */
+  private setStatus(v: View, flags: unknown) {
+    const kinds = parseStatusFlags(flags);
+    if (kinds.join() === v.statusKinds.join()) return;
+    v.statusKinds = kinds;
+    const g = v.statusIcons;
+    g.clear();
+    // 10 px de passo para o fundo de 9 px: 1 px entre um ícone e outro
+    kinds.forEach((k, i) => this.drawStatusIcon(g, k, 22 + i * 10));
+    // não corta o clarão branco do golpe (o restoreTint dele roda 70 ms depois)
+    if (!v.spr.tintFill) this.restoreTint(v);
+  }
+
+  /** Ícone de 7 px em pixel art, uma forma por status para ler sem depender só da cor. */
+  private drawStatusIcon(g: Phaser.GameObjects.Graphics, kind: StatusKind, x: number) {
+    const col = STATUS_LOOK[kind].icon;
+    g.fillStyle(0x0b0a12, 0.9).fillRect(x - 4, -4, 9, 9);
+    g.fillStyle(col);
+    if (kind === "freeze") {
+      // cristal de gelo: losango
+      g.fillTriangle(x, -3, x + 3, 0, x - 3, 0).fillTriangle(x, 3, x + 3, 0, x - 3, 0);
+    } else if (kind === "stun") {
+      // estrela de tontura: cruz
+      g.fillRect(x - 3, -1, 7, 2).fillRect(x - 1, -3, 2, 7);
+    } else if (kind === "slow") {
+      // seta para baixo
+      g.fillTriangle(x - 3, -2, x + 3, -2, x, 3);
+    } else {
+      // gota de sangue
+      g.fillTriangle(x, -3, x + 2, 1, x - 2, 1).fillCircle(x, 1, 2);
+    }
   }
 
   // ---------- entrada ----------
