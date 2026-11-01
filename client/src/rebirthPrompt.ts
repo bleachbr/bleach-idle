@@ -1,9 +1,6 @@
 // Texto da janela de renascimento (issue #35). Só explica: quem decide é o handler "rebirth" do
-// WorldRoom.ts (nível mínimo, 6 s fora de combate e o limite de 250), com as mesmas regras de shared/.
-import { START_LEVEL, rebirthBonus, rebirthLevel } from "../../shared/src";
-
-/** limite de renascimentos aceito pelo servidor (WorldRoom.registerRebirthMessages) */
-const REBIRTH_MAX = 250;
+// WorldRoom.ts (nível mínimo, 6 s fora de combate e o limite REBIRTH_MAX), com as mesmas regras de shared/.
+import { REBIRTH_MAX, START_LEVEL, rebirthBonus, rebirthLevel } from "../../shared/src";
 
 export interface RebirthPrompt {
   title: string;

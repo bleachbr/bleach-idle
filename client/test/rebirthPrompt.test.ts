@@ -34,6 +34,11 @@ describe("janela de renascimento (issue #35)", () => {
     expect(rebirthPrompt({ level: 100, rebirths: 250 }).ready).toBe(false);
   });
 
+  it("cliente e servidor leem o mesmo limite de shared/ (sem 250 escrito à mão)", () => {
+    expect(read("../src/rebirthPrompt.ts")).not.toMatch(/\b250\b/);
+    expect(read("../../server/src/WorldRoom.ts")).toMatch(/p\.rebirths >= REBIRTH_MAX/);
+  });
+
   it("o botão de renascer não usa mais o window.confirm do navegador", () => {
     const main = read("../src/main.ts");
     const handler = main.slice(main.indexOf('$("#rebirth-btn")'), main.indexOf('$("#rebirth-btn")') + 800);
