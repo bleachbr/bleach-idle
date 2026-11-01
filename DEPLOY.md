@@ -14,6 +14,23 @@ O primeiro provisionamento é manual e requer revisão: criar o virtual host exc
 
 O workflow não altera Nginx nem certificados. Deploys são serializados, esperam o healthcheck do container e verificam `/healthz` por HTTPS. Falha não restaura automaticamente uma imagem antiga: mudanças futuras no esquema SQLite podem tornar rollback incompatível. O marcador `/opt/bleach-idle/deployed-revision` só é gravado após o healthcheck do container. Há desconexão breve de jogadores durante a recriação.
 
+### Novidades e identificação da versão
+
+O botão **Novidades**, no login, na seleção de personagens e no menu do jogo,
+consulta `/release` sem cache. O script de deploy injeta `RELEASE_REVISION`
+(SHA completo da imagem) e `RELEASE_DEPLOYED_AT` (UTC, imediatamente antes de
+recriar o container). O horário exibido em Brasília é o início da atualização,
+não a conclusão do healthcheck. Um restart do mesmo container preserva o valor;
+executar o script novamente registra uma nova atualização. Ambientes sem esses
+metadados mostram a ausência da data, sem usar o relógio do navegador.
+
+Antes de integrar uma mudança visível ao jogador, acrescente uma entrada no
+início de `shared/src/releases.ts`, com ID único estável, data `AAAA-MM-DD`,
+título e lista de novidades/correções em português. Preserve o histórico.
+O deploy publica as notas junto com o código; não extrai textos de commits.
+O indicador de não lidas acompanha o ID da nota mais recente, salvo por
+navegador. Abrir o modal marca as notas disponíveis como lidas.
+
 Banco e backups ficam em `/data` no volume `bleach-dados`; não use `docker compose down -v`. As imagens anteriores permanecem na VPS; monitore o disco e remova apenas versões explicitamente escolhidas. Backups no mesmo volume não substituem cópia externa.
 
 Primeiro deploy realizado após revisão independente e autorização humana: `https://bleach.acoplum.com` responde 200; `https://www.bleach.acoplum.com` redireciona para o endereço principal. HTTP redireciona para HTTPS e o handshake WebSocket por TLS foi aceito. O container está saudável, com porta somente em loopback e volume `bleach-dados`. Os 24 arquivos de sites existentes mantiveram os mesmos hashes, e o laboratório cripto manteve a resposta 401 esperada. Não houve restart de serviços existentes, apenas reload validado do Nginx.

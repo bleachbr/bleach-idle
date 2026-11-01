@@ -3,13 +3,16 @@ import Phaser from "phaser";
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
+import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { bindEvents } from "./events";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
+import { initReleases } from "./releases";
+
+initReleases();
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 // em produção o servidor entrega a página e o WebSocket no mesmo endereço (wss atrás do HTTPS);
@@ -169,6 +172,10 @@ function start(room: Room<any>, myId: string) {
   // registra logo ao entrar para o Colyseus não avisar enquanto a cena do Phaser carrega
   room.onMessage("welcome", () => {});
   room.onMessage("fx", () => {});
+  // Arena 1v1 e patrulhas ainda não têm painel: o servidor já narra fila, pareamento, resultado e
+  // patrulha no chat (log/sys). Os dados estruturados ficam para a interface futura, mas precisam
+  // de handler: sem ele o colyseus.js avisa no console a cada mensagem (issue #22)
+  for (const type of ["arenaData", "arenaMatchFound", "arenaResult", "patrolData"]) room.onMessage(type, () => {});
   $("#exit-btn").onclick = async () => {
     if (!confirm("Trocar de personagem? Com Auto Hunt ligado, ele segue caçando offline.")) return;
     await room.leave(); // com Auto Hunt ligado, o personagem segue caçando offline
@@ -211,7 +218,7 @@ function start(room: Room<any>, myId: string) {
   });
   bindGuild(room, closeWindows);
   bindBook(room, closeWindows);
-  bindShop(room, closeWindows);
+  bindShop(room, myId, closeWindows);
   bindSeason(room, closeWindows);
   bindEvents(room);
   bindDev(room, myId, closeWindows);
@@ -448,7 +455,7 @@ function bindDev(room: Room<any>, myId: string, closeWindows: (keep?: string) =>
 
 // ---------- Loja de Cristais ----------
 
-function bindShop(room: Room<any>, closeWindows: (keep?: string) => void) {
+function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) => void) {
   const panel = $("#shop");
   let data: { crystals: number; owned: string[]; equip: Partial<Record<string, string>> } | null = null;
   let tab: CosKind = "aura";
@@ -469,16 +476,23 @@ function bindShop(room: Room<any>, closeWindows: (keep?: string) => void) {
     }
     const kind = COS_KINDS.find((k) => k.kind === tab)!;
     const slot = tab === "lore" ? "title" : tab;
+    // traje: retrato do personagem atual vestido; quem não tem a folha (capitão com o haori) vê só a cor e o aviso
+    const charId: string = room.state.players.get(myId)?.charId ?? "";
+    const base = CHARS[charId]?.forms[0].sprite ?? "";
+    const outfitKey = (look = "") => (base && look ? spriteKey(base, look) : base);
     body.innerHTML = `<p class="hint">${escHtml(kind.hint)} Ganhe cristais na recompensa diária e nas conquistas; eles valem para todos os personagens da conta.</p>` +
       COSMETICS.filter((x) => x.kind === tab && (!x.season || data!.owned.includes(x.id))).map((x) => {
         const own = data!.owned.includes(x.id);
         const on = data!.equip[slot] === x.id;
-        const swatch = `<span class="swatch" style="background:${hex(x.color)};box-shadow:0 0 8px ${hex(x.color2 ?? x.color)}"></span>`;
+        const fits = tab === "outfit" && outfitFits(charId, x.look ?? "");
+        const swatch = fits ? `<span class="outfit-pic" style="background-image:url(/assets/sprites/${outfitKey(x.look)}.png);${portraitCss(outfitKey(x.look))}"></span>`
+          : `<span class="swatch" style="background:${hex(x.color)};box-shadow:0 0 8px ${hex(x.color2 ?? x.color)}"></span>`;
+        const desc = x.desc + (tab === "outfit" && !fits ? ` Não muda o visual de ${CHARS[charId]?.name ?? "este personagem"}.` : "");
         const action = !own ? `<button type="button" data-buy="${x.id}" ${data!.crystals < x.price ? `disabled title="Faltam ${x.price - data!.crystals} cristais (ganhe na recompensa diária e conquistas)"` : ""}>💎 ${x.price}</button>`
           : tab === "lore" ? `<button type="button" data-read="${x.id}">Ler</button><button type="button" data-equip="${x.id}" ${on ? "disabled" : ""}>${on ? "Título em uso" : "Usar título"}</button>`
           : on ? `<button type="button" data-off="${slot}">Tirar</button>` : `<button type="button" data-equip="${x.id}">Usar</button>`;
         const label = tab === "title" || tab === "lore" ? `<b style="color:${hex(x.color)}">« ${escHtml(titleText(x.id))} »</b>` : `<b>${escHtml(x.name)}</b>`;
-        return `<div class="cos${own ? " own" : ""}${on ? " on" : ""}">${swatch}<div class="cos-text">${label}${tab === "lore" ? ` <small>${escHtml(x.name)}</small>` : ""}<div class="hint">${escHtml(x.desc)}</div></div><div class="cos-act">${action}</div></div>`;
+        return `<div class="cos${own ? " own" : ""}${on ? " on" : ""}">${swatch}<div class="cos-text">${label}${tab === "lore" ? ` <small>${escHtml(x.name)}</small>` : ""}<div class="hint">${escHtml(desc)}</div></div><div class="cos-act">${action}</div></div>`;
       }).join("") +
       `<p class="hint buy-note">Compra de cristais com dinheiro: ainda não está aberta.</p>`;
     // compra em dois cliques: o primeiro pede confirmação no próprio botão

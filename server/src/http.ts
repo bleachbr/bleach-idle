@@ -5,6 +5,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { readFile, stat } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
+import { releaseInfo } from "../../shared/src/releases.js";
 
 const TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
@@ -40,6 +41,10 @@ export function createHttpServer(status: () => Record<string, unknown>) {
 
   async function handler(req: IncomingMessage, res: ServerResponse) {
     const url = new URL(req.url ?? "/", "http://x");
+    if (url.pathname === "/release") {
+      res.writeHead(200, { ...SECURITY_HEADERS, "content-type": "application/json", "cache-control": "no-store" });
+      return res.end(JSON.stringify(releaseInfo(process.env.RELEASE_REVISION, process.env.RELEASE_DEPLOYED_AT)));
+    }
     if (url.pathname === "/healthz" || url.pathname === "/metrics") {
       const s = status();
       const ok = typeof s.alert === "boolean" ? !s.alert : true;
