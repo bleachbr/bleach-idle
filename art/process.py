@@ -129,6 +129,28 @@ GAME_SPRITES = {
     ) if (Path(__file__).parent / "raw" / "walk8" / f"{id_}_down.png").exists()},
 }
 
+# R-13: trajes da Loja de Cristais (<base>__<traje>), com a escala e a célula da forma base. Onde já havia arte do
+# mesmo visual, feita para o equipamento (haori e máscara do Ichigo, Rukia, Renji, Ishida e Sado), a folha a reaproveita.
+COS_REUSE = {"karakura": None, "capitao": "haori", "vizard": "mask"}
+COS_BASES = ["ichigo_shikai", "rukia", "renji", "ishida", "sado", "hitsugaya", "byakuya", "kenpachi", "yoruichi", "ukitake", "shunsui"]
+# o Shunsui de uniforme fica sem o chapéu de palha (o ponto mais alto da forma base): a altura do desenho base, senão o corpo cresce
+COS_REL = {"shunsui__karakura": rel_like("shunsui__karakura", "shunsui", 1.04)}
+
+
+def _cos_sheets():
+    walk = ROOT / "raw" / "walk8"
+    out = {}
+    for b in COS_BASES:
+        rel, tiles = GAME_SPRITES[b][3], GAME_SPRITES[b][4]
+        for look, reuse in COS_REUSE.items():
+            src = f"{b}__{reuse}" if reuse and (walk / f"{b}__{reuse}_down.png").exists() else f"{b}__{look}"
+            if (walk / f"{src}_sheet.png").exists():
+                out[f"{b}__{look}"] = (f"walk8/{src}_sheet.png", 4, 8, COS_REL.get(f"{b}__{look}", rel), tiles)
+    return out
+
+
+GAME_SPRITES.update(_cos_sheets())
+
 
 def is_bg(p):
     r, g, b = p[:3]
