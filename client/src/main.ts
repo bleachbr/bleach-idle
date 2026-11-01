@@ -396,11 +396,14 @@ function bindSeason(room: Room<any>, closeWindows: (keep?: string) => void) {
       <button type="button" class="claim" ${tier > st.claimed ? "" : `disabled title="Suba de nível no passe (${into}/${st.perTier} pontos) para liberar novos prêmios"`}>${tier > st.claimed ? `Pegar ${tier - st.claimed} ${tier - st.claimed === 1 ? "prêmio" : "prêmios"}` : "Tudo pego até agora"}</button>`;
     $("#pass-head").querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("seasonClaim");
     const cells = passTierCards(st).map((c, i) => {
-      const body = `<small>${c.label}</small><span class="prize">${i < st!.tiers ? prize(i + 1) : `A cada nível a mais:<br>${prize(st!.tiers + 1)}`}</span>`;
+      const note = c.note ? `<span class="note">${escHtml(c.note)}</span>` : "";
+      const body = `<small>${escHtml(c.label)}</small><span class="prize">${i < st!.tiers ? prize(i + 1) : `A cada nível a mais:<br>${prize(st!.tiers + 1)}`}</span>${note}`;
       const cls = `tier ${c.cls}${i < st!.tiers && seasonReward(i + 1).cos ? " big" : ""}`;
-      // pronto: botão que resgata (o mesmo seasonClaim de cima); os outros explicam no tooltip (#34)
-      return c.claimable ? `<button type="button" class="${cls}" title="${c.hint}" data-claim>${body}</button>`
-        : `<div class="${cls}" title="${c.hint}">${body}</div>`;
+      // pronto: botão que resgata (o mesmo seasonClaim de cima). O texto visível (note) diz a ação ou
+      // o que falta, não só o tooltip (#34). O botão tira o nome do próprio conteúdo (nível, prêmio e
+      // "toque para pegar"); aria-label nele esconderia o prêmio. O bloqueado é um grupo rotulado.
+      return c.claimable ? `<button type="button" class="${cls}" title="${escHtml(c.hint)}" data-claim>${body}</button>`
+        : `<div class="${cls}" role="group" title="${escHtml(c.hint)}" aria-label="${escHtml(c.aria)}">${body}</div>`;
     });
     $("#pass-body").innerHTML = `<div class="tiers">${cells.join("")}</div>`;
     $("#pass-body").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = () => room.send("seasonClaim")));

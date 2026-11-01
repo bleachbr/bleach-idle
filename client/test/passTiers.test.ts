@@ -22,6 +22,19 @@ describe("cards do passe de temporada (#34)", () => {
     expect(far.hint).toBe("Libera no nível 4 do passe: faltam 150 pontos");
   });
 
+  it("o que falta e a ação aparecem no card, não só no tooltip (toque, teclado e leitor de tela)", () => {
+    const [got, ready, locked, far] = passTierCards(st);
+    expect(locked.note).toBe("faltam 50 pts");
+    expect(far.note).toBe("faltam 150 pts");
+    expect(ready.note).toBe("toque para pegar");
+    expect(got.note).toBe("");
+    expect(passTierCards(st).at(-1)!.note).toBe("faltam 350 pts");
+    // nome acessível: nível e estado por extenso
+    expect(locked.aria).toBe("Nível 3, bloqueado. Libera no nível 3 do passe: faltam 50 pontos");
+    expect(ready.aria).toBe("Nível 2, pronto. Clique para pegar o prêmio liberado");
+    expect(got.aria).toBe("Nível 1, já pego");
+  });
+
   it("o card pronto avisa que pega todos os liberados de uma vez", () => {
     const cards = passTierCards({ ...st, pts: 400, claimed: 1 }); // níveis 2, 3 e 4 liberados
     expect(cards.filter((c) => c.claimable).map((c) => c.label)).toEqual(["2", "3", "4"]);

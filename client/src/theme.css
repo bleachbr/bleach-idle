@@ -274,6 +274,8 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 /* card pronto é botão: resgata como o "Pegar" de cima (#34) */
 #pass button.tier { color: inherit; font-family: inherit; text-align: left; cursor: pointer; }
 #pass .tier .prize { display: block; }
+#pass .tier .note { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; }
+#pass .tier.ready .note { color: var(--gold); }
 #pass button.tier:hover, #pass button.tier:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 #pass .excl { color: #ffb04a; }
 #season-btn.ping { position: relative; }
