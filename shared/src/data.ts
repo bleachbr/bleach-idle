@@ -13,6 +13,8 @@ export interface SpriteDef {
   frame: number;
   /** quadros de andar por direção: 4 (padrão) ou 8 (ciclo completo, art/walk8.py) */
   cols?: number;
+  /** sem folha em client/public/assets/sprites_hd/ (ex.: boneco de treino estático) */
+  noHd?: boolean;
 }
 export const SPRITES: Record<string, SpriteDef> = {
   ichigo_shikai: { frame: 48, cols: 8 },
@@ -23,7 +25,7 @@ export const SPRITES: Record<string, SpriteDef> = {
   adjuchas: { frame: 96, cols: 8 },
   gillian: { frame: 96, cols: 8 },
   arrancar: { frame: 48, cols: 8 },
-  boneco: { frame: 48 },
+  boneco: { frame: 48, noHd: true },
   fishbone: { frame: 96, cols: 8 },
   rukia_bankai: { frame: 48, cols: 8 },
   renji_bankai: { frame: 48, cols: 8 },
@@ -133,6 +135,8 @@ export interface SkillDef {
   minLevel?: number;
   /** raio em volta do alvo: acerta também os monstros vizinhos */
   area?: number;
+  /** efeito de status aplicado no alvo (M2-01..05) */
+  status?: import("./combatStatus").SkillStatusDef;
 }
 
 export interface CharDef {
@@ -193,11 +197,11 @@ export const CHARS: Record<string, CharDef> = {
         skill: { name: "Hakuren Absoluto", color: 0xffffff, mult: 5 } },
     ],
     // mais alcance e mais dano de habilidade, menos corpo a corpo
-    skill: { name: "Tsugi no Mai: Hakuren", range: 6, cost: 22, mult: 3.0, cdMs: 3000, color: 0xe6fbff },
+    skill: { name: "Tsugi no Mai: Hakuren", range: 6, cost: 22, mult: 3.0, cdMs: 3000, color: 0xe6fbff, status: { kind: "slow", durationMs: 3000, slowMult: 1.5 } },
     techs: [
-      { name: "Some no Mai: Tsukishiro", minLevel: 25, range: 5, cost: 35, mult: 3, cdMs: 6000, color: 0xbff4ff, area: 2 },
+      { name: "Some no Mai: Tsukishiro", minLevel: 25, range: 5, cost: 35, mult: 3, cdMs: 6000, color: 0xbff4ff, area: 2, status: { kind: "freeze", durationMs: 2000 } },
       { name: "San no Mai: Shirafune", minLevel: 50, range: 7, cost: 45, mult: 4.8, cdMs: 9000, color: 0xe6fbff },
-      { name: "Zero Absoluto", minLevel: 100, range: 6, cost: 90, mult: 8, cdMs: 30000, color: 0xffffff, area: 3 },
+      { name: "Zero Absoluto", minLevel: 100, range: 6, cost: 90, mult: 8, cdMs: 30000, color: 0xffffff, area: 3, status: { kind: "freeze", durationMs: 3000 } },
     ],
   },
   // Shikai → Bankai → depois do treino com a Divisão Zero → Bankai verdadeiro (Sōō Zabimaru) → Zaga Tetsuzan
@@ -221,7 +225,7 @@ export const CHARS: Record<string, CharDef> = {
     techs: [
       { name: "Rōga Sō", minLevel: 25, range: 4, cost: 35, mult: 3.2, cdMs: 6000, color: 0xff6a4a, area: 2 },
       { name: "Hikotsu Taihō", minLevel: 50, range: 6, cost: 45, mult: 4.6, cdMs: 9000, color: 0xff4020, area: 1 },
-      { name: "Hihiō Zabimaru: Fogo Total", minLevel: 100, range: 5, cost: 90, mult: 9.5, cdMs: 30000, color: 0xff2010, area: 2 },
+      { name: "Hihiō Zabimaru: Fogo Total", minLevel: 100, range: 5, cost: 90, mult: 9.5, cdMs: 30000, color: 0xff2010, area: 2, status: { kind: "dot", durationMs: 4000, tickMs: 1000, dotRatio: 0.25 } },
     ],
   },
   // Quincy: corpo a corpo fraco, flecha de longe e barata.
@@ -270,8 +274,8 @@ export const CHARS: Record<string, CharDef> = {
     skill: { name: "El Directo", range: 3, cost: 20, mult: 2.8, cdMs: 3000, color: 0xff5040 },
     techs: [
       { name: "Golpe de Mi Abuelo", minLevel: 25, range: 3, cost: 35, mult: 3.8, cdMs: 6000, color: 0xff5040, area: 2 },
-      { name: "Golpe do Gigante", minLevel: 50, range: 4, cost: 45, mult: 5, cdMs: 9000, color: 0xffd040, area: 1 },
-      { name: "Puño del Diablo", minLevel: 100, range: 4, cost: 90, mult: 10, cdMs: 30000, color: 0xff2020, area: 3 },
+      { name: "Golpe do Gigante", minLevel: 50, range: 4, cost: 45, mult: 5, cdMs: 9000, color: 0xffd040, area: 1, status: { kind: "stun", durationMs: 1500 } },
+      { name: "Puño del Diablo", minLevel: 100, range: 4, cost: 90, mult: 10, cdMs: 30000, color: 0xff2020, area: 3, status: { kind: "stun", durationMs: 2000 } },
     ],
   },
   // o capitão-prodígio do gelo: técnicas em área, alcance médio.
@@ -292,11 +296,11 @@ export const CHARS: Record<string, CharDef> = {
       { id: "shiten", label: "Forma Adulta: Shiten Kōsō", shout: "SHITEN KŌSŌ!", sprite: "hitsugaya_shiten", dmgMult: 3, stepMs: 130, attackMs: 480, reiDrain: 6, minLevel: 100,
         skill: { name: "Shiten Kōsō", color: 0xffffff, mult: 4.7 } },
     ],
-    skill: { name: "Hyōryū: Dragão de Gelo", range: 5, cost: 20, mult: 2.8, cdMs: 3000, color: 0x9fe8ff },
+    skill: { name: "Hyōryū: Dragão de Gelo", range: 5, cost: 20, mult: 2.8, cdMs: 3000, color: 0x9fe8ff, status: { kind: "slow", durationMs: 3000, slowMult: 1.5 } },
     techs: [
-      { name: "Guncho Tsurara", minLevel: 25, range: 5, cost: 35, mult: 3.1, cdMs: 6000, color: 0xbff4ff, area: 2 },
-      { name: "Hyōryū Senbi", minLevel: 50, range: 6, cost: 45, mult: 4.6, cdMs: 9000, color: 0x9fe8ff, area: 1 },
-      { name: "Ryūsenka: Flor de Gelo", minLevel: 100, range: 7, cost: 90, mult: 8.5, cdMs: 30000, color: 0xffffff, area: 3 },
+      { name: "Guncho Tsurara", minLevel: 25, range: 5, cost: 35, mult: 3.1, cdMs: 6000, color: 0xbff4ff, area: 2, status: { kind: "slow", durationMs: 3000, slowMult: 1.5 } },
+      { name: "Hyōryū Senbi", minLevel: 50, range: 6, cost: 45, mult: 4.6, cdMs: 9000, color: 0x9fe8ff, area: 1, status: { kind: "freeze", durationMs: 2000 } },
+      { name: "Ryūsenka: Flor de Gelo", minLevel: 100, range: 7, cost: 90, mult: 8.5, cdMs: 30000, color: 0xffffff, area: 3, status: { kind: "freeze", durationMs: 3000 } },
     ],
   },
   // o capitão nobre da 6ª Divisão: pétalas-lâmina em área, de longe.
@@ -319,7 +323,7 @@ export const CHARS: Record<string, CharDef> = {
     ],
     skill: { name: "Senbonzakura", range: 5, cost: 25, mult: 2.6, cdMs: 3500, color: 0xff9fc4, area: 1 },
     techs: [
-      { name: "Hadō 4: Byakurai", minLevel: 25, range: 6, cost: 35, mult: 3.4, cdMs: 6000, color: 0xe8f4ff },
+      { name: "Hadō 4: Byakurai", minLevel: 25, range: 6, cost: 35, mult: 3.4, cdMs: 6000, color: 0xe8f4ff, status: { kind: "stun", durationMs: 1200 } },
       { name: "Senka", minLevel: 50, range: 2, cost: 45, mult: 5, cdMs: 9000, color: 0xffd0e8 },
       { name: "Ikka Senjinka", minLevel: 100, range: 5, cost: 90, mult: 9.5, cdMs: 30000, color: 0xff7ab0, area: 2 },
     ],
@@ -344,9 +348,9 @@ export const CHARS: Record<string, CharDef> = {
     ],
     skill: { name: "Corte de Reiatsu", range: 2, cost: 20, mult: 3, cdMs: 3000, color: 0xffd040 },
     techs: [
-      { name: "Reiatsu Esmagador", minLevel: 25, range: 2, cost: 35, mult: 3.8, cdMs: 6000, color: 0xffd040, area: 2 },
+      { name: "Reiatsu Esmagador", minLevel: 25, range: 2, cost: 35, mult: 3.8, cdMs: 6000, color: 0xffd040, area: 2, status: { kind: "dot", durationMs: 3000, tickMs: 1000, dotRatio: 0.2 } },
       { name: "Kendō: Ryōdan", minLevel: 50, range: 3, cost: 45, mult: 5.4, cdMs: 9000, color: 0xffe080, area: 1 },
-      { name: "Nozarashi: Corte do Céu", minLevel: 100, range: 3, cost: 90, mult: 10.5, cdMs: 30000, color: 0xff2020, area: 3 },
+      { name: "Nozarashi: Corte do Céu", minLevel: 100, range: 3, cost: 90, mult: 10.5, cdMs: 30000, color: 0xff2020, area: 3, status: { kind: "dot", durationMs: 3000, tickMs: 1000, dotRatio: 0.25 } },
     ],
   },
 };
@@ -386,15 +390,15 @@ export const MONSTERS: Record<string, MonsterDef> = Object.fromEntries([
   m("hollow_devorador", "Hollow Devorador", 480, 30, 6, 720, 1, 0xffffff, 420, 20000, "hollow_devorador"),
   m("fishbone", "Fishbone D", 700, 36, 8, 1100, 1, 0xffffff, 420, 20000, "fishbone"),
   m("grand_fisher", "Grand Fisher", 2600, 48, 12, 6000, 1, 0xffffff, 380, 180000, "grand_fisher"),
-  m("adjuchas", "Adjuchas", 950, 42, 10, 1500, 1, 0xffffff, 330, 25000, "adjuchas"),
-  m("arrancar", "Arrancar", 1400, 50, 14, 2300, 1, 0xffffff, 300, 30000, "arrancar"),
+  m("adjuchas", "Adjuchas", 950, 40, 10, 1650, 1, 0xffffff, 330, 25000, "adjuchas"),
+  m("arrancar", "Arrancar", 1300, 45, 12, 2500, 1, 0xffffff, 300, 25000, "arrancar"),
   m("metastacia", "Metastacia", 3800, 44, 11, 8000, 1, 0xffffff, 360, 150000, "metastacia"),
   m("gillian", "Menos Grande (Gillian)", 5200, 62, 16, 9000, 1, 0xffffff, 650, 120000, "gillian"),
   // Las Noches (nível 45+)
-  m("arrancar_numeros", "Arrancar Números", 2300, 60, 17, 4800, 1, 0xffffff, 300, 30000, "arrancar_numeros"),
-  m("exequias", "Exequias", 3200, 68, 20, 7000, 1, 0xffffff, 330, 30000, "exequias"),
-  m("fraccion", "Fracción", 4300, 78, 24, 9800, 1, 0xffffff, 360, 35000, "fraccion"),
-  m("privaron", "Privaron Espada", 18000, 92, 28, 42000, 1, 0xffffff, 300, 240000, "privaron"),
+  m("arrancar_numeros", "Arrancar Números", 1650, 49, 14, 3600, 1, 0xffffff, 300, 25000, "arrancar_numeros"),
+  m("exequias", "Exequias", 2000, 53, 15, 4650, 1, 0xffffff, 330, 25000, "exequias"),
+  m("fraccion", "Fracción", 2350, 55, 16, 5850, 1, 0xffffff, 360, 25000, "fraccion"),
+  m("privaron", "Privaron Espada", 18000, 88, 26, 42000, 1, 0xffffff, 300, 240000, "privaron"),
   // Karakura Falsa (nível 60+): o exército de Aizen na réplica da cidade
   m("fraccion_espada", "Fracción de Espada", 2600, 56, 18, 7000, 1, 0xffffff, 320, 25000, "fraccion_espada"),
   m("arrancar_resurreccion", "Arrancar em Resurrección", 3400, 62, 20, 9500, 1, 0xffffff, 340, 25000, "arrancar_resurreccion"),

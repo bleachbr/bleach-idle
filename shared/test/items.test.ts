@@ -1,4 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { SPRITES } from "../src/data";
 import {
   spaceFor,
   addItem,
@@ -180,6 +184,17 @@ describe("items", () => {
 
     it("retorna vazio para monstro inexistente", () => {
       expect(rollLoot("monstro_fantasma")).toEqual({ gold: 0, items: [] });
+    });
+  });
+
+  describe("SPRITES (arquivos pixel e HD)", () => {
+    it("todo sprite sem noHd possui arquivo .webp em client/public/assets/sprites_hd", () => {
+      const pub = fileURLToPath(new URL("../../client/public/assets", import.meta.url));
+      for (const [key, def] of Object.entries(SPRITES)) {
+        expect(existsSync(join(pub, "sprites", `${key}.png`)), `falta sprites/${key}.png`).toBe(true);
+        const hasHd = existsSync(join(pub, "sprites_hd", `${key}.webp`));
+        expect(hasHd, `divergência HD em ${key}`).toBe(!(def as { noHd?: boolean }).noHd);
+      }
     });
   });
 });

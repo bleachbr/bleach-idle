@@ -102,6 +102,12 @@ export function prevDay(key: string): string {
   return dayKey(Date.parse(`${key}T12:00:00Z`) + 3 * 3600_000 - 24 * 3600_000);
 }
 
+export interface ChronicleProgress {
+  activeWeekKey: string;
+  questKills: number;
+  completedAt?: number;
+}
+
 export interface Progress {
   bestiary: Record<string, number>;
   ach: string[];
@@ -118,7 +124,29 @@ export interface Progress {
   dgBest?: number;
   /** passe de temporada */
   season?: import("./season").SeasonState;
+  /** títulos conquistados por marcos do servidor (W-06) */
+  titles?: string[];
+  /** progresso da crônica semanal (M1-05) */
+  chronicle?: ChronicleProgress;
 }
+
+// ---------- marcos históricos do servidor (W-06) ----------
+
+export interface ServerMilestoneDef {
+  id: string;
+  name: string;
+  desc: string;
+  titleId: string;
+}
+
+export const SERVER_MILESTONES: ServerMilestoneDef[] = [
+  { id: "first_bankai", name: "Primeiro Bankai", desc: "Primeiro guerreiro a liberar a 2ª forma (Bankai / Resurrección / Vollständig).", titleId: "tit_primeiro_bankai" },
+  { id: "first_lv60", name: "Primeiro Capitão", desc: "Primeiro guerreiro a alcançar o nível 60.", titleId: "tit_primeiro_capitao" },
+  { id: "first_rebirth", name: "Primeiro Renascido", desc: "Primeiro guerreiro a realizar o Renascimento.", titleId: "tit_primeiro_renascido" },
+  { id: "first_dangai10", name: "Pioneiro do Dangai", desc: "Primeiro guerreiro a limpar o andar 10 do Dangai.", titleId: "tit_pioneiro_dangai" },
+  { id: "first_pvp10", name: "Campeão da Arena", desc: "Primeiro guerreiro a alcançar 10 abates em PvP.", titleId: "tit_terror_arena" },
+  { id: "first_yhwach", name: "Regicida Quincy", desc: "Primeiro guerreiro a derrotar o chefe Yhwach.", titleId: "tit_regicida" },
+];
 
 // ---------- desafio do Dangai (torre sem fim) ----------
 // Cada andar traz uma leva de monstros só sua. Os andares sobem pela escada de monstros e,
@@ -180,7 +208,14 @@ export const TUTORIAL: { id: TutorialId; text: string; reward: { gold: number; i
 /** personagem que já passou deste nível não vê o guia */
 export const TUTORIAL_MAX_LEVEL = 15;
 
-export const newProgress = (): Progress => ({ bestiary: {}, ach: [], daily: { last: "", streak: 0 }, kills: 0, bossKills: 0 });
+export const newProgress = (): Progress => ({
+  bestiary: {},
+  ach: [],
+  daily: { last: "", streak: 0 },
+  kills: 0,
+  bossKills: 0,
+  chronicle: { activeWeekKey: "", questKills: 0 },
+});
 
 export function stagesSum(bestiary: Record<string, number>): number {
   return Object.entries(bestiary).reduce((s, [k, n]) => s + bestiaryStage(k, n), 0);

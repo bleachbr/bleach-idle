@@ -80,5 +80,26 @@ describe("auth", () => {
       clearFails(testUser);
       expect(blocked(testUser)).toBe(false);
     });
+
+    it("isola limite de criação de contas por IP (reg:) em janela de 1h sem misturar com falhas de login (ip:)", () => {
+      const regKey = "reg:203.0.113.10";
+      const ipKey = "ip:203.0.113.10";
+      clearFails(regKey);
+      clearFails(ipKey);
+
+      const t0 = 1_700_000_000_000;
+      for (let i = 0; i < 4; i++) {
+        fail(regKey, t0);
+        expect(blocked(regKey, t0)).toBe(false);
+      }
+      fail(regKey, t0); // 5ª conta criada no mesmo IP
+      expect(blocked(regKey, t0)).toBe(true);
+      // Login normal pelo mesmo IP não foi bloqueado pelo limite de cadastro
+      expect(blocked(ipKey, t0)).toBe(false);
+      // Após 2 minutos ainda está bloqueado para criar conta (janela é de 1 hora, não 1 minuto)
+      expect(blocked(regKey, t0 + 120_000)).toBe(true);
+      // Após 1 hora + 1 ms o bloqueio expira
+      expect(blocked(regKey, t0 + 3_600_001)).toBe(false);
+    });
   });
 });

@@ -110,8 +110,13 @@ Ao implementar código ou refatorar no Bleach Idle, o agente deve obrigatoriamen
 - Spritesheets podem ter 4 ou 8 colunas de caminhada (`cols: 4` ou `cols: 8`). O cálculo de frames e proporções deve respeitar `spriteCols()` e `SPRITES[key]`.
 - Ao criar variações de sprite ou modos visuais (Modo HD vs Pixel Art), certifique-se de manter as dimensões relativas para evitar distorção ou encolhimento de escala.
 
-### 4.5. Git e Branches
-- Branches de funcionalidade seguem o prefixo `feat/`, correções `fix/`, testes `test/`, documentação `docs/` e manutenção `chore/`.
+### 4.5. Git, Branches e Worktrees (Orca IDE)
+- **Todo novo desenvolvimento nasce em um worktree isolado a partir da `main`:** nunca desenvolva trocando de branch dentro do diretório principal da `main`. No Orca IDE, crie o worktree via CLI (`orca worktree create --name <id-assunto> --branch <prefixo/id-assunto> --base-branch main --no-parent --json`) e trabalhe dentro do caminho do worktree criado.
+- Branches de funcionalidade seguem o prefixo `feat/`, correções `fix/`, performance `perf/`, testes `test/`, documentação `docs/` e manutenção `chore/`.
+- **Padrão obrigatório em cada entrega:**
+  1. **Simulação antes da correção:** escreva primeiro um teste determinístico que reproduz o problema e falha antes da mudança, e comprove que passa depois.
+  2. **Organização de código:** funções curtas e coesas, nomes claros e expressivos, extração para módulos dedicados em vez de inflar arquivos grandes (como `WorldRoom.ts`).
+  3. **Documentação e memória do projeto:** atualize `docs/roadmap.md`, `docs/roadmap-duplas.md`, `docs/pendencias.md` (quando aplicável) e registre a lição técnica em `docs/aprendizados.md`.
 - Sempre execute `npm run typecheck` e `npm test` antes de considerar uma tarefa concluída. Se mexeu em lógica do servidor, rode também os cenários afetados (`npm run test:scripts`).
 - Um resultado por PR e um assunto por commit. Mensagens em português, no estilo `tipo: o que mudou`. Código escrito com IA leva `Co-Authored-By` com o modelo usado.
 - Quem escreveu não aprova o próprio PR (skill `revisar-pr`). O merge na `main` é decisão de uma pessoa; agente não faz push nem merge sem pedido explícito.

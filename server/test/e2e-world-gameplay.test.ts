@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { Client, type Room } from "colyseus.js";
+import { MONSTERS } from "../../shared/src";
+import * as db from "../src/db";
 import { startTestServer, stopTestServer, once, quiet } from "./helpers/testServer";
 
 describe("E2E: World Gameplay", () => {
@@ -17,7 +19,7 @@ describe("E2E: World Gameplay", () => {
   const randomLetters = (len = 5) =>
     Array.from({ length: len }, () => String.fromCharCode(97 + Math.floor(Math.random() * 26))).join("");
 
-  async function createPlayerAndJoin(charName = `Gamer ${randomLetters(4)}`) {
+  async function createPlayerAndJoin(charName = `Gamer ${randomLetters(4)}`, beforePlay?: (id: string) => void) {
     const client = new Client(url);
     const login = `user_${Date.now().toString(36)}_${randomLetters(4)}`;
 
@@ -30,7 +32,9 @@ describe("E2E: World Gameplay", () => {
     await once(lobby, "chars");
     lobby.send("create", { name: charName, charId: "ichigo" });
     await once(lobby, "chars");
-    lobby.send("play", { id: charName.toLowerCase() });
+    const id = charName.toLowerCase();
+    beforePlay?.(id);
+    lobby.send("play", { id });
     const { ticket } = await once<{ ticket: string }>(lobby, "ticket");
     await lobby.leave();
 

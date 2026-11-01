@@ -6,6 +6,7 @@ import { WorldRoom } from "./WorldRoom";
 import { LobbyRoom } from "./LobbyRoom";
 import { createHttpServer } from "./http";
 import { flagOn } from "./flags";
+import { getOperationalMetrics } from "./metrics";
 import * as db from "./db";
 
 // Configuração por variáveis de ambiente (veja DEPLOY.md):
@@ -17,9 +18,7 @@ import * as db from "./db";
 const port = Number(process.env.PORT ?? 2567);
 const startedAt = Date.now();
 
-const http = createHttpServer(() => ({
-  uptimeS: Math.round((Date.now() - startedAt) / 1000),
-}));
+const http = createHttpServer(() => getOperationalMetrics(Math.round((Date.now() - startedAt) / 1000)));
 const gameServer = new Server({ transport: new WebSocketTransport({ server: http }) });
 gameServer.define("lobby", LobbyRoom);
 gameServer.define("world", WorldRoom);
