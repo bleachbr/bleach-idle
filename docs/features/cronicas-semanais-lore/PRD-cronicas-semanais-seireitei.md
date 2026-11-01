@@ -95,7 +95,7 @@ No mapa `soul.tmj`, a área segura (PZ) central ao redor do portal Senkaimon rec
 | NPC ID | Nome Visível | Título do NPC | Sprite Base | Posição no Mapa | Função |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `npc_cronista` | **Maki** | *Cronista do Gotei 13* | `rukia__haori` | `x: 21, y: 14` | NPC principal: apresenta a crônica semanal ativa, conta os detalhes históricos e entrega a missão da semana. |
-| `npc_shunsui` | **Shunsui Kyōraku** | *Capitão da 8ª Divisão* | `byakuya` (com tint/chapéu) | `x: 26, y: 13` | Comentários descontraídos sobre o estado do Seireitei, diálogos reflexivos sobre batalhas passadas e dicas de combate. |
+| `npc_shunsui` | **Shunsui Kyōraku** | *Capitão da 8ª Divisão* | `shunsui` (jogável desde o R-01) | `x: 26, y: 13` | Comentários descontraídos sobre o estado do Seireitei, diálogos reflexivos sobre batalhas passadas e dicas de combate. |
 | `npc_sentinela` | **Sentinela do Seireitei** | *13ª Divisão* | `renji__haori` | `x: 23, y: 16` | Informações sobre a segurança do portal Senkaimon, alertas de invasão e ambientação militar. |
 
 ---
