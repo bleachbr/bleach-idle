@@ -147,3 +147,5 @@ Números e método em [`baseline.md`](baseline.md). Skill: `performance-servidor
 | [#39](https://github.com/bleachbr/bleach-idle/issues/39) | Balance | Avaliar atenuante para penalidade de morte por perda de itens e XP na Invasão de Hollows |
 | [#40](https://github.com/bleachbr/bleach-idle/issues/40) | UX | Adicionar confirmação ou feedback visual imediato ao usar "Zerar contagem" na Caçada do Livro |
 | [#41](https://github.com/bleachbr/bleach-idle/issues/41) | UX | Exibir feedback visual no HUD ao tentar usar poções com HP ou Reiatsu cheios |
+
+- **Cards do Passe de Temporada (#34):** o card pronto manda o mesmo `seasonClaim` do botão de cima, então clicar em qualquer card liberado resgata todos os prêmios liberados de uma vez (o tooltip avisa "os N prêmios liberados"); resgate de um nível só exigiria mensagem nova no servidor. O card "N+" (níveis além do último) mudou: antes acendia sempre que o nível passava do último; agora só acende se ainda houver prêmio por pegar (`tier > claimed`).
