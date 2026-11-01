@@ -11,6 +11,7 @@ import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
 import { initReleases } from "./releases";
+import { huntResetButton } from "./huntReset";
 
 initReleases();
 
@@ -553,9 +554,11 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
         <tr><td>Abates</td><td>${h.kills}</td><td>${per(h.kills)}</td></tr></table>
         <p class="hint">Loot (kan acima conta o dinheiro do loot e a Auto Venda):</p>
         <div class="loot-list">${h.items.map((i: any) => `<span class="slot static" title="${escHtml(i.name)}">${iconHtml(i.icon, i.n)}</span>`).join("") || `<span class="hint">nada ainda</span>`}</div>
-        <button type="button" class="claim">Zerar contagem</button>`;
+        ${huntResetButton(h)}`;
+      // retorno na hora; o "book" zerado que o servidor devolve mantém o botão desabilitado
       body.querySelector<HTMLButtonElement>(".claim")!.onclick = (e) => {
         const b = e.currentTarget as HTMLButtonElement;
+        b.disabled = true;
         b.textContent = "✔ Contagem zerada";
         room.send("huntReset");
       };
