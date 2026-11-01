@@ -25,6 +25,10 @@ As filas são **estanques**: ninguém puxa item da fila do outro. Mas os **temas
 5. **Specs.** Item com `Spec` marcada só começa com PRD e ADR em `docs/features/<nome>/`. Quem escreve a spec é o dono do item; quem aprova são as duas pessoas. A ordem de escrita está em [Plano de specs](#plano-de-specs).
 6. **Balanceamento de números de jogo** (status, drops, XP, custos) e **handlers sensíveis** (itens, kan, conta) têm sempre revisão adversarial independente — skill `seguranca-servidor` como checklist; CodeRabbit pode aprovar conforme D-004.
 
+F-18 (Waldir, pedido de 01/11/2026): novidades e data da versão no login,
+seleção de personagens e menu do jogo. Implementação local em
+`feat/novidades-versao`; revisão independente aprovada, CI e merge pendentes.
+
 ## Fila Waldir (W): fundação, motor e pacotes de mundo
 
 Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD/ADR antes de começar.

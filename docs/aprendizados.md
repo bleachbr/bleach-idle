@@ -4,6 +4,25 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ---
 
+## Novidades vinculadas à versão servida (F-18)
+
+Um push na `main` não comprova que o deploy terminou. `/release` entrega as
+notas da própria imagem em execução e os metadados públicos injetados pelo
+`deploy.sh`: SHA da imagem e horário UTC imediatamente anterior à recriação
+do container. A interface identifica esse horário como início da atualização,
+não como término do healthcheck. Sem esses metadados, não inventa data local.
+
+As notas são editoriais em `shared/src/releases.ts`, da mais recente para a
+mais antiga, com ID estável por entrada. Novas entregas com mudanças visíveis
+ao jogador acrescentam uma entrada; commits não viram notas automaticamente.
+Um novo deploy atualiza a data/versão, mas só notas novas acionam o indicador.
+A leitura fica por navegador em `bi.releaseSeen`, independente da conta.
+
+O endpoint usa `no-store` e fica fora do service worker para não apresentar
+metadados antigos como atuais quando a rede falhar. O modal nativo contém o
+foco e fecha por Escape; o listener em captura impede que teclas do modal
+acionem técnicas no jogo. Não é necessário mudar CSP nem instalar dependências.
+
 ## Repositório público, rulesets e revisores automáticos (F-07)
 
 Ao tornar o repositório público, a API passou a permitir ruleset ativo: PR obrigatório, uma aprovação descartada com novos commits, aprovação do último push por outra conta, conversas resolvidas e checks vinculados ao app GitHub Actions. Os nomes dos checks devem refletir o workflow atual (`gitleaks`, `test (22.x)`, `test (24.x)`); exigir o antigo `test` deixaria a nova matriz sem satisfazer a regra. O ruleset não tem bypass, inclusive para administradores.

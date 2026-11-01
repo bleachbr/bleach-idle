@@ -7,6 +7,8 @@ services:
       NODE_ENV: production
       BI_DEV: "0"
       BI_DEBUG: "0"
+      RELEASE_REVISION: "${RELEASE_REVISION:?defina RELEASE_REVISION}"
+      RELEASE_DEPLOYED_AT: "${RELEASE_DEPLOYED_AT:?defina RELEASE_DEPLOYED_AT}"
       TRUST_PROXY: "${TRUST_PROXY:?defina TRUST_PROXY}"
     ports:
       - "127.0.0.1:2567:2567"
