@@ -39,6 +39,7 @@ const KNOWN_ROOM_MESSAGES = [
   "offline",
   "devMode",
   "time",
+  "patrolData",
 ];
 
 function registerDefaultHandlers<T extends Room>(room: T): T {
