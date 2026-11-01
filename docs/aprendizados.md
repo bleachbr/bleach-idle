@@ -228,3 +228,9 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - O prazo no cliente sai de `left` (ms que faltam) somado ao relógio do aparelho, e não de `until` com `serverNow()`: o banner de quem entra chega antes da resposta do `time` (`clock.ts`), e um aparelho adiantado apagaria o banner na hora.
 - Os textos ficam em `shared/src/events.ts`, e o servidor manda só a fase. O cliente busca o texto com `own(EVENT_BANNER, fase)`: mesmo vindo do servidor, a chave chega pela rede.
 - Os avisos de sistema com números (vida, XP, minutos) continuam iguais e a lore vai numa linha separada (canal `lore`), porque os cenários `invasion` e `temporada` conferem trechos desses avisos.
+
+## 25. Trilha imutável de auditoria econômica e anti-duplicação (W-08)
+
+- **Problema:** Movimentações de alto valor de kan, cristais e itens (mercado entre jogadores, correio com anexos, forja do Kisuke, compras de loja e recompensas) não tinham registro histórico persistente. Em caso de relatos de itens sumidos, suspeita de duplicação ou desbalanceamento da economia por injeção excessiva de moeda, não existia uma trilha contábil para auditar o fluxo de bens.
+- **Solução (`server/src/economyAudit.ts`, `server/src/WorldRoom.ts`):** Criamos a tabela append-only `economy_audit` no SQLite com prepared statements rápidos indexados por `char_id`, `currency` e `created_at`. Cada transação relevante registra `(accountId, charId, currency, delta, balanceAfter, reason, itemId, details, createdAt)`. O módulo oferece `recordAudit` para inserção atômica, `getAuditTrail(charId, limit)` para suporte ao jogador e `queryEconomyFlow(since, until)` para consolidação agregada de entradas e saídas de kan/cristais da economia.
+
