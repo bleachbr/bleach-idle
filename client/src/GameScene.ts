@@ -3,8 +3,9 @@
 import Phaser from "phaser";
 import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
-import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, titleText, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, npcById, type GameMap } from "../../shared/src";
+import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, titleText, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, npcById, type GameMap, type QuestState } from "../../shared/src";
 import { serverNow } from "./clock";
+import { fixedMarks, questTargetKinds, targetAreas, type FixedMark } from "./minimapMarks";
 import { parseStatusFlags, desiredTint, dotHitStyle, STATUS_LOOK } from "./statusFx";
 import type { StatusKind } from "../../shared/src/combatStatus";
 
@@ -115,6 +116,9 @@ const PIXEL_FONT = '"Pixelify Sans", system-ui, sans-serif';
 const px = (x: number) => x * TILE + TILE / 2;
 const py = (y: number) => y * TILE + TILE;
 
+/** pixels do canvas do minimapa por tile (o CSS fixa a largura na tela) */
+const MINIMAP_K = 4;
+const MINIMAP_LEGEND = "Losango roxo: portal (com anel dourado, o alvo da missão está em outro mapa). Quadrado dourado: loja; laranja: depot. Cruz: templo. Círculo amarelo: NPC. Verde claro: zona protegida. Tracejado dourado: onde caçar o alvo da missão; ponto dourado: monstro do alvo.";
 /** versão dos .tmj na URL: subir junto com o CACHE de client/public/sw.js quando um mapa mudar (2: NPCs no soul.tmj, M1-03) */
 const MAP_VERSION = 2;
 
@@ -296,6 +300,9 @@ export class GameScene extends Phaser.Scene {
     s.bags.onRemove((_b: any, id: string) => { this.bags.get(id)?.img.destroy(); this.bags.delete(id); });
 
     this.room.onMessage("fx", (fx) => this.onFx(fx));
+    // missões do Kisuke para o minimapa: a primeira já chegou antes da cena existir, então pede de novo
+    this.room.onMessage("quests", (q: QuestState) => (this.quests = q));
+    this.room.send("quests");
     this.input.on("pointerdown", (ptr: Phaser.Input.Pointer) => this.onClick(ptr));
     this.bindKeys();
   }
@@ -1005,8 +1012,13 @@ export class GameScene extends Phaser.Scene {
   // ---------- minimapa ----------
 
   private minimap = document.querySelector<HTMLCanvasElement>("#minimap");
-  private minimapBase: ImageData | null = null;
+  /** fundo do mapa atual, 1 pixel por tile; o minimapa o desenha ampliado MINIMAP_K vezes */
+  private minimapBase: HTMLCanvasElement | null = null;
   private nextMinimapAt = 0;
+  /** marcadores do mapa atual que não mudam (zona protegida, portal, loja, NPCs) */
+  private minimapFixed: FixedMark[] = [];
+  /** missões do Kisuke, para marcar onde caçar o alvo (a mesma mensagem que o painel de missões recebe) */
+  private quests: QuestState = { active: {}, done: [] };
 
   /** Fundo do minimapa: 1 pixel por tile, na cor média do tile mais alto (sem a camada "acima"). */
   private buildMinimap(id: string) {
@@ -1031,8 +1043,6 @@ export class GameScene extends Phaser.Scene {
       }
       return avg.get(gid)!;
     };
-    c.width = data.width;
-    c.height = data.height;
     const out = new ImageData(data.width, data.height);
     const layers = (data.layers as any[]).filter((l) => l.type === "tilelayer" && l.name !== "acima");
     for (let i = 0; i < data.width * data.height; i++) {
@@ -1041,27 +1051,99 @@ export class GameScene extends Phaser.Scene {
       const [r, g, b] = gid ? colorOf(gid) : [0, 0, 0];
       out.data.set([r, g, b, 255], i * 4);
     }
-    this.minimapBase = out;
+    const base = document.createElement("canvas");
+    base.width = data.width;
+    base.height = data.height;
+    base.getContext("2d")!.putImageData(out, 0, 0);
+    this.minimapBase = base;
+    // o canvas fica MINIMAP_K vezes maior que o mapa, para os marcadores terem forma (o CSS mantém a largura na tela)
+    c.width = data.width * MINIMAP_K;
+    c.height = data.height * MINIMAP_K;
+    this.minimapFixed = fixedMarks(this.maps[id]);
+    c.title = `${this.maps[id].name}: clique para andar até lá. ${MINIMAP_LEGEND}`;
     c.onclick = (e) => {
       const rect = c.getBoundingClientRect();
-      const x = Math.floor(((e.clientX - rect.left) / rect.width) * c.width);
-      const y = Math.floor(((e.clientY - rect.top) / rect.height) * c.height);
+      const x = Math.floor(((e.clientX - rect.left) / rect.width) * data.width);
+      const y = Math.floor(((e.clientY - rect.top) / rect.height) * data.height);
       this.room.send("move", { x, y });
     };
   }
 
   private drawMinimap(me: any) {
     const c = this.minimap;
-    if (!c || !this.minimapBase || !me) return;
+    const base = this.minimapBase;
+    if (!c || !base || !me) return;
+    const K = MINIMAP_K;
     const ctx = c.getContext("2d")!;
-    ctx.putImageData(this.minimapBase, 0, 0);
-    const dot = (x: number, y: number, color: string, size = 1) => { ctx.fillStyle = color; ctx.fillRect(x - (size >> 1), y - (size >> 1), size, size); };
-    for (const m of this.room.state.monsters.values()) if (m.map === this.mapId) dot(m.x, m.y, "#ff4a3a");
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(base, 0, 0, base.width * K, base.height * K);
+    // centro do tile, em pixels do canvas
+    const cx = (t: number) => t * K + K / 2;
+    const dot = (x: number, y: number, color: string, size = 1) => {
+      const s = size * K;
+      ctx.fillStyle = color;
+      ctx.fillRect(cx(x) - s / 2, cx(y) - s / 2, s, s);
+    };
+    // zona protegida por baixo de tudo
+    for (const f of this.minimapFixed) {
+      if (f.kind !== "pz") continue;
+      const { x0, y0, x1, y1 } = f.rect;
+      ctx.fillStyle = "rgba(110, 255, 150, 0.18)";
+      ctx.fillRect(x0 * K, y0 * K, (x1 - x0 + 1) * K, (y1 - y0 + 1) * K);
+      ctx.strokeStyle = "rgba(110, 255, 150, 0.7)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x0 * K + 0.5, y0 * K + 0.5, (x1 - x0 + 1) * K - 1, (y1 - y0 + 1) * K - 1);
+    }
+    // onde caçar o alvo das missões: círculo tracejado na área de spawn
+    const kinds = questTargetKinds(this.quests);
+    const target = kinds.size ? targetAreas(this.maps[this.mapId], Object.values(this.maps), kinds) : { areas: [], elsewhere: false };
+    ctx.setLineDash([3, 2]);
+    ctx.strokeStyle = "#ffd84a";
+    ctx.lineWidth = 2;
+    for (const a of target.areas) {
+      ctx.beginPath();
+      ctx.arc(cx(a.x), cx(a.y), (a.radius + 0.5) * K, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    for (const f of this.minimapFixed) if (f.kind !== "pz") this.minimapIcon(ctx, f.kind, cx(f.x), cx(f.y), f.kind === "gate" && target.elsewhere);
+    for (const m of this.room.state.monsters.values()) if (m.map === this.mapId) dot(m.x, m.y, kinds.has(m.kind) && (!m.owner || m.owner === this.myId) ? "#ffd84a" : "#ff4a3a");
     for (const p of this.room.state.players.values()) {
       if (p.map !== this.mapId || p.id === this.myId) continue;
       dot(p.x, p.y, me.partyId && p.partyId === me.partyId ? "#7dff8a" : "#6cc0ff", 2);
     }
+    dot(me.x, me.y, "#000000", 4);
     dot(me.x, me.y, "#ffffff", 3);
+  }
+
+  /** Ícone de um ponto fixo: forma e cor diferentes, para não depender só da cor. `hot`: alvo de missão em outro mapa. */
+  private minimapIcon(ctx: CanvasRenderingContext2D, kind: Exclude<FixedMark["kind"], "pz">, x: number, y: number, hot: boolean) {
+    // raio de ~1 tile: na praça de Karakura loja, depot, portal e templo ficam a 2 ou 3 tiles um do outro
+    const r = MINIMAP_K * 0.9;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#000000";
+    ctx.beginPath();
+    if (kind === "gate") {
+      // losango roxo; com alvo em outro mapa, um anel dourado em volta
+      ctx.moveTo(x, y - r - 1); ctx.lineTo(x + r + 1, y); ctx.lineTo(x, y + r + 1); ctx.lineTo(x - r - 1, y); ctx.closePath();
+      ctx.fillStyle = "#c08aff";
+      ctx.fill(); ctx.stroke();
+      if (hot) { ctx.strokeStyle = "#ffd84a"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.stroke(); }
+    } else if (kind === "npc") {
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffe08a";
+      ctx.fill(); ctx.stroke();
+    } else if (kind === "temple") {
+      // cruz branca
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x - 1, y - r, 2, r * 2);
+      ctx.fillRect(x - r, y - 1, r * 2, 2);
+    } else {
+      // quadrado: loja dourada, depot laranja
+      ctx.rect(x - r, y - r, r * 2, r * 2);
+      ctx.fillStyle = kind === "shop" ? "#ffd34a" : "#ff9a3a";
+      ctx.fill(); ctx.stroke();
+    }
   }
 
   update(time: number, delta: number) {

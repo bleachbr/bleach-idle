@@ -103,7 +103,7 @@ Backlog novo (IDs R-##) — narrativa, QoL e social com partes de servidor:
 | :-- | :-- | :--- | :-- | :--- | :-- |
 | 15 | ~~R-01~~ | ~~**Personagens novos (bloco R)** — Yoruichi, Ukitake, Shunsui; 5 estágios e 4 técnicas cada~~ | M cada | — | skill `adicionar-conteudo` |
 | 16 | R-08 | **Onboarding e tutorial** — primeiros 10 minutos guiados com missão introdutória do Kisuke | M | M1-07 | sim |
-| 17 | R-10 | **Minimapa e marcadores** — minimapa por zona com ícones de NPC, portal, PZ e alvo de missão | M | M1-03 | não |
+| 17 | ~~R-10~~ | ~~**Minimapa e marcadores** — minimapa por zona com ícones de NPC, portal, PZ e alvo de missão~~ | M | M1-03 | não |
 | 18 | ~~R-12~~ | ~~**Eventos narrados** — invasões e chefes mundiais com textos de lore no chat e banner no HUD~~ | P | — | não |
 | 19 | R-09 | **Codex / enciclopédia de lore** — bestiário expandido com fichas de personagens, facções e eventos | M | M1-06 (só as fichas das Crônicas Semanais) | sim (rascunho em `features/codex-lore/`, aguardando aprovação) |
 | 20 | R-14 | **Acessibilidade e QoL do cliente** — escala de fonte, alto contraste, re-mapeamento de teclas, modo uma mão no toque | M | — | sim (rascunho em `features/acessibilidade-qol/`, aguardando aprovação) |
