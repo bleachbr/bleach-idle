@@ -29,6 +29,7 @@ import { recordTick } from "./tickStats";
 import { recordSave, setWorldMetricsProvider } from "./metrics";
 import { getRanking, invalidateRankingCache } from "./ranking";
 import { claimServerMilestone } from "./milestones";
+import { checkChatMessage, isGm, mutePlayer, sanitizeChatText, unmutePlayer } from "./moderation";
 
 const GUILD_COST = 500;
 /** Modo Dev (botão que libera tudo para testar): nasce DESLIGADO e só liga com BI_DEV=1 (`npm run dev` já define). */
@@ -222,10 +223,12 @@ export class WorldRoom extends GameRoom<WorldState> {
     });
     this.handle("chat", (c, m: { text: string }) => {
       const p = this.me(c);
-      const text = (typeof m?.text === "string" ? m.text : "").trim().slice(0, 200);
+      const text = sanitizeChatText(m?.text);
       if (!p || !text) return;
       if (text.startsWith("/")) return this.command(p, text);
-      for (const x of this.state.players.values()) if (!x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: this.display(p), text });
+      const chk = checkChatMessage(p.id, text);
+      if (!chk.ok) return chk.reason ? this.log(p, chk.reason) : undefined;
+      for (const x of this.state.players.values()) if (!x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: this.display(p), text: chk.text });
     });
     this.handle("ranking", (c) => c.send("ranking", this.ranking()));
     // O cliente envia `devHello` a todo jogador que entra (main.ts, bindDev). Sem handler o Colyseus desconecta quem manda:
@@ -1347,22 +1350,34 @@ export class WorldRoom extends GameRoom<WorldState> {
         const v = this.findPlayer(to);
         if (!v || !v.online) return this.log(p, `${to || "?"} não está online.`);
         if (!msg) return this.log(p, "Uso: /pm Nome, mensagem");
-        if (!v.ignore.includes(p.id)) this.sendTo(v, "chat", { from: p.name, text: msg, ch: "pm" });
-        return this.sendTo(p, "chat", { from: `para ${v.name}`, text: msg, ch: "pm" });
+        const chk = checkChatMessage(p.id, msg);
+        if (!chk.ok) return chk.reason ? this.log(p, chk.reason) : undefined;
+        if (!v.ignore.includes(p.id)) this.sendTo(v, "chat", { from: p.name, text: chk.text, ch: "pm" });
+        return this.sendTo(p, "chat", { from: `para ${v.name}`, text: chk.text, ch: "pm" });
       }
       case "p": {
         const party = this.parties.get(p.partyId);
         if (!party) return this.log(p, "Você não está numa party.");
+        const chk = checkChatMessage(p.id, rest);
+        if (!chk.ok) return chk.reason ? this.log(p, chk.reason) : undefined;
         for (const id of party.members) {
           const x = this.state.players.get(id);
-          if (x && !x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: p.name, text: rest, ch: "party" });
+          if (x && !x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: p.name, text: chk.text, ch: "party" });
         }
         return;
       }
       case "g": {
         if (!p.guildId) return this.log(p, "Você não está numa guilda.");
-        return this.guildSay(p.guildId, { from: p.name, text: rest, ch: "guild" }, p.id);
+        const chk = checkChatMessage(p.id, rest);
+        if (!chk.ok) return chk.reason ? this.log(p, chk.reason) : undefined;
+        return this.guildSay(p.guildId, { from: p.name, text: chk.text, ch: "guild" }, p.id);
       }
+      case "silenciar":
+      case "mute":
+      case "dessilenciar":
+      case "unmute":
+      case "anuncio":
+        return this.gmCommand(p, cmd.toLowerCase(), rest);
       case "guilda":
       case "guild":
         return this.guildCommand(p, rest);
@@ -1371,6 +1386,38 @@ export class WorldRoom extends GameRoom<WorldState> {
       default:
         return this.log(p, `Comando desconhecido: /${cmd}. Digite /ajuda.`);
     }
+  }
+
+  private gmCommand(p: Player, cmd: string, rest: string) {
+    if (!isGm(p.id)) return this.log(p, "Comando restrito a moderadores (GM).");
+    if (cmd === "anuncio") {
+      if (!rest) return this.log(p, "Uso: /anuncio mensagem");
+      this.broadcast("chat", { from: "", ch: "sys", text: `📢 [GM ${p.name}] ${rest}` });
+      this.broadcast("fx", { t: "event", text: rest.slice(0, 60) });
+      return;
+    }
+    if (cmd === "dessilenciar" || cmd === "unmute") {
+      const id = rest.toLowerCase().trim();
+      if (!id) return this.log(p, "Uso: /dessilenciar Nome");
+      if (!unmutePlayer(id)) return this.log(p, `${rest} não estava silenciado.`);
+      const target = this.state.players.get(id);
+      if (target) this.log(target, "Seu silenciamento no chat foi removido por um GM.");
+      return this.log(p, `Silenciamento de ${rest} removido.`);
+    }
+    // /silenciar Nome, 15, motivo  OU  /silenciar Nome 15 motivo
+    const parts = rest.includes(",") ? rest.split(",").map((s) => s.trim()) : rest.split(/\s+/);
+    const targetName = parts[0] ?? "";
+    const targetId = targetName.toLowerCase();
+    if (!targetId || (!this.state.players.has(targetId) && !db.load(targetId))) {
+      return this.log(p, "Uso: /silenciar Nome [minutos] [motivo]");
+    }
+    const minsRaw = Number(parts[1]);
+    const mins = Number.isFinite(minsRaw) && minsRaw > 0 ? Math.min(10_080, Math.round(minsRaw)) : 15;
+    const reason = (Number.isFinite(minsRaw) ? parts.slice(2) : parts.slice(1)).join(" ").trim() || "moderação";
+    mutePlayer(targetId, mins * 60_000, reason, p.name);
+    const online = this.state.players.get(targetId);
+    if (online) this.log(online, `Você foi silenciado no chat por ${mins} min (${reason}).`);
+    this.log(p, `${targetName} silenciado por ${mins} min (${reason}).`);
   }
 
   private guildCommand(p: Player, rest: string) {
