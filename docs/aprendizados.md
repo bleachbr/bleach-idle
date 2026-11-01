@@ -8,9 +8,13 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 Ao tornar o repositório público, a API passou a permitir ruleset ativo: PR obrigatório, uma aprovação descartada com novos commits, aprovação do último push por outra conta, conversas resolvidas e checks vinculados ao app GitHub Actions. Os nomes dos checks devem refletir o workflow atual (`gitleaks`, `test (22.x)`, `test (24.x)`); exigir o antigo `test` deixaria a nova matriz sem satisfazer a regra. O ruleset não tem bypass, inclusive para administradores.
 
-Administrador de repositório não é necessariamente owner da organização: a conta autenticada é membro de `bleachbr`, enquanto o owner `rafael2267` precisa autorizar a instalação do CodeRabbit. Aprovação do bot não é merge nem prova de revisão humana. A configuração local limita aprovação automática a baixo risco, desliga o atalho do autor e a bloqueia nos caminhos sensíveis; CODEOWNERS associa esses caminhos a pessoas. Só vale após publicação na base e instalação do aplicativo. Aprovação no chat não substitui aprovação registrada no GitHub.
+Administrador de repositório não é necessariamente owner da organização; a instalação inicial do app exigiu acesso do owner. CodeRabbit já publicou review e check reais no repositório. Pela decisão D-004, a aprovação automática vale também para CI, deploy e segurança, após revisão completa do HEAD atual e resolução dos bloqueios, sem atalhos de aprovação. `max_merge_risk: low` exige avaliação atual: risco material deve ser corrigido, não aprovado à força. CODEOWNERS serve para indicar responsáveis; a exigência de aprovação humana foi desativada, mantendo uma aprovação obrigatória do último push por outro ator e os checks do GitHub Actions e do app CodeRabbit. Aprovação do bot não faz merge. Aprovação no chat não substitui `APPROVED` registrado no GitHub.
 
 Repositório público aumenta a exposição de código e histórico, não libera segredos: secret scanning, push protection e alertas de dependências foram habilitados; workflows de forks externos passaram a exigir aprovação. `.env.*` também precisa ser ignorado e excluído do contexto Docker. Gitleaks limpo reduz risco, mas não substitui rotação de qualquer segredo que já tenha sido exposto.
+
+## Deploy em VPS compartilhada (F-13)
+
+A inspeção somente leitura confirmou Nginx nas portas 80/443, Docker Compose e Certbot disponíveis. O Compose original com Caddy disputaria essas portas. A configuração específica para VPS deve publicar o jogo apenas em loopback e persistir SQLite em volume próprio. O workflow prepara a imagem no runner, evitando build concorrente com os outros sites na VPS, e só publica push da `main` depois dos testes. O arquivo Nginx é provisionado separadamente; não se altera o proxy compartilhado a cada release. A identidade SSH deve ser fixada, não descoberta cegamente durante o deploy. O provisionamento foi validado com HTTPS e handshake WebSocket; os 24 arquivos dos outros sites mantiveram os mesmos hashes. O fluxo completo pelo GitHub e a restauração de backup ainda precisam de validação. No Mac ARM, o build amd64 falhou no runtime Go do esbuild sob emulação; o build nativo na VPS passou, limitado a 1 CPU e 1,5 GB. Essa exceção inicial não muda o workflow: releases seguintes são construídas no runner amd64.
 
 ## 1. Arquitetura de Servidor Autoritativo e Tick de 100 ms
 
@@ -236,3 +240,12 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - O prazo no cliente sai de `left` (ms que faltam) somado ao relógio do aparelho, e não de `until` com `serverNow()`: o banner de quem entra chega antes da resposta do `time` (`clock.ts`), e um aparelho adiantado apagaria o banner na hora.
 - Os textos ficam em `shared/src/events.ts`, e o servidor manda só a fase. O cliente busca o texto com `own(EVENT_BANNER, fase)`: mesmo vindo do servidor, a chave chega pela rede.
 - Os avisos de sistema com números (vida, XP, minutos) continuam iguais e a lore vai numa linha separada (canal `lore`), porque os cenários `invasion` e `temporada` conferem trechos desses avisos.
+
+## 24. Caçada Offline v2 com Relatório Estruturado e Persistência Unificada (W-05)
+
+- **Problema:** Ao reconectar após caçada offline, o relatório não informava quais monstros foram abatidos, taxas de rendimento por hora nem separava perdas de mortes de ganhos líquidos; além disso, a lógica de snapshot e restauração ficava dispersa em `onLeave`, `restoreWorld` e `onJoin`.
+- **Solução (`shared/src/offlineReport.ts`, `server/src/offlineState.ts`, `server/src/WorldRoom.ts`):** Extraímos o cálculo puro de rendimento para `buildOfflineReport`, limitando o tempo ao teto de 12 horas (`OFFLINE_MAX_MS`) e fornecendo `topKills`, `expPerHour`, `killsPerHour` e perdas detalhadas. Unificamos a captura de snapshot e restauração do save em `offlineState.ts`, salvando `offKinds` em `SaveData.offline` com compatibilidade retroativa para saves antigos.
+
+## Fluxo de publicação: uma branch e um PR por entrega
+
+- **Regra (Waldir, 31/10/2026):** depois de acumular 38 commits na `main` local e publicá-los direto, a decisão passou a ser publicar cada entrega em branch própria com PR. Reduz o raio de conflito (o remoto já divergia com o F-10 duplicado) e dá o ponto de revisão adversarial previsto no fluxo do roadmap.

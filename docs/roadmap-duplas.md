@@ -32,7 +32,7 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 | Ordem | ID | Entrega | Tam. | Depende de | Spec | Obs. |
 | :-- | :-- | :--- | :-- | :--- | :-- | :--- |
 | 0 | F-16 | **Pacote de correções do Jogador-IA** (`boneco` sem HD, `nextTarget` ignorando `dummy`, exclusividade de janelas + `Esc`, confirmação no `#exit-btn`, `welcome`/`fx` e tooltips de botões desabilitados) | M | — | não | **Feito** — validado com testes determinísticos + simulação real do Jogador-IA (`test/`) |
-| 1 | F-13 | Primeiro deploy com HTTPS atrás do Caddy e restauração de backup testada | M | — | não | Destrava o portão G1; decisão de servidor e domínio pendente |
+| 1 | F-13 | Primeiro deploy com HTTPS atrás do proxy existente e restauração de backup testada | M | — | não | Waldir: `bleach.acoplum.com` online com HTTPS e WebSocket; workflow em `chore/f-13-deploy-vps` aguarda CI e aprovação; restauração de backup pendente |
 | 2 | F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | — | não | **Feito** (`fix/f-04-unique-db`) |
 | 3 | F-14 | Limite de criação de contas por IP | P | F-03 (feito) | não | **Feito** (`feat/f-14-limite-contas-ip`) |
 | 4 | F-05 | Contêiner roda como `node`, não root | P | — | não | **Feito** (`fix/f-05-docker-user-node`) |
@@ -62,7 +62,7 @@ Backlog novo (IDs W-##) — motor, operação e conteúdo de mundo misturados:
 | 23 | W-04 | **Chefes com fases** — motor de fases de boss (Aizen, Yhwach) reutilizável por chefe mundial e M4-02 | M | — | **Feito** (`feat/w-04-chefes-fases`) |
 | 24 | W-06 | **Títulos e marcos de servidor** — por feitos (primeiro Bankai do servidor, top da arena), persistidos | M | — | **Feito** (`feat/w-06-marcos-servidor`) |
 | 25 | W-07 | **Correio interno (mailbox)** — recompensas, itens de mercado expirado, mensagens de sistema | M | — | **Feito** (`feat/w-07-correio-interno`; UI do cliente pendente) |
-| 26 | W-05 | **Caçada offline v2** — resumo detalhado ao voltar (drops, mortes, kan), simulação por lote | M | — | sim |
+| 26 | W-05 | **Caçada offline v2** — resumo detalhado ao voltar (drops, mortes, kan), simulação por lote | M | — | **Feito** (`feat/w-05-cacada-offline-v2`) | Spec em `docs/features/cacada-offline-v2/` |
 | 27 | W-09 | **Métricas de operação** — `/metrics` (tick, salas, jogadores, saves) com alerta mínimo (`feat/w-09-metricas-operacao` — **Feito**) | M | F-08 | não |
 | 28 | W-08 | **Auditoria de economia** — trilha imutável de kan/cristais/itens (anti-dupe, suporte) | M | — | sim |
 | 29 | W-13 | **Patrulhas idle de Hollows** — jogador/party em patrulha por X horas retorna com recompensa | M | — | sim |
