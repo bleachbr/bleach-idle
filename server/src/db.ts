@@ -62,6 +62,11 @@ export interface CharRow {
 const SESSION_DAYS = 30;
 
 const db = new DatabaseSync(process.env.DB_FILE ?? "bleach-idle.sqlite");
+
+/** Arquivo do banco principal aberto, lido do próprio handle ("" = em memória). Usado pelo teste do ambiente. */
+export function openDbFile(): string {
+  return (db.prepare("PRAGMA database_list").get() as { file: string }).file;
+}
 db.exec(`
   PRAGMA journal_mode = WAL;
   PRAGMA foreign_keys = ON;
