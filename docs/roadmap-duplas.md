@@ -4,7 +4,7 @@ Este documento reparte o [roadmap](roadmap.md) em dois núcleos de backlog para 
 
 Atualizado em 31/10/2026.
 
-F-07 (Waldir): proteção efetiva da `main` pública ativada via ruleset, sem bypass; secret scanning, push protection e aprovação de workflows de forks externos habilitados. Configuração CodeRabbit e CODEOWNERS preparada em `chore/f-07-repo-publico`; instalação do aplicativo depende de `rafael2267`, owner da organização. Não confundir configuração local com aplicativo instalado.
+F-07 (Waldir): proteção efetiva da `main` pública ativada via ruleset, sem bypass; secret scanning, push protection e aprovação de workflows de forks externos habilitados. CodeRabbit ativo e configuração inicial integrada pelo PR #11. D-004 autoriza aprovação automática também em CI/deploy/segurança após revisão completa sem bloqueios; CODEOWNERS indica responsáveis sem aprovação humana obrigatória. Ajuste em `chore/f-07-auto-approval`, sem bypass e mantendo CI obrigatório.
 
 Item riscado já foi implementado (status no `roadmap.md`). Ele continua na fila para não mudar a numeração da ordem.
 
@@ -23,7 +23,7 @@ As filas são **estanques**: ninguém puxa item da fila do outro. Mas os **temas
 3. **Novos backlogs entram numa das duas filas** na linha correspondente, escolhida por conversa; item grande ganha ID e linha no `roadmap.md` no mesmo PR.
 4. **Ordem e portões valem do `roadmap.md`.** Nenhuma fila fura portão: G1 (testar com amigos) exige F-13; G2 (abrir ao público) exige o resto dos F, M3-05 e M5-01.
 5. **Specs.** Item com `Spec` marcada só começa com PRD e ADR em `docs/features/<nome>/`. Quem escreve a spec é o dono do item; quem aprova são as duas pessoas. A ordem de escrita está em [Plano de specs](#plano-de-specs).
-6. **Balanceamento de números de jogo** (status, drops, XP, custos) e **handlers sensíveis** (itens, kan, conta) têm sempre revisão adversarial da outra pessoa — skill `seguranca-servidor` como checklist.
+6. **Balanceamento de números de jogo** (status, drops, XP, custos) e **handlers sensíveis** (itens, kan, conta) têm sempre revisão adversarial independente — skill `seguranca-servidor` como checklist; CodeRabbit pode aprovar conforme D-004.
 
 ## Fila Waldir (W): fundação, motor e pacotes de mundo
 
@@ -194,4 +194,4 @@ As filas não se misturam, mas **dependem uma da outra** nestes pontos:
 - **Conteúdo de Rafael que precisa de motor do Waldir:** R-05 precisa de M2-01..05; R-03/R-04 rendem mais com W-04 (chefes com fases); R-07 precisa de M1-04.
 - **Social de Rafael que habilita mundo do Waldir:** M3-04 (banco de guilda) destrava parte de W-17 (guerra de guildas) e W-18 (divisões).
 - **Instanciação é o gargalo comum:** F-12 → M4-01 destrava W-16, W-17 e qualquer conteúdo instanciado futuro.
-- **Revisão cruzada obrigatória:** handler sensível e números de jogo são sempre revisados pela outra pessoa — é a forma oficial de um ajudar o outro sem puxar item.
+- **Revisão cruzada obrigatória:** handler sensível e números de jogo são sempre revisados de forma independente; aprovação do CodeRabbit é válida conforme D-004. A revisão entre as duas pessoas continua sendo uma forma de ajudar sem puxar item.

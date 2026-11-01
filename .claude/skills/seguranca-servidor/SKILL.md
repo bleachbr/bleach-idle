@@ -5,7 +5,7 @@ description: Revisa e escreve código seguro no servidor autoritativo do Bleach 
 
 # Segurança do servidor autoritativo
 
-Mudança de segurança só é aprovada pela outra pessoa do projeto; o veredito de um agente revisor é insumo. Tudo que chega pelo WebSocket é hostil até o servidor validar. O cliente só envia intenções (AGENTS.md §1 e §4.2). Abaixo, o que revisar e o que já foi provado neste repositório em 31/10/2026 (servidores isolados, porta própria, banco temporário).
+Mudança de segurança exige revisão adversarial independente. Pela D-004, CodeRabbit pode registrar a aprovação exigida após revisão completa do HEAD sem bloqueios; veredito local de agente não substitui `APPROVED`, e atalhos de aprovação são proibidos. Tudo que chega pelo WebSocket é hostil até o servidor validar. O cliente só envia intenções (AGENTS.md §1 e §4.2). Abaixo, o que revisar e o que já foi provado neste repositório em 31/10/2026 (servidores isolados, porta própria, banco temporário).
 
 ## Antes de começar
 1. Liste a superfície: `grep -n 'this.handle(' server/src/*.ts` (54 no `WorldRoom`, 5 no `LobbyRoom`).

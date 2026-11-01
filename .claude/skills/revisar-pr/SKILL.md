@@ -37,4 +37,4 @@ Veredito no topo: BLOQUEIA, APROVA COM RESSALVAS ou APROVA. Depois os achados, d
 
 Termine com o que foi executado (comando e resultado) e o que não foi. Não escreva "os testes passam" sem ter rodado.
 
-Para mudança em segurança (handler, login, sessão, `innerHTML`, dependências, Dockerfile, CI, segredos), o veredito de agente é insumo e não substitui a aprovação da outra pessoa.
+Para mudança em segurança (handler, login, sessão, `innerHTML`, dependências, Dockerfile, CI, segredos), o veredito local de agente é insumo. Pela D-004, CodeRabbit pode registrar a aprovação exigida após revisão completa sem bloqueios; antes de merge por agente, conferir `APPROVED` do bot para o HEAD atual, CI verde e conversas resolvidas. Não usar comandos de aprovação forçada, self-approval ou bypass.

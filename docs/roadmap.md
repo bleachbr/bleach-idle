@@ -50,12 +50,12 @@ A ordem é de prioridade, não de dependência técnica, salvo onde a coluna "De
 2. **Worktree a partir da `main` atualizada (Orca IDE):** todo novo desenvolvimento nasce em um worktree próprio via `orca worktree create --name <id-assunto> --branch <prefixo/id-assunto> --base-branch main --no-parent --json` (`feat/`, `fix/`, `perf/`, `test/`, `docs/` ou `chore/` + ID + assunto), mantendo o checkout principal da `main` limpo.
 3. **Implemente em passos pequenos**, simulando primeiro o problema com teste que falha antes da correção (skill `testes-deterministicos`), mantendo funções curtas, nomes claros e módulos coesos, e aplicando a skill do assunto (`seguranca-servidor`, `adicionar-conteudo`, `performance-servidor`).
 4. **Verifique localmente:** `npm run typecheck`, `npm test`, os cenários afetados e `gitleaks git --redact -c .gitleaks.toml .`.
-5. **Revisão adversarial antes de publicar.** Quem escreveu o código não o revisa: outra pessoa, ou uma sessão nova de agente com a skill `revisar-pr` (que revisa a branch local com `git diff origin/main...HEAD`). O revisor procura o que está errado em vez de confirmar o que parece certo e confere cada afirmação contra o código. Achado BLOQUEIA ou ALTA é corrigido antes do passo seguinte. Em mudança de segurança (handler, login, sessão, `innerHTML`, dependências, Dockerfile, CI, segredos), o veredito de agente é insumo e a aprovação é da outra pessoa.
+5. **Revisão adversarial antes de publicar.** Quem escreveu o código não o revisa: outra pessoa, ou uma sessão nova de agente com a skill `revisar-pr` (que revisa a branch local com `git diff origin/main...HEAD`). O revisor procura o que está errado em vez de confirmar o que parece certo e confere cada afirmação contra o código. Achado BLOQUEIA ou ALTA é corrigido antes do passo seguinte. Pela D-004, CodeRabbit pode conceder a aprovação exigida também em mudanças de segurança, CI e deploy, após revisão completa do HEAD e sem bloqueios; não usar comandos de aprovação forçada.
 6. **Commit e push** só depois do passo 5, em commits pequenos de um assunto só.
 7. **Abra o PR** com o modelo do repositório (`.github/pull_request_template.md`) e cole o veredito da revisão, com os comandos que o revisor rodou.
 8. **CI verde.** Se estiver vermelho, ache a causa (`gh run view ID --log-failed`). Conserto pequeno que destrava o CI fica no PR, em commit próprio, mesmo que a falha já existisse; qualquer outro conserto vira PR separado.
 9. **Feche o item no PR, antes do merge:** status `Feito` aqui, lição em `aprendizados.md`, sobras em `pendencias.md`.
-10. **Merge** com CI verde e sem achado BLOQUEIA ou ALTA aberto, por uma pessoa ou por agente a pedido explícito. PR com commits bem separados entra por "rebase and merge"; PR com commits de trabalho, por "squash". O GitHub não impõe nada disso neste plano (veja F-07): é combinado entre as pessoas.
+10. **Merge** com CI verde e sem achado BLOQUEIA ou ALTA aberto, por uma pessoa ou por agente a pedido explícito. PR com commits bem separados entra por "rebase and merge"; PR com commits de trabalho, por "squash". O ruleset `protect-main` exige aprovação e checks verdes, sem bypass; o merge pelo agente exige `APPROVED` do CodeRabbit no HEAD atual.
 
 ## Definição de pronto
 
@@ -88,7 +88,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | | Feito | S6 |
 | F-05 | Contêiner roda como `node`, não como root (conferir a permissão do volume `/data`) | P | | Feito | S9 |
 | F-06 | CSP e cabeçalhos de segurança no Caddy | P | | Feito | S7 |
-| F-07 | Proteger a `main` pública com PR, aprovação e CI obrigatório, bloqueando exclusão e force-push | P | | Proteção ativa; configuração CodeRabbit/CODEOWNERS aguarda publicação e instalação pelo owner | S8; ruleset `protect-main` (26294474), sem bypass; branch `chore/f-07-repo-publico` |
+| F-07 | Proteger a `main` pública com PR, aprovação e CI obrigatório, bloqueando exclusão e force-push | P | | CodeRabbit ativo; aprovação automática em validação conforme D-004, sem Code Owner humano obrigatório | S8; ruleset `protect-main` (26294474), sem bypass; branch `chore/f-07-auto-approval` |
 | F-08 | Métrica da duração do tick, com aviso acima de 50 ms | P | | Feito | P3 |
 | F-09 | Ranking sem bloquear o tick | M | F-08 | Feito | P1 |
 | F-10 | Trocar `sleep` fixo por `vi.waitFor` ou `once`; limpar o ruído do Vitest. Rotina: ao mexer num teste com `sleep`, troque-o | M | | Feito | Q2, Q3 |
@@ -155,6 +155,7 @@ Visual de equipamentos além do haori e da máscara, e interiores de edifícios 
 | D-001 | 31/10/2026 | A trava das recompensas em cristais fica **por personagem** (comportamento atual). Cada personagem extra repete a diária e as conquistas, até 5 por conta; pelo código, o chefe mundial e o passe de temporada também pagam por personagem (não executado). Recompensa nova (como as Crônicas) segue a mesma regra, e o balanceamento deve contar com isso (M1-06). | Waldir decidiu; Rafael confirmou em 31/10/2026 |
 | D-002 | 31/10/2026 | Nada é publicado sem revisão adversarial, e PR só é mesclado com CI verde (fluxo de trabalho, passos 5 a 10). É um combinado entre as pessoas: o GitHub não o impõe neste plano (F-07). | Waldir |
 | D-003 | 31/10/2026 | Skills do projeto ficam em `.claude/skills/`, com um link por skill em `.kiro/skills/`. | Waldir |
+| D-004 | 01/11/2026 | CodeRabbit pode aprovar também PRs de CI, deploy e segurança, após revisão completa do HEAD sem bloqueios. Manter CI, uma aprovação de outro ator, descarte de aprovações antigas, conversas resolvidas e nenhum bypass. CODEOWNERS indica responsáveis, sem impor aprovação humana. Proibidos atalhos de aprovação do autor; merge por agente só a pedido explícito e após `APPROVED` do bot no HEAD atual. | Waldir autorizou explicitamente |
 
 ## Riscos
 
