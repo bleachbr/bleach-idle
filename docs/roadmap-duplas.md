@@ -183,7 +183,7 @@ Quem escreve é o dono do item; aprovação é das duas pessoas. Ordem sugerida,
 | 5 | Contas: recuperação de senha (M5-01) e limite persistente (M5-02) | Waldir | Portão G2 |
 | 6 | Dungeons e salas instanciadas (M4) | Waldir | M4-01 a M4-03, W-16, W-17 |
 | 7 | Conteúdo grande: Fullbringer (W-15), Hell (R-03), Kidō (R-05), Divisões (W-18) | dono do item | Expansões |
-| 8 | E2E Playwright (M5-03), partição por mapa (M5-04) | Rafael / Waldir | Qualidade e escala |
+| 8 | E2E Playwright (M5-03; rascunho em `features/e2e-navegador/`, 01/11/2026), partição por mapa (M5-04) | Rafael / Waldir | Qualidade e escala |
 
 ## Como as filas se cruzam
 
