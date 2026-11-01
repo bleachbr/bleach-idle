@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import {
-  CHARS, START_KIT, gearBonus, maxHp, maxRei, playerAtk,
+  BESTIARY_DMG, BESTIARY_LOOT, CHARS, REI_DMG_PER_LEVEL, START_KIT, ZAN_DMG_PER_LEVEL, gearBonus, maxHp, maxRei, playerAtk,
   playerDef, powerOf, rebirthBonus, reiMult, setBonuses, zanMult,
 } from "../../shared/src";
 import { characterSheet, type SheetGear, type SheetPlayer } from "../src/characterSheet";
@@ -59,7 +59,7 @@ describe("ficha do personagem (issue #36)", () => {
     expect(rowOf(s, "Zanjutsu").value).toBe("10 (40% para o 11)");
     expect(rowOf(s, "Reiryoku").value).toBe("5 (12% para o 6)");
     expect(rowOf(s, "Golpe").value).toBe("a cada 0,65 s");
-    expect(rowOf(s, "Passo").value).toBe("170 ms por quadro");
+    expect(rowOf(s, "Passo").value).toBe("170 ms por passo");
   });
 
   it("técnicas levam o multiplicador do estágio em todos os personagens e estágios (CHARS reais)", () => {
@@ -72,6 +72,17 @@ describe("ficha do personagem (issue #36)", () => {
         expect(rowOf(s, "Dano corpo a corpo").value, `${charId}/${f.id}`).toBe(fmt(f.dmgMult * zanMult(10) * rb * set));
       });
     }
+  });
+
+  it("textos de bônus saem das constantes de shared/, não de números escritos à mão", () => {
+    const s = characterSheet(player, gear, WED);
+    const pc = (x: number) => `+${Math.round(x * 100)}%`;
+    expect(rowOf(s, "Zanjutsu").hint).toBe(`${pc(ZAN_DMG_PER_LEVEL)} de dano corpo a corpo por nível; sobe acertando golpes`);
+    expect(rowOf(s, "Reiryoku").hint).toBe(`${pc(REI_DMG_PER_LEVEL)} de dano das técnicas por nível; sobe gastando reiatsu`);
+    expect(rowOf(s, "Bestiário").value).toBe(`${pc(BESTIARY_DMG)} de dano por estágio`);
+    expect(rowOf(s, "Chance de loot").hint).toContain(`bestiário completo: ×${BESTIARY_LOOT.toLocaleString("pt-BR")} contra aquele monstro`);
+    const src = readFileSync(new URL("../src/characterSheet.ts", import.meta.url), "utf8");
+    for (const lit of ['"+2%', '"+3%', '"+4%', "×1,2 "]) expect(src.includes(lit), lit).toBe(false);
   });
 
   it("XP e loot: renascimento, conjuntos, pergaminho, incenso e fim de semana", () => {

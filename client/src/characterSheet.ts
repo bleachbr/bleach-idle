@@ -3,7 +3,7 @@
 // servidor usa (recompute, hit, monsterExp e giveLoot no WorldRoom.ts). O total de ataque e defesa
 // é o que o servidor mandou; a ficha só explica de onde ele vem.
 import {
-  CHARS, BOOST_EXP, BOOST_LOOT, POWER_TIERS, WEEKEND_EXP, attackDmgMult, expForLevel,
+  CHARS, BESTIARY_DMG, BESTIARY_LOOT, BOOST_EXP, BOOST_LOOT, POWER_TIERS, WEEKEND_EXP, attackDmgMult, expForLevel,
   fmtPower, gearBonus, maxHp, maxRei, playerAtk, playerDef, powerTier, rebirthBonus, rebirthLevel, reiMult, setBonuses,
   xpWeekend, zanMult, type EquipSlot,
 } from "../../shared/src";
@@ -76,15 +76,15 @@ export function characterSheet(p: SheetPlayer, gear: SheetGear | null, now: numb
         `renascimento ${mult(rb.exp)}`, `conjuntos ${mult(set.exp)}`,
         gear.expBoostUntil > now ? `pergaminho ${mult(BOOST_EXP)}` : "", xpWeekend(now) ? `fim de semana ${mult(WEEKEND_EXP)}` : "",
       ].filter(Boolean).join(" · ") },
-      { label: "Chance de loot", value: pct(loot), hint: [`conjuntos ${mult(set.loot)}`, gear.lootBoostUntil > now ? `incenso ${mult(BOOST_LOOT)}` : "", "bestiário completo: ×1,2 contra aquele monstro"].filter(Boolean).join(" · ") },
+      { label: "Chance de loot", value: pct(loot), hint: [`conjuntos ${mult(set.loot)}`, gear.lootBoostUntil > now ? `incenso ${mult(BOOST_LOOT)}` : "", `bestiário completo: ${mult(BESTIARY_LOOT)} contra aquele monstro`].filter(Boolean).join(" · ") },
     );
   }
   combat.push(
-    { label: "Zanjutsu", value: `${p.zanjutsu} (${p.zanPct}% para o ${p.zanjutsu + 1})`, hint: "+2% de dano corpo a corpo por nível; sobe acertando golpes" },
-    { label: "Reiryoku", value: `${p.reiryoku} (${p.reiPct}% para o ${p.reiryoku + 1})`, hint: "+3% de dano das técnicas por nível; sobe gastando reiatsu" },
+    { label: "Zanjutsu", value: `${p.zanjutsu} (${p.zanPct}% para o ${p.zanjutsu + 1})`, hint: `${pct(zanMult(1))} de dano corpo a corpo por nível; sobe acertando golpes` },
+    { label: "Reiryoku", value: `${p.reiryoku} (${p.reiPct}% para o ${p.reiryoku + 1})`, hint: `${pct(reiMult(1))} de dano das técnicas por nível; sobe gastando reiatsu` },
     { label: "Golpe", value: `a cada ${num(form.attackMs / 1000)} s`, hint: "intervalo do ataque corpo a corpo no estágio atual" },
-    { label: "Passo", value: `${p.stepMs} ms por quadro`, hint: "quanto menor, mais rápido; lentidão aumenta" },
-    { label: "Bestiário", value: "+4% de dano por estágio", hint: "contra cada tipo de monstro; veja no Livro" },
+    { label: "Passo", value: `${p.stepMs} ms por passo`, hint: "quanto menor, mais rápido; lentidão aumenta" },
+    { label: "Bestiário", value: `${pct(1 + BESTIARY_DMG)} de dano por estágio`, hint: "contra cada tipo de monstro; veja no Livro" },
   );
   progress.push({
     label: "Renascimentos",
