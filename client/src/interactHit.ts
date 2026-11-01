@@ -23,6 +23,18 @@ export function interactAt(m: Places, wx: number, wy: number): InteractKind | nu
   return null;
 }
 
+export type ClickPick = { player: string } | { interact: InteractKind } | null;
+
+/** Ordem do clique: outro jogador (`playerAt`, pelos limites do sprite) vem antes da loja, porque o desenho
+ * largo do Kisuke cobre os tiles do lado e quem clica num jogador ali quer o menu dele; depois loja, depot e
+ * portal (`interactAt`). `null`: o chamador segue para monstro ou andar. */
+export function pickClick(m: Places, wx: number, wy: number, playerAt: (wx: number, wy: number) => string | undefined): ClickPick {
+  const player = playerAt(wx, wy);
+  if (player) return { player };
+  const kind = interactAt(m, wx, wy);
+  return kind ? { interact: kind } : null;
+}
+
 /** O que está ao alcance do servidor (INTERACT_RANGE) de quem está em (x, y), na mesma prioridade do clique. */
 export function interactNear(m: Places, x: number, y: number): InteractKind | null {
   const near = (at?: { x: number; y: number }) => !!at && chebyshev(x, y, at.x, at.y) <= INTERACT_RANGE;

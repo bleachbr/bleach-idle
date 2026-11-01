@@ -4,7 +4,7 @@ import Phaser from "phaser";
 import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
 import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, titleText, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, npcById, type GameMap, type QuestState } from "../../shared/src";
-import { interactAt, interactHint, interactNear } from "./interactHit";
+import { pickClick, interactHint, interactNear } from "./interactHit";
 import { serverNow } from "./clock";
 import { fixedMarks, questTargetKinds, targetAreas, type FixedMark } from "./minimapMarks";
 import { parseStatusFlags, desiredTint, dotHitStyle, STATUS_LOOK } from "./statusFx";
@@ -954,16 +954,18 @@ export class GameScene extends Phaser.Scene {
         return this.room.send("bagOpen", { id });
       }
     }
-    // NPC da loja (todo o desenho, que passa do tile dele), baú do depot e portal; a loja tem prioridade (#26)
-    const kind = interactAt(m, ptr.worldX, ptr.worldY);
-    if (kind) return this.room.send("interact", { kind });
-    // outro jogador: abre o menu (party / atacar) na posição do clique
-    for (const v of this.views.values()) {
-      if (!v.isMonster && v.id !== this.myId && v.c.visible && v.spr.getBounds().contains(ptr.worldX, ptr.worldY)) {
-        const ev = ptr.event as MouseEvent;
-        return this.onPlayerClick(v.id, ev.clientX, ev.clientY);
-      }
+    // outro jogador abre o menu (party / atacar) na posição do clique; senão NPC da loja (todo o desenho, que passa
+    // do tile dele), baú do depot e portal, com a loja na frente (#26, ordem em pickClick)
+    const pick = pickClick(m, ptr.worldX, ptr.worldY, (wx, wy) => {
+      for (const v of this.views.values())
+        if (!v.isMonster && v.id !== this.myId && v.c.visible && v.spr.getBounds().contains(wx, wy)) return v.id;
+      return undefined;
+    });
+    if (pick && "player" in pick) {
+      const ev = ptr.event as MouseEvent;
+      return this.onPlayerClick(pick.player, ev.clientX, ev.clientY);
     }
+    if (pick) return this.room.send("interact", { kind: pick.interact });
     // monstro clicado (o sprite é maior que o tile, então testa os limites do desenho)
     for (const v of this.views.values()) {
       if (v.isMonster && v.c.visible && v.spr.getBounds().contains(ptr.worldX, ptr.worldY)) {
