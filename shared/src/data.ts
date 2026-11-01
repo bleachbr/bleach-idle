@@ -1,4 +1,5 @@
 // Personagens, formas (Shikai/Bankai), monstros e spawns.
+import { own } from "./lookup";
 
 export const TILE = 32;
 export const TICK_MS = 100;
@@ -134,6 +135,12 @@ export const portraitCss = (key: string) => {
 
 export function spriteKey(base: string, look: string): string {
   return look && OUTFIT_OK[base]?.includes(look) ? `${base}__${look}` : base;
+}
+
+/** O traje (R-13) muda o visual deste personagem? Não muda quando falta a folha, como o haori em quem já é capitão. */
+export function outfitFits(charId: string, look: string): boolean {
+  const base = own(CHARS, charId)?.forms[0].sprite ?? "";
+  return !!base && spriteKey(base, look) !== base;
 }
 
 export interface FormDef {

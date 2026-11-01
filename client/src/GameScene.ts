@@ -129,9 +129,10 @@ export class GameScene extends Phaser.Scene {
 
   /** Liga ou desliga o modo HD. Na primeira vez baixa as folhas (só quem liga paga o download). */
   setHd(on: boolean, done?: (ok: boolean) => void) {
+    this.hdWanted = on;
     if (!on) return this.applyHd(false), done?.(true);
-    // trajes (lazy) só entram quando a folha de pixel já foi baixada; os outros, todos
-    const missing = Object.entries(SPRITES).filter(([k, d]) => !d.noHd && (!d.lazy || this.textures.exists(k)) && !this.textures.exists(HD + k));
+    // trajes (lazy) só entram quando já foram pedidos (a folha de pixel pode ainda estar baixando); os outros, todos
+    const missing = Object.entries(SPRITES).filter(([k, d]) => !d.noHd && (!d.lazy || this.lazyAsked.has(k)) && !this.textures.exists(HD + k));
     if (!missing.length) return this.applyHd(true), done?.(true);
     for (const [key, def] of missing)
       this.load.spritesheet(HD + key, `/assets/sprites_hd/${key}.webp`, { frameWidth: def.frame * HD_K, frameHeight: def.frame * HD_K });
@@ -143,7 +144,8 @@ export class GameScene extends Phaser.Scene {
         if (!this.textures.exists(hk)) continue;
         this.textures.get(hk).setFilter(Phaser.Textures.FilterMode.LINEAR);
         for (let d = 0; d < 4; d++)
-          this.anims.create({ key: `${hk}-${d}`, frames: this.anims.generateFrameNumbers(hk, { start: d * this.cols(hk), end: d * this.cols(hk) + this.cols(hk) - 1 }), repeat: -1 });
+          if (!this.anims.exists(`${hk}-${d}`)) // a folha HD de um traje pode ter chegado antes pelo loadLazy
+            this.anims.create({ key: `${hk}-${d}`, frames: this.anims.generateFrameNumbers(hk, { start: d * this.cols(hk), end: d * this.cols(hk) + this.cols(hk) - 1 }), repeat: -1 });
       }
       this.applyHd(true);
       done?.(true);
@@ -153,6 +155,8 @@ export class GameScene extends Phaser.Scene {
 
   /** folhas lazy já pedidas (baixando, prontas ou com erro): cada uma só é pedida uma vez */
   private lazyAsked = new Set<string>();
+  /** o jogador ligou o HD (as folhas HD podem ainda estar baixando; `hd` só vira true no fim) */
+  private hdWanted = false;
 
   /** Baixa a folha de um traje (e a HD, com o modo HD ligado) e redesenha quem já está na tela. */
   private loadLazy(key: string) {
@@ -161,7 +165,7 @@ export class GameScene extends Phaser.Scene {
     const def = SPRITES[key];
     this.load.spritesheet(key, `/assets/sprites/${key}.png`, { frameWidth: def.frame, frameHeight: def.frame });
     const keys = [key];
-    if (this.hd && !def.noHd) {
+    if (this.hdWanted && !def.noHd) {
       keys.push(HD + key);
       this.load.spritesheet(HD + key, `/assets/sprites_hd/${key}.webp`, { frameWidth: def.frame * HD_K, frameHeight: def.frame * HD_K });
     }
@@ -169,10 +173,11 @@ export class GameScene extends Phaser.Scene {
       this.load.once(`filecomplete-spritesheet-${k}`, () => {
         if (k.startsWith(HD)) this.textures.get(k).setFilter(Phaser.Textures.FilterMode.LINEAR);
         for (let d = 0; d < 4; d++)
-          this.anims.create({ key: `${k}-${d}`, frames: this.anims.generateFrameNumbers(k, { start: d * this.cols(k), end: d * this.cols(k) + this.cols(k) - 1 }), repeat: -1 });
+          if (!this.anims.exists(`${k}-${d}`))
+            this.anims.create({ key: `${k}-${d}`, frames: this.anims.generateFrameNumbers(k, { start: d * this.cols(k), end: d * this.cols(k) + this.cols(k) - 1 }), repeat: -1 });
         this.room.state.players.forEach((p: any, id: string) => { const v = this.views.get(id); if (v) this.refreshLook(v, p); });
       });
-    // sem a folha (erro no download) o personagem continua com a da forma base
+    // sem a folha (erro no download) o personagem continua com a da forma base até recarregar a página
     this.load.start();
   }
 

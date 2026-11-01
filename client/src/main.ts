@@ -3,7 +3,7 @@ import Phaser from "phaser";
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
+import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { bindEvents } from "./events";
@@ -211,7 +211,7 @@ function start(room: Room<any>, myId: string) {
   });
   bindGuild(room, closeWindows);
   bindBook(room, closeWindows);
-  bindShop(room, closeWindows);
+  bindShop(room, myId, closeWindows);
   bindSeason(room, closeWindows);
   bindEvents(room);
   bindDev(room, myId, closeWindows);
@@ -448,7 +448,7 @@ function bindDev(room: Room<any>, myId: string, closeWindows: (keep?: string) =>
 
 // ---------- Loja de Cristais ----------
 
-function bindShop(room: Room<any>, closeWindows: (keep?: string) => void) {
+function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) => void) {
   const panel = $("#shop");
   let data: { crystals: number; owned: string[]; equip: Partial<Record<string, string>> } | null = null;
   let tab: CosKind = "aura";
@@ -470,14 +470,14 @@ function bindShop(room: Room<any>, closeWindows: (keep?: string) => void) {
     const kind = COS_KINDS.find((k) => k.kind === tab)!;
     const slot = tab === "lore" ? "title" : tab;
     // traje: retrato do personagem atual vestido; quem não tem a folha (capitão com o haori) vê só a cor e o aviso
-    const charId: string = room.state.players.get(room.sessionId)?.charId ?? "";
+    const charId: string = room.state.players.get(myId)?.charId ?? "";
     const base = CHARS[charId]?.forms[0].sprite ?? "";
     const outfitKey = (look = "") => (base && look ? spriteKey(base, look) : base);
     body.innerHTML = `<p class="hint">${escHtml(kind.hint)} Ganhe cristais na recompensa diária e nas conquistas; eles valem para todos os personagens da conta.</p>` +
       COSMETICS.filter((x) => x.kind === tab && (!x.season || data!.owned.includes(x.id))).map((x) => {
         const own = data!.owned.includes(x.id);
         const on = data!.equip[slot] === x.id;
-        const fits = tab === "outfit" && outfitKey(x.look) !== base;
+        const fits = tab === "outfit" && outfitFits(charId, x.look ?? "");
         const swatch = fits ? `<span class="outfit-pic" style="background-image:url(/assets/sprites/${outfitKey(x.look)}.png);${portraitCss(outfitKey(x.look))}"></span>`
           : `<span class="swatch" style="background:${hex(x.color)};box-shadow:0 0 8px ${hex(x.color2 ?? x.color)}"></span>`;
         const desc = x.desc + (tab === "outfit" && !fits ? ` Não muda o visual de ${CHARS[charId]?.name ?? "este personagem"}.` : "");

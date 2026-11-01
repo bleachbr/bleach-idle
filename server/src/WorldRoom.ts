@@ -12,7 +12,7 @@ import {
   CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir,
   expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
-  DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, spriteKey, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
+  DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, outfitFits, QUEST_BY_ID, MAX_ACTIVE_QUESTS,
   zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
@@ -1001,12 +1001,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   /** Visual no mapa: o traje da Loja de Cristais (R-13), se o personagem tem a folha dele, cobre o do equipamento. */
   private lookFor(p: Player): string {
     const outfit = own(COSMETIC, p.cosOutfit)?.look;
-    return outfit && this.outfitFits(p, outfit) ? outfit : lookOf(p.equip);
-  }
-
-  private outfitFits(p: Player, look: string): boolean {
-    const base = CHARS[p.charId].forms[0].sprite;
-    return spriteKey(base, look) !== base;
+    return outfit && outfitFits(p.charId, outfit) ? outfit : lookOf(p.equip);
   }
 
   /** Recalcula o Poder; ao subir de título, avisa e solta o efeito na tela. */
@@ -3124,7 +3119,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.cosOutfit = id;
       p.look = this.lookFor(p);
       const look = COSMETIC[id].look ?? "";
-      if (!this.outfitFits(p, look)) this.log(p, `${COSMETIC[id].name} não muda o visual de ${CHARS[p.charId].name}; vale nos outros personagens da conta.`);
+      if (!outfitFits(p.charId, look)) this.log(p, `${COSMETIC[id].name} não muda o visual de ${CHARS[p.charId].name}; vale nos outros personagens da conta.`);
     }
   }
 

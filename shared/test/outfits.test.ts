@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CHARS, COSMETICS, COS_KINDS, COS_LOOK_BASES, SPRITES, spriteKey } from "../src";
+import { CHARS, COSMETICS, COS_KINDS, COS_LOOK_BASES, SPRITES, outfitFits, spriteKey } from "../src";
 
 // R-13: trajes da Loja de Cristais. Uma folha por combinação <base>__<look>, só na forma base.
 const outfits = COSMETICS.filter((c) => c.kind === "outfit");
@@ -22,6 +22,14 @@ describe("trajes da Loja de Cristais", () => {
       expect(spriteKey(b, "vizard")).toBe(`${b}__vizard`);
       expect(spriteKey(b, "capitao")).toBe(CAPTAINS.includes(b) ? b : `${b}__capitao`);
     }
+  });
+
+  it("outfitFits diz se o traje muda o personagem (servidor e loja usam a mesma regra)", () => {
+    expect(outfitFits("ichigo", "capitao")).toBe(true);
+    expect(outfitFits("hitsugaya", "capitao")).toBe(false);
+    expect(outfitFits("hitsugaya", "karakura")).toBe(true);
+    expect(outfitFits("constructor", "karakura")).toBe(false);
+    expect(outfitFits("", "karakura")).toBe(false);
   });
 
   it("forma liberada não veste o traje", () => {

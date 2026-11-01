@@ -141,6 +141,8 @@ def _cos_sheets():
     walk = ROOT / "raw" / "walk8"
     out = {}
     for b in COS_BASES:
+        if b not in GAME_SPRITES:  # sem a arte bruta da forma base, o traje também fica de fora
+            continue
         rel, tiles = GAME_SPRITES[b][3], GAME_SPRITES[b][4]
         for look, reuse in COS_REUSE.items():
             src = f"{b}__{reuse}" if reuse and (walk / f"{b}__{reuse}_down.png").exists() else f"{b}__{look}"
