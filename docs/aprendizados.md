@@ -197,3 +197,8 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 - **Problema:** Contadores de brute-force (`auth.ts`) ficavam apenas em memória e zeravam a cada reinício do processo; além disso, não havia mecanismo de recuperação de senha assinado e de uso único.
 - **Solução (`server/src/db.ts`, `server/src/auth.ts`, `server/src/LobbyRoom.ts`):** Movemos o armazenamento de `fail()`, `blocked()` e `clearFails()` para a tabela `auth_limits` do SQLite via prepared statements síncronos em modo WAL. Para a recuperação de senha (`M5-01`), combinamos assinatura HMAC-SHA256 (`timingSafeEqual`) no formato `<accountId>.<exp>.<nonce>.<sig>` com consumo atômico de `sha256(nonce)` na tabela `password_resets` (expiração de 15 min) e revogação automática de todas as sessões anteriores da conta.
+
+## 21. Motor de status e controle de grupo por tick no servidor (M2-01 a M2-05)
+
+- **Problema:** Todas as habilidades de personagens aplicavam apenas dano instantâneo, sem suporte a congelamento (`freeze`), lentidão (`slow`), sangramento/queimadura (`dot`) ou atordoamento (`stun`).
+- **Solução (`shared/src/combatStatus.ts`, `shared/src/data.ts`, `server/src/WorldRoom.ts`):** Extraímos o motor puro de status para `shared/src/combatStatus.ts` (`applyStatus`, `tickStatuses`, `canEntityMove`, `canEntityAct`, `effectiveStepMs`, `formatStatusFlags`), sincronizamos `statusFlags` no Schema (`Player` e `Monster`) para consumo pela camada visual (`M2-06`) e integramos a avaliação por tick (`100 ms`) no `WorldRoom.ts` respeitando zonas de proteção (PZ) e o boneco de treino (`dummy`).

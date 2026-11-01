@@ -11,3 +11,4 @@ export * from "./shop";
 export * from "./season";
 export * from "./lookup";
 export * from "./chronicles";
+export * from "./combatStatus";
