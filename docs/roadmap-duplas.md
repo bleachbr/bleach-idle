@@ -109,8 +109,8 @@ Backlog novo (IDs R-##) — narrativa, QoL e social com partes de servidor:
 | 16 | R-08 | **Onboarding e tutorial** — primeiros 10 minutos guiados com missão introdutória do Kisuke | M | M1-07 | sim |
 | 17 | ~~R-10~~ | ~~**Minimapa e marcadores** — minimapa por zona com ícones de NPC, portal, PZ e alvo de missão~~ | M | M1-03 | não |
 | 18 | ~~R-12~~ | ~~**Eventos narrados** — invasões e chefes mundiais com textos de lore no chat e banner no HUD~~ | P | — | não |
-| 19 | R-09 | **Codex / enciclopédia de lore** — bestiário expandido com fichas de personagens, facções e eventos | M | M1-06 (só as fichas das Crônicas Semanais) | sim (rascunho em `features/codex-lore/`, aguardando aprovação) |
-| 20 | R-14 | **Acessibilidade e QoL do cliente** — escala de fonte, alto contraste, re-mapeamento de teclas, modo uma mão no toque | M | — | sim (rascunho em `features/acessibilidade-qol/`, aguardando aprovação) |
+| 19 | R-09 | **Codex / enciclopédia de lore** — bestiário expandido com fichas de personagens, facções e eventos | M | M1-06 (só as fichas das Crônicas Semanais) | aceita (`features/codex-lore/`) |
+| 20 | R-14 | **Acessibilidade e QoL do cliente** — escala de fonte, alto contraste, re-mapeamento de teclas, modo uma mão no toque | M | — | aceita (`features/acessibilidade-qol/`) |
 | 21 | R-07 | **Companion: Mod Soul** — Kon e afins acompanham o personagem, coletam loot cosmético, progressão própria (entidade seguidora no servidor + visual no cliente) | M | M1-04 | sim |
 | 22 | ~~R-13~~ | ~~**Cosméticos sazonais** — uniforme Karakura, haori de capitão, máscaras Vizard na Loja de Cristais~~ | M | — | não |
 | 23 | R-04 | **Expansão Wandenreich** — Sternritter como chefes de elite rotativos, Volständig visual para Ishida | M | W-04 recomendado | sim |
@@ -182,12 +182,12 @@ Quem escreve é o dono do item; aprovação é das duas pessoas. Ordem sugerida,
 | :-- | :--- | :--- | :--- |
 | 1 | Status e controle de grupo (M2) | Waldir | M2-01 a M2-07, R-05, W-01 |
 | 2 | Colyseus 0.18 (critérios, migração, rollback) | Waldir | F-12 → M4, W-16, W-17 |
-| 3 | Social: trade 1v1 (M3-01), abas (M3-02), filtro de loot (M3-03), banco de guilda (M3-04). Rascunho em `features/social-avancado/` (01/11/2026), aguardando aprovação | Rafael | M3 inteiro; M3-04 habilita W-17 e W-18 |
+| 3 | Social: trade 1v1 (M3-01), abas (M3-02), filtro de loot (M3-03), banco de guilda (M3-04). Spec aceita em `features/social-avancado/` (01/11/2026) | Rafael | M3 inteiro; M3-04 habilita W-17 e W-18 |
 | 4 | Moderação de chat (M3-05) | Waldir | Portão G2 |
 | 5 | Contas: recuperação de senha (M5-01) e limite persistente (M5-02) | Waldir | Portão G2 |
 | 6 | Dungeons e salas instanciadas (M4) | Waldir | M4-01 a M4-03, W-16, W-17 |
 | 7 | Conteúdo grande: Fullbringer (W-15), Hell (R-03), Kidō (R-05), Divisões (W-18) | dono do item | Expansões |
-| 8 | E2E Playwright (M5-03; rascunho em `features/e2e-navegador/`, 01/11/2026), partição por mapa (M5-04) | Rafael / Waldir | Qualidade e escala |
+| 8 | E2E Playwright (M5-03; spec aceita em `features/e2e-navegador/`, 01/11/2026), partição por mapa (M5-04) | Rafael / Waldir | Qualidade e escala |
 
 ## Como as filas se cruzam
 
