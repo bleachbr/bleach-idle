@@ -2,7 +2,7 @@
 
 | Metadado | Detalhe |
 | :--- | :--- |
-| **Status** | Proposto |
+| **Status** | Proposto. Falta a aprovação das duas pessoas para "Aceito" (pontos do PRD §8 decididos em 31/10/2026) |
 | **Data** | 2026-10-31 |
 | **Autor** | Time de Engenharia Bleach Idle |
 | **Contexto Técnico** | Expansão de NPCs no Seireitei e futuros mapas |
