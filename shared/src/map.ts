@@ -58,6 +58,8 @@ export function parseMap(id: string, json: any, opts: { strictNpcs?: boolean } =
 
   const solid = new Uint8Array(w * h);
   const map: GameMap = { id, name: String(prop(json, "nome") ?? id), w, h, solid, pz: [], arrivals: {}, spawns: [], npcs: [] };
+  // NPCs só se validam depois de todas as camadas: a de objetos pode vir antes da de tiles, e o tile sólido ainda não estaria marcado
+  const npcObjs: (Pt & { id: string })[] = [];
   for (const layer of json.layers ?? []) {
     if (layer.type === "tilelayer" && layer.name !== "acima") {
       (layer.data as number[]).forEach((g, i) => { if (solidGids.has(g & FLIP_MASK)) solid[i] = 1; });
@@ -78,17 +80,20 @@ export function parseMap(id: string, json: any, opts: { strictNpcs?: boolean } =
           map: id, kind: String(prop(o, "monstro") ?? o.name), x: pt.x, y: pt.y,
           radius: Number(prop(o, "raio") ?? 3), count: Number(prop(o, "quantidade") ?? 3),
         });
-      else if (kind === "npc") {
-        // id sem catálogo ou repetido: no servidor (strictNpcs) é erro de carga (ADR-001), melhor não subir do que
-        // ter um NPC mudo no mapa. No cliente só é pulado: um .tmj velho no cache do navegador não pode travar o jogo
-        const npcId = String(prop(o, "id") ?? o.name);
-        const problem = !npcById(npcId) ? "não existe em shared/src/npcs.ts" : map.npcs.some((n) => n.id === npcId) ? "repetido" : "";
-        if (problem && opts.strictNpcs) throw new Error(`mapa ${id}: NPC "${npcId}" ${problem}`);
-        if (!problem) map.npcs.push({ id: npcId, ...pt });
-      }
+      else if (kind === "npc") npcObjs.push({ id: String(prop(o, "id") ?? o.name), ...pt });
     }
   }
-  // o NPC da loja ocupa o tile dele, e os NPCs sólidos do catálogo também
+  for (const n of npcObjs) {
+    // id sem catálogo, repetido, fora do mapa ou em cima de parede: no servidor (strictNpcs) é erro de carga (ADR-001),
+    // melhor não subir do que ter um NPC mudo ou preso no mapa. No cliente só é pulado: um .tmj velho no cache do
+    // navegador não pode travar o jogo
+    const inside = n.x >= 0 && n.y >= 0 && n.x < w && n.y < h;
+    const problem = !npcById(n.id) ? "não existe em shared/src/npcs.ts" : map.npcs.some((o) => o.id === n.id) ? "repetido"
+      : !inside ? `fora do mapa (${n.x},${n.y})` : solid[n.y * w + n.x] ? `sobre tile sólido (${n.x},${n.y})` : "";
+    if (problem && opts.strictNpcs) throw new Error(`mapa ${id}: NPC "${n.id}" ${problem}`);
+    if (!problem) map.npcs.push(n);
+  }
+  // o NPC da loja ocupa o tile dele, e os NPCs sólidos do catálogo também (todos já conferidos dentro do mapa)
   if (map.shop) solid[map.shop.y * w + map.shop.x] = 1;
   for (const n of map.npcs) if (npcById(n.id)?.solid) solid[n.y * w + n.x] = 1;
   return map;
@@ -109,4 +114,13 @@ export function nearestWalkable(m: GameMap, x: number, y: number): Pt {
       for (let dx = -r; dx <= r; dx++)
         if (Math.max(Math.abs(dx), Math.abs(dy)) === r && walkable(m, x + dx, y + dy)) return { x: x + dx, y: y + dy };
   return m.temple ?? { x: 1, y: 1 };
+}
+
+/** Onde o personagem volta ao mundo no mesmo mapa: o tile salvo, ou o andável mais perto se ele virou parede
+ * (por exemplo, um NPC sólido posto depois em cima dele). Sem lugar (posição inválida), undefined. */
+export function resumeAt(m: GameMap, x: number, y: number): Pt | undefined {
+  if (walkable(m, x, y)) return { x, y };
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return undefined;
+  const p = nearestWalkable(m, x, y);
+  return walkable(m, p.x, p.y) ? p : undefined;
 }
