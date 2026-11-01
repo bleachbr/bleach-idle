@@ -169,6 +169,10 @@ function start(room: Room<any>, myId: string) {
   // registra logo ao entrar para o Colyseus não avisar enquanto a cena do Phaser carrega
   room.onMessage("welcome", () => {});
   room.onMessage("fx", () => {});
+  // Arena 1v1 e patrulhas ainda não têm painel: o servidor já narra fila, pareamento, resultado e
+  // patrulha no chat (log/sys). Os dados estruturados ficam para a interface futura, mas precisam
+  // de handler: sem ele o colyseus.js avisa no console a cada mensagem (issue #22)
+  for (const type of ["arenaData", "arenaMatchFound", "arenaResult", "patrolData"]) room.onMessage(type, () => {});
   $("#exit-btn").onclick = async () => {
     if (!confirm("Trocar de personagem? Com Auto Hunt ligado, ele segue caçando offline.")) return;
     await room.leave(); // com Auto Hunt ligado, o personagem segue caçando offline
