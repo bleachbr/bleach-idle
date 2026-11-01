@@ -20,6 +20,7 @@ import {
   own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
   applyStatus, tickStatuses, canEntityMove, canEntityAct, effectiveStepMs, formatStatusFlags, clearStatuses, type SkillStatusDef,
   evaluateBossPhase,
+  PATROL_SECTORS, PATROL_DURATIONS, calculatePatrolRewards, canClaimPatrol, patrolRemainingMs, type PatrolState,
 } from "../../shared/src";
 import { findPath, type Pt } from "./path";
 import * as db from "./db";
@@ -47,6 +48,7 @@ const HELP = [
   `/guilda criar Nome (${GUILD_COST} kan, nível ${GUILD_MIN_LEVEL}+) · /guilda convidar Nome · /guilda aceitar · /guilda recusar`,
   "/guilda sair · /guilda expulsar Nome · /guilda lider Nome · /guilda depositar N · /guilda sacar N (líder) · /guilda info",
   "/ranking — abre o ranking",
+  "/patrulha — status da patrulha idle · /patrulha resgatar · /patrulha cancelar",
   "/ignorar Nome — liga ou desliga as mensagens dessa pessoa · /ignorar — mostra a lista",
 ];
 
@@ -196,6 +198,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.registerForgeMessages();
     this.registerRebirthMessages();
     this.registerDangaiMessages();
+    this.registerPatrolMessages();
     // relógio: o cliente pergunta a hora do servidor para contar o bloqueio de PvP certo
     this.handle("time", (c) => c.send("time", { now: Date.now() }));
     this.handle("transform", (c) => {
@@ -298,6 +301,9 @@ export class WorldRoom extends GameRoom<WorldState> {
     client.send("dailyReady", { ready: p.prog.daily.last !== dayKey(Date.now()) });
     const unread = mailbox.unreadCount(p.id);
     if (unread) this.log(p, `Você tem ${unread} carta(s) no correio. Use /correio.`);
+    if (p.prog.patrol && canClaimPatrol(p.prog.patrol, Date.now())) {
+      this.log(p, "Sua patrulha de Hollows foi concluída! Digite /patrulha resgatar.");
+    }
     this.sendSeason(p, false);
     if (xpWeekend(Date.now())) client.send("log", { text: "Fim de semana: XP em dobro dos monstros até domingo à meia-noite!" });
     if (this.worldBoss) client.send("log", { text: `O chefe mundial ${MONSTERS[WORLD_BOSS.kind].name} está na praça de Karakura!` });
@@ -1472,6 +1478,9 @@ export class WorldRoom extends GameRoom<WorldState> {
       case "guilda":
       case "guild":
         return this.guildCommand(p, rest);
+      case "patrulha":
+      case "patrol":
+        return this.patrolCommand(p, rest);
       case "ranking":
         return this.sendTo(p, "ranking", this.ranking());
       default:
@@ -2000,6 +2009,151 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.teleport(p, "dangai", back);
     const run = this.dangai.get(p.id);
     this.dangaiEnd(p.id, `${by} derrubou você no andar ${run?.floor ?? "?"} (no Dangai não se perde nada).`);
+  }
+
+  // ---------- patrulhas idle de Hollows (W-13) ----------
+
+  private sendPatrolData(p: Player) {
+    const patrol = p.prog.patrol ?? null;
+    const now = Date.now();
+    const remainingMs = patrolRemainingMs(patrol, now);
+    const canClaim = canClaimPatrol(patrol, now);
+    const previewRewards = (patrol && canClaim)
+      ? calculatePatrolRewards(patrol.sectorId, patrol.durationHours, p.level, { partyBonus: patrol.partyBonus, seed: patrol.startedAt })
+      : null;
+
+    this.sendTo(p, "patrolData", {
+      sectors: PATROL_SECTORS,
+      durations: PATROL_DURATIONS,
+      patrol: patrol
+        ? {
+            sectorId: patrol.sectorId,
+            durationHours: patrol.durationHours,
+            startedAt: patrol.startedAt,
+            completedAt: patrol.completedAt,
+            partyBonus: !!patrol.partyBonus,
+            remainingMs,
+            canClaim,
+          }
+        : null,
+      previewRewards,
+    });
+  }
+
+  private registerPatrolMessages() {
+    this.handle("patrolList", (c) => {
+      const p = this.me(c);
+      if (p) this.sendPatrolData(p);
+    });
+
+    this.handle("patrolStart", (c, m: { sectorId: string; durationHours: number }) => {
+      const p = this.me(c);
+      if (!p) return;
+      const sector = own(PATROL_SECTORS, m?.sectorId);
+      if (!sector) return this.log(p, "Setor de patrulha inválido.");
+      if (p.level < sector.minLevel) {
+        return this.log(p, `Exige nível ${sector.minLevel} para patrulhar ${sector.name}.`);
+      }
+      const dur = Number(m?.durationHours);
+      if (!PATROL_DURATIONS.includes(dur as any)) {
+        return this.log(p, "Duração de patrulha inválida (escolha 1, 4, 8 ou 12 horas).");
+      }
+      const now = Date.now();
+      if (p.prog.patrol) {
+        if (canClaimPatrol(p.prog.patrol, now)) {
+          return this.log(p, "Resgate a recompensa da sua patrulha concluída antes de iniciar outra.");
+        }
+        return this.log(p, "Você já tem uma patrulha em andamento.");
+      }
+
+      const party = p.partyId ? this.parties.get(p.partyId) : undefined;
+      const hasPartyBonus = !!party && party.members.some((mid) => mid !== p.id && this.state.players.get(mid)?.online);
+
+      p.prog.patrol = {
+        sectorId: sector.id,
+        durationHours: dur,
+        startedAt: now,
+        completedAt: now + dur * 3600_000,
+        partyBonus: hasPartyBonus,
+      };
+
+      this.log(p, `Patrulha iniciada: ${sector.name} por ${dur}h!${hasPartyBonus ? " (+15% bônus de grupo)" : ""}`);
+      this.sendPatrolData(p);
+    });
+
+    this.handle("patrolClaim", (c) => {
+      const p = this.me(c);
+      if (p) this.claimPatrol(p);
+    });
+
+    this.handle("patrolCancel", (c) => {
+      const p = this.me(c);
+      if (!p || !p.prog.patrol) return;
+      p.prog.patrol = null;
+      this.log(p, "Patrulha cancelada.");
+      this.sendPatrolData(p);
+    });
+  }
+
+  private claimPatrol(p: Player) {
+    const patrol = p.prog.patrol;
+    if (!patrol) return this.log(p, "Nenhuma patrulha para resgatar.");
+    const now = Date.now();
+    if (!canClaimPatrol(patrol, now)) {
+      const leftMin = Math.ceil(patrolRemainingMs(patrol, now) / 60_000);
+      return this.log(p, `A patrulha ainda não terminou (${leftMin} min restantes).`);
+    }
+
+    const rewards = calculatePatrolRewards(patrol.sectorId, patrol.durationHours, p.level, {
+      partyBonus: patrol.partyBonus,
+      seed: patrol.startedAt,
+    });
+
+    const trial = p.inv.map((sl) => (sl ? { ...sl } : null));
+    for (const item of rewards.items) {
+      if (addItem(trial, item.id, item.qty) < item.qty) {
+        return this.log(p, "Inventário sem espaço para as recompensas da patrulha.");
+      }
+    }
+
+    for (const item of rewards.items) {
+      addItem(p.inv, item.id, item.qty);
+    }
+    p.gold += rewards.gold;
+    p.frags = (p.frags ?? 0) + rewards.frags;
+    this.gainExp(p, rewards.exp, "Patrulha");
+
+    p.prog.patrol = null;
+    const dropsText = rewards.items.length
+      ? `, itens: ${rewards.items.map((i) => `${i.qty}x ${ITEMS[i.id]?.name ?? i.id}`).join(", ")}`
+      : "";
+    this.log(p, `Patrulha concluída! +${rewards.exp} EXP, +${rewards.gold} kan, +${rewards.frags} frags${dropsText}.`);
+    this.sendInv(p);
+    this.sendPatrolData(p);
+  }
+
+  private patrolCommand(p: Player, rest: string) {
+    const [sub] = rest.trim().split(/\s+/);
+    const action = (sub ?? "").toLowerCase();
+    if (action === "resgatar" || action === "claim") {
+      this.claimPatrol(p);
+    } else if (action === "cancelar" || action === "cancel") {
+      if (!p.prog.patrol) return this.log(p, "Nenhuma patrulha em andamento.");
+      p.prog.patrol = null;
+      this.log(p, "Patrulha cancelada.");
+      this.sendPatrolData(p);
+    } else {
+      const patrol = p.prog.patrol;
+      if (!patrol) {
+        this.log(p, "Nenhuma patrulha em andamento. Abra a interface de patrulhas para iniciar.");
+      } else if (canClaimPatrol(patrol, Date.now())) {
+        this.log(p, `Patrulha em ${PATROL_SECTORS[patrol.sectorId]?.name ?? patrol.sectorId} CONCLUÍDA! Digite /patrulha resgatar.`);
+      } else {
+        const leftMin = Math.ceil(patrolRemainingMs(patrol, Date.now()) / 60_000);
+        this.log(p, `Patrulha em ${PATROL_SECTORS[patrol.sectorId]?.name ?? patrol.sectorId}: ${leftMin} min restantes.`);
+      }
+      this.sendPatrolData(p);
+    }
   }
 
   // ---------- modo Dev ----------

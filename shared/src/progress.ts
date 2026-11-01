@@ -128,6 +128,8 @@ export interface Progress {
   titles?: string[];
   /** progresso da crônica semanal (M1-05) */
   chronicle?: ChronicleProgress;
+  /** patrulha idle ativa (W-13) */
+  patrol?: import("./patrols").PatrolState | null;
 }
 
 // ---------- marcos históricos do servidor (W-06) ----------
