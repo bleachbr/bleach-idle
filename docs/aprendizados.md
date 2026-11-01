@@ -277,6 +277,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Problema:** A progressão offline dependia unicamente de deixar o personagem parado no mapa combatendo monstros em loop (Auto Hunt). Não havia como escolher setores temáticos, despachar expedições de vigília em intervalos de 1h a 12h ou receber bônus de cooperação de grupo de forma desacoplada de ticks ativos de combate.
 - **Solução (`shared/src/patrols.ts`, `server/src/WorldRoom.ts`):** Extraímos o catálogo de setores (`PATROL_SECTORS`), as durações válidas (`[1, 4, 8, 12]` h com bônus de eficiência progressivo de até +25%) e o cálculo de recompensas para o pacote compartilhado `shared/src/patrols.ts`. O cálculo de recompensas (`calculatePatrolRewards`) é uma função pura e determinística com gerador pseudo-aleatório baseado em semente (`startedAt`), garantindo que EXP, Kan, fragmentos de Hollow e drops temáticos sejam gerados sem depender do relógio do sistema. No servidor, o estado reside em `Progress.patrol` sem timers em segundo plano — a validação de conclusão ocorre apenas sob demanda no resgate (`patrolClaim`), economizando CPU e memória.
 
+## Foco de teclado: `blur()` no handler do campo muda o que os ouvintes de `window` veem (R-14)
+
+- O `keydown` de um `<input>` roda antes de o evento subir até `window`. Se o handler do campo chama `blur()`, quando o ouvinte de `window` confere `document.activeElement` o campo já não está focado, e ele trata a tecla como se viesse do jogo (o Esc do chat também fecha as janelas; o Enter que envia volta a focar o chat). Para saber de onde a tecla veio, confira `e.target`, ou chame `stopPropagation` no handler do campo.
+- `e.target instanceof HTMLInputElement` como regra de "está digitando" erra para os dois lados: deixa passar `<select>` e bloqueia `input type="range"`.
+
 ## 27. Mensagem do servidor sem handler no cliente (issue #22)
 
 - **Problema:** o servidor mandava `arenaData` e `patrolData` (e, no duelo, `arenaMatchFound` e `arenaResult`), mas o cliente não tinha painel de Arena nem de patrulha e não registrava handler. O colyseus.js avisa `onMessage() not registered for type ...` no console a cada mensagem; o Jogador-IA achou na rodada de 01/11/2026. Mensagem nova no servidor não quebra nada nos testes do Vitest, porque o helper `quiet` cala esse aviso de propósito.
@@ -286,3 +291,19 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 ## Fluxo de publicação: uma branch e um PR por entrega
 
 - **Regra (Waldir, 31/10/2026):** depois de acumular 38 commits na `main` local e publicá-los direto, a decisão passou a ser publicar cada entrega em branch própria com PR. Reduz o raio de conflito (o remoto já divergia com o F-10 duplicado) e dá o ponto de revisão adversarial previsto no fluxo do roadmap.
+
+---
+
+## 10. Camada visual do status (M2-06)
+
+### Dano contínuo não é golpe
+- O servidor manda cada tick de dano contínuo como `fx` `dmg` com `from` (quem aplicou) e `dot: true`. O cliente tratava todo `dmg` com `from` como golpe: quem aplicou o sangramento avançava sobre o alvo e o corte aparecia a cada segundo, mesmo longe.
+- **Solução:** `dotHitStyle` (`client/src/statusFx.ts`) separa o dano contínuo antes da animação de golpe; ele só mostra um número menor, na cor do sangramento, sem som (tocaria a cada segundo).
+
+### Cor de status sem brigar com a cor da forma
+- O `onChange` do jogador trocava textura e cor no mesmo `if`, comparando a cor do sprite com a da forma. Com a cor do status por cima, o clarão branco do golpe (`setTintFill`) fazia a comparação falhar no patch seguinte, e a textura era trocada no meio do clarão. A troca de textura e a de cor ficaram separadas, a cor usa `desiredTint(status, cor da forma)` (também no `restoreTint`), e nada mexe na cor enquanto `tintFill` estiver ligado.
+- A lógica que dá para testar sem Phaser (ler `statusFlags` só com os status conhecidos, prioridade da cor, estilo do número) fica num módulo puro com teste em `client/test/`. A ordem vem de `STATUS_KINDS`, exportada por `shared/src/combatStatus.ts`, e o teste confere contra `formatStatusFlags` do servidor.
+
+### `process.env` no corpo do teste chega depois dos imports
+- Em ESM, os `import` estáticos são avaliados antes do corpo do arquivo. Um teste que faz `import * as db from "../src/db"` e só depois `process.env.DB_FILE = ":memory:"` abre o `bleach-idle.sqlite` do disco. Era o caso de `auth.test`, `arena.test` e `e2e-world-gameplay.test`: três workers no mesmo arquivo, e o CI falhava às vezes com `database is locked` (run 41302928162). Rodando em casa, os testes ainda escreviam no banco de quem desenvolve.
+- **Solução:** `env: { DB_FILE: ":memory:" }` no `vitest.config.ts`, que vale em todos os workers antes de qualquer import (cobre também `guilds.ts` e `economyAudit.ts`, que leem `DB_FILE` ao carregar). `server/test/test-env.test.ts` falha sem isso.

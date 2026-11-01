@@ -12,6 +12,7 @@ export * from "./season";
 export * from "./events";
 export * from "./lookup";
 export * from "./chronicles";
+export * from "./npcs";
 export * from "./combatStatus";
 export * from "./bossPhases";
 export * from "./arena";

@@ -82,12 +82,12 @@ Itens herdados do roadmap e das pendências:
 
 | Ordem | ID | Entrega | Tam. | Depende de | Spec | Obs. |
 | :-- | :-- | :--- | :-- | :--- | :-- | :--- |
-| 1 | M1-00 | Aprovar PRD e 3 ADRs das Crônicas; fechar pontos abertos do PRD §8 | P | — | é a própria spec | Decisão das duas pessoas; Rafael dirige |
-| 2 | M1-02 | `shared/src/npcs.ts`: tipos e catálogo de NPCs | P | M1-00 | idem | |
+| 1 | ~~M1-00~~ | ~~Aprovar PRD e 3 ADRs das Crônicas; fechar pontos abertos do PRD §8~~ | P | — | é a própria spec | Decisão das duas pessoas; Rafael dirige |
+| 2 | ~~M1-02~~ | ~~`shared/src/npcs.ts`: tipos e catálogo de NPCs~~ | P | M1-00 | idem | |
 | 3 | M1-03 | NPCs no `soul.tmj`, leitura em `parseMap` e `mapcheck` | M | M1-02 | idem | `parseMap`/`mapcheck` mexe em `shared/src/map.ts` (zona de atrito) |
 | 4 | M1-07 | Janela de diálogo no `#modal` (teclado, toque, `Esc`) | M | M1-04 (Waldir) | idem | |
 | 5 | M2-07 | Tempo de recarga numérico no HUD | P | — | spec de M2 | Independente do motor; pode sair antes |
-| 6 | M2-06 | Efeitos visuais de status (cor no sprite, ícone, número de dano contínuo) | M | M2-01 (Waldir) | spec de M2 | Fatia de cliente do pacote M2 |
+| 6 | ~~M2-06~~ | ~~Efeitos visuais de status (cor no sprite, ícone, número de dano contínuo)~~ | M | M2-01 (Waldir) | spec de M2 | Fatia de cliente do pacote M2 |
 | 7 | ~~F-10~~ | ~~Trocar `sleep` fixo por `vi.waitFor`/`once` e limpar ruído do Vitest~~ | M | — | não | Feito no Vitest; nos cenários segue como rotina, junto com cada teste que tocar |
 | 8 | M3-02 | Abas de chat (Geral, Combate, Party, Guilda, Privado) | M | — | sim | |
 | 9 | M3-01 | Troca direta 1v1, duas confirmações, mesmo mapa e alcance | M | — | sim | Servidor + UI; handler sensível: skill `seguranca-servidor`, revisão do Waldir |
@@ -106,7 +106,7 @@ Backlog novo (IDs R-##) — narrativa, QoL e social com partes de servidor:
 | 17 | R-10 | **Minimapa e marcadores** — minimapa por zona com ícones de NPC, portal, PZ e alvo de missão | M | M1-03 | não |
 | 18 | ~~R-12~~ | ~~**Eventos narrados** — invasões e chefes mundiais com textos de lore no chat e banner no HUD~~ | P | — | não |
 | 19 | R-09 | **Codex / enciclopédia de lore** — bestiário expandido com fichas de personagens, facções e eventos | M | — | sim |
-| 20 | R-14 | **Acessibilidade e QoL do cliente** — escala de fonte, alto contraste, re-mapeamento de teclas, modo uma mão no toque | M | — | sim |
+| 20 | R-14 | **Acessibilidade e QoL do cliente** — escala de fonte, alto contraste, re-mapeamento de teclas, modo uma mão no toque | M | — | sim (rascunho em `features/acessibilidade-qol/`, aguardando aprovação) |
 | 21 | R-07 | **Companion: Mod Soul** — Kon e afins acompanham o personagem, coletam loot cosmético, progressão própria (entidade seguidora no servidor + visual no cliente) | M | M1-04 | sim |
 | 22 | R-13 | **Cosméticos sazonais** — uniforme Karakura, haori de divisões, máscaras Vizard na Loja de Cristais | M | arte nova (uniforme, haori por divisão); decisão de lore (máscara fora do Ichigo) | não |
 | 23 | R-04 | **Expansão Wandenreich** — Sternritter como chefes de elite rotativos, Volständig visual para Ishida | M | W-04 recomendado | sim |
@@ -178,12 +178,12 @@ Quem escreve é o dono do item; aprovação é das duas pessoas. Ordem sugerida,
 | :-- | :--- | :--- | :--- |
 | 1 | Status e controle de grupo (M2) | Waldir | M2-01 a M2-07, R-05, W-01 |
 | 2 | Colyseus 0.18 (critérios, migração, rollback) | Waldir | F-12 → M4, W-16, W-17 |
-| 3 | Social: trade 1v1 (M3-01), abas (M3-02), filtro de loot (M3-03), banco de guilda (M3-04) | Rafael | M3 inteiro; M3-04 habilita W-17 e W-18 |
+| 3 | Social: trade 1v1 (M3-01), abas (M3-02), filtro de loot (M3-03), banco de guilda (M3-04). Rascunho em `features/social-avancado/` (01/11/2026), aguardando aprovação | Rafael | M3 inteiro; M3-04 habilita W-17 e W-18 |
 | 4 | Moderação de chat (M3-05) | Waldir | Portão G2 |
 | 5 | Contas: recuperação de senha (M5-01) e limite persistente (M5-02) | Waldir | Portão G2 |
 | 6 | Dungeons e salas instanciadas (M4) | Waldir | M4-01 a M4-03, W-16, W-17 |
 | 7 | Conteúdo grande: Fullbringer (W-15), Hell (R-03), Kidō (R-05), Divisões (W-18) | dono do item | Expansões |
-| 8 | E2E Playwright (M5-03), partição por mapa (M5-04) | Rafael / Waldir | Qualidade e escala |
+| 8 | E2E Playwright (M5-03; rascunho em `features/e2e-navegador/`, 01/11/2026), partição por mapa (M5-04) | Rafael / Waldir | Qualidade e escala |
 
 ## Como as filas se cruzam
 
