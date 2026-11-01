@@ -2,7 +2,7 @@
 // arquivo roda por último (o nome começa com "zz", e o config usa um worker só, em ordem).
 import { test, expect } from "@playwright/test";
 import { Client } from "colyseus.js";
-import { PORT } from "../playwright.config";
+import { PORT } from "../port";
 import { PASSWORD, newPlayer, suffix } from "./helpers";
 
 /** Um segundo jogador, por colyseus.js, só para mandar as mensagens de depuração (o cliente do jogo não as envia). */

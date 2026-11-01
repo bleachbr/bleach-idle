@@ -329,6 +329,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Solução (`client/src/main.ts`):** handlers vazios, registrados em `start()` junto com `welcome` e `fx`, com comentário dizendo que o texto já chega pelo chat. Toda mensagem que o servidor manda ao cliente precisa de handler no mesmo PR, mesmo que vazio enquanto a interface não existe.
 - **Teste no navegador:** `test/regressao/issue-22-arena-patrulha.ts` usa o `Game` do Jogador-IA (servidor isolado na 2578 e Vite na 5183, banco temporário), cria conta e personagem pela tela, sobe ao nível 20 pelo modo Dev (`window.__bi`) e digita `/patrulha` e `/arena entrar|sair` no chat. Além de exigir que o console não tenha o aviso, conta os frames do WebSocket que trazem cada tipo: sem isso, um upgrade que mudasse o texto do aviso deixaria o teste verde sem provar nada. Para saber que os dados já chegaram sem esperar por tempo, o teste usa o `/arena` como barreira: o servidor responde na ordem, então o log dele chega depois das mensagens anteriores. Falhou antes da correção (3 avisos) e passou depois. `arenaMatchFound` e `arenaResult` pedem dois jogadores e ficaram fora do teste.
 
+## Workspace que não entra na imagem Docker (M5-03)
+
+- `e2e/` é workspace da raiz, mas o Dockerfile só copia os `package.json` de `client`, `server` e `shared` antes do `npm ci`. Com a pasta ausente, o `npm ci` passa e não instala as dependências dela (conferido repetindo o passo do Dockerfile numa pasta temporária com o `package-lock.json` real: sem `@playwright/test`, com `tsx`). O `.dockerignore` também tira `e2e` do contexto.
+- `Add-Content` do PowerShell não põe quebra de linha antes do texto quando o arquivo não termina com uma: o `e2e/test-results/` grudou na última linha do `.gitignore`, que era a regra de um arquivo de credencial. Conferir com `git check-ignore -v` depois de mexer no `.gitignore`.
+
 ## Fluxo de publicação: uma branch e um PR por entrega
 
 - **Regra (Waldir, 31/10/2026):** depois de acumular 38 commits na `main` local e publicá-los direto, a decisão passou a ser publicar cada entrega em branch própria com PR. Reduz o raio de conflito (o remoto já divergia com o F-10 duplicado) e dá o ponto de revisão adversarial previsto no fluxo do roadmap.

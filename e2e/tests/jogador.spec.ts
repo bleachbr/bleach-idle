@@ -18,9 +18,9 @@ test("cadastro, senha errada e login", async ({ page }) => {
   await expect(page.locator("#acc-login")).toHaveText(login);
 });
 
-test("criar personagem e entrar no mundo", async ({ page }) => {
+test("criar personagem (escolhendo outro que não o padrão) e entrar no mundo", async ({ page }) => {
   await register(page);
-  const name = await createChar(page, `Novo ${suffix()}`);
+  const name = await createChar(page, `Novo ${suffix()}`, 1);
   await enterWorld(page, name);
   await expect(page.locator("#game canvas")).toBeVisible();
 });
@@ -46,6 +46,7 @@ test("trocar de personagem e, com Lembrar, recarregar pula o login", async ({ pa
   // o Playwright recusa diálogos por padrão; "Trocar de personagem?" precisa ser aceito
   page.on("dialog", (d) => d.accept());
   const { name } = await newPlayer(page);
+  await expect(page.locator("#remember")).toBeChecked(); // "Lembrar neste navegador" vem marcado no cadastro
   await page.click("#exit-btn");
   await expect(page.locator("#lobby")).toBeVisible();
   await expect(page.locator("#char-list .char-row", { hasText: name })).toBeVisible();

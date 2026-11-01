@@ -16,12 +16,18 @@ export async function register(page: Page, login = `e2e${suffix()}`) {
   return login;
 }
 
-/** Cria um personagem no lobby e espera ele aparecer na lista. */
-export async function createChar(page: Page, name = `Teste ${suffix()}`) {
+/** Cria um personagem no lobby e espera ele aparecer na lista. `pick`: posição do personagem em #chars
+ * (o 1º, o Ichigo, já é o padrão do formulário; escolher outro confere que a escolha chega ao servidor). */
+export async function createChar(page: Page, name = `Teste ${suffix()}`, pick = 0) {
   await page.fill("#new-name", name);
-  await page.locator("#chars button.char").first().click();
+  const choice = page.locator("#chars button.char").nth(pick);
+  await choice.click();
+  await expect(choice).toHaveAttribute("aria-pressed", "true");
+  const charName = (await choice.textContent())?.trim() ?? "";
   await page.click("#create-form button[type=submit]");
-  await expect(page.locator("#char-list .char-row", { hasText: name })).toBeVisible();
+  const row = page.locator("#char-list .char-row", { hasText: name });
+  await expect(row).toBeVisible();
+  if (pick) await expect(row.locator("small")).toContainText(charName);
   return name;
 }
 
