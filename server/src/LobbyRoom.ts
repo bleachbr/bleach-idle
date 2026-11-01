@@ -9,12 +9,13 @@ import {
 import * as db from "./db";
 import { HOME, TEMPLE } from "./maps";
 import * as guilds from "./guilds";
-import { hashPassword, verifyPassword, issueTicket, blocked, fail, clearFails } from "./auth";
+import { hashPassword, verifyPassword, issueTicket, blocked, fail, clearFails, consumeResetToken } from "./auth";
 import { clientIp } from "./clientIp";
 
 const MAX_CHARS = 5;
 const LOGIN_RE = /^[a-z0-9_]{3,20}$/;
 const NAME_RE = /^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ ]{2,15}$/;
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,24}$/;
 
 interface Auth { accountId: number; login: string; token?: string }
 
@@ -40,6 +41,22 @@ export class LobbyRoom extends GameRoom {
       const acc = db.sessionAccount(token);
       if (!acc) throw new ServerError(401, "Sessão expirada. Entre de novo.");
       return { ...acc, token };
+    }
+    if (opts?.action === "reset") {
+      if (blocked(ip)) throw new ServerError(429, "Muitas tentativas. Espere um minuto.");
+      const resetToken = typeof opts?.resetToken === "string" ? opts.resetToken.trim() : "";
+      const newPass = typeof opts?.password === "string" ? opts.password : "";
+      if (newPass.length < 6 || newPass.length > 72) throw new ServerError(400, "Senha: de 6 a 72 caracteres.");
+      const reset = consumeResetToken(resetToken, await hashPassword(newPass));
+      if (!reset) {
+        fail(ip);
+        throw new ServerError(401, "Código de recuperação inválido ou vencido.");
+      }
+      return {
+        accountId: reset.accountId,
+        login: reset.login,
+        token: opts.remember ? db.createSession(reset.accountId) : undefined,
+      };
     }
     const login = typeof opts?.login === "string" ? opts.login.trim().toLowerCase() : "";
     const pass = typeof opts?.password === "string" ? opts.password : "";
@@ -113,6 +130,13 @@ export class LobbyRoom extends GameRoom {
       clearFails(login);
       db.setPassword(accountId, await hashPassword(newPw), token);
       c.send("passwordOk", {});
+    });
+    this.handle("email", (c, m: { email?: string }) => {
+      const { accountId } = c.userData as Auth;
+      const email = (typeof m?.email === "string" ? m.email : "").trim().toLowerCase();
+      if (!email || !EMAIL_RE.test(email)) return c.send("error", { text: "Informe um e-mail válido." });
+      db.setAccountEmail(accountId, email);
+      c.send("emailOk", { email });
     });
     this.handle("logout", (c) => {
       const { token } = c.userData as Auth;
