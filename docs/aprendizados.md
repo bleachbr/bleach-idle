@@ -307,3 +307,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 ### `process.env` no corpo do teste chega depois dos imports
 - Em ESM, os `import` estáticos são avaliados antes do corpo do arquivo. Um teste que faz `import * as db from "../src/db"` e só depois `process.env.DB_FILE = ":memory:"` abre o `bleach-idle.sqlite` do disco. Era o caso de `auth.test`, `arena.test` e `e2e-world-gameplay.test`: três workers no mesmo arquivo, e o CI falhava às vezes com `database is locked` (run 41302928162). Rodando em casa, os testes ainda escreviam no banco de quem desenvolve.
 - **Solução:** `env: { DB_FILE: ":memory:" }` no `vitest.config.ts`, que vale em todos os workers antes de qualquer import (cobre também `guilds.ts` e `economyAudit.ts`, que leem `DB_FILE` ao carregar). `server/test/test-env.test.ts` falha sem isso.
+
+---
+
+## 11. NPCs no mapa sem regenerar o Tiled (M1-03)
+
+- O `soul.tmj` é editado no Tiled e não pode passar pelo `build_maps.py`. Os 3 NPCs entraram como objetos `npc` na camada `logica` por edição direta do JSON (uma linha só, como o Tiled grava), com `nextobjectid` atualizado e no mesmo formato dos objetos que o Tiled grava (a abertura no Tiled não foi testada).
+- No servidor (`parseMap` com `strictNpcs`), id de NPC fora do catálogo ou repetido é erro de carga: o servidor não sobe com um NPC mudo no mapa. A busca usa `npcById` (`own`), então `constructor` no `.tmj` também é erro. No cliente o NPC só é pulado: o service worker serve `/maps/` do cache, e um `.tmj` velho com o JS novo travaria o jogo.
+- NPC sólido bloqueia o tile no `parseMap`. Por isso o cliente passou a desenhar os NPCs no mesmo PR: sem o desenho, o jogador esbarraria num tile invisível. Pelo mesmo motivo o `CACHE` do `client/public/sw.js` subiu para v2: sem isso, a primeira sessão depois do deploy usaria o `soul.tmj` velho, sem NPCs, contra um servidor que já bloqueia os tiles.
