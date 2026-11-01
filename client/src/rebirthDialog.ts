@@ -17,9 +17,10 @@ export function initRebirthDialog(room: Room<any>, me: () => { level: number; re
       if (i.ok === false) li.className = "missing";
       return li;
     }));
-  const open = () => {
-    const p = me();
-    if (!p) return;
+  let shown = "";
+  /** preenche a janela com o nível e os renascimentos atuais */
+  const render = (p: { level: number; rebirths: number }) => {
+    shown = `${p.level}/${p.rebirths}`;
     const r = rebirthPrompt(p);
     text("#rebirth-title", r.title);
     text("#rebirth-reset", r.reset);
@@ -28,8 +29,18 @@ export function initRebirthDialog(room: Room<any>, me: () => { level: number; re
     list("#rebirth-reqs", r.requirements);
     text("#rebirth-note", `${r.note} ${r.next}`);
     confirmBtn.disabled = !r.ready;
+  };
+  const open = () => {
+    const p = me();
+    if (!p) return;
+    render(p);
     if (!dialog.open) dialog.showModal();
   };
+  // com a janela aberta o nível ainda pode mudar (ex.: morrer no Auto Hunt e perder XP): o Confirmar acompanha
+  room.onStateChange(() => {
+    const p = dialog.open ? me() : undefined;
+    if (p && `${p.level}/${p.rebirths}` !== shown) render(p);
+  });
   confirmBtn.onclick = () => {
     room.send("rebirth");
     dialog.close();
