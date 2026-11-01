@@ -20,13 +20,18 @@ export function rebirthPrompt(p: { level: number; rebirths: number }): RebirthPr
   const need = rebirthLevel(p.rebirths);
   const now = rebirthBonus(p.rebirths), after = rebirthBonus(p.rebirths + 1);
   const levelOk = p.level >= need;
+  const capped = p.rebirths >= REBIRTH_MAX;
   return {
     title: `Renascer (${p.rebirths + 1}º)`,
-    ready: levelOk && p.rebirths < REBIRTH_MAX,
+    ready: levelOk && !capped,
     reset: `Você volta ao nível ${START_LEVEL} e vai para a praça de Karakura.`,
     keeps: "Você mantém itens, equipamento, kan, forja, bestiário, conquistas e habilidades.",
     bonus: [`XP: ${pct(now.exp)} → ${pct(after.exp)}`, `Dano: ${pct(now.dmg)} → ${pct(after.dmg)}`, `Vida: ${pct(now.hp)} → ${pct(after.hp)}`],
-    requirements: [{ text: `Nível ${need} (você está no ${p.level})`, ok: levelOk }],
+    requirements: [
+      { text: `Nível ${need} (você está no ${p.level})`, ok: levelOk },
+      // no teto o servidor recusa calado: a janela diz o motivo
+      ...(capped ? [{ text: `Limite de ${REBIRTH_MAX} renascimentos atingido`, ok: false }] : []),
+    ],
     // o cliente não sabe quando foi o último golpe: só avisa da regra (6 s no WorldRoom.ts)
     note: "Fique 6 segundos fora de combate antes de confirmar.",
     next: `O renascimento seguinte pede o nível ${rebirthLevel(p.rebirths + 1)}.`,

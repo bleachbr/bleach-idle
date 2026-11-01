@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
+import { REBIRTH_MAX } from "../../shared/src";
 import { rebirthPrompt } from "../src/rebirthPrompt";
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
@@ -30,8 +31,14 @@ describe("janela de renascimento (issue #35)", () => {
     expect(r.requirements[0]).toEqual({ text: "Nível 60 (você está no 59)", ok: false });
   });
 
-  it("no limite de 250 renascimentos não oferece confirmar", () => {
-    expect(rebirthPrompt({ level: 100, rebirths: 250 }).ready).toBe(false);
+  it("no limite de 250 renascimentos não oferece confirmar e diz por quê", () => {
+    expect(REBIRTH_MAX).toBe(250);
+    const r = rebirthPrompt({ level: 100, rebirths: REBIRTH_MAX });
+    expect(r.ready).toBe(false);
+    expect(r.requirements).toContainEqual({ text: "Limite de 250 renascimentos atingido", ok: false });
+    // abaixo do limite o requisito não aparece
+    expect(rebirthPrompt({ level: 100, rebirths: REBIRTH_MAX - 1 }).ready).toBe(true);
+    expect(rebirthPrompt({ level: 100, rebirths: REBIRTH_MAX - 1 }).requirements.some((x) => x.text.startsWith("Limite"))).toBe(false);
   });
 
   it("cliente e servidor leem o mesmo limite de shared/ (sem 250 escrito à mão)", () => {
