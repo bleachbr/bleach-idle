@@ -59,6 +59,7 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 | :--- | :--- | :--- |
 | **Filtros Customizados de Loot** | O Auto Helper recolhe tudo e converte em kan via Auto Venda apenas o excedente. | Jogadores de nível alto gostariam de ignorar lixo de monstros fracos e pegar apenas itens raros ou consumíveis específicos. |
 | **Interiores de Edifícios e Andares** | Os edifícios nos mapas são sólidos sem entrada ou interiores exploráveis. | Quartéis do Seireitei, loja do Kisuke e palácios poderiam ter mapas internos dedicados. |
+| **Atalhos que vazam do foco (R-14)** | `GameScene.bindKeys` só ignora teclas com foco em `input`: com o `<select id="hunt-spot">` focado, setas, dígitos, T e R chegam ao jogo, e um `range` do Auto Helper focado bloqueia os atalhos. O `#chatin` tira o foco antes de o evento subir: o Esc também fecha as janelas, e o Enter que envia volta a focar o chat (os dois deduzidos da ordem de propagação em `main.ts`, sem teste no navegador). | Consertar no 1º PR da R-14 (RF-08 da spec em `docs/features/acessibilidade-qol/`). |
 
 ---
 

@@ -143,6 +143,7 @@ Descrição, ordem e dependências em [`roadmap-duplas.md`](roadmap-duplas.md). 
 | R-12 | Eventos narrados: linha de lore no chat (canal `lore`) e banner no topo da tela durante a invasão de Hollows e o chefe mundial (`shared/src/events.ts`) | P | | Feito |
 | R-01 | Personagens novos do bloco R: Yoruichi, Ukitake e Shunsui jogáveis, com 5 estágios da obra e 4 técnicas cada; sprites gerados pelo Codex (`art/gen_r01.py`). Números de combate na faixa dos 8 atuais (`balance.ts`); revisão do Waldir pendente | M | | Feito |
 | R-13 | Trajes na Loja de Cristais (aba "Trajes", `kind: "outfit"` em `shared/src/shop.ts`): uniforme do Colégio Karakura (150), haori de capitão (250) e máscara Vizard (300), preços com revisão do Waldir pendente. Valem na forma base dos 11 personagens e cobrem o visual do equipamento; o haori não muda os 5 que já são capitães. 28 folhas `<base>__<look>` (18 novas pelo Codex em `art/gen_r13.py`, 10 com a arte bruta de haori e máscara que já existia); o cliente só baixa a folha quando alguém aparece com o traje (`lazy` em `SPRITES`). Haori por divisão e braçadeira de tenente ficaram de fora: não aparecem em 48 px | M | | Feito |
+| R-14 | Acessibilidade e QoL do cliente: janela de opções, escala de texto, alto contraste, menos movimento, teclas configuráveis e toque para uma mão. Só cliente, sem mensagem nova | M | | Precisa de spec: rascunho em [`features/acessibilidade-qol/`](features/acessibilidade-qol/PRD-acessibilidade-qol.md) (Proposto em 01/11/2026), falta a aprovação das duas pessoas |
 
 ## Sem marco
 

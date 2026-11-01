@@ -283,6 +283,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Problema:** A progressão offline dependia unicamente de deixar o personagem parado no mapa combatendo monstros em loop (Auto Hunt). Não havia como escolher setores temáticos, despachar expedições de vigília em intervalos de 1h a 12h ou receber bônus de cooperação de grupo de forma desacoplada de ticks ativos de combate.
 - **Solução (`shared/src/patrols.ts`, `server/src/WorldRoom.ts`):** Extraímos o catálogo de setores (`PATROL_SECTORS`), as durações válidas (`[1, 4, 8, 12]` h com bônus de eficiência progressivo de até +25%) e o cálculo de recompensas para o pacote compartilhado `shared/src/patrols.ts`. O cálculo de recompensas (`calculatePatrolRewards`) é uma função pura e determinística com gerador pseudo-aleatório baseado em semente (`startedAt`), garantindo que EXP, Kan, fragmentos de Hollow e drops temáticos sejam gerados sem depender do relógio do sistema. No servidor, o estado reside em `Progress.patrol` sem timers em segundo plano — a validação de conclusão ocorre apenas sob demanda no resgate (`patrolClaim`), economizando CPU e memória.
 
+## Foco de teclado: `blur()` no handler do campo muda o que os ouvintes de `window` veem (R-14)
+
+- O `keydown` de um `<input>` roda antes de o evento subir até `window`. Se o handler do campo chama `blur()`, quando o ouvinte de `window` confere `document.activeElement` o campo já não está focado, e ele trata a tecla como se viesse do jogo (o Esc do chat também fecha as janelas; o Enter que envia volta a focar o chat). Para saber de onde a tecla veio, confira `e.target`, ou chame `stopPropagation` no handler do campo.
+- `e.target instanceof HTMLInputElement` como regra de "está digitando" erra para os dois lados: deixa passar `<select>` e bloqueia `input type="range"`.
+
 ## Fluxo de publicação: uma branch e um PR por entrega
 
 - **Regra (Waldir, 31/10/2026):** depois de acumular 38 commits na `main` local e publicá-los direto, a decisão passou a ser publicar cada entrega em branch própria com PR. Reduz o raio de conflito (o remoto já divergia com o F-10 duplicado) e dá o ponto de revisão adversarial previsto no fluxo do roadmap.
