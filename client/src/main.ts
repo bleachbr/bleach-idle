@@ -11,6 +11,7 @@ import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
 import { initReleases } from "./releases";
+import { initInventoryShortcut } from "./inventoryShortcut";
 
 initReleases();
 
@@ -227,6 +228,7 @@ function start(room: Room<any>, myId: string) {
     if (e.code === "Escape" && document.activeElement !== chatin) closeWindows();
   });
   $("#travel-btn").onclick = () => inventory.openTravel();
+  initInventoryShortcut();
   $("#rebirth-btn").onclick = () => {
     const me = room.state.players.get(myId);
     if (!me) return;
