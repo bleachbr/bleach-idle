@@ -15,6 +15,8 @@ export interface SpriteDef {
   cols?: number;
   /** sem folha em client/public/assets/sprites_hd/ (ex.: boneco de treino estático) */
   noHd?: boolean;
+  /** fora do preload: o cliente baixa quando alguém aparece com ela (trajes da Loja de Cristais) */
+  lazy?: boolean;
 }
 export const SPRITES: Record<string, SpriteDef> = {
   ichigo_shikai: { frame: 48, cols: 8 },
@@ -109,6 +111,17 @@ export const OUTFIT_BASES = ["ichigo_shikai", "rukia", "renji"];
 export const OUTFIT_LOOKS = ["haori", "mask", "haori_mask"];
 const OUTFIT_OK: Record<string, string[]> = { ichigo_shikai: ["haori", "mask", "haori_mask"], rukia: ["haori"], renji: ["haori"] };
 for (const b of OUTFIT_BASES) for (const l of OUTFIT_OK[b]) SPRITES[`${b}__${l}`] = { frame: 48, cols: 8 };
+
+// R-13: trajes da Loja de Cristais, também uma folha por combinação, mas com nomes próprios para não mudar a
+// regra do equipamento (o haori equipado continua sem efeito no Sado). Valem na forma base de todos;
+// quem já usa haori de capitão na forma base fica sem o "capitao". Baixam só quando alguém aparece com eles (lazy).
+export const COS_LOOK_BASES = ["ichigo_shikai", "rukia", "renji", "ishida", "sado", "hitsugaya", "byakuya", "kenpachi", "yoruichi", "ukitake", "shunsui"];
+const CAPTAIN_BASES = new Set(["hitsugaya", "byakuya", "kenpachi", "ukitake", "shunsui"]);
+for (const b of COS_LOOK_BASES)
+  for (const l of ["karakura", "vizard", ...(CAPTAIN_BASES.has(b) ? [] : ["capitao"])]) {
+    (OUTFIT_OK[b] ??= []).push(l);
+    SPRITES[`${b}__${l}`] = { frame: 48, cols: 8, lazy: true };
+  }
 
 export const spriteCols = (key: string) => SPRITES[key]?.cols ?? 4;
 /** quadro "parado" de uma direção: o de passagem, com as pernas juntas */

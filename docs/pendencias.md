@@ -36,6 +36,7 @@ Este documento mapeia todas as pendências conhecidas, limitações da arquitetu
 | **Abas de Chat no Cliente** | Todas as mensagens (`Geral`, `/pm`, `/p`, `/g`, logs de sistema) aparecem em uma única janela de rolagem. | O chat fica poluído rapidamente em caçadas com party e eventos globais. Necessário criar abas dedicadas. |
 | **Banco e Sede de Guilda** | Apenas kan pode ser doado para a guilda. | Permitir cofre de itens compartilhado com controle de acesso por cargo (Líder, Oficial, Membro). |
 | **Moderação e Segurança no Chat** | A moderação se resume ao comando `/ignorar Nome`. | Falta filtro automático de spam, mute temporário e comandos de administração para Game Masters (GM). |
+| **Preços dos trajes sem revisão do Waldir (R-13)** | Uniforme do Colégio Karakura 150 cristais, haori de capitão 250, máscara Vizard 300 (as auras vão de 180 a 500). Fora do R-13 por decisão: haori de cada divisão e braçadeira de tenente, porque o detalhe não aparece em 48 px. | Revisão de preços pela outra pessoa (regra 6 do `roadmap-duplas.md`). |
 
 ---
 
