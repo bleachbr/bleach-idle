@@ -64,7 +64,7 @@ Backlog novo (IDs W-##) — motor, operação e conteúdo de mundo misturados:
 | 25 | W-07 | **Correio interno (mailbox)** — recompensas, itens de mercado expirado, mensagens de sistema | M | — | **Feito** (`feat/w-07-correio-interno`; UI do cliente pendente) |
 | 26 | W-05 | **Caçada offline v2** — resumo detalhado ao voltar (drops, mortes, kan), simulação por lote | M | — | **Feito** (`feat/w-05-cacada-offline-v2`) | Spec em `docs/features/cacada-offline-v2/` |
 | 27 | W-09 | **Métricas de operação** — `/metrics` (tick, salas, jogadores, saves) com alerta mínimo (`feat/w-09-metricas-operacao` — **Feito**) | M | F-08 | não |
-| 28 | W-08 | **Auditoria de economia** — trilha imutável de kan/cristais/itens (anti-dupe, suporte) | M | — | sim |
+| 28 | W-08 | **Auditoria de economia** — trilha imutável de kan/cristais/itens (anti-dupe, suporte) | M | — | **Feito** (`feat/w-08-auditoria-economia`) |
 | 29 | W-13 | **Patrulhas idle de Hollows** — jogador/party em patrulha por X horas retorna com recompensa | M | — | sim |
 | 30 | W-14 | **Personagens novos (bloco W)** — Orihime (barreira/suporte), Urahara, Mayuri; 5 estágios e 4 técnicas cada | M cada | — | skill `adicionar-conteudo`; Orihime exige mecânica nova de barreira no motor |
 | 31 | W-01 | **Arena de duelos 1v1 ranqueada** — fila por reiatsu, rating Elo, anti-cheat de velocidade | G | M2-01 recomendado | sim |

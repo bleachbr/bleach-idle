@@ -258,6 +258,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Problema:** Ao reconectar após caçada offline, o relatório não informava quais monstros foram abatidos, taxas de rendimento por hora nem separava perdas de mortes de ganhos líquidos; além disso, a lógica de snapshot e restauração ficava dispersa em `onLeave`, `restoreWorld` e `onJoin`.
 - **Solução (`shared/src/offlineReport.ts`, `server/src/offlineState.ts`, `server/src/WorldRoom.ts`):** Extraímos o cálculo puro de rendimento para `buildOfflineReport`, limitando o tempo ao teto de 12 horas (`OFFLINE_MAX_MS`) e fornecendo `topKills`, `expPerHour`, `killsPerHour` e perdas detalhadas. Unificamos a captura de snapshot e restauração do save em `offlineState.ts`, salvando `offKinds` em `SaveData.offline` com compatibilidade retroativa para saves antigos.
 
+## 25. Trilha imutável de auditoria econômica e anti-duplicação (W-08)
+
+- **Problema:** Movimentações de alto valor de kan, cristais e itens (mercado entre jogadores, correio com anexos, forja do Kisuke, compras de loja e recompensas) não tinham registro histórico persistente. Em caso de relatos de itens sumidos, suspeita de duplicação ou desbalanceamento da economia por injeção excessiva de moeda, não existia uma trilha contábil para auditar o fluxo de bens.
+- **Solução (`server/src/economyAudit.ts`, `server/src/WorldRoom.ts`):** Criamos a tabela append-only `economy_audit` no SQLite com prepared statements rápidos indexados por `char_id`, `currency` e `created_at`. Cada transação relevante registra `(accountId, charId, currency, delta, balanceAfter, reason, itemId, details, createdAt)`. O módulo oferece `recordAudit` para inserção atômica, `getAuditTrail(charId, limit)` para suporte ao jogador e `queryEconomyFlow(since, until)` para consolidação agregada de entradas e saídas de kan/cristais da economia.
+
 ## Fluxo de publicação: uma branch e um PR por entrega
 
 - **Regra (Waldir, 31/10/2026):** depois de acumular 38 commits na `main` local e publicá-los direto, a decisão passou a ser publicar cada entrega em branch própria com PR. Reduz o raio de conflito (o remoto já divergia com o F-10 duplicado) e dá o ponto de revisão adversarial previsto no fluxo do roadmap.
