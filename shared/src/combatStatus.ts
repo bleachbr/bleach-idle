@@ -26,6 +26,8 @@ export interface ActiveStatus {
 export type StatusMap = Partial<Record<StatusKind, ActiveStatus>>;
 
 const STATUS_ORDER: StatusKind[] = ["freeze", "stun", "slow", "dot"];
+/** Ordem de prioridade dos status (a cor no cliente é a do primeiro ativo; M2-06). */
+export const STATUS_KINDS: readonly StatusKind[] = STATUS_ORDER;
 
 export function applyStatus(
   statuses: StatusMap,
