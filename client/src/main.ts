@@ -659,7 +659,7 @@ function bindGuild(room: Room<any>, closeWindows: (keep?: string) => void) {
   panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab!; render(); }));
 }
 
-interface DeathReport { by: string; exp: number; gold: number; items: string[]; protected: boolean; at: number }
+interface DeathReport { by: string; exp: number; gold: number; items: string[]; protected: boolean; invasion?: boolean; at: number }
 
 function showDeath(list: DeathReport[], offline: boolean) {
   const esc = (t: string) => t.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -667,7 +667,9 @@ function showDeath(list: DeathReport[], offline: boolean) {
     const when = offline ? ` <small>(${new Date(d.at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}, caçando offline)</small>` : "";
     if (d.protected) return `<p>Morto por <b>${esc(d.by)}</b>${when}.</p><p class="safe">O Amuleto da Alma se desfez e protegeu seu XP, seus itens e seu dinheiro.</p>`;
     const items = d.items.length ? `<ul>${d.items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : `<p class="safe">Nenhum item perdido.</p>`;
-    return `<p>Morto por <b>${esc(d.by)}</b>${when}.</p><p>Perdeu ${d.exp} XP e ${d.gold} kan.</p>${items}`;
+    // atenuante da Invasão de Hollows (#39): texto fixo, sem dado do servidor no HTML
+    const inv = d.invasion ? `<p class="safe">Invasão de Hollows: sem perda de itens, e a XP e o kan perdidos caem pela metade.</p>` : "";
+    return `<p>Morto por <b>${esc(d.by)}</b>${when}.</p><p>Perdeu ${d.exp} XP e ${d.gold} kan.</p>${inv}${items}`;
   }).join("<hr>") + `<p class="hint">Equipe um Amuleto da Alma (loja do Kisuke) para não perder nada. O depot nunca perde itens.</p>`;
   $("#death").hidden = false;
 }

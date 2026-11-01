@@ -917,7 +917,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.autoHunt = back;
     p.pvpUntil = 0;
 
-    const report: DeathReport = { by, exp: loss, gold: goldLost, items, protected: prot, at: Date.now() };
+    const report: DeathReport = { by, exp: loss, gold: goldLost, items, protected: prot, invasion: pen.invasion, at: Date.now() };
     if (p.online) this.sendTo(p, "death", report);
     else p.offlineDeaths.push(report);
     const after = back ? "O Auto Helper volta à caça." : p.autoReturn && p.deathTimes.length >= 3 ? "3 mortes em 10 min: Auto Hunt desligado." : "Auto Hunt desligado.";
