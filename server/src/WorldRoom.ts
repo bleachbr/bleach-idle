@@ -25,6 +25,7 @@ import { consumeTicket, type Ticket } from "./auth";
 import { MAPS, HOME, TEMPLE, SPAWNS, tileKey } from "./maps";
 import * as guilds from "./guilds";
 import * as market from "./market";
+import * as mailbox from "./mailbox";
 import { flagOn } from "./flags";
 import { recordTick } from "./tickStats";
 import { recordSave, setWorldMetricsProvider } from "./metrics";
@@ -186,6 +187,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.registerQuestMessages();
     this.registerBagMessages();
     this.registerMarketMessages();
+    this.registerMailMessages();
     this.registerBookMessages();
     this.registerShopMessages();
     this.registerSeasonMessages();
@@ -292,6 +294,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.sendGuild(p);
     this.sendQuests(p);
     client.send("dailyReady", { ready: p.prog.daily.last !== dayKey(Date.now()) });
+    const unread = mailbox.unreadCount(p.id);
+    if (unread) this.log(p, `Você tem ${unread} carta(s) no correio. Use /correio.`);
     this.sendSeason(p, false);
     if (xpWeekend(Date.now())) client.send("log", { text: "Fim de semana: XP em dobro dos monstros até domingo à meia-noite!" });
     if (this.worldBoss) client.send("log", { text: `O chefe mundial ${MONSTERS[WORLD_BOSS.kind].name} está na praça de Karakura!` });
@@ -1429,6 +1433,12 @@ export class WorldRoom extends GameRoom<WorldState> {
       case "unmute":
       case "anuncio":
         return this.gmCommand(p, cmd.toLowerCase(), rest);
+      case "correio":
+      case "mail": {
+        const [sub, arg] = rest.split(/\s+/);
+        if (sub === "retirar" || sub === "take") return this.takeMail(p, Number(arg));
+        return this.showMail(p, true);
+      }
       case "guilda":
       case "guild":
         return this.guildCommand(p, rest);
@@ -2560,6 +2570,41 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
 
+  // ---------- correio interno (W-07) ----------
+
+  private registerMailMessages() {
+    this.handle("mailList", (c) => { const p = this.me(c); if (p) this.showMail(p, false); });
+    this.handle("mailTake", (c, m: { id: number }) => { const p = this.me(c); if (p) this.takeMail(p, m?.id); });
+    this.clock.setInterval(() => mailbox.purgeExpired(), 3600_000);
+  }
+
+  private showMail(p: Player, asChat: boolean) {
+    const inbox = mailbox.list(p.id);
+    inbox.forEach((m) => mailbox.markRead(m.id, p.id));
+    this.sendTo(p, "mail", { inbox });
+    if (!asChat) return;
+    if (!inbox.length) return this.log(p, "Correio vazio.");
+    for (const m of inbox) {
+      const att = [m.gold ? `${m.gold} kan` : "", ...m.items.map((s) => `${s.qty}x ${ITEMS[s.id]?.name ?? s.id}`)].filter(Boolean).join(", ");
+      this.log(p, `#${m.id} de ${m.from}: ${m.subject}${att ? ` [anexo: ${att}]` : ""} (/correio retirar ${m.id})`);
+    }
+  }
+
+  /** Retira a carta: o anexo precisa caber no inventário; a carta só some se tudo foi entregue. */
+  private takeMail(p: Player, id: unknown) {
+    if (!Number.isInteger(id)) return;
+    const mail = mailbox.get(id as number, p.id);
+    if (!mail) return this.log(p, "Carta não encontrada.");
+    const trial = p.inv.map((sl) => (sl ? { ...sl } : null));
+    for (const s of mail.items) if (addItem(trial, s.id, s.qty) < s.qty) return this.log(p, "Inventário sem espaço para o anexo.");
+    if (!mailbox.take(mail.id, p.id)) return;
+    for (const s of mail.items) addItem(p.inv, s.id, s.qty);
+    p.gold += mail.gold;
+    this.log(p, `Carta recebida: ${mail.subject}${mail.gold ? `, +${mail.gold} kan` : ""}${mail.items.map((s) => `, ${s.qty}x ${ITEMS[s.id]?.name ?? s.id}`).join("")}.`);
+    this.sendInv(p);
+    this.showMail(p, false);
+  }
+
   // ---------- mercado entre jogadores (no Kisuke) ----------
 
   private registerMarketMessages() {
@@ -2616,19 +2661,25 @@ export class WorldRoom extends GameRoom<WorldState> {
     });
   }
 
-  /** Anúncios com mais de 7 dias voltam para o depot do vendedor (fica no anúncio se o depot estiver cheio). */
+  /** Anúncios com mais de 7 dias voltam para o depot do vendedor; se o depot estiver cheio, o item segue por carta. */
   private expireListings() {
     for (const l of market.expired()) {
       const x = this.state.players.get(l.seller);
       const row = x ? undefined : db.load(l.seller);
       if (row) row.data.depot = Array.from({ length: DEPOT_SIZE }, (_, i) => row.data.depot?.[i] ?? null);
       const depot = x ? x.depot : row?.data.depot;
-      if (!depot || spaceFor(depot, l.item) < l.qty) continue;
+      if (!x && !row) continue;
       if (!market.remove(l.id)) continue;
-      addItem(depot, l.item, l.qty);
-      const text = `Mercado: seu anúncio de ${l.qty}x ${ITEMS[l.item].name} expirou e voltou para o depot.`;
-      if (x) { this.log(x, text); this.sendInv(x); }
-      else if (row) db.save(l.seller, row.data, row.inWorld);
+      const item = ITEMS[l.item].name;
+      if (depot && spaceFor(depot, l.item) >= l.qty) {
+        addItem(depot, l.item, l.qty);
+        const text = `Mercado: seu anúncio de ${l.qty}x ${item} expirou e voltou para o depot.`;
+        if (x) { this.log(x, text); this.sendInv(x); }
+        else if (row) db.save(l.seller, row.data, row.inWorld);
+      } else {
+        mailbox.send(l.seller, "Mercado", "Anúncio expirado", `Seu anúncio de ${l.qty}x ${item} expirou e o depot estava cheio.`, { items: [{ id: l.item, qty: l.qty }] });
+        if (x) this.log(x, `Mercado: anúncio de ${l.qty}x ${item} expirou; o item foi para o correio (/correio).`);
+      }
     }
   }
 

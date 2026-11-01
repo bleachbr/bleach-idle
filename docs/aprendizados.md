@@ -202,3 +202,9 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 - **Problema:** Todas as habilidades de personagens aplicavam apenas dano instantâneo, sem suporte a congelamento (`freeze`), lentidão (`slow`), sangramento/queimadura (`dot`) ou atordoamento (`stun`).
 - **Solução (`shared/src/combatStatus.ts`, `shared/src/data.ts`, `server/src/WorldRoom.ts`):** Extraímos o motor puro de status para `shared/src/combatStatus.ts` (`applyStatus`, `tickStatuses`, `canEntityMove`, `canEntityAct`, `effectiveStepMs`, `formatStatusFlags`), sincronizamos `statusFlags` no Schema (`Player` e `Monster`) para consumo pela camada visual (`M2-06`) e integramos a avaliação por tick (`100 ms`) no `WorldRoom.ts` respeitando zonas de proteção (PZ) e o boneco de treino (`dummy`).
+
+
+## 23. Correio interno com retirada atômica (W-07)
+
+- **Problema:** itens e kan só chegavam com o jogador online; anúncio expirado com depot cheio ficava preso no mercado.
+- **Solução (`server/src/mailbox.ts`):** tabela `mailbox` própria; `take()` usa `DELETE` condicional e só entrega o anexo se apagou a linha, o que impede duplicação por retirada repetida. O `WorldRoom` valida espaço numa cópia do inventário antes de retirar. O mercado usa o correio como destino quando o depot está cheio.
