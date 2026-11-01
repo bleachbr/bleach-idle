@@ -147,3 +147,5 @@ Números e método em [`baseline.md`](baseline.md). Skill: `performance-servidor
 | [#39](https://github.com/bleachbr/bleach-idle/issues/39) | Balance | Avaliar atenuante para penalidade de morte por perda de itens e XP na Invasão de Hollows |
 | [#40](https://github.com/bleachbr/bleach-idle/issues/40) | UX | Adicionar confirmação ou feedback visual imediato ao usar "Zerar contagem" na Caçada do Livro |
 | [#41](https://github.com/bleachbr/bleach-idle/issues/41) | UX | Exibir feedback visual no HUD ao tentar usar poções com HP ou Reiatsu cheios |
+
+- **Ficha do personagem (#36): o que ficou de fora.** A ficha (`client/src/characterSheet.ts`) só mostra o que o cliente recebe: o bônus do bestiário (+4% de dano por estágio, por monstro) aparece como regra, sem o valor de cada monstro, porque `prog.bestiary` não é sincronizado; o XP não conta `EXP_RATE` (variável do servidor) nem o bônus de invasão; o passo não inclui a lentidão ativa. Não há golpe crítico no jogo, então a ficha não o mostra. Layout e leitor de tela conferidos só pelo código, sem abrir no navegador.

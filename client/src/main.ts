@@ -11,6 +11,7 @@ import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
 import { initReleases } from "./releases";
+import { initCharacterSheet } from "./characterSheetDialog";
 
 initReleases();
 
@@ -194,9 +195,11 @@ function start(room: Room<any>, myId: string) {
   },
     () => room.state.players.get(myId)?.level ?? 1,
     () => { const p = room.state.players.get(myId); return p ? { x: p.x, y: p.y } : undefined; });
+  const sheet = initCharacterSheet(room, () => room.state.players.get(myId), serverNow);
   const onMe = (p: any) => {
     renderStats(p);
     inventory.onMove(p.x, p.y);
+    sheet.update();
   };
   const game = new Phaser.Game(gameConfig("game"));
   game.scene.add("game", GameScene, true, { room, myId, onMe, onPlayerClick: (id: string, x: number, y: number) => playerMenu(room, myId, id, x, y) });
