@@ -10,7 +10,7 @@ import { browserStore, loadLoreRead, markLoreRead } from "./loreRead";
 import { bindEvents } from "./events";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
-import { sfx } from "./sfx";
+import { initOptions } from "./options";
 import { initReleases } from "./releases";
 import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
 
@@ -184,7 +184,7 @@ function start(room: Room<any>, myId: string) {
     location.reload();
   };
 
-  const WINDOWS = ["#ranking", "#book", "#pass", "#dev", "#shop"];
+  const WINDOWS = ["#ranking", "#book", "#pass", "#dev", "#shop", "#options"];
   let inventory: ReturnType<typeof initInventory>;
   const closeWindows = (keep?: string) => {
     if (keep !== "#modal") inventory?.close();
@@ -236,11 +236,8 @@ function start(room: Room<any>, myId: string) {
     const ok = confirm(`Renascer volta você ao nível 8 e leva para a praça de Karakura.\n\nVocê mantém itens, equipamento, kan, forja, bestiário, conquistas e habilidades.\n\nBônus permanentes depois deste renascimento: +${Math.round((b.exp - 1) * 100)}% de XP, +${Math.round((b.dmg - 1) * 100)}% de dano e +${Math.round((b.hp - 1) * 100)}% de vida.\n\nRenascer agora?`);
     if (ok) room.send("rebirth");
   };
-  const mute = $("#mute-btn");
-  const showMute = () => { mute.dataset.ico = sfx.isMuted() ? "mute" : "sound"; mute.title = sfx.isMuted() ? "Som desligado (clique para ligar)" : "Som ligado (clique para desligar)"; };
-  showMute();
-  mute.onclick = () => { sfx.setMuted(!sfx.isMuted()); showMute(); };
-  bindHd(game);
+  // HD e som: atalhos no cabeçalho e janela de opções, com as mesmas preferências (R-14)
+  initOptions(game, closeWindows);
   room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log"));
   room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[]; zanGain?: number; reiGain?: number; zanjutsu?: number; reiryoku?: number; kills?: number; items?: string[] }) => {
     const sign = (n: number) => (n >= 0 ? "+" : "") + n;
@@ -263,6 +260,9 @@ function start(room: Room<any>, myId: string) {
     if (e.code === "Enter" && document.activeElement !== chatin) { e.preventDefault(); chatin.focus(); }
   });
   chatin.addEventListener("keydown", (e) => {
+    // Enter e Esc do chat param aqui: o blur abaixo faria os ouvintes de window acharem que o chat não
+    // está focado, e o mesmo Esc fecharia as janelas e o mesmo Enter focaria o chat de novo (R-14, RF-08)
+    if (e.code === "Enter" || e.code === "Escape") e.stopPropagation();
     if (e.code === "Enter") {
       if (chatin.value.trim()) room.send("chat", { text: chatin.value });
       chatin.value = "";
@@ -341,32 +341,6 @@ function bindParty(room: Room<any>, myId: string) {
 }
 
 // ---------- livro: bestiário, conquistas e recompensa diária ----------
-
-// ---------- visual: pixel art ou desenho original (HD) ----------
-
-function bindHd(game: Phaser.Game) {
-  const btn = $<HTMLButtonElement>("#hd-btn");
-  let on = false;
-  try { on = localStorage.getItem("bi_hd") === "1"; } catch {}
-  const show = (loading = false) => {
-    btn.classList.toggle("on", on);
-    btn.textContent = loading ? "…" : "HD";
-    btn.title = on ? "Visual HD: desenho original (clique para pixel art)" : "Visual pixel art (clique para o desenho original em HD)";
-  };
-  const apply = () => {
-    const scene = game.scene.getScene("game") as GameScene | null;
-    if (!scene?.sys.isActive()) return void window.setTimeout(apply, 300); // a cena ainda está carregando
-    show(on);
-    scene.setHd(on, () => show());
-  };
-  btn.onclick = () => {
-    on = !on;
-    try { localStorage.setItem("bi_hd", on ? "1" : "0"); } catch {}
-    apply();
-  };
-  show();
-  if (on) apply();
-}
 
 // ---------- passe de temporada ----------
 

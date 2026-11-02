@@ -374,3 +374,12 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Causa:** nas capturas citadas na issue (`grinder/screenshots/passo-017.png`, `grinder/screenshots/passo-209.png`, `explorador/screenshots/passo-038.png`, e também `explorador/screenshots/passo-110.png`), a área visível do painel do Livro termina por volta de y=540, cortando os cartões dos dias, e o botão não aparece. Os relatórios mostram todos os cliques em (786,620): abaixo das três missões, dentro do `#book-body` com `overflow-y: auto`. O agente clica na coordenada do centro do elemento, e ali está o chat. Uma pessoa precisaria rolar o painel para achar o botão.
 - **Solução:** a recompensa de entrada vem antes das missões (`client/src/bookDaily.ts`), o botão desabilita e mostra "Pegando…" no clique, e a recusa do servidor ("já pegou hoje") também devolve o `book`, para o botão não ficar parado.
 - **Regra:** antes de corrigir achado de IA sobre clique, olhe a captura e confira se o alvo está visível dentro do painel; ação principal de uma aba fica no topo, não depois de conteúdo de tamanho variável.
+
+---
+
+## 14. Tirar o foco no handler não esconde a tecla dos ouvintes de `window` (R-14)
+
+- **Sintoma:** com o chat focado, o Esc saía do chat e também fechava o Livro aberto; o Enter que enviava a mensagem deixava o chat focado de novo. Reproduzido no navegador contra o build da `main` (`.git/smoke-options.mjs` com `ONLY_FOCUS=1`, fora do git).
+- **Causa:** o ouvinte do `#chatin` chamava `blur()` e o mesmo evento seguia subindo até `window`. Lá, os ouvintes de `main.ts` perguntavam `document.activeElement !== chatin`, e a resposta já era "sim", porque o foco tinha saído no passo anterior. O mesmo vale para o `GameScene.bindKeys`, que olhava `e.target instanceof HTMLInputElement`: o `<select>` não é `input` (deixava passar setas, dígitos, T e R) e o `range` é (segurava WASD e os atalhos até perder o foco).
+- **Solução:** o ouvinte do campo chama `e.stopPropagation()` no Esc e no Enter, e a regra "a tecla é do campo" ficou numa função pura (`keyBelongsToField` em `client/src/keyFocus.ts`), testada sem DOM, que olha a tag e o `type` em vez da classe do elemento.
+- **Regra:** quem trata a tecla e muda o foco é quem impede o evento de seguir. Ouvinte de `window` que decide pelo foco atual vê o estado depois dos handlers do alvo, não antes. Para saber se um atalho deve valer, pergunte se o elemento recebe texto, não se ele é `<input>`.

@@ -57,7 +57,7 @@
       <button type="button" id="menu-btn" aria-label="Abrir menu">☰</button>
       <aside id="side">
         <section id="stats">
-          <div class="who"><b id="pname"></b> <span id="plevel"></span><span class="who-icons"><button type="button" id="travel-btn" class="link icon-btn" data-ico="portal" title="Viajar (de qualquer lugar)"></button><button type="button" id="exit-btn" class="link icon-btn" data-ico="swap" title="Trocar de personagem"></button><button type="button" id="ranking-btn" class="link icon-btn" data-ico="trophy" title="Ranking"></button><button type="button" id="season-btn" class="link icon-btn" data-ico="star" title="Passe de temporada (grátis)"></button><button type="button" id="shop-btn" class="link icon-btn crystal-btn" title="Loja de Cristais: auras, técnicas, títulos e crônicas">💎</button><button type="button" id="book-btn" class="link icon-btn" data-ico="book" title="Livro: bestiário, conquistas, diário e caçada"></button><button type="button" id="dev-btn" class="link icon-btn dev-btn" title="Modo Dev: libera tudo para testar" hidden>DEV</button><button type="button" id="hd-btn" class="link icon-btn hd-btn" title="Visual: pixel art ou desenho original (HD)">HD</button><button type="button" id="mute-btn" class="link icon-btn" data-ico="sound" title="Ligar ou desligar o som"></button></span></div>
+          <div class="who"><b id="pname"></b> <span id="plevel"></span><span class="who-icons"><button type="button" id="travel-btn" class="link icon-btn" data-ico="portal" title="Viajar (de qualquer lugar)"></button><button type="button" id="exit-btn" class="link icon-btn" data-ico="swap" title="Trocar de personagem"></button><button type="button" id="ranking-btn" class="link icon-btn" data-ico="trophy" title="Ranking"></button><button type="button" id="season-btn" class="link icon-btn" data-ico="star" title="Passe de temporada (grátis)"></button><button type="button" id="shop-btn" class="link icon-btn crystal-btn" title="Loja de Cristais: auras, técnicas, títulos e crônicas">💎</button><button type="button" id="book-btn" class="link icon-btn" data-ico="book" title="Livro: bestiário, conquistas, diário e caçada"></button><button type="button" id="dev-btn" class="link icon-btn dev-btn" title="Modo Dev: libera tudo para testar" hidden>DEV</button><button type="button" id="hd-btn" class="link icon-btn hd-btn" title="Visual: pixel art ou desenho original (HD)">HD</button><button type="button" id="mute-btn" class="link icon-btn" data-ico="sound" title="Ligar ou desligar o som"></button><button type="button" id="options-btn" class="link icon-btn" data-ico="gear" title="Opções" aria-label="Opções"></button></span></div>
           <div class="bar hp"><i></i><span></span></div>
           <div class="bar rei"><i></i><span></span></div>
           <div class="bar exp"><i></i><span></span></div>
@@ -154,6 +154,11 @@
             <button type="button" id="shop-close" aria-label="Fechar">✕</button></header>
           <div class="tabs" id="shop-tabs"></div>
           <div id="shop-body"></div>
+        </div>
+        <div id="options" class="window" hidden>
+          <header><b data-ico="gear">Opções</b> <span class="hint">salvas neste navegador</span>
+            <button type="button" id="options-close" aria-label="Fechar">✕</button></header>
+          <div id="options-body"></div>
         </div>
         <div id="death" hidden>
           <h2>Você morreu</h2>

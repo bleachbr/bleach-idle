@@ -7,6 +7,7 @@ import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, title
 import { serverNow } from "./clock";
 import { fixedMarks, questTargetKinds, targetAreas, type FixedMark } from "./minimapMarks";
 import { parseStatusFlags, desiredTint, dotHitStyle, STATUS_LOOK } from "./statusFx";
+import { keyBelongsToField } from "./keyFocus";
 import type { StatusKind } from "../../shared/src/combatStatus";
 
 const VIEW_W = 15;
@@ -970,7 +971,7 @@ export class GameScene extends Phaser.Scene {
 
   private bindKeys() {
     const dirOf: Record<string, number> = { KeyS: 0, ArrowDown: 0, KeyA: 1, ArrowLeft: 1, KeyD: 2, ArrowRight: 2, KeyW: 3, ArrowUp: 3 };
-    const typing = (e: KeyboardEvent) => e.target instanceof HTMLInputElement;
+    const typing = (e: KeyboardEvent) => keyBelongsToField(e.target);
     const down = (e: KeyboardEvent) => {
       if (typing(e)) return;
       if (e.code in dirOf) {
