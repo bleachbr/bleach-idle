@@ -21,7 +21,7 @@ import { initCharacterSheet } from "./characterSheetDialog";
 import { initInventoryShortcut } from "./inventoryShortcut";
 import { huntResetButton, huntResetDoneLabel, isHuntEmpty } from "./huntReset";
 import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
-import { renderTutorialStep } from "./tutorialView";
+import { renderTutorialStep, dispatchTutorialAction } from "./tutorialView";
 
 initReleases();
 
@@ -622,6 +622,20 @@ function bindBook(room: Room<any>, myId: string, closeWindows: (keep?: string) =
       };
     }
   };
+  const openBookTab = (targetTab: string) => {
+    tab = targetTab;
+    if (panel.hidden) {
+      if (data) {
+        closeWindows("#book");
+        panel.hidden = false;
+        render();
+      } else {
+        room.send("book");
+      }
+    } else {
+      render();
+    }
+  };
   room.onMessage("book", (d: any) => { data = d; if (panel.hidden) { closeWindows("#book"); panel.hidden = false; } render(); });
   room.onMessage("dailyReady", (m: { ready: boolean }) => $("#book-btn").classList.toggle("ping", m.ready));
   room.onMessage("tutorial", (steps: { id?: string; text: string; done: boolean }[] | null) => {
@@ -631,17 +645,15 @@ function bindBook(room: Room<any>, myId: string, closeWindows: (keep?: string) =
       list.innerHTML = steps.map(renderTutorialStep).join("");
       list.querySelectorAll<HTMLButtonElement>(".tut-act").forEach((b) => {
         b.onclick = () => {
-          const act = b.dataset.act;
-          if (act === "auto") {
-            const me = room.state.players.get(myId);
-            room.send("auto", { autoHunt: !me?.autoHunt });
-          } else if (act === "book") {
-            $("#book-btn")?.click();
-          } else if (act === "travel") {
-            $("#travel-btn")?.click();
-          } else if (act === "bankai") {
-            room.send("transform");
-          }
+          dispatchTutorialAction(b.dataset.act ?? "", {
+            auto: () => {
+              const me = room.state.players.get(myId);
+              room.send("auto", { autoHunt: !me?.autoHunt });
+            },
+            book: () => openBookTab("diario"),
+            travel: () => $("#travel-btn")?.click(),
+            bankai: () => room.send("transform"),
+          });
         };
       });
     }

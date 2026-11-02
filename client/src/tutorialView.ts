@@ -8,14 +8,34 @@ export interface TutorialStepData {
 
 const escHtml = (t: string) => t.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 
-export function tutorialAction(act: string): "toggleAutoHunt" | "openBook" | "openTravel" | "transform" | null {
+export type TutorialActionId = "auto" | "book" | "travel" | "bankai";
+
+export interface TutorialActionHandlers {
+  auto: () => void;
+  book: () => void;
+  travel: () => void;
+  bankai: () => void;
+}
+
+export function tutorialAction(act: string): TutorialActionId | null {
   switch (act) {
-    case "auto": return "toggleAutoHunt";
-    case "book": return "openBook";
-    case "travel": return "openTravel";
-    case "bankai": return "transform";
-    default: return null;
+    case "auto":
+    case "book":
+    case "travel":
+    case "bankai":
+      return act;
+    default:
+      return null;
   }
+}
+
+export function dispatchTutorialAction(act: string, handlers: TutorialActionHandlers): boolean {
+  const action = tutorialAction(act);
+  if (action && typeof handlers[action] === "function") {
+    handlers[action]();
+    return true;
+  }
+  return false;
 }
 
 export function renderTutorialStep(step: TutorialStepData): string {

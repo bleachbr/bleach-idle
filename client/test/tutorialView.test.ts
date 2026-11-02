@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderTutorialStep, tutorialAction } from "../src/tutorialView";
+import { renderTutorialStep, tutorialAction, dispatchTutorialAction } from "../src/tutorialView";
 
 describe("Lote 4: Primeiros passos interativos e atalhos de HUD", () => {
   it("renderTutorialStep gera botões de ação clicáveis para passos não concluídos", () => {
@@ -45,11 +45,29 @@ describe("Lote 4: Primeiros passos interativos e atalhos de HUD", () => {
     expect(doneHtml).not.toContain('data-act="auto"');
   });
 
-  it("tutorialAction mapeia a ação para o handler correto", () => {
-    expect(tutorialAction("auto")).toBe("toggleAutoHunt");
-    expect(tutorialAction("book")).toBe("openBook");
-    expect(tutorialAction("travel")).toBe("openTravel");
-    expect(tutorialAction("bankai")).toBe("transform");
+  it("tutorialAction mapeia a ação para o identificador correspondente", () => {
+    expect(tutorialAction("auto")).toBe("auto");
+    expect(tutorialAction("book")).toBe("book");
+    expect(tutorialAction("travel")).toBe("travel");
+    expect(tutorialAction("bankai")).toBe("bankai");
     expect(tutorialAction("unknown")).toBeNull();
+  });
+
+  it("dispatchTutorialAction encaminha para o handler específico e ignora desconhecidos", () => {
+    const calls: string[] = [];
+    const handlers = {
+      auto: () => calls.push("auto"),
+      book: () => calls.push("book"),
+      travel: () => calls.push("travel"),
+      bankai: () => calls.push("bankai"),
+    };
+
+    expect(dispatchTutorialAction("auto", handlers)).toBe(true);
+    expect(dispatchTutorialAction("book", handlers)).toBe(true);
+    expect(dispatchTutorialAction("travel", handlers)).toBe(true);
+    expect(dispatchTutorialAction("bankai", handlers)).toBe(true);
+    expect(dispatchTutorialAction("invalid", handlers)).toBe(false);
+
+    expect(calls).toEqual(["auto", "book", "travel", "bankai"]);
   });
 });
