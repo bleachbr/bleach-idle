@@ -4,6 +4,7 @@ import Phaser from "phaser";
 import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
 import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, titleText, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, npcById, type GameMap, type QuestState } from "../../shared/src";
+import { pickClick, interactHint, interactNear } from "./interactHit";
 import { serverNow } from "./clock";
 import { fixedMarks, questTargetKinds, targetAreas, type FixedMark } from "./minimapMarks";
 import { parseStatusFlags, desiredTint, dotHitStyle, STATUS_LOOK } from "./statusFx";
@@ -230,6 +231,9 @@ export class GameScene extends Phaser.Scene {
   private myId = "";
   private views = new Map<string, View>();
   private targetBox!: Phaser.GameObjects.Graphics;
+  /** rótulo "E / Espaço / clique" sobre a loja, o depot ou o portal ao alcance (#26) */
+  private interactLabel!: Phaser.GameObjects.Text;
+  private interactAt = "";
   private held: number[] = []; // direções seguradas no teclado, a última vale
   private nextStepSend = 0;
   private onMe: (p: any) => void = () => {};
@@ -286,6 +290,9 @@ export class GameScene extends Phaser.Scene {
         this.anims.create({ key: `${key}-${d}`, frames: this.anims.generateFrameNumbers(key, { start: d * this.cols(key), end: d * this.cols(key) + this.cols(key) - 1 }), repeat: -1 });
 
     this.targetBox = this.add.graphics().setDepth(1e6);
+    this.interactLabel = this.add.text(0, 0, "", {
+      fontFamily: PIXEL_FONT, fontSize: "10px", color: "#ffffff", backgroundColor: "#000000aa", padding: { x: 3, y: 1 }, resolution: 2,
+    }).setOrigin(0.5, 1).setDepth(1e6).setVisible(false);
 
     const s = this.room.state;
     s.players.onAdd((p: any, id: string) => this.addView(id, p, false));
@@ -952,17 +959,18 @@ export class GameScene extends Phaser.Scene {
         return this.room.send("bagOpen", { id });
       }
     }
-    // NPC da loja (o desenho ocupa o tile dele e o de cima), baú do depot e portal
-    if (m.shop && tx === m.shop.x && (ty === m.shop.y || ty === m.shop.y - 1)) return this.room.send("interact", { kind: "shop" });
-    if (m.depot && tx === m.depot.x && ty === m.depot.y) return this.room.send("interact", { kind: "depot" });
-    if (m.gate && tx === m.gate.x && ty === m.gate.y) return this.room.send("interact", { kind: "travel" });
-    // outro jogador: abre o menu (party / atacar) na posição do clique
-    for (const v of this.views.values()) {
-      if (!v.isMonster && v.id !== this.myId && v.c.visible && v.spr.getBounds().contains(ptr.worldX, ptr.worldY)) {
-        const ev = ptr.event as MouseEvent;
-        return this.onPlayerClick(v.id, ev.clientX, ev.clientY);
-      }
+    // outro jogador abre o menu (party / atacar) na posição do clique; senão NPC da loja (todo o desenho, que passa
+    // do tile dele), baú do depot e portal, com a loja na frente (#26, ordem em pickClick)
+    const pick = pickClick(m, ptr.worldX, ptr.worldY, (wx, wy) => {
+      for (const v of this.views.values())
+        if (!v.isMonster && v.id !== this.myId && v.c.visible && v.spr.getBounds().contains(wx, wy)) return v.id;
+      return undefined;
+    });
+    if (pick && "player" in pick) {
+      const ev = ptr.event as MouseEvent;
+      return this.onPlayerClick(pick.player, ev.clientX, ev.clientY);
     }
+    if (pick) return this.room.send("interact", { kind: pick.interact });
     // monstro clicado (o sprite é maior que o tile, então testa os limites do desenho)
     for (const v of this.views.values()) {
       if (v.isMonster && v.c.visible && v.spr.getBounds().contains(ptr.worldX, ptr.worldY)) {
@@ -990,6 +998,12 @@ export class GameScene extends Phaser.Scene {
       else if (e.code === "Escape") this.room.send("target", { id: "" });
       else if (e.code === "KeyT") this.room.send("transform");
       else if (e.code === "KeyR") this.room.send("recall");
+      else if (e.code === "KeyE" || (e.code === "Space" && !(e.target instanceof HTMLButtonElement))) {
+        // interage com o que estiver ao alcance (loja antes do depot); o servidor confere a distância
+        const me = this.room.state.players.get(this.myId);
+        const kind = me && this.maps[this.mapId] ? interactNear(this.maps[this.mapId], me.x, me.y) : null;
+        if (kind) { e.preventDefault(); this.room.send("interact", { kind }); }
+      }
       else if (/^Digit[1-9]$/.test(e.code)) this.room.send("skill", { slot: Number(e.code.slice(5)) });
     };
     const up = (e: KeyboardEvent) => {
@@ -1151,6 +1165,20 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** mostra o rótulo de interação só quando a loja, o depot ou o portal estão ao alcance; recalcula ao trocar de tile */
+  private updateInteractLabel(me: any) {
+    const m = this.maps[this.mapId];
+    const key = me && m ? `${this.mapId}:${me.x}:${me.y}` : "";
+    if (key === this.interactAt) return;
+    this.interactAt = key;
+    const h = key ? interactHint(m, me.x, me.y) : null;
+    this.interactLabel.setVisible(!!h);
+    if (!h) return;
+    // acima do nome do Kisuke (desenho de 48 px) ou do tile do depot e do portal
+    const top = py(h.y) - (h.kind === "shop" ? 64 : TILE) - 2;
+    this.interactLabel.setText(h.text).setPosition(px(h.x), top);
+  }
+
   update(time: number, delta: number) {
     this.glide(delta);
     this.flyPets(time);
@@ -1196,6 +1224,7 @@ export class GameScene extends Phaser.Scene {
       if (v.label.text !== text) v.label.setText(text);
       if (v.label.style.color !== color) v.label.setColor(color);
     }
+    this.updateInteractLabel(me);
     this.targetBox.clear();
     const t = me?.targetId ? this.views.get(me.targetId) : undefined;
     if (t) this.targetBox.lineStyle(2, 0xff3030, 1).strokeRect(t.c.x - TILE / 2, t.c.y - TILE, TILE, TILE);

@@ -131,6 +131,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const p = this.me(c);
       if (!p || this.inArenaCountdown(p) || !Number.isInteger(m?.x) || !Number.isInteger(m?.y) || !walkable(mapOf(p), m.x, m.y)) return;
       p.follow = false;
+      p.pendingInteract = ""; // andar para outro lado desiste do depot/loja clicado antes (#26)
       p.path = findPath(p.x, p.y, (x, y) => x === m.x && y === m.y, (x, y) => !walkable(mapOf(p), x, y));
     });
     this.handle("step", (c, m: { dir: number }) => {
@@ -141,12 +142,14 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (!p || this.inArenaCountdown(p) || !Number.isInteger(dir) || !(dir in DIR_VEC)) return;
       const [dx, dy] = DIR_VEC[dir as Dir];
       p.follow = false;
+      p.pendingInteract = "";
       p.dir = dir;
       p.path = walkable(mapOf(p), p.x + dx, p.y + dy) ? [{ x: p.x + dx, y: p.y + dy }] : [];
     });
     this.handle("target", (c, m: { id: string }) => {
       const p = this.me(c);
       if (!p) return;
+      p.pendingInteract = "";
       if (!m?.id || m.id === p.targetId) { p.targetId = ""; p.follow = false; return; }
       const mo = this.state.monsters.get(m.id);
       if (mo) {
@@ -164,6 +167,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.handle("nextTarget", (c) => {
       const p = this.me(c);
       if (!p) return;
+      p.pendingInteract = ""; // trocar de alvo desiste do depot/loja clicado antes, como `target` (#26)
       const list = [...this.state.monsters.values()]
         .filter((mo) => sameMap(p, mo) && (!mo.owner || mo.owner === p.id) && !MONSTERS[mo.kind]?.dummy && chebyshev(p.x, p.y, mo.x, mo.y) <= VIEW)
         .sort((a, b) => chebyshev(p.x, p.y, a.x, a.y) - chebyshev(p.x, p.y, b.x, b.y));

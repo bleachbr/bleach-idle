@@ -384,6 +384,13 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 ---
 
+## Intenção pendente precisa morrer com a próxima ação (issue #26)
+
+- **Sintoma:** na praça de Karakura, clicar no Kisuke às vezes abria o depot. O baú fica a 4 tiles da loja, mas `interact` de longe guarda `pendingInteract` e o tick abre a janela quando o caminho acaba. `move` e `step` trocavam o caminho sem apagar a intenção: quem clicava no depot, mudava de ideia e parava a 2 tiles do baú (por exemplo em (16,13), ao lado do Kisuke) via o depot abrir.
+- **Solução:** `move`, `step` e `target` zeram `pendingInteract`. No cliente, a área de clique da loja é o desenho inteiro (48 px, mais largo que o tile) e vem antes do depot (`client/src/interactHit.ts`).
+- **Teste sem relógio:** `server/test/interact.test.ts` embrulha `open` e `updatePlayer` da sala real (via `matchMaker.getRoomById`) e espera dois ticks do jogador depois da chegada, em vez de esperar tempo: o `pendingInteract` é conferido no começo do `updatePlayer`, antes do passo, então a janela só abriria no tick seguinte ao da chegada.
+- **Regra:** todo estado "faça X quando chegar" precisa ser apagado pelas outras intenções do jogador, não só pela chegada.
+
 ## 13. "Botão não responde" que era rolagem (#23)
 
 - **Sintoma (Jogador-IA, rodada `2026-11-01-12-47`):** o Grinder clicou em "Pegar a recompensa de hoje" nos passos 12 a 16 e de novo no 208, e registrou nos passos 17 e 209 que o botão não respondia; o Explorador clicou nos passos 38 e 109 e registrou o mesmo no 110. Em todas as capturas a sequência continua em 0 dias. Os cenários `progress` e `hunt` provam que o handler `daily` paga e recusa o segundo resgate.
