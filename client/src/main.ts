@@ -14,6 +14,7 @@ import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
 import { ChatBook, CHAT_MAX, CHAT_TABS, parseTab, type ChatLineData, type ChatTab } from "./chatTabs";
 import { initReleases } from "./releases";
+import { initCharacterSheet } from "./characterSheetDialog";
 import { initInventoryShortcut } from "./inventoryShortcut";
 import { huntResetButton, huntResetDoneLabel, isHuntEmpty } from "./huntReset";
 import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
@@ -200,9 +201,11 @@ function start(room: Room<any>, myId: string) {
   },
     () => room.state.players.get(myId)?.level ?? 1,
     () => { const p = room.state.players.get(myId); return p ? { x: p.x, y: p.y } : undefined; });
+  const sheet = initCharacterSheet(room, () => room.state.players.get(myId), serverNow);
   const onMe = (p: any) => {
     renderStats(p);
     inventory.onMove(p.x, p.y);
+    sheet.update();
   };
   const game = new Phaser.Game(gameConfig("game"));
   game.scene.add("game", GameScene, true, { room, myId, onMe, onPlayerClick: (id: string, x: number, y: number) => playerMenu(room, myId, id, x, y) });

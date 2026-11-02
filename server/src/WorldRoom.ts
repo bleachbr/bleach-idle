@@ -13,7 +13,7 @@ import {
   expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, outfitFits, QUEST_BY_ID, huntKinds, MAX_ACTIVE_QUESTS,
-  zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN, potionRefusal,
+  zanNext, reiNext, zanMult, reiMult, trainedDmgMult, AUTO_TRAIN_BURN, potionRefusal,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
   EVENT_BANNER, EVENT_END_MS, eventLore, type EventBanner, type EventKind, type EventPhase,
@@ -739,7 +739,8 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private hit(p: Player, t: Player | Monster, mult: number, now: number, skill = false) {
-    mult *= (skill ? reiMult(p.reiryoku) : zanMult(p.zanjutsu)) * rebirthBonus(p.rebirths).dmg * setBonuses(p.equip).total.dmg;
+    // perícia × renascimento × conjuntos (shared/src/damage.ts, a mesma conta da ficha); o estágio entra no rollDamage
+    mult *= trainedDmgMult(p, skill);
     if (!skill) this.train(p, 1, 0);
     if (isPlayer(t)) return this.pvpHit(p, t, mult, now);
     // no mesmo tick a habilidade pode matar e o golpe corpo a corpo acertar o mesmo alvo:
