@@ -235,8 +235,17 @@ function start(room: Room<any>, myId: string) {
   bindEvents(room);
   bindDev(room, myId, closeWindows);
   bindDangai(room, myId);
+  const chatin = $<HTMLInputElement>("#chatin");
   window.addEventListener("keydown", (e) => {
-    if (e.code === "Escape" && document.activeElement !== chatin) closeWindows();
+    if (e.code === "Escape") {
+      if (document.activeElement === chatin) {
+        e.preventDefault();
+        chatin.value = "";
+        chatin.blur();
+      } else {
+        closeWindows();
+      }
+    }
   });
   $("#travel-btn").onclick = () => inventory.openTravel();
   initInventoryShortcut();
@@ -266,7 +275,6 @@ function start(room: Room<any>, myId: string) {
   bindLootFilter(room);
   bindParty(room, myId);
   syncClock(room);
-  const chatin = $<HTMLInputElement>("#chatin");
   openChatTab(chat.active);
   window.addEventListener("keydown", (e) => {
     if (e.code === "Enter" && document.activeElement !== chatin) { e.preventDefault(); chatin.focus(); }
@@ -287,7 +295,11 @@ function start(room: Room<any>, myId: string) {
       }
       chatin.value = "";
       chatin.blur();
-    } else if (e.code === "Escape") chatin.blur();
+    } else if (e.code === "Escape") {
+      e.preventDefault();
+      chatin.value = "";
+      chatin.blur();
+    }
   });
 }
 

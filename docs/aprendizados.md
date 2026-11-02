@@ -403,3 +403,14 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Causa:** nas capturas citadas na issue (`grinder/screenshots/passo-017.png`, `grinder/screenshots/passo-209.png`, `explorador/screenshots/passo-038.png`, e também `explorador/screenshots/passo-110.png`), a área visível do painel do Livro termina por volta de y=540, cortando os cartões dos dias, e o botão não aparece. Os relatórios mostram todos os cliques em (786,620): abaixo das três missões, dentro do `#book-body` com `overflow-y: auto`. O agente clica na coordenada do centro do elemento, e ali está o chat. Uma pessoa precisaria rolar o painel para achar o botão.
 - **Solução:** a recompensa de entrada vem antes das missões (`client/src/bookDaily.ts`), o botão desabilita e mostra "Pegando…" no clique, e a recusa do servidor ("já pegou hoje") também devolve o `book`, para o botão não ficar parado.
 - **Regra:** antes de corrigir achado de IA sobre clique, olhe a captura e confira se o alvo está visível dentro do painel; ação principal de uma aba fica no topo, não depois de conteúdo de tamanho variável.
+
+---
+
+## 14. Foco no Input de Chat e Hotkeys Presas em Jogos Canvas (Lote 2 do Playtest)
+
+- **Sintoma:** Bots e jogadores ficavam presos com o foco retido no `<input id="chatin">`. Quando tentavam andar com WASD ou usar técnicas (1-9), os comandos viravam texto no input (ex: "w", "a", "s", "AH", "AHF/a"). Ao clicar no mapa ou no canvas, o navegador mantinha o foco no input porque o canvas WebGL não rouba o activeElement do DOM. Pressionar `Escape` também mantinha os caracteres incompletos no valor do input.
+- **Solução (`client/src/main.ts`, `client/src/GameScene.ts`):**
+  1. No `GameScene.onClick`, `document.activeElement.blur()` desfaz o foco ativo caso o usuário clique no mundo para andar, interagir ou atacar.
+  2. Pressionar `Escape` no `chatin` ou no listener global com `document.activeElement === chatin` limpa o buffer (`chatin.value = ""`) e desfoca o campo (`chatin.blur()`), restaurando os atalhos de teclado.
+  3. No servidor (`server/src/WorldRoom.ts`), suporte direto via chat para automação e aliases mais tentados (`/autohunt`, `/hunt`, `/helper`, `/auto`, `/party`, `/livro`, `/patrulha iniciar`, `/cronicas`).
+- **Regra:** Em jogos 2D híbridos (DOM + Canvas), cliques no canvas precisam liberar o foco de inputs para devolver o fluxo aos atalhos globais de teclado, e `Escape` no chat deve limpar qualquer rascunho acidental.

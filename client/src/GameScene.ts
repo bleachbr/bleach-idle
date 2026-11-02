@@ -951,6 +951,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onClick(ptr: Phaser.Input.Pointer) {
+    if (document.activeElement instanceof HTMLElement && document.activeElement !== document.body) {
+      document.activeElement.blur();
+    }
     const tx = Math.floor(ptr.worldX / TILE), ty = Math.floor(ptr.worldY / TILE);
     const m = this.maps[this.mapId];
     for (const [id, b] of this.bags) {
