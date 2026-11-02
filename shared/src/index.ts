@@ -19,3 +19,4 @@ export * from "./arena";
 export * from "./patrols";
 export * from "./offlineReport";
 export * from "./potions";
+export * from "./skillGate";
