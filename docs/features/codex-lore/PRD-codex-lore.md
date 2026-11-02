@@ -3,7 +3,7 @@
 | Metadado | Detalhe |
 | :--- | :--- |
 | **Feature** | Aba "Codex" no Livro, com fichas de personagens, facções, inimigos, lugares e eventos, liberadas pelo que o personagem já fez |
-| **Status** | Proposto. Rascunho do Rafael em 01/11/2026; falta a aprovação das duas pessoas para "Aceito" |
+| **Status** | Aceito em 01/11/2026 por Rafael e Waldir: Waldir aprovou o PR #42 ([revisão](https://github.com/bleachbr/bleach-idle/pull/42#pullrequestreview-5729861501)), e Rafael confirmou o aceite. As propostas dos pontos em aberto valem como decisão até alguém reabrir |
 | **Item do roadmap** | R-09 (fila do Rafael, `roadmap-duplas.md`) |
 | **ADRs** | [ADR-001 catálogo e regras de desbloqueio](adrs/ADR-001-catalogo-e-desbloqueio.md) · [ADR-002 protocolo e interface](adrs/ADR-002-protocolo-e-interface.md) |
 

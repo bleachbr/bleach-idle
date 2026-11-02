@@ -6,11 +6,13 @@ import { Client, type Room } from "colyseus.js";
 import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
+import { browserStore, loadLoreRead, markLoreRead } from "./loreRead";
 import { bindEvents } from "./events";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
 import { initReleases } from "./releases";
+import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
 
 initReleases();
 
@@ -460,6 +462,7 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
   let data: { crystals: number; owned: string[]; equip: Partial<Record<string, string>> } | null = null;
   let tab: CosKind = "aura";
   let reading = "";
+  const loreRead = loadLoreRead(browserStore());
   const hex = (n: number) => `#${n.toString(16).padStart(6, "0")}`;
   const render = () => {
     if (!data) return;
@@ -469,9 +472,11 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
     const body = $("#shop-body");
     if (reading) {
       const x = COSMETIC[reading];
-      body.innerHTML = `<h3>${escHtml(x.name)}</h3>${(x.text ?? []).map((t) => `<p>${escHtml(t)}</p>`).join("")}
-        <p class="hint">Título desta crônica: <b style="color:${hex(x.color)}">${escHtml(x.title ?? "")}</b></p><button type="button" class="claim" data-back>Voltar</button>`;
-      body.querySelector<HTMLButtonElement>("[data-back]")!.onclick = () => { reading = ""; render(); };
+      // voltar no topo e no fim: o texto é longo e o botão de baixo ficava fora da vista (#38)
+      const back = `<button type="button" class="claim" data-back>← Voltar à lista de crônicas</button>`;
+      body.innerHTML = `${back}<h3>${escHtml(x.name)}</h3>${(x.text ?? []).map((t) => `<p>${escHtml(t)}</p>`).join("")}
+        <p class="hint">Título desta crônica: <b style="color:${hex(x.color)}">${escHtml(x.title ?? "")}</b></p>${back}`;
+      body.querySelectorAll<HTMLButtonElement>("[data-back]").forEach((b) => (b.onclick = () => { reading = ""; render(); }));
       return;
     }
     const kind = COS_KINDS.find((k) => k.kind === tab)!;
@@ -489,10 +494,10 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
           : `<span class="swatch" style="background:${hex(x.color)};box-shadow:0 0 8px ${hex(x.color2 ?? x.color)}"></span>`;
         const desc = x.desc + (tab === "outfit" && !fits ? ` Não muda o visual de ${CHARS[charId]?.name ?? "este personagem"}.` : "");
         const action = !own ? `<button type="button" data-buy="${x.id}" ${data!.crystals < x.price ? `disabled title="Faltam ${x.price - data!.crystals} cristais (ganhe na recompensa diária e conquistas)"` : ""}>💎 ${x.price}</button>`
-          : tab === "lore" ? `<button type="button" data-read="${x.id}">Ler</button><button type="button" data-equip="${x.id}" ${on ? "disabled" : ""}>${on ? "Título em uso" : "Usar título"}</button>`
+          : tab === "lore" ? `<button type="button" data-read="${x.id}">${loreRead.has(x.id) ? "Reler" : "Ler"}</button><button type="button" data-equip="${x.id}" ${on ? "disabled" : ""}>${on ? "Título em uso" : "Usar título"}</button>`
           : on ? `<button type="button" data-off="${slot}">Tirar</button>` : `<button type="button" data-equip="${x.id}">Usar</button>`;
         const label = tab === "title" || tab === "lore" ? `<b style="color:${hex(x.color)}">« ${escHtml(titleText(x.id))} »</b>` : `<b>${escHtml(x.name)}</b>`;
-        return `<div class="cos${own ? " own" : ""}${on ? " on" : ""}">${swatch}<div class="cos-text">${label}${tab === "lore" ? ` <small>${escHtml(x.name)}</small>` : ""}<div class="hint">${escHtml(desc)}</div></div><div class="cos-act">${action}</div></div>`;
+        return `<div class="cos${own ? " own" : ""}${on ? " on" : ""}">${swatch}<div class="cos-text">${label}${tab === "lore" ? ` <small>${escHtml(x.name)}</small>${loreRead.has(x.id) ? ` <span class="lore-read">✓ Lida</span>` : ""}` : ""}<div class="hint">${escHtml(desc)}</div></div><div class="cos-act">${action}</div></div>`;
       }).join("") +
       `<p class="hint buy-note">Compra de cristais com dinheiro: ainda não está aberta.</p>`;
     // compra em dois cliques: o primeiro pede confirmação no próprio botão
@@ -503,7 +508,7 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
     }));
     body.querySelectorAll<HTMLButtonElement>("[data-equip]").forEach((b) => (b.onclick = () => room.send("shopEquip", { id: b.dataset.equip })));
     body.querySelectorAll<HTMLButtonElement>("[data-off]").forEach((b) => (b.onclick = () => room.send("shopEquip", { kind: b.dataset.off })));
-    body.querySelectorAll<HTMLButtonElement>("[data-read]").forEach((b) => (b.onclick = () => { reading = b.dataset.read!; render(); }));
+    body.querySelectorAll<HTMLButtonElement>("[data-read]").forEach((b) => (b.onclick = () => { reading = b.dataset.read!; markLoreRead(browserStore(), reading, loreRead); render(); }));
   };
   room.onMessage("shopData", (d: typeof data) => { data = d; closeWindows("#shop"); panel.hidden = false; render(); });
   room.onMessage("crystals", (m: { crystals: number }) => { if (data) { data.crystals = m.crystals; render(); } });
@@ -515,8 +520,7 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
   const panel = $("#book");
   let data: any = null;
   let tab = "bestiario";
-  const reward = (r: { gold: number; items?: { id: string; qty: number }[] }) =>
-    [r.gold ? `${r.gold} kan` : "", ...(r.items ?? []).map((i) => `${i.qty}x ${ITEMS[i.id]?.name ?? i.id}`)].filter(Boolean).join(" + ");
+  const reward = rewardText;
   const bar = (have: number, need: number) => `<div class="bar"><i style="width:${Math.min(100, (have / need) * 100)}%"></i></div>`;
   const render = () => {
     panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === tab)));
@@ -564,11 +568,19 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
       const ms = data.missions;
       const missions = `<h3>Missões de hoje</h3><p class="hint">Cada uma paga ${ms.gold} kan e ${ms.exp} XP sozinha ao completar; as três juntas dão uma Caixa do Kisuke${ms.bonus ? " (já ganha)" : ""}.</p>` +
         ms.list.map((m: any) => `<div class="ach${m.done ? " done" : ""}"><b>${escHtml(m.text)}</b><div class="hint">${m.done ? "Feita" : `${m.have}/${m.need}`}</div>${m.done ? "" : bar(m.have, m.need)}</div>`).join("");
-      body.innerHTML = missions + `<h3>Recompensa de entrada</h3><p class="hint">Pegue uma vez por dia (o dia vira à meia-noite de Brasília). Perder um dia zera a sequência.</p>
-        <div><b>Sequência: ${d.streak} ${d.streak === 1 ? "dia" : "dias"}</b></div>
-        <div class="days">${d.rewards.map((r: any, i: number) => `<div class="${i < d.index || (d.claimed && i === d.index) ? "got" : ""}${i === d.index ? " today" : ""}"><b>Dia ${i + 1}</b><br>${reward(r)}</div>`).join("")}</div>
-        <button type="button" class="claim" ${d.claimed ? `disabled title="Recompensa diária já resgatada hoje. Volte após a meia-noite de Brasília."` : ""}>${d.claimed ? "Já pegou hoje" : "Pegar a recompensa de hoje"}</button>`;
-      body.querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("daily");
+      body.innerHTML = dailyTabHtml(d, missions);
+      // retorno na hora; o "book" que o servidor devolve (resgate ou recusa) redesenha a aba
+      body.querySelector<HTMLButtonElement>(".claim")!.onclick = (e) => {
+        const b = e.currentTarget as HTMLButtonElement;
+        b.disabled = true;
+        b.textContent = claimPendingLabel;
+        room.send("daily");
+        // sem "book" de volta (servidor lento ou mensagem perdida), o botão não fica preso em "Pegando…";
+        // se o "book" chegou, a aba foi redesenhada e este botão já saiu do DOM
+        window.setTimeout(() => {
+          if (b.isConnected && b.textContent === claimPendingLabel) { b.disabled = false; b.textContent = claimLabel; }
+        }, claimTimeoutMs);
+      };
     }
   };
   room.onMessage("book", (d: any) => { data = d; if (panel.hidden) { closeWindows("#book"); panel.hidden = false; } render(); });

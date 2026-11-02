@@ -3,7 +3,7 @@
 | Metadado | Detalhe |
 | :--- | :--- |
 | **Feature** | Testes E2E com Playwright: login, lobby, entrada no mundo e HUD |
-| **Status** | Proposto. Rascunho do Rafael em 01/11/2026; falta a aprovação das duas pessoas para "Aceito" |
+| **Status** | Aceito em 01/11/2026 por Rafael e Waldir: Waldir aprovou o PR #29 ([revisão](https://github.com/bleachbr/bleach-idle/pull/29#pullrequestreview-5729186922)), e Rafael confirmou o aceite. As propostas dos pontos em aberto valem como decisão até alguém reabrir |
 | **Item do roadmap** | M5-03 |
 | **ADR** | [ADR-001 Playwright no CI](adrs/ADR-001-playwright-no-ci.md) |
 

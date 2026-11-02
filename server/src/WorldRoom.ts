@@ -3180,7 +3180,8 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (!p) return;
       const today = dayKey(Date.now());
       const d = p.prog.daily;
-      if (d.last === today) return this.log(p, "Você já pegou a recompensa de hoje. Volte amanhã.");
+      // na recusa também devolve o Livro: o cliente desabilitou o botão ao clicar e espera o redesenho (#23)
+      if (d.last === today) { this.log(p, "Você já pegou a recompensa de hoje. Volte amanhã."); return show(p); }
       d.streak = d.last === prevDay(today) ? d.streak + 1 : 1;
       d.last = today;
       const got = this.grant(p, DAILY[(d.streak - 1) % DAILY.length]);
