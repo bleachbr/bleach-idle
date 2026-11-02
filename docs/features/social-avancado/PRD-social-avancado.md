@@ -3,7 +3,7 @@
 | Metadado | Detalhe |
 | :--- | :--- |
 | **Feature** | Troca direta, abas de chat, filtro de loot do Auto Helper e banco de guilda |
-| **Status** | Proposto. Rascunho do Rafael em 01/11/2026; falta a aprovação das duas pessoas para "Aceito" |
+| **Status** | Aceito em 01/11/2026 por Rafael e Waldir: Waldir aprovou o PR #28 ([revisão](https://github.com/bleachbr/bleach-idle/pull/28#pullrequestreview-5729185927)), e Rafael confirmou o aceite. As propostas dos pontos em aberto valem como decisão até alguém reabrir |
 | **Itens do roadmap** | M3-01, M3-02, M3-03, M3-04 (M3-05, moderação de chat, já está feito e tem spec própria em `docs/features/moderacao-chat/`) |
 | **ADRs** | [ADR-001 troca direta](adrs/ADR-001-troca-direta.md) · [ADR-002 abas de chat](adrs/ADR-002-abas-de-chat.md) · [ADR-003 filtro de loot](adrs/ADR-003-filtro-de-loot.md) · [ADR-004 banco de guilda](adrs/ADR-004-banco-de-guilda.md) |
 

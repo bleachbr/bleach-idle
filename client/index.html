@@ -57,7 +57,7 @@
       <button type="button" id="menu-btn" aria-label="Abrir menu">☰</button>
       <aside id="side">
         <section id="stats">
-          <div class="who"><b id="pname"></b> <span id="plevel"></span><span class="who-icons"><button type="button" id="travel-btn" class="link icon-btn" data-ico="portal" title="Viajar (de qualquer lugar)"></button><button type="button" id="exit-btn" class="link icon-btn" data-ico="swap" title="Trocar de personagem"></button><button type="button" id="ranking-btn" class="link icon-btn" data-ico="trophy" title="Ranking"></button><button type="button" id="season-btn" class="link icon-btn" data-ico="star" title="Passe de temporada (grátis)"></button><button type="button" id="shop-btn" class="link icon-btn crystal-btn" title="Loja de Cristais: auras, técnicas, títulos e crônicas">💎</button><button type="button" id="book-btn" class="link icon-btn" data-ico="book" title="Livro: bestiário, conquistas, diário e caçada"></button><button type="button" id="dev-btn" class="link icon-btn dev-btn" title="Modo Dev: libera tudo para testar" hidden>DEV</button><button type="button" id="hd-btn" class="link icon-btn hd-btn" title="Visual: pixel art ou desenho original (HD)">HD</button><button type="button" id="mute-btn" class="link icon-btn" data-ico="sound" title="Ligar ou desligar o som"></button></span></div>
+          <div class="who"><button type="button" id="sheet-btn" class="who-name" aria-haspopup="dialog" aria-controls="sheet-dialog" title="Ficha do personagem: atributos e bônus"><b id="pname"></b> <span id="plevel"></span></button><span class="who-icons"><button type="button" id="travel-btn" class="link icon-btn" data-ico="portal" title="Viajar (de qualquer lugar)"></button><button type="button" id="exit-btn" class="link icon-btn" data-ico="swap" title="Trocar de personagem"></button><button type="button" id="inv-btn" class="link icon-btn" data-ico="chest" title="Inventário e equipamento (tecla I)" aria-label="Inventário (I)" aria-keyshortcuts="I B" aria-controls="gear"></button><button type="button" id="ranking-btn" class="link icon-btn" data-ico="trophy" title="Ranking"></button><button type="button" id="season-btn" class="link icon-btn" data-ico="star" title="Passe de temporada (grátis)"></button><button type="button" id="shop-btn" class="link icon-btn crystal-btn" title="Loja de Cristais: auras, técnicas, títulos e crônicas">💎</button><button type="button" id="book-btn" class="link icon-btn" data-ico="book" title="Livro: bestiário, conquistas, diário e caçada"></button><button type="button" id="dev-btn" class="link icon-btn dev-btn" title="Modo Dev: libera tudo para testar" hidden>DEV</button><button type="button" id="hd-btn" class="link icon-btn hd-btn" title="Visual: pixel art ou desenho original (HD)">HD</button><button type="button" id="mute-btn" class="link icon-btn" data-ico="sound" title="Ligar ou desligar o som"></button></span></div>
           <div class="bar hp"><i></i><span></span></div>
           <div class="bar rei"><i></i><span></span></div>
           <div class="bar exp"><i></i><span></span></div>
@@ -74,6 +74,7 @@
           <h2 data-ico="scroll">Atalhos</h2>
           <div><kbd>2</kbd> Poção de Cura (<span id="potions">0</span>)</div>
           <div><kbd>3</kbd> Poção de Reiatsu (<span id="rei-potions">0</span>)</div>
+          <div><kbd>I</kbd> Inventário e equipamento (ou <kbd>B</kbd>)</div>
           <div><kbd>T</kbd> Liberar o estágio mais alto da evolução ↔ voltar</div>
           <div><kbd>R</kbd> Voltar à cidade</div>
           <div><kbd>Tab</kbd> próximo alvo · <kbd>Esc</kbd> soltar alvo</div>
@@ -84,7 +85,7 @@
           <div id="atkdef"></div>
           <div id="sets"></div>
           <div id="equip" class="grid"></div>
-          <h2 data-ico="chest">Inventário <span id="gold"></span></h2>
+          <h2 id="inv-title" data-ico="chest" tabindex="-1">Inventário <kbd title="Atalho: tecla I">I</kbd> <span id="gold"></span></h2>
           <div id="inv" class="grid"></div>
           <p class="hint">Clique para equipar ou usar. Baú (depot) e loja ficam na praça.</p>
         </section>
@@ -165,7 +166,8 @@
           <div id="modal-body"></div>
         </div>
         <div id="chat">
-          <div id="chatlog"></div>
+          <div id="chat-tabs" role="tablist" aria-label="Canais do chat"></div>
+          <div id="chatlog" role="tabpanel"></div>
           <input id="chatin" maxlength="200" placeholder="Enter para conversar · /ajuda para comandos" autocomplete="off" />
         </div>
         <div id="touch" hidden>
@@ -200,6 +202,10 @@
         <button type="button" id="rebirth-cancel" autofocus>Cancelar</button>
         <button type="button" id="rebirth-confirm" class="primary">Confirmar Renascimento</button>
       </div>
+    </dialog>
+    <dialog id="sheet-dialog" aria-labelledby="sheet-title">
+      <header><h2 id="sheet-title">Ficha do personagem</h2><button type="button" id="sheet-close" autofocus>Fechar</button></header>
+      <div id="sheet-body"></div>
     </dialog>
   </body>
 </html>

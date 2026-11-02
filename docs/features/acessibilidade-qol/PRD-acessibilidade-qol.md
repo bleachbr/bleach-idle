@@ -3,7 +3,7 @@
 | Metadado | Detalhe |
 | :--- | :--- |
 | **Feature** | Janela de opções, escala de texto, alto contraste, menos movimento, teclas configuráveis e controles de toque para uma mão |
-| **Status** | Proposto. Rascunho do Rafael em 01/11/2026; falta a aprovação das duas pessoas para "Aceito" |
+| **Status** | Aceito em 01/11/2026 por Rafael e Waldir: Waldir aprovou o PR #33 ([revisão](https://github.com/bleachbr/bleach-idle/pull/33#pullrequestreview-5729160240)), e Rafael confirmou o aceite. As propostas dos pontos em aberto valem como decisão até alguém reabrir |
 | **Item do roadmap** | R-14 (fila do Rafael, `roadmap-duplas.md`) |
 | **ADRs** | [ADR-001 preferências e janela de opções](adrs/ADR-001-preferencias-e-janela-de-opcoes.md) · [ADR-002 escala, contraste e movimento](adrs/ADR-002-escala-contraste-e-movimento.md) · [ADR-003 teclas e toque](adrs/ADR-003-teclas-e-toque.md) |
 
