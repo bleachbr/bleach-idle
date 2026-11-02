@@ -6,6 +6,7 @@ import { Client, type Room } from "colyseus.js";
 import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
+import { passTierCards } from "./passTiers";
 import { browserStore, loadLoreRead, markLoreRead } from "./loreRead";
 import { loreReadingHtml, hex } from "./loreReader";
 import { bindEvents } from "./events";
@@ -392,6 +393,11 @@ function bindSeason(room: Room<any>, closeWindows: (keep?: string) => void) {
   const panel = $("#pass");
   type Season = { open: boolean; name: string; endsAt: number; pts: number; perTier: number; tiers: number; claimed: number; killPts: number; killCap: number };
   let st: Season | null = null;
+  let restoreFocusAfterClaim = false;
+  const sendClaim = () => {
+    restoreFocusAfterClaim = true;
+    room.send("seasonClaim");
+  };
   const prize = (t: number) => {
     const r = seasonReward(t);
     return [
@@ -413,16 +419,28 @@ function bindSeason(room: Room<any>, closeWindows: (keep?: string) => void) {
       <div class="bar"><i style="width:${(into / st.perTier) * 100}%"></i></div>
       <p class="hint">Pontos: a cada ${SEASON_PTS.killEvery} abates +${SEASON_PTS.kill} (hoje ${st.killPts}/${st.killCap}) · chefe +${SEASON_PTS.boss} · missão diária +${SEASON_PTS.mission} · recompensa diária +${SEASON_PTS.daily} · chefe mundial +${SEASON_PTS.worldBoss}</p>
       <button type="button" class="claim" ${tier > st.claimed ? "" : `disabled title="Suba de nível no passe (${into}/${st.perTier} pontos) para liberar novos prêmios"`}>${tier > st.claimed ? `Pegar ${tier - st.claimed} ${tier - st.claimed === 1 ? "prêmio" : "prêmios"}` : "Tudo pego até agora"}</button>`;
-    $("#pass-head").querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("seasonClaim");
-    const cells: string[] = [];
-    for (let t = 1; t <= st.tiers; t++) {
-      const cls = t <= st.claimed ? "got" : t <= tier ? "ready" : "";
-      cells.push(`<div class="tier ${cls}${seasonReward(t).cos ? " big" : ""}"><small>${t}</small><div>${prize(t)}</div></div>`);
-    }
-    cells.push(`<div class="tier${tier > st.tiers ? " ready" : ""}"><small>${st.tiers}+</small><div>A cada nível a mais:<br>${prize(st.tiers + 1)}</div></div>`);
+    $("#pass-head").querySelector<HTMLButtonElement>(".claim")!.onclick = sendClaim;
+    const cells = passTierCards(st).map((c, i) => {
+      const note = c.note ? `<span class="note">${escHtml(c.note)}</span>` : "";
+      const body = `<small>${escHtml(c.label)}</small><span class="prize">${i < st!.tiers ? prize(i + 1) : `A cada nível a mais:<br>${prize(st!.tiers + 1)}`}</span>${note}`;
+      const cls = `tier ${c.cls}${i < st!.tiers && seasonReward(i + 1).cos ? " big" : ""}`;
+      // pronto: botão que resgata (o mesmo seasonClaim de cima). O texto visível (note) diz a ação ou
+      // o que falta, não só o tooltip (#34). O botão tira o nome do próprio conteúdo (nível, prêmio e
+      // "toque para pegar"); aria-label nele esconderia o prêmio. O bloqueado é um grupo rotulado.
+      return c.claimable ? `<button type="button" class="${cls}" title="${escHtml(c.hint)}" data-claim>${body}</button>`
+        : `<div class="${cls}" role="group" title="${escHtml(c.hint)}" aria-label="${escHtml(c.aria)}">${body}</div>`;
+    });
     $("#pass-body").innerHTML = `<div class="tiers">${cells.join("")}</div>`;
+    $("#pass-body").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = sendClaim));
     // rola até o próximo prêmio
     $("#pass-body").querySelector<HTMLElement>(".tier.ready:not(.got), .tier:not(.got)")?.scrollIntoView({ block: "nearest", inline: "center" });
+    if (restoreFocusAfterClaim) {
+      restoreFocusAfterClaim = false;
+      const target = $("#pass-body").querySelector<HTMLButtonElement>("[data-claim]")
+        ?? $("#pass-head").querySelector<HTMLButtonElement>(".claim:not([disabled])")
+        ?? $("#pass-body");
+      target?.focus();
+    }
   };
   room.onMessage("season", (m: Season) => { st = m; if (m.open) { closeWindows("#pass"); panel.hidden = false; } render(); });
   $("#season-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("seasonOpen"); };
