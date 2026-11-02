@@ -54,3 +54,37 @@ test("trocar de personagem e, com Lembrar, recarregar pula o login", async ({ pa
   await expect(page.locator("#lobby")).toBeVisible();
   await expect(page.locator("#login")).toBeHidden();
 });
+
+test("entrar no mundo com personagem existente exibe loading e inicializa canvas centrado", async ({ page }) => {
+  page.on("dialog", (d) => d.accept());
+  const { name } = await newPlayer(page);
+  // Sai para o lobby para simular retorno com personagem existente
+  await page.click("#exit-btn");
+  await expect(page.locator("#lobby")).toBeVisible();
+  const row = page.locator("#char-list .char-row", { hasText: name });
+  await expect(row).toBeVisible();
+
+  // Clica em Jogar com personagem existente
+  await row.getByRole("button", { name: "Jogar" }).click();
+  await expect(page.locator("#app")).toBeVisible();
+
+  // Deve exibir o indicador de carregamento enquanto o mundo inicializa (evita percepção de canvas preto travado)
+  const loader = page.locator("#game-loading");
+  await expect(loader).toBeVisible();
+
+  // Aguarda o carregamento concluir e o canvas ficar pronto
+  await expect(loader).toHaveClass(/ready/, { timeout: 10_000 });
+  const canvas = page.locator("#game canvas");
+  await expect(canvas).toBeVisible();
+
+  // Verifica que o canvas tem dimensões renderizadas válidas
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.width).toBeGreaterThan(100);
+  expect(box!.height).toBeGreaterThan(100);
+
+  // Confirma que o mundo entrou e o canvas tem dimensões válidas
+  await expect(page.locator("#chatlog")).toContainText(`${name} entrou no mundo`);
+  const shot = await canvas.screenshot();
+  expect(shot.length).toBeGreaterThan(1000);
+});
