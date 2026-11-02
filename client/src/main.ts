@@ -3,15 +3,24 @@ import Phaser from "phaser";
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, isPureLoot, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
+import { CHARS, ITEMS, isPureLoot, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
+import { passTierCards } from "./passTiers";
+import { browserStore, loadLoreRead, markLoreRead } from "./loreRead";
+import { loreReadingHtml, hex } from "./loreReader";
 import { bindEvents } from "./events";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
 import { ChatBook, CHAT_MAX, CHAT_TABS, parseTab, type ChatLineData, type ChatTab } from "./chatTabs";
 import { initReleases } from "./releases";
+import { rankingEmptyText } from "./rankingEmpty";
+import { initRebirthDialog } from "./rebirthDialog";
+import { initCharacterSheet } from "./characterSheetDialog";
+import { initInventoryShortcut } from "./inventoryShortcut";
+import { huntResetButton, huntResetDoneLabel, isHuntEmpty } from "./huntReset";
+import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
 
 initReleases();
 
@@ -195,9 +204,11 @@ function start(room: Room<any>, myId: string) {
   },
     () => room.state.players.get(myId)?.level ?? 1,
     () => { const p = room.state.players.get(myId); return p ? { x: p.x, y: p.y } : undefined; });
+  const sheet = initCharacterSheet(room, () => room.state.players.get(myId), serverNow);
   const onMe = (p: any) => {
     renderStats(p);
     inventory.onMove(p.x, p.y);
+    sheet.update();
   };
   const game = new Phaser.Game(gameConfig("game"));
   game.scene.add("game", GameScene, true, { room, myId, onMe, onPlayerClick: (id: string, x: number, y: number) => playerMenu(room, myId, id, x, y) });
@@ -228,13 +239,10 @@ function start(room: Room<any>, myId: string) {
     if (e.code === "Escape" && document.activeElement !== chatin) closeWindows();
   });
   $("#travel-btn").onclick = () => inventory.openTravel();
-  $("#rebirth-btn").onclick = () => {
-    const me = room.state.players.get(myId);
-    if (!me) return;
-    const b = rebirthBonus(me.rebirths + 1);
-    const ok = confirm(`Renascer volta você ao nível 8 e leva para a praça de Karakura.\n\nVocê mantém itens, equipamento, kan, forja, bestiário, conquistas e habilidades.\n\nBônus permanentes depois deste renascimento: +${Math.round((b.exp - 1) * 100)}% de XP, +${Math.round((b.dmg - 1) * 100)}% de dano e +${Math.round((b.hp - 1) * 100)}% de vida.\n\nRenascer agora?`);
-    if (ok) room.send("rebirth");
-  };
+  initInventoryShortcut();
+  // janela do jogo no lugar do window.confirm (issue #35); o servidor continua validando o renascimento
+  const rebirth = initRebirthDialog(room, () => room.state.players.get(myId));
+  $("#rebirth-btn").onclick = () => rebirth.open();
   const mute = $("#mute-btn");
   const showMute = () => { mute.dataset.ico = sfx.isMuted() ? "mute" : "sound"; mute.title = sfx.isMuted() ? "Som desligado (clique para ligar)" : "Som ligado (clique para desligar)"; };
   showMute();
@@ -386,6 +394,11 @@ function bindSeason(room: Room<any>, closeWindows: (keep?: string) => void) {
   const panel = $("#pass");
   type Season = { open: boolean; name: string; endsAt: number; pts: number; perTier: number; tiers: number; claimed: number; killPts: number; killCap: number };
   let st: Season | null = null;
+  let restoreFocusAfterClaim = false;
+  const sendClaim = () => {
+    restoreFocusAfterClaim = true;
+    room.send("seasonClaim");
+  };
   const prize = (t: number) => {
     const r = seasonReward(t);
     return [
@@ -407,16 +420,28 @@ function bindSeason(room: Room<any>, closeWindows: (keep?: string) => void) {
       <div class="bar"><i style="width:${(into / st.perTier) * 100}%"></i></div>
       <p class="hint">Pontos: a cada ${SEASON_PTS.killEvery} abates +${SEASON_PTS.kill} (hoje ${st.killPts}/${st.killCap}) · chefe +${SEASON_PTS.boss} · missão diária +${SEASON_PTS.mission} · recompensa diária +${SEASON_PTS.daily} · chefe mundial +${SEASON_PTS.worldBoss}</p>
       <button type="button" class="claim" ${tier > st.claimed ? "" : `disabled title="Suba de nível no passe (${into}/${st.perTier} pontos) para liberar novos prêmios"`}>${tier > st.claimed ? `Pegar ${tier - st.claimed} ${tier - st.claimed === 1 ? "prêmio" : "prêmios"}` : "Tudo pego até agora"}</button>`;
-    $("#pass-head").querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("seasonClaim");
-    const cells: string[] = [];
-    for (let t = 1; t <= st.tiers; t++) {
-      const cls = t <= st.claimed ? "got" : t <= tier ? "ready" : "";
-      cells.push(`<div class="tier ${cls}${seasonReward(t).cos ? " big" : ""}"><small>${t}</small><div>${prize(t)}</div></div>`);
-    }
-    cells.push(`<div class="tier${tier > st.tiers ? " ready" : ""}"><small>${st.tiers}+</small><div>A cada nível a mais:<br>${prize(st.tiers + 1)}</div></div>`);
+    $("#pass-head").querySelector<HTMLButtonElement>(".claim")!.onclick = sendClaim;
+    const cells = passTierCards(st).map((c, i) => {
+      const note = c.note ? `<span class="note">${escHtml(c.note)}</span>` : "";
+      const body = `<small>${escHtml(c.label)}</small><span class="prize">${i < st!.tiers ? prize(i + 1) : `A cada nível a mais:<br>${prize(st!.tiers + 1)}`}</span>${note}`;
+      const cls = `tier ${c.cls}${i < st!.tiers && seasonReward(i + 1).cos ? " big" : ""}`;
+      // pronto: botão que resgata (o mesmo seasonClaim de cima). O texto visível (note) diz a ação ou
+      // o que falta, não só o tooltip (#34). O botão tira o nome do próprio conteúdo (nível, prêmio e
+      // "toque para pegar"); aria-label nele esconderia o prêmio. O bloqueado é um grupo rotulado.
+      return c.claimable ? `<button type="button" class="${cls}" title="${escHtml(c.hint)}" data-claim>${body}</button>`
+        : `<div class="${cls}" role="group" title="${escHtml(c.hint)}" aria-label="${escHtml(c.aria)}">${body}</div>`;
+    });
     $("#pass-body").innerHTML = `<div class="tiers">${cells.join("")}</div>`;
+    $("#pass-body").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = sendClaim));
     // rola até o próximo prêmio
     $("#pass-body").querySelector<HTMLElement>(".tier.ready:not(.got), .tier:not(.got)")?.scrollIntoView({ block: "nearest", inline: "center" });
+    if (restoreFocusAfterClaim) {
+      restoreFocusAfterClaim = false;
+      const target = $("#pass-body").querySelector<HTMLButtonElement>("[data-claim]")
+        ?? $("#pass-head").querySelector<HTMLButtonElement>(".claim:not([disabled])")
+        ?? $("#pass-body");
+      target?.focus();
+    }
   };
   room.onMessage("season", (m: Season) => { st = m; if (m.open) { closeWindows("#pass"); panel.hidden = false; } render(); });
   $("#season-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("seasonOpen"); };
@@ -474,7 +499,7 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
   let data: { crystals: number; owned: string[]; equip: Partial<Record<string, string>> } | null = null;
   let tab: CosKind = "aura";
   let reading = "";
-  const hex = (n: number) => `#${n.toString(16).padStart(6, "0")}`;
+  const loreRead = loadLoreRead(browserStore());
   const render = () => {
     if (!data) return;
     $("#shop-crystals").textContent = `${data.crystals.toLocaleString("pt-BR")} cristais`;
@@ -482,10 +507,8 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
     $("#shop-tabs").querySelectorAll<HTMLButtonElement>("button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab as CosKind; reading = ""; render(); }));
     const body = $("#shop-body");
     if (reading) {
-      const x = COSMETIC[reading];
-      body.innerHTML = `<h3>${escHtml(x.name)}</h3>${(x.text ?? []).map((t) => `<p>${escHtml(t)}</p>`).join("")}
-        <p class="hint">Título desta crônica: <b style="color:${hex(x.color)}">${escHtml(x.title ?? "")}</b></p><button type="button" class="claim" data-back>Voltar</button>`;
-      body.querySelector<HTMLButtonElement>("[data-back]")!.onclick = () => { reading = ""; render(); };
+      body.innerHTML = loreReadingHtml(COSMETIC[reading], escHtml);
+      body.querySelectorAll<HTMLButtonElement>("[data-back]").forEach((b) => (b.onclick = () => { reading = ""; render(); }));
       return;
     }
     const kind = COS_KINDS.find((k) => k.kind === tab)!;
@@ -503,10 +526,10 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
           : `<span class="swatch" style="background:${hex(x.color)};box-shadow:0 0 8px ${hex(x.color2 ?? x.color)}"></span>`;
         const desc = x.desc + (tab === "outfit" && !fits ? ` Não muda o visual de ${CHARS[charId]?.name ?? "este personagem"}.` : "");
         const action = !own ? `<button type="button" data-buy="${x.id}" ${data!.crystals < x.price ? `disabled title="Faltam ${x.price - data!.crystals} cristais (ganhe na recompensa diária e conquistas)"` : ""}>💎 ${x.price}</button>`
-          : tab === "lore" ? `<button type="button" data-read="${x.id}">Ler</button><button type="button" data-equip="${x.id}" ${on ? "disabled" : ""}>${on ? "Título em uso" : "Usar título"}</button>`
+          : tab === "lore" ? `<button type="button" data-read="${x.id}">${loreRead.has(x.id) ? "Reler" : "Ler"}</button><button type="button" data-equip="${x.id}" ${on ? "disabled" : ""}>${on ? "Título em uso" : "Usar título"}</button>`
           : on ? `<button type="button" data-off="${slot}">Tirar</button>` : `<button type="button" data-equip="${x.id}">Usar</button>`;
         const label = tab === "title" || tab === "lore" ? `<b style="color:${hex(x.color)}">« ${escHtml(titleText(x.id))} »</b>` : `<b>${escHtml(x.name)}</b>`;
-        return `<div class="cos${own ? " own" : ""}${on ? " on" : ""}">${swatch}<div class="cos-text">${label}${tab === "lore" ? ` <small>${escHtml(x.name)}</small>` : ""}<div class="hint">${escHtml(desc)}</div></div><div class="cos-act">${action}</div></div>`;
+        return `<div class="cos${own ? " own" : ""}${on ? " on" : ""}">${swatch}<div class="cos-text">${label}${tab === "lore" ? ` <small>${escHtml(x.name)}</small>${loreRead.has(x.id) ? ` <span class="lore-read">✓ Lida</span>` : ""}` : ""}<div class="hint">${escHtml(desc)}</div></div><div class="cos-act">${action}</div></div>`;
       }).join("") +
       `<p class="hint buy-note">Compra de cristais com dinheiro: ainda não está aberta.</p>`;
     // compra em dois cliques: o primeiro pede confirmação no próprio botão
@@ -517,7 +540,7 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
     }));
     body.querySelectorAll<HTMLButtonElement>("[data-equip]").forEach((b) => (b.onclick = () => room.send("shopEquip", { id: b.dataset.equip })));
     body.querySelectorAll<HTMLButtonElement>("[data-off]").forEach((b) => (b.onclick = () => room.send("shopEquip", { kind: b.dataset.off })));
-    body.querySelectorAll<HTMLButtonElement>("[data-read]").forEach((b) => (b.onclick = () => { reading = b.dataset.read!; render(); }));
+    body.querySelectorAll<HTMLButtonElement>("[data-read]").forEach((b) => (b.onclick = () => { reading = b.dataset.read!; markLoreRead(browserStore(), reading, loreRead); render(); }));
   };
   room.onMessage("shopData", (d: typeof data) => { data = d; closeWindows("#shop"); panel.hidden = false; render(); });
   room.onMessage("crystals", (m: { crystals: number }) => { if (data) { data.crystals = m.crystals; render(); } });
@@ -529,8 +552,9 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
   const panel = $("#book");
   let data: any = null;
   let tab = "bestiario";
-  const reward = (r: { gold: number; items?: { id: string; qty: number }[] }) =>
-    [r.gold ? `${r.gold} kan` : "", ...(r.items ?? []).map((i) => `${i.qty}x ${ITEMS[i.id]?.name ?? i.id}`)].filter(Boolean).join(" + ");
+  // o jogador zerou a Caçada e nada foi contado desde então (rótulo "✔ Contagem zerada" no botão)
+  let huntJustReset = false;
+  const reward = rewardText;
   const bar = (have: number, need: number) => `<div class="bar"><i style="width:${Math.min(100, (have / need) * 100)}%"></i></div>`;
   const render = () => {
     panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === tab)));
@@ -557,6 +581,7 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
           <div class="hint">${a.done ? "Feita" : `${a.have}/${a.need}`} · ${reward(a.reward)}</div>${a.done ? "" : bar(a.have, a.need)}</div>`).join("");
     } else if (tab === "cacada") {
       const h = data.hunt;
+      if (!isHuntEmpty(h)) huntJustReset = false;
       const hours = Math.max((h.now - h.since) / 3600_000, 1 / 60);
       const per = (v: number) => Math.round(v / hours).toLocaleString("pt-BR");
       const dur = Math.floor((h.now - h.since) / 60000);
@@ -567,10 +592,13 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
         <tr><td>Abates</td><td>${h.kills}</td><td>${per(h.kills)}</td></tr></table>
         <p class="hint">Loot (kan acima conta o dinheiro do loot e a Auto Venda):</p>
         <div class="loot-list">${h.items.map((i: any) => `<span class="slot static" title="${escHtml(i.name)}">${iconHtml(i.icon, i.n)}</span>`).join("") || `<span class="hint">nada ainda</span>`}</div>
-        <button type="button" class="claim">Zerar contagem</button>`;
+        ${huntResetButton(h, huntJustReset)}`;
+      // retorno na hora; o "book" zerado que o servidor devolve mantém o botão desabilitado
       body.querySelector<HTMLButtonElement>(".claim")!.onclick = (e) => {
         const b = e.currentTarget as HTMLButtonElement;
-        b.textContent = "✔ Contagem zerada";
+        huntJustReset = true;
+        b.disabled = true;
+        b.textContent = huntResetDoneLabel;
         room.send("huntReset");
       };
     } else {
@@ -578,11 +606,19 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
       const ms = data.missions;
       const missions = `<h3>Missões de hoje</h3><p class="hint">Cada uma paga ${ms.gold} kan e ${ms.exp} XP sozinha ao completar; as três juntas dão uma Caixa do Kisuke${ms.bonus ? " (já ganha)" : ""}.</p>` +
         ms.list.map((m: any) => `<div class="ach${m.done ? " done" : ""}"><b>${escHtml(m.text)}</b><div class="hint">${m.done ? "Feita" : `${m.have}/${m.need}`}</div>${m.done ? "" : bar(m.have, m.need)}</div>`).join("");
-      body.innerHTML = missions + `<h3>Recompensa de entrada</h3><p class="hint">Pegue uma vez por dia (o dia vira à meia-noite de Brasília). Perder um dia zera a sequência.</p>
-        <div><b>Sequência: ${d.streak} ${d.streak === 1 ? "dia" : "dias"}</b></div>
-        <div class="days">${d.rewards.map((r: any, i: number) => `<div class="${i < d.index || (d.claimed && i === d.index) ? "got" : ""}${i === d.index ? " today" : ""}"><b>Dia ${i + 1}</b><br>${reward(r)}</div>`).join("")}</div>
-        <button type="button" class="claim" ${d.claimed ? `disabled title="Recompensa diária já resgatada hoje. Volte após a meia-noite de Brasília."` : ""}>${d.claimed ? "Já pegou hoje" : "Pegar a recompensa de hoje"}</button>`;
-      body.querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("daily");
+      body.innerHTML = dailyTabHtml(d, missions);
+      // retorno na hora; o "book" que o servidor devolve (resgate ou recusa) redesenha a aba
+      body.querySelector<HTMLButtonElement>(".claim")!.onclick = (e) => {
+        const b = e.currentTarget as HTMLButtonElement;
+        b.disabled = true;
+        b.textContent = claimPendingLabel;
+        room.send("daily");
+        // sem "book" de volta (servidor lento ou mensagem perdida), o botão não fica preso em "Pegando…";
+        // se o "book" chegou, a aba foi redesenhada e este botão já saiu do DOM
+        window.setTimeout(() => {
+          if (b.isConnected && b.textContent === claimPendingLabel) { b.disabled = false; b.textContent = claimLabel; }
+        }, claimTimeoutMs);
+      };
     }
   };
   room.onMessage("book", (d: any) => { data = d; if (panel.hidden) { closeWindows("#book"); panel.hidden = false; } render(); });
@@ -665,7 +701,8 @@ function bindGuild(room: Room<any>, closeWindows: (keep?: string) => void) {
       ? `<tr><td>${i + 1}</td><td>${escHtml(r.name)} <small>[${escHtml(r.tag)}]</small></td><td>${r.frags} abates</td><td>${r.members} membros · ${r.levels} níveis</td></tr>`
       : `<tr><td>${i + 1}</td><td>${escHtml(r.name)}${r.guild ? ` <small>[${escHtml(r.guild)}]</small>` : ""}</td><td>${CHARS[r.charId]?.name ?? ""}</td><td>${
         tab === "nivel" ? `${r.rebirths ? `✦${r.rebirths} · ` : ""}nível ${r.level}` : tab === "poder" ? `${fmtPower(r.power)} · ${POWER_TIERS[powerTier(r.power)].title}` : tab === "dangai" ? `andar ${r.dg}` : tab === "conquistas" ? `${r.ach} conquistas` : tab === "bestiario" ? `${r.stages} estágios` : `${r.frags} abates`}</td></tr>`);
-    $("#ranking-body").innerHTML = rows.length ? `<table>${rows.join("")}</table>` : `<p class="hint">Ninguém aqui ainda.</p>`;
+    if (rows.length) $("#ranking-body").innerHTML = `<table>${rows.join("")}</table>`;
+    else $("#ranking-body").replaceChildren(Object.assign(document.createElement("p"), { className: "hint", textContent: rankingEmptyText(tab) }));
   };
   room.onMessage("ranking", (d: any) => { data = d; closeWindows("#ranking"); panel.hidden = false; render(); });
   $("#ranking-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("ranking"); };
@@ -673,7 +710,7 @@ function bindGuild(room: Room<any>, closeWindows: (keep?: string) => void) {
   panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab!; render(); }));
 }
 
-interface DeathReport { by: string; exp: number; gold: number; items: string[]; protected: boolean; at: number }
+interface DeathReport { by: string; exp: number; gold: number; items: string[]; protected: boolean; invasion?: boolean; at: number }
 
 function showDeath(list: DeathReport[], offline: boolean) {
   const esc = (t: string) => t.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -681,7 +718,9 @@ function showDeath(list: DeathReport[], offline: boolean) {
     const when = offline ? ` <small>(${new Date(d.at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}, caçando offline)</small>` : "";
     if (d.protected) return `<p>Morto por <b>${esc(d.by)}</b>${when}.</p><p class="safe">O Amuleto da Alma se desfez e protegeu seu XP, seus itens e seu dinheiro.</p>`;
     const items = d.items.length ? `<ul>${d.items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : `<p class="safe">Nenhum item perdido.</p>`;
-    return `<p>Morto por <b>${esc(d.by)}</b>${when}.</p><p>Perdeu ${d.exp} XP e ${d.gold} kan.</p>${items}`;
+    // atenuante da Invasão de Hollows (#39): texto fixo, sem dado do servidor no HTML
+    const inv = d.invasion ? `<p class="safe">Invasão de Hollows: sem perda de itens, e a XP e o kan perdidos caem pela metade.</p>` : "";
+    return `<p>Morto por <b>${esc(d.by)}</b>${when}.</p><p>Perdeu ${d.exp} XP e ${d.gold} kan.</p>${inv}${items}`;
   }).join("<hr>") + `<p class="hint">Equipe um Amuleto da Alma (loja do Kisuke) para não perder nada. O depot nunca perde itens.</p>`;
   $("#death").hidden = false;
 }

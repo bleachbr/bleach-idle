@@ -35,26 +35,26 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 
 | Ordem | ID | Entrega | Tam. | Depende de | Spec | Obs. |
 | :-- | :-- | :--- | :-- | :--- | :-- | :--- |
-| 0 | F-16 | **Pacote de correções do Jogador-IA** (`boneco` sem HD, `nextTarget` ignorando `dummy`, exclusividade de janelas + `Esc`, confirmação no `#exit-btn`, `welcome`/`fx` e tooltips de botões desabilitados) | M | — | não | **Feito** — validado com testes determinísticos + simulação real do Jogador-IA (`test/`) |
+| 0 | ~~F-16~~ | ~~**Pacote de correções do Jogador-IA** (`boneco` sem HD, `nextTarget` ignorando `dummy`, exclusividade de janelas + `Esc`, confirmação no `#exit-btn`, `welcome`/`fx` e tooltips de botões desabilitados)~~ | M | — | não | **Feito** — validado com testes determinísticos + simulação real do Jogador-IA (`test/`) |
 | 1 | F-13 | Primeiro deploy com HTTPS atrás do proxy existente e restauração de backup testada | M | — | não | Waldir: `bleach.acoplum.com` online com HTTPS e WebSocket; workflow de deploy rodando na main; estado vazio no container corrigido em `fix/tsx-tsconfig-container`; restauração de backup pendente |
-| 2 | F-04 | Capturar só `UNIQUE` em `createAccount` e `createChar` | P | — | não | **Feito** (`fix/f-04-unique-db`) |
-| 3 | F-14 | Limite de criação de contas por IP | P | F-03 (feito) | não | **Feito** (`feat/f-14-limite-contas-ip`) |
-| 4 | F-05 | Contêiner roda como `node`, não root | P | — | não | **Feito** (`fix/f-05-docker-user-node`) |
-| 5 | F-06 | CSP e cabeçalhos de segurança no Caddy | P | — | não | **Feito** (`feat/f-06-caddy-csp-headers`) |
-| 6 | F-08 | Métrica da duração do tick, aviso acima de 50 ms | P | — | não | **Feito** (`feat/f-08-metrica-tick`) |
-| 7 | F-09 | Ranking sem bloquear o tick | M | F-08 | não | **Feito** (`perf/f-09-ranking-incremental`) |
-| 8 | F-11 | CI: gitleaks, `ubuntu-24.04`, Node 22 e 24, actions v7 | M | — | não | **Feito** (`ci/f-11-ci-gitleaks-matrix`) |
-| 9 | F-15 | Balanceamento dos mapas avançados (`balance.ts`) | M | — | não | **Feito** (`feat/f-15-balanceamento-mapas`) |
-| 10 | M1-01 | `shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) + testes de borda | P | M1-00 (Rafael) | PRD/ADRs das Crônicas | **Feito** (`feat/m1-01-05-chronicles-core`) |
-| 11 | M1-05 | `newProgress()` e `Progress.chronicle`; virada de semana zera `questKills`/`completedAt` | P | M1-01 | idem | **Feito** (`feat/m1-01-05-chronicles-core`) |
+| 2 | ~~F-04~~ | ~~Capturar só `UNIQUE` em `createAccount` e `createChar`~~ | P | — | não | **Feito** (`fix/f-04-unique-db`) |
+| 3 | ~~F-14~~ | ~~Limite de criação de contas por IP~~ | P | F-03 (feito) | não | **Feito** (`feat/f-14-limite-contas-ip`) |
+| 4 | ~~F-05~~ | ~~Contêiner roda como `node`, não root~~ | P | — | não | **Feito** (`fix/f-05-docker-user-node`) |
+| 5 | ~~F-06~~ | ~~CSP e cabeçalhos de segurança no Caddy~~ | P | — | não | **Feito** (`feat/f-06-caddy-csp-headers`) |
+| 6 | ~~F-08~~ | ~~Métrica da duração do tick, aviso acima de 50 ms~~ | P | — | não | **Feito** (`feat/f-08-metrica-tick`) |
+| 7 | ~~F-09~~ | ~~Ranking sem bloquear o tick~~ | M | F-08 | não | **Feito** (`perf/f-09-ranking-incremental`) |
+| 8 | ~~F-11~~ | ~~CI: gitleaks, `ubuntu-24.04`, Node 22 e 24, actions v7~~ | M | — | não | **Feito** (`ci/f-11-ci-gitleaks-matrix`) |
+| 9 | ~~F-15~~ | ~~Balanceamento dos mapas avançados (`balance.ts`)~~ | M | — | não | **Feito** (`feat/f-15-balanceamento-mapas`) |
+| 10 | ~~M1-01~~ | ~~`shared/src/chronicles.ts` (`weekNumber`, `weekIndex`, `currentWeekKey`) + testes de borda~~ | P | M1-00 (Rafael) | PRD/ADRs das Crônicas | **Feito** (`feat/m1-01-05-chronicles-core`) |
+| 11 | ~~M1-05~~ | ~~`newProgress()` e `Progress.chronicle`; virada de semana zera `questKills`/`completedAt`~~ | P | M1-01 | idem | **Feito** (`feat/m1-01-05-chronicles-core`) |
 | 12 | M1-04 | Servidor: `interact`, `npc_dialog`, `npc_action` com nó no servidor e distância validada | M | M1-02 e M1-03 (Rafael) | idem | Handler novo: skill `seguranca-servidor` |
-| 13 | M1-08 | Textos e conteúdo das 5 crônicas | M | M1-00 | idem | **Feito** (`feat/m1-08-cronicas-conteudo`) |
+| 13 | ~~M1-08~~ | ~~Textos e conteúdo das 5 crônicas~~ | M | M1-00 | idem | **Feito** (`feat/m1-08-cronicas-conteudo`) |
 | 14 | M1-06 | Missão semanal e recompensa por personagem | M | M1-00, M1-04, M1-05 | idem | Fazer antes a conta de cristais (D-001) |
 | 15 | M1-09 | Cenário `cronicas.ts` e testes de rotação, diálogo e entrega | M | M1-06 e M1-07 (Rafael) | não | |
-| 16 | M2-01..05 | Motor de status por tick + freeze, slow, DoT, stun | G | — | **Feito** (`feat/m2-01-05-motor-status`) | Spec em `docs/features/status-combate/`; M2-06 e M2-07 (visual/HUD) são de Rafael |
-| 17 | M3-05 | Moderação de chat (filtro de spam, silenciar, comandos de GM) | M | — | **Feito** (`feat/m3-05-moderacao-chat`) | Portão G2; spec em `docs/features/moderacao-chat/` |
-| 18 | M5-01 | Recuperação de senha por e-mail com token assinado | M | — | **Feito** (`feat/m5-01-02-recuperacao-rate-limit`) | Portão G2; spec em `docs/features/seguranca-contas/` |
-| 19 | M5-02 | Limite de tentativas persistente (SQLite) | M | — | **Feito** (`feat/m5-01-02-recuperacao-rate-limit`) | Persistido em `auth_limits` no SQLite |
+| 16 | ~~M2-01..05~~ | ~~Motor de status por tick + freeze, slow, DoT, stun~~ | G | — | **Feito** (`feat/m2-01-05-motor-status`) | Spec em `docs/features/status-combate/`; M2-06 e M2-07 (visual/HUD) são de Rafael |
+| 17 | ~~M3-05~~ | ~~Moderação de chat (filtro de spam, silenciar, comandos de GM)~~ | M | — | **Feito** (`feat/m3-05-moderacao-chat`) | Portão G2; spec em `docs/features/moderacao-chat/` |
+| 18 | ~~M5-01~~ | ~~Recuperação de senha por e-mail com token assinado~~ | M | — | **Feito** (`feat/m5-01-02-recuperacao-rate-limit`) | Portão G2; spec em `docs/features/seguranca-contas/` |
+| 19 | ~~M5-02~~ | ~~Limite de tentativas persistente (SQLite)~~ | M | — | **Feito** (`feat/m5-01-02-recuperacao-rate-limit`) | Persistido em `auth_limits` no SQLite |
 | 20 | F-12 | Upgrade do Colyseus 0.15 para 0.18 | G | — | **sim** | Antes de M4, W-16 e W-17; PR próprio com a bateria completa |
 | 21 | M4-* | Dungeons: salas instanciadas (M4-01), puzzles/ondas/chefes com fases (M4-02), defesa do Senkaimon (M4-03) | G | F-12 | **sim** | M4-02 reutiliza W-04 se já existir |
 | 22 | M5-04 | Partição do mundo por mapa | G | F-08, F-09 | **sim** | Só quando `baseline.md` mostrar necessidade |
@@ -63,15 +63,15 @@ Backlog novo (IDs W-##) — motor, operação e conteúdo de mundo misturados:
 
 | Ordem | ID | Entrega | Tam. | Depende de | Spec |
 | :-- | :-- | :--- | :-- | :--- | :-- |
-| 23 | W-04 | **Chefes com fases** — motor de fases de boss (Aizen, Yhwach) reutilizável por chefe mundial e M4-02 | M | — | **Feito** (`feat/w-04-chefes-fases`) |
-| 24 | W-06 | **Títulos e marcos de servidor** — por feitos (primeiro Bankai do servidor, top da arena), persistidos | M | — | **Feito** (`feat/w-06-marcos-servidor`) |
-| 25 | W-07 | **Correio interno (mailbox)** — recompensas, itens de mercado expirado, mensagens de sistema | M | — | **Feito** (`feat/w-07-correio-interno`; UI do cliente pendente) |
-| 26 | W-05 | **Caçada offline v2** — resumo detalhado ao voltar (drops, mortes, kan), simulação por lote | M | — | **Feito** (`feat/w-05-cacada-offline-v2`) | Spec em `docs/features/cacada-offline-v2/` |
-| 27 | W-09 | **Métricas de operação** — `/metrics` (tick, salas, jogadores, saves) com alerta mínimo (`feat/w-09-metricas-operacao` — **Feito**) | M | F-08 | não |
-| 28 | W-08 | **Auditoria de economia** — trilha imutável de kan/cristais/itens (anti-dupe, suporte) | M | — | **Feito** (`feat/w-08-auditoria-economia`) | Spec em `docs/features/auditoria-economia/` |
-| 29 | W-13 | **Patrulhas idle de Hollows** — jogador/party em patrulha por X horas retorna com recompensa | M | — | **Feito** (`feat/w-13-patrulhas-idle`) | Spec em `docs/features/patrulhas-idle/` |
+| 23 | ~~W-04~~ | ~~**Chefes com fases** — motor de fases de boss (Aizen, Yhwach) reutilizável por chefe mundial e M4-02~~ | M | — | **Feito** (`feat/w-04-chefes-fases`) |
+| 24 | ~~W-06~~ | ~~**Títulos e marcos de servidor** — por feitos (primeiro Bankai do servidor, top da arena), persistidos~~ | M | — | **Feito** (`feat/w-06-marcos-servidor`) |
+| 25 | ~~W-07~~ | ~~**Correio interno (mailbox)** — recompensas, itens de mercado expirado, mensagens de sistema~~ | M | — | **Feito** (`feat/w-07-correio-interno`; UI do cliente pendente) |
+| 26 | ~~W-05~~ | ~~**Caçada offline v2** — resumo detalhado ao voltar (drops, mortes, kan), simulação por lote~~ | M | — | **Feito** (`feat/w-05-cacada-offline-v2`) | Spec em `docs/features/cacada-offline-v2/` |
+| 27 | ~~W-09~~ | ~~**Métricas de operação** — `/metrics` (tick, salas, jogadores, saves) com alerta mínimo (`feat/w-09-metricas-operacao` — **Feito**)~~ | M | F-08 | não |
+| 28 | ~~W-08~~ | ~~**Auditoria de economia** — trilha imutável de kan/cristais/itens (anti-dupe, suporte)~~ | M | — | **Feito** (`feat/w-08-auditoria-economia`) | Spec em `docs/features/auditoria-economia/` |
+| 29 | ~~W-13~~ | ~~**Patrulhas idle de Hollows** — jogador/party em patrulha por X horas retorna com recompensa~~ | M | — | **Feito** (`feat/w-13-patrulhas-idle`) | Spec em `docs/features/patrulhas-idle/` |
 | 30 | W-14 | **Personagens novos (bloco W)** — Orihime (barreira/suporte), Urahara, Mayuri; 5 estágios e 4 técnicas cada | M cada | — | skill `adicionar-conteudo`; Orihime exige mecânica nova de barreira no motor |
-| 31 | W-01 | **Arena de duelos 1v1 ranqueada** — fila por reiatsu, rating Elo, anti-cheat de velocidade | G | M2-01 recomendado | **Feito** (`feat/w-01-arena-duelos-1v1`) |
+| 31 | ~~W-01~~ | ~~**Arena de duelos 1v1 ranqueada** — fila por reiatsu, rating Elo, anti-cheat de velocidade~~ | G | M2-01 recomendado | **Feito** (`feat/w-01-arena-duelos-1v1`) |
 | 32 | W-10 | **Anti-abuso de automação** — heurística de bot com flag de revisão, sem ban automático | M | W-09 recomendado | sim |
 | 33 | W-15 | **Arco Fullbringer (pacote completo)** — mapa Xcution, monstros, itens, Ginjo/Tsukishima como chefe/NPC | G | W-04 recomendado | sim |
 | 34 | W-16 | **Mundo Interior da Zanpakutō** — instância solo que desbloqueia Shikai/Bankai por prova de combate | G | F-12 e M4-01 | sim |
@@ -97,7 +97,7 @@ Itens herdados do roadmap e das pendências:
 | 9 | M3-01 | Troca direta 1v1, duas confirmações, mesmo mapa e alcance | M | — | sim | Servidor + UI; handler sensível: skill `seguranca-servidor`, revisão do Waldir |
 | 10 | ~~M3-03~~ | ~~Filtro de loot do Auto Helper~~ | M | — | sim | Regras no save do personagem, validadas e aplicadas no servidor |
 | 11 | M3-04 | Banco de guilda com permissões por cargo | M | — | sim | Handler sensível (itens/kan): revisão do Waldir |
-| 12 | M5-03 | Testes E2E no navegador com Playwright | M | — | sim | Login, menus, HUD |
+| 12 | ~~M5-03~~ | ~~Testes E2E no navegador com Playwright~~ | M | — | sim | Login, menus, HUD |
 | 13 | — | Visual de equipamentos além do haori e da máscara | M | — | sim | Pendências §2; ganha ID quando entrar |
 | 14 | — | Interiores de edifícios (quartéis, loja do Kisuke) | G | M1-03 recomendado | sim | Pendências §5; ganha ID quando entrar |
 
