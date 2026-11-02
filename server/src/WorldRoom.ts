@@ -13,7 +13,7 @@ import {
   expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, outfitFits, QUEST_BY_ID, huntKinds, MAX_ACTIVE_QUESTS,
-  zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
+  zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN, potionRefusal,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
   EVENT_BANNER, EVENT_END_MS, eventLore, type EventBanner, type EventKind, type EventPhase,
@@ -198,7 +198,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       } else if (m?.slot === 2 || m?.slot === 3) {
         const id = this.bestPotion(p, m.slot === 2 ? "hp" : "rei");
         if (!id) this.log(p, m.slot === 2 ? "Sem poções de cura." : "Sem poções de reiatsu.");
-        else if (!this.useConsumable(p, id, now)) this.log(p, `Não dá para usar ${ITEMS[id].name} agora.`);
+        else if (!this.useConsumable(p, id, now)) this.denyConsumable(p, id, now);
       }
     });
     this.registerItemMessages();
@@ -833,6 +833,14 @@ export class WorldRoom extends GameRoom<WorldState> {
     return true;
   }
 
+  /** Poção recusada pelo jogador: diz o motivo no chat e sobe um texto só para ele (#41). */
+  private denyConsumable(p: Player, id: string, now: number) {
+    const why = potionRefusal(ITEMS[id], p, now);
+    if (!why) return this.log(p, `Não dá para usar ${ITEMS[id].name} agora.`);
+    this.log(p, why.chat);
+    this.sendTo(p, "fx", { t: "deny", id: p.id, text: why.float });
+  }
+
   private regen(p: Player, now: number) {
     if (p.hp <= 0) return;
     const fight = now - p.lastCombatAt < 6000;
@@ -1081,7 +1089,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.handle("useItem", (c, m: { index: number }) => {
       const p = this.me(c);
       const s = p?.inv[idx(m?.index, INV_SIZE)];
-      if (p && s && !this.useConsumable(p, s.id, Date.now())) this.log(p, `Não dá para usar ${ITEMS[s.id].name} agora.`);
+      if (p && s) { const now = Date.now(); if (!this.useConsumable(p, s.id, now)) this.denyConsumable(p, s.id, now); }
     });
     this.handle("equip", (c, m: { index: number }) => {
       const p = this.me(c);
