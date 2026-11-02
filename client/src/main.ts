@@ -3,15 +3,24 @@ import Phaser from "phaser";
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
+import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { passTierCards } from "./passTiers";
+import { browserStore, loadLoreRead, markLoreRead } from "./loreRead";
+import { loreReadingHtml, hex } from "./loreReader";
 import { bindEvents } from "./events";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
+import { ChatBook, CHAT_MAX, CHAT_TABS, parseTab, type ChatLineData, type ChatTab } from "./chatTabs";
 import { initReleases } from "./releases";
+import { rankingEmptyText } from "./rankingEmpty";
+import { initRebirthDialog } from "./rebirthDialog";
+import { initCharacterSheet } from "./characterSheetDialog";
+import { initInventoryShortcut } from "./inventoryShortcut";
+import { huntResetButton, huntResetDoneLabel, isHuntEmpty } from "./huntReset";
+import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
 
 initReleases();
 
@@ -195,9 +204,11 @@ function start(room: Room<any>, myId: string) {
   },
     () => room.state.players.get(myId)?.level ?? 1,
     () => { const p = room.state.players.get(myId); return p ? { x: p.x, y: p.y } : undefined; });
+  const sheet = initCharacterSheet(room, () => room.state.players.get(myId), serverNow);
   const onMe = (p: any) => {
     renderStats(p);
     inventory.onMove(p.x, p.y);
+    sheet.update();
   };
   const game = new Phaser.Game(gameConfig("game"));
   game.scene.add("game", GameScene, true, { room, myId, onMe, onPlayerClick: (id: string, x: number, y: number) => playerMenu(room, myId, id, x, y) });
@@ -215,7 +226,7 @@ function start(room: Room<any>, myId: string) {
   // canais: local (sem ch), pm, party, guild, sys (avisos do servidor) e lore (narração dos eventos)
   room.onMessage("chat", (m: { from: string; text: string; ch?: string }) => {
     const prefix = m.ch === "pm" ? "[pm] " : m.ch === "party" ? "[party] " : m.ch === "guild" ? "[guilda] " : "";
-    chatLine(m.from ? `${prefix}${m.from}: ${m.text}` : `${prefix}${m.text}`, m.ch && m.ch !== "sys" ? m.ch : m.from ? "" : "sys");
+    chatLine(m.from ? `${prefix}${m.from}: ${m.text}` : `${prefix}${m.text}`, m.ch && m.ch !== "sys" ? m.ch : m.from ? "" : "sys", "chat", m.ch, m.ch === "pm" ? m.from : "");
   });
   bindGuild(room, closeWindows);
   bindBook(room, closeWindows);
@@ -228,42 +239,51 @@ function start(room: Room<any>, myId: string) {
     if (e.code === "Escape" && document.activeElement !== chatin) closeWindows();
   });
   $("#travel-btn").onclick = () => inventory.openTravel();
-  $("#rebirth-btn").onclick = () => {
-    const me = room.state.players.get(myId);
-    if (!me) return;
-    const b = rebirthBonus(me.rebirths + 1);
-    const ok = confirm(`Renascer volta você ao nível 8 e leva para a praça de Karakura.\n\nVocê mantém itens, equipamento, kan, forja, bestiário, conquistas e habilidades.\n\nBônus permanentes depois deste renascimento: +${Math.round((b.exp - 1) * 100)}% de XP, +${Math.round((b.dmg - 1) * 100)}% de dano e +${Math.round((b.hp - 1) * 100)}% de vida.\n\nRenascer agora?`);
-    if (ok) room.send("rebirth");
-  };
+  initInventoryShortcut();
+  // janela do jogo no lugar do window.confirm (issue #35); o servidor continua validando o renascimento
+  const rebirth = initRebirthDialog(room, () => room.state.players.get(myId));
+  $("#rebirth-btn").onclick = () => rebirth.open();
   const mute = $("#mute-btn");
   const showMute = () => { mute.dataset.ico = sfx.isMuted() ? "mute" : "sound"; mute.title = sfx.isMuted() ? "Som desligado (clique para ligar)" : "Som ligado (clique para desligar)"; };
   showMute();
   mute.onclick = () => { sfx.setMuted(!sfx.isMuted()); showMute(); };
   bindHd(game);
-  room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log"));
+  room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log", "log"));
   room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[]; zanGain?: number; reiGain?: number; zanjutsu?: number; reiryoku?: number; kills?: number; items?: string[] }) => {
     const sign = (n: number) => (n >= 0 ? "+" : "") + n;
     const skills = [m.zanGain ? `Zanjutsu ${sign(m.zanGain)} (agora ${m.zanjutsu})` : "", m.reiGain ? `Reiryoku ${sign(m.reiGain)} (agora ${m.reiryoku})` : ""].filter(Boolean).join(", ");
-    chatLine(`Tempo offline: ${m.minutes} min, ${m.kills ?? 0} abates, ${sign(m.exp)} XP, ${sign(m.gold)} kan${skills ? `, ${skills}` : ""}. Você está no nível ${m.level}.`, "log");
-    if (m.items?.length) chatLine(`Loot offline: ${m.items.slice(0, 8).join(", ")}${m.items.length > 8 ? ` e mais ${m.items.length - 8} tipos` : ""}.`, "log");
+    chatAlert(`Tempo offline: ${m.minutes} min, ${m.kills ?? 0} abates, ${sign(m.exp)} XP, ${sign(m.gold)} kan${skills ? `, ${skills}` : ""}. Você está no nível ${m.level}.`, "log", "log");
+    if (m.items?.length) chatAlert(`Loot offline: ${m.items.slice(0, 8).join(", ")}${m.items.length > 8 ? ` e mais ${m.items.length - 8} tipos` : ""}.`, "log", "log");
     if (m.deaths?.length) showDeath(m.deaths, true);
   });
   room.onMessage("death", (d: DeathReport) => showDeath([d], false));
   $("#death-ok").onclick = () => ($("#death").hidden = true);
-  room.onLeave((code) => chatLine(code === 4001
+  room.onLeave((code) => chatAlert(code === 4001
     ? "Este personagem entrou em outra janela. Esta sessão foi encerrada."
-    : "Conexão perdida. Recarregue a página para entrar de novo.", "sys"));
+    : "Conexão perdida. Recarregue a página para entrar de novo.", "sys", "chat", "sys"));
 
   bindAuto(room);
   bindParty(room, myId);
   syncClock(room);
   const chatin = $<HTMLInputElement>("#chatin");
+  openChatTab(chat.active);
   window.addEventListener("keydown", (e) => {
     if (e.code === "Enter" && document.activeElement !== chatin) { e.preventDefault(); chatin.focus(); }
   });
   chatin.addEventListener("keydown", (e) => {
     if (e.code === "Enter") {
-      if (chatin.value.trim()) room.send("chat", { text: chatin.value });
+      if (chatin.value.trim()) {
+        // a aba aberta decide o canal: Party vira /p, Guilda /g, Privado /pm para a última conversa
+        const out = chat.outgoing(chatin.value);
+        if ("error" in out) {
+          // o texto fica no campo: é só pôr o "/pm Nome," na frente
+          chat.notice({ text: out.error, cls: "sys" });
+          appendChatLine({ text: out.error, cls: "sys" });
+          return;
+        }
+        room.send("chat", { text: out.text });
+        chat.sent(Date.now(), out.text);
+      }
       chatin.value = "";
       chatin.blur();
     } else if (e.code === "Escape") chatin.blur();
@@ -373,6 +393,11 @@ function bindSeason(room: Room<any>, closeWindows: (keep?: string) => void) {
   const panel = $("#pass");
   type Season = { open: boolean; name: string; endsAt: number; pts: number; perTier: number; tiers: number; claimed: number; killPts: number; killCap: number };
   let st: Season | null = null;
+  let restoreFocusAfterClaim = false;
+  const sendClaim = () => {
+    restoreFocusAfterClaim = true;
+    room.send("seasonClaim");
+  };
   const prize = (t: number) => {
     const r = seasonReward(t);
     return [
@@ -394,7 +419,7 @@ function bindSeason(room: Room<any>, closeWindows: (keep?: string) => void) {
       <div class="bar"><i style="width:${(into / st.perTier) * 100}%"></i></div>
       <p class="hint">Pontos: a cada ${SEASON_PTS.killEvery} abates +${SEASON_PTS.kill} (hoje ${st.killPts}/${st.killCap}) · chefe +${SEASON_PTS.boss} · missão diária +${SEASON_PTS.mission} · recompensa diária +${SEASON_PTS.daily} · chefe mundial +${SEASON_PTS.worldBoss}</p>
       <button type="button" class="claim" ${tier > st.claimed ? "" : `disabled title="Suba de nível no passe (${into}/${st.perTier} pontos) para liberar novos prêmios"`}>${tier > st.claimed ? `Pegar ${tier - st.claimed} ${tier - st.claimed === 1 ? "prêmio" : "prêmios"}` : "Tudo pego até agora"}</button>`;
-    $("#pass-head").querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("seasonClaim");
+    $("#pass-head").querySelector<HTMLButtonElement>(".claim")!.onclick = sendClaim;
     const cells = passTierCards(st).map((c, i) => {
       const note = c.note ? `<span class="note">${escHtml(c.note)}</span>` : "";
       const body = `<small>${escHtml(c.label)}</small><span class="prize">${i < st!.tiers ? prize(i + 1) : `A cada nível a mais:<br>${prize(st!.tiers + 1)}`}</span>${note}`;
@@ -406,9 +431,16 @@ function bindSeason(room: Room<any>, closeWindows: (keep?: string) => void) {
         : `<div class="${cls}" role="group" title="${escHtml(c.hint)}" aria-label="${escHtml(c.aria)}">${body}</div>`;
     });
     $("#pass-body").innerHTML = `<div class="tiers">${cells.join("")}</div>`;
-    $("#pass-body").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = () => room.send("seasonClaim")));
+    $("#pass-body").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = sendClaim));
     // rola até o próximo prêmio
     $("#pass-body").querySelector<HTMLElement>(".tier.ready:not(.got), .tier:not(.got)")?.scrollIntoView({ block: "nearest", inline: "center" });
+    if (restoreFocusAfterClaim) {
+      restoreFocusAfterClaim = false;
+      const target = $("#pass-body").querySelector<HTMLButtonElement>("[data-claim]")
+        ?? $("#pass-head").querySelector<HTMLButtonElement>(".claim:not([disabled])")
+        ?? $("#pass-body");
+      target?.focus();
+    }
   };
   room.onMessage("season", (m: Season) => { st = m; if (m.open) { closeWindows("#pass"); panel.hidden = false; } render(); });
   $("#season-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("seasonOpen"); };
@@ -466,7 +498,7 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
   let data: { crystals: number; owned: string[]; equip: Partial<Record<string, string>> } | null = null;
   let tab: CosKind = "aura";
   let reading = "";
-  const hex = (n: number) => `#${n.toString(16).padStart(6, "0")}`;
+  const loreRead = loadLoreRead(browserStore());
   const render = () => {
     if (!data) return;
     $("#shop-crystals").textContent = `${data.crystals.toLocaleString("pt-BR")} cristais`;
@@ -474,10 +506,8 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
     $("#shop-tabs").querySelectorAll<HTMLButtonElement>("button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab as CosKind; reading = ""; render(); }));
     const body = $("#shop-body");
     if (reading) {
-      const x = COSMETIC[reading];
-      body.innerHTML = `<h3>${escHtml(x.name)}</h3>${(x.text ?? []).map((t) => `<p>${escHtml(t)}</p>`).join("")}
-        <p class="hint">Título desta crônica: <b style="color:${hex(x.color)}">${escHtml(x.title ?? "")}</b></p><button type="button" class="claim" data-back>Voltar</button>`;
-      body.querySelector<HTMLButtonElement>("[data-back]")!.onclick = () => { reading = ""; render(); };
+      body.innerHTML = loreReadingHtml(COSMETIC[reading], escHtml);
+      body.querySelectorAll<HTMLButtonElement>("[data-back]").forEach((b) => (b.onclick = () => { reading = ""; render(); }));
       return;
     }
     const kind = COS_KINDS.find((k) => k.kind === tab)!;
@@ -495,10 +525,10 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
           : `<span class="swatch" style="background:${hex(x.color)};box-shadow:0 0 8px ${hex(x.color2 ?? x.color)}"></span>`;
         const desc = x.desc + (tab === "outfit" && !fits ? ` Não muda o visual de ${CHARS[charId]?.name ?? "este personagem"}.` : "");
         const action = !own ? `<button type="button" data-buy="${x.id}" ${data!.crystals < x.price ? `disabled title="Faltam ${x.price - data!.crystals} cristais (ganhe na recompensa diária e conquistas)"` : ""}>💎 ${x.price}</button>`
-          : tab === "lore" ? `<button type="button" data-read="${x.id}">Ler</button><button type="button" data-equip="${x.id}" ${on ? "disabled" : ""}>${on ? "Título em uso" : "Usar título"}</button>`
+          : tab === "lore" ? `<button type="button" data-read="${x.id}">${loreRead.has(x.id) ? "Reler" : "Ler"}</button><button type="button" data-equip="${x.id}" ${on ? "disabled" : ""}>${on ? "Título em uso" : "Usar título"}</button>`
           : on ? `<button type="button" data-off="${slot}">Tirar</button>` : `<button type="button" data-equip="${x.id}">Usar</button>`;
         const label = tab === "title" || tab === "lore" ? `<b style="color:${hex(x.color)}">« ${escHtml(titleText(x.id))} »</b>` : `<b>${escHtml(x.name)}</b>`;
-        return `<div class="cos${own ? " own" : ""}${on ? " on" : ""}">${swatch}<div class="cos-text">${label}${tab === "lore" ? ` <small>${escHtml(x.name)}</small>` : ""}<div class="hint">${escHtml(desc)}</div></div><div class="cos-act">${action}</div></div>`;
+        return `<div class="cos${own ? " own" : ""}${on ? " on" : ""}">${swatch}<div class="cos-text">${label}${tab === "lore" ? ` <small>${escHtml(x.name)}</small>${loreRead.has(x.id) ? ` <span class="lore-read">✓ Lida</span>` : ""}` : ""}<div class="hint">${escHtml(desc)}</div></div><div class="cos-act">${action}</div></div>`;
       }).join("") +
       `<p class="hint buy-note">Compra de cristais com dinheiro: ainda não está aberta.</p>`;
     // compra em dois cliques: o primeiro pede confirmação no próprio botão
@@ -509,7 +539,7 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
     }));
     body.querySelectorAll<HTMLButtonElement>("[data-equip]").forEach((b) => (b.onclick = () => room.send("shopEquip", { id: b.dataset.equip })));
     body.querySelectorAll<HTMLButtonElement>("[data-off]").forEach((b) => (b.onclick = () => room.send("shopEquip", { kind: b.dataset.off })));
-    body.querySelectorAll<HTMLButtonElement>("[data-read]").forEach((b) => (b.onclick = () => { reading = b.dataset.read!; render(); }));
+    body.querySelectorAll<HTMLButtonElement>("[data-read]").forEach((b) => (b.onclick = () => { reading = b.dataset.read!; markLoreRead(browserStore(), reading, loreRead); render(); }));
   };
   room.onMessage("shopData", (d: typeof data) => { data = d; closeWindows("#shop"); panel.hidden = false; render(); });
   room.onMessage("crystals", (m: { crystals: number }) => { if (data) { data.crystals = m.crystals; render(); } });
@@ -521,8 +551,9 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
   const panel = $("#book");
   let data: any = null;
   let tab = "bestiario";
-  const reward = (r: { gold: number; items?: { id: string; qty: number }[] }) =>
-    [r.gold ? `${r.gold} kan` : "", ...(r.items ?? []).map((i) => `${i.qty}x ${ITEMS[i.id]?.name ?? i.id}`)].filter(Boolean).join(" + ");
+  // o jogador zerou a Caçada e nada foi contado desde então (rótulo "✔ Contagem zerada" no botão)
+  let huntJustReset = false;
+  const reward = rewardText;
   const bar = (have: number, need: number) => `<div class="bar"><i style="width:${Math.min(100, (have / need) * 100)}%"></i></div>`;
   const render = () => {
     panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === tab)));
@@ -549,6 +580,7 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
           <div class="hint">${a.done ? "Feita" : `${a.have}/${a.need}`} · ${reward(a.reward)}</div>${a.done ? "" : bar(a.have, a.need)}</div>`).join("");
     } else if (tab === "cacada") {
       const h = data.hunt;
+      if (!isHuntEmpty(h)) huntJustReset = false;
       const hours = Math.max((h.now - h.since) / 3600_000, 1 / 60);
       const per = (v: number) => Math.round(v / hours).toLocaleString("pt-BR");
       const dur = Math.floor((h.now - h.since) / 60000);
@@ -559,10 +591,13 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
         <tr><td>Abates</td><td>${h.kills}</td><td>${per(h.kills)}</td></tr></table>
         <p class="hint">Loot (kan acima conta o dinheiro do loot e a Auto Venda):</p>
         <div class="loot-list">${h.items.map((i: any) => `<span class="slot static" title="${escHtml(i.name)}">${iconHtml(i.icon, i.n)}</span>`).join("") || `<span class="hint">nada ainda</span>`}</div>
-        <button type="button" class="claim">Zerar contagem</button>`;
+        ${huntResetButton(h, huntJustReset)}`;
+      // retorno na hora; o "book" zerado que o servidor devolve mantém o botão desabilitado
       body.querySelector<HTMLButtonElement>(".claim")!.onclick = (e) => {
         const b = e.currentTarget as HTMLButtonElement;
-        b.textContent = "✔ Contagem zerada";
+        huntJustReset = true;
+        b.disabled = true;
+        b.textContent = huntResetDoneLabel;
         room.send("huntReset");
       };
     } else {
@@ -570,11 +605,19 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
       const ms = data.missions;
       const missions = `<h3>Missões de hoje</h3><p class="hint">Cada uma paga ${ms.gold} kan e ${ms.exp} XP sozinha ao completar; as três juntas dão uma Caixa do Kisuke${ms.bonus ? " (já ganha)" : ""}.</p>` +
         ms.list.map((m: any) => `<div class="ach${m.done ? " done" : ""}"><b>${escHtml(m.text)}</b><div class="hint">${m.done ? "Feita" : `${m.have}/${m.need}`}</div>${m.done ? "" : bar(m.have, m.need)}</div>`).join("");
-      body.innerHTML = missions + `<h3>Recompensa de entrada</h3><p class="hint">Pegue uma vez por dia (o dia vira à meia-noite de Brasília). Perder um dia zera a sequência.</p>
-        <div><b>Sequência: ${d.streak} ${d.streak === 1 ? "dia" : "dias"}</b></div>
-        <div class="days">${d.rewards.map((r: any, i: number) => `<div class="${i < d.index || (d.claimed && i === d.index) ? "got" : ""}${i === d.index ? " today" : ""}"><b>Dia ${i + 1}</b><br>${reward(r)}</div>`).join("")}</div>
-        <button type="button" class="claim" ${d.claimed ? `disabled title="Recompensa diária já resgatada hoje. Volte após a meia-noite de Brasília."` : ""}>${d.claimed ? "Já pegou hoje" : "Pegar a recompensa de hoje"}</button>`;
-      body.querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("daily");
+      body.innerHTML = dailyTabHtml(d, missions);
+      // retorno na hora; o "book" que o servidor devolve (resgate ou recusa) redesenha a aba
+      body.querySelector<HTMLButtonElement>(".claim")!.onclick = (e) => {
+        const b = e.currentTarget as HTMLButtonElement;
+        b.disabled = true;
+        b.textContent = claimPendingLabel;
+        room.send("daily");
+        // sem "book" de volta (servidor lento ou mensagem perdida), o botão não fica preso em "Pegando…";
+        // se o "book" chegou, a aba foi redesenhada e este botão já saiu do DOM
+        window.setTimeout(() => {
+          if (b.isConnected && b.textContent === claimPendingLabel) { b.disabled = false; b.textContent = claimLabel; }
+        }, claimTimeoutMs);
+      };
     }
   };
   room.onMessage("book", (d: any) => { data = d; if (panel.hidden) { closeWindows("#book"); panel.hidden = false; } render(); });
@@ -657,7 +700,8 @@ function bindGuild(room: Room<any>, closeWindows: (keep?: string) => void) {
       ? `<tr><td>${i + 1}</td><td>${escHtml(r.name)} <small>[${escHtml(r.tag)}]</small></td><td>${r.frags} abates</td><td>${r.members} membros · ${r.levels} níveis</td></tr>`
       : `<tr><td>${i + 1}</td><td>${escHtml(r.name)}${r.guild ? ` <small>[${escHtml(r.guild)}]</small>` : ""}</td><td>${CHARS[r.charId]?.name ?? ""}</td><td>${
         tab === "nivel" ? `${r.rebirths ? `✦${r.rebirths} · ` : ""}nível ${r.level}` : tab === "poder" ? `${fmtPower(r.power)} · ${POWER_TIERS[powerTier(r.power)].title}` : tab === "dangai" ? `andar ${r.dg}` : tab === "conquistas" ? `${r.ach} conquistas` : tab === "bestiario" ? `${r.stages} estágios` : `${r.frags} abates`}</td></tr>`);
-    $("#ranking-body").innerHTML = rows.length ? `<table>${rows.join("")}</table>` : `<p class="hint">Ninguém aqui ainda.</p>`;
+    if (rows.length) $("#ranking-body").innerHTML = `<table>${rows.join("")}</table>`;
+    else $("#ranking-body").replaceChildren(Object.assign(document.createElement("p"), { className: "hint", textContent: rankingEmptyText(tab) }));
   };
   room.onMessage("ranking", (d: any) => { data = d; closeWindows("#ranking"); panel.hidden = false; render(); });
   $("#ranking-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("ranking"); };
@@ -665,7 +709,7 @@ function bindGuild(room: Room<any>, closeWindows: (keep?: string) => void) {
   panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab!; render(); }));
 }
 
-interface DeathReport { by: string; exp: number; gold: number; items: string[]; protected: boolean; at: number }
+interface DeathReport { by: string; exp: number; gold: number; items: string[]; protected: boolean; invasion?: boolean; at: number }
 
 function showDeath(list: DeathReport[], offline: boolean) {
   const esc = (t: string) => t.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -673,7 +717,9 @@ function showDeath(list: DeathReport[], offline: boolean) {
     const when = offline ? ` <small>(${new Date(d.at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}, caçando offline)</small>` : "";
     if (d.protected) return `<p>Morto por <b>${esc(d.by)}</b>${when}.</p><p class="safe">O Amuleto da Alma se desfez e protegeu seu XP, seus itens e seu dinheiro.</p>`;
     const items = d.items.length ? `<ul>${d.items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : `<p class="safe">Nenhum item perdido.</p>`;
-    return `<p>Morto por <b>${esc(d.by)}</b>${when}.</p><p>Perdeu ${d.exp} XP e ${d.gold} kan.</p>${items}`;
+    // atenuante da Invasão de Hollows (#39): texto fixo, sem dado do servidor no HTML
+    const inv = d.invasion ? `<p class="safe">Invasão de Hollows: sem perda de itens, e a XP e o kan perdidos caem pela metade.</p>` : "";
+    return `<p>Morto por <b>${esc(d.by)}</b>${when}.</p><p>Perdeu ${d.exp} XP e ${d.gold} kan.</p>${inv}${items}`;
   }).join("<hr>") + `<p class="hint">Equipe um Amuleto da Alma (loja do Kisuke) para não perder nada. O depot nunca perde itens.</p>`;
   $("#death").hidden = false;
 }
@@ -780,12 +826,67 @@ function bindAuto(room: Room<any>) {
   }
 }
 
-function chatLine(text: string, cls: string) {
+function chatLine(text: string, cls: string, kind: "chat" | "log" = "chat", ch?: string, from = ""): ChatTab[] {
+  const tabs = chat.add(kind, ch, { text, cls }, Date.now(), from);
+  if (tabs.includes(chat.active)) appendChatLine({ text, cls });
+  renderChatTabs();
+  return tabs;
+}
+
+/** Aviso que ninguém pode perder (queda da conexão, relatório offline): também na aba aberta. */
+function chatAlert(text: string, cls: string, kind: "chat" | "log", ch?: string) {
+  if (chatLine(text, cls, kind, ch).includes(chat.active)) return;
+  chat.notice({ text, cls });
+  appendChatLine({ text, cls });
+}
+
+// ---------- abas do chat (M3-02) ----------
+
+const chat = new ChatBook();
+try { chat.setActive(parseTab(localStorage.getItem("bi.chatTab"))); } catch { /* sem armazenamento: começa em Geral */ }
+
+function appendChatLine(l: ChatLineData) {
   const log = $("#chatlog");
   const div = document.createElement("div");
-  if (cls) div.className = cls;
-  div.textContent = text;
+  if (l.cls) div.className = l.cls;
+  div.textContent = l.text;
   log.append(div);
-  while (log.children.length > 200) log.firstChild!.remove();
+  while (log.children.length > CHAT_MAX) log.firstChild!.remove();
   log.scrollTop = log.scrollHeight;
+}
+
+function renderChatTabs() {
+  const bar = $("#chat-tabs");
+  if (!bar.children.length) {
+    for (const t of CHAT_TABS) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("role", "tab");
+      b.dataset.tab = t.id;
+      b.onclick = () => openChatTab(t.id);
+      bar.append(b);
+    }
+  }
+  for (const b of bar.querySelectorAll<HTMLButtonElement>("button")) {
+    const t = CHAT_TABS.find((x) => x.id === b.dataset.tab)!;
+    const n = chat.unread[t.id];
+    b.textContent = n ? `${t.label} ${n > 99 ? "99+" : n}` : t.label;
+    b.setAttribute("aria-selected", String(t.id === chat.active));
+    b.setAttribute("aria-controls", "chatlog");
+    b.classList.toggle("new", n > 0);
+  }
+  // o campo diz para onde vai o texto (no Privado, com quem é a conversa, que muda quando chega pm de outra pessoa)
+  const placeholder = chat.active === "privado" ? (chat.pmWith ? `Enter para responder a ${chat.pmWith}` : "Escreva /pm Nome, mensagem")
+    : chat.active === "party" || chat.active === "guilda" ? `Enter para falar em ${CHAT_TABS.find((x) => x.id === chat.active)!.label}`
+    : "Enter para conversar";
+  $<HTMLInputElement>("#chatin").placeholder = `${placeholder} · /ajuda para comandos`;
+}
+
+function openChatTab(tab: ChatTab) {
+  chat.setActive(tab);
+  try { localStorage.setItem("bi.chatTab", tab); } catch { /* só nesta sessão */ }
+  const log = $("#chatlog");
+  log.replaceChildren();
+  for (const l of chat.lines[tab]) appendChatLine(l);
+  renderChatTabs();
 }
