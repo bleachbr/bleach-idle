@@ -253,6 +253,8 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 #shop .cos-act { display: flex; gap: 4px; flex-shrink: 0; }
 #shop .cos-act button, #shop .claim, #pass .claim { padding: 4px 10px; background: var(--bg); color: var(--text); border: 1px solid var(--accent); border-radius: 4px; cursor: pointer; font-size: 12px; }
 #shop .cos-act button:disabled { opacity: 0.5; cursor: default; border-color: var(--line); }
+/* título da crônica na leitura: fonte de texto, porque na pixel "Crônica" vira "Orônloa" (C≈O, ic≈lo; #24) */
+#shop .lore-title { font-family: system-ui, sans-serif; }
 /* crônica já lida neste navegador (#38) */
 #shop .lore-read { color: #6aff9a; font-size: 11px; white-space: nowrap; }
 #shop .swatch { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; border: 1px solid #ffffff40; }

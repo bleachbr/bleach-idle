@@ -7,6 +7,7 @@ import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirth
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { browserStore, loadLoreRead, markLoreRead } from "./loreRead";
+import { loreReadingHtml, hex } from "./loreReader";
 import { bindEvents } from "./events";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
@@ -477,7 +478,6 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
   let tab: CosKind = "aura";
   let reading = "";
   const loreRead = loadLoreRead(browserStore());
-  const hex = (n: number) => `#${n.toString(16).padStart(6, "0")}`;
   const render = () => {
     if (!data) return;
     $("#shop-crystals").textContent = `${data.crystals.toLocaleString("pt-BR")} cristais`;
@@ -485,11 +485,7 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
     $("#shop-tabs").querySelectorAll<HTMLButtonElement>("button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab as CosKind; reading = ""; render(); }));
     const body = $("#shop-body");
     if (reading) {
-      const x = COSMETIC[reading];
-      // voltar no topo e no fim: o texto é longo e o botão de baixo ficava fora da vista (#38)
-      const back = `<button type="button" class="claim" data-back>← Voltar à lista de crônicas</button>`;
-      body.innerHTML = `${back}<h3>${escHtml(x.name)}</h3>${(x.text ?? []).map((t) => `<p>${escHtml(t)}</p>`).join("")}
-        <p class="hint">Título desta crônica: <b style="color:${hex(x.color)}">${escHtml(x.title ?? "")}</b></p>${back}`;
+      body.innerHTML = loreReadingHtml(COSMETIC[reading], escHtml);
       body.querySelectorAll<HTMLButtonElement>("[data-back]").forEach((b) => (b.onclick = () => { reading = ""; render(); }));
       return;
     }
