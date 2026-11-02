@@ -49,6 +49,8 @@ export const sfx = {
   skill: () => throttled("skill", 120, [{ f: 300, to: 1200, dur: 0.18, type: "sawtooth", vol: 0.5 }, { f: 900, to: 400, at: 0.12, dur: 0.15, type: "triangle", vol: 0.5 }]),
   loot: () => throttled("loot", 120, [{ f: 988, dur: 0.07, type: "square", vol: 0.4 }, { f: 1319, at: 0.07, dur: 0.12, type: "square", vol: 0.4 }]),
   heal: () => throttled("heal", 300, [{ f: 523, dur: 0.12, type: "triangle" }, { f: 784, at: 0.08, dur: 0.18, type: "triangle" }]),
+  // ação recusada (poção com a barra cheia, #41): dois toques graves e baixos
+  deny: () => throttled("deny", 300, [{ f: 196, dur: 0.07, type: "square", vol: 0.3 }, { f: 147, at: 0.09, dur: 0.1, type: "square", vol: 0.3 }]),
   level: () => play([523, 659, 784, 1047].map((f, i) => ({ f, at: i * 0.09, dur: 0.2, type: "square" as OscillatorType, vol: 0.6 }))),
   chime: () => throttled("chime", 400, [{ f: 1047, dur: 0.15, type: "triangle" }, { f: 1568, at: 0.1, dur: 0.3, type: "triangle" }]),
   bankai: () => play([{ f: 80, to: 40, dur: 0.6, type: "sawtooth", vol: 1 }, { f: 400, to: 1600, dur: 0.4, type: "triangle", vol: 0.5 }]),
