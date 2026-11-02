@@ -98,6 +98,8 @@ export function initOptions(game: Phaser.Game, closeWindows: (keep?: string) => 
     else panel.hidden = true;
   };
   $("#options-close").onclick = () => (panel.hidden = true);
+  // o Enter dentro da janela aciona o botão ou a caixa focada; o ouvinte de window do chat não pode roubá-lo
+  panel.addEventListener("keydown", (e) => { if (e.code === "Enter") e.stopPropagation(); });
 
   // a primeira carga traz bi_hd e bi_mute para bi.prefs (ADR-001 §2.2); daqui em diante bi.prefs manda
   savePrefs(store, prefs);

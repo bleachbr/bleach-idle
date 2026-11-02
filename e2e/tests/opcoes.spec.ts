@@ -38,6 +38,29 @@ test("⚙ abre a janela, o som acompanha o ícone e a escolha fica gravada", asy
 
   await page.click("#options-body fieldset:nth-of-type(2) button"); // Voltar ao padrão
   await expect(page.locator("#mute-btn")).toHaveAttribute("data-ico", "sound");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("bi.prefs"))).toBe('{"hd":false,"mute":false}');
+});
+
+test("Enter no botão Voltar ao padrão aciona o botão e não foca o chat", async ({ page }) => {
+  await newPlayer(page);
+  await page.click("#options-btn");
+  await prefsBoxes(page).nth(1).uncheck(); // som desligado
+  await expect(page.locator("#mute-btn")).toHaveAttribute("data-ico", "mute");
+  await page.locator("#options-body fieldset:nth-of-type(2) button").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#mute-btn")).toHaveAttribute("data-ico", "sound");
+  await expect(page.locator("#chatin")).not.toBeFocused();
+});
+
+test("Espaço na caixa de marcar não manda interagir ao jogo", async ({ page }) => {
+  const sentHas = watchSent(page);
+  await newPlayer(page); // nasce na praça, perto do Kisuke e da loja: Espaço fora de um campo mandaria "interact"
+  await page.click("#options-btn");
+  await prefsBoxes(page).nth(1).focus();
+  await page.keyboard.press("Space");
+  await expect(page.locator("#mute-btn")).toHaveAttribute("data-ico", "mute"); // a caixa mudou
+  await flush(page);
+  expect(sentHas("interact")).toBe(false);
 });
 
 test("o Esc fecha a janela e abrir outra janela fecha a de opções", async ({ page }) => {

@@ -10,16 +10,18 @@ const RANGE_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "
 /** O que se lê do alvo do evento (o teste passa um objeto simples, sem DOM). */
 type FocusTarget = { tagName?: unknown; type?: unknown; isContentEditable?: unknown };
 
-/** true se a tecla `code` deve ficar com o campo: texto, lista (`select`), `textarea`, `[contenteditable]`
- *  e, no `range`, só as teclas que o movem. */
+/** true se a tecla `code` deve ficar com o campo: texto, lista (`select`), `textarea`, `[contenteditable]`,
+ *  no `range` só as teclas que o movem e, em botão, caixa de marcar e radio, o Espaço. */
 export function keyBelongsToField(target: unknown, code: string): boolean {
   if (typeof target !== "object" || target === null) return false;
   const t = target as FocusTarget;
   if (t.isContentEditable === true) return true;
   const tag = typeof t.tagName === "string" ? t.tagName.toUpperCase() : "";
   if (tag === "SELECT" || tag === "TEXTAREA") return true;
+  if (tag === "BUTTON") return code === "Space"; // o Espaço aciona o botão; não pode virar "interagir" no jogo
   if (tag !== "INPUT") return false;
   const type = typeof t.type === "string" ? t.type.toLowerCase() : "text";
   if (type === "range") return RANGE_KEYS.has(code);
-  return !NOT_TEXT.has(type);
+  if (NOT_TEXT.has(type)) return code === "Space" && type !== "range"; // caixa de marcar, radio e botões: o Espaço é deles
+  return true;
 }

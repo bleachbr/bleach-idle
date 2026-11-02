@@ -34,6 +34,14 @@ describe("keyBelongsToField", () => {
     expect(keyBelongsToField(input("checkbox"), "ArrowUp")).toBe(false); // a seta só é do campo no range
   });
 
+  it("o Espaço fica com botão, caixa de marcar e radio (não vira interagir no jogo)", () => {
+    for (const t of ["checkbox", "radio", "button", "submit"]) expect(keyBelongsToField(input(t), "Space")).toBe(true);
+    expect(keyBelongsToField({ tagName: "BUTTON" }, "Space")).toBe(true);
+    expect(keyBelongsToField({ tagName: "BUTTON" }, "KeyE")).toBe(false); // as outras teclas seguem para o jogo
+    expect(keyBelongsToField(input("checkbox"), "KeyE")).toBe(false);
+    expect(keyBelongsToField({ tagName: "CANVAS" }, "Space")).toBe(false);
+  });
+
   it("alvo que não é elemento não bloqueia", () => {
     for (const t of [null, undefined, "INPUT", 7, {}, { tagName: 3 }]) expect(keyBelongsToField(t, "KeyW")).toBe(false);
   });
