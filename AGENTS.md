@@ -54,6 +54,7 @@ bleach-idle/
 │   ├── src/                   # WorldRoom.ts, LobbyRoom.ts, db.ts, http.ts, schema.ts
 │   ├── scripts/               # Scripts de cenários de teste, balanceamento e bots
 │   └── test/                  # Testes unitários e E2E rápidos (Vitest)
+├── e2e/                       # Testes no navegador com Playwright (M5-03): npm run test:e2e
 ├── client/                    # Cliente Phaser 3 + Vite + PWA
 │   ├── src/                   # GameScene.ts, main.ts, sfx.ts, theme.css
 │   └── public/                # Assets gráficos, áudios e mapas (.tmj)
@@ -73,6 +74,7 @@ Toda intervenção de código deve ser validada com os comandos padrão do proje
 | **Testes Unitários / E2E** | `npm test` | Suíte rápida Vitest (testes de regras, banco em memória e E2E) |
 | **Modo Watch de Testes** | `npm run test:watch` | Execução interativa contínua do Vitest |
 | **Bateria de Cenários** | `npm run test:scripts` | Sobe servidor de teste isolado e roda todos os 31 cenários (cerca de 7 min). Para um só: `cd server && npx tsx scripts/test.ts social` |
+| **Testes no Navegador** | `npm run test:e2e` | Playwright (Chromium) contra o servidor do jogo servindo um build temporário, com banco temporário (cerca de 30 s). Primeira vez: `npm exec -w e2e -- playwright install chromium` |
 | **Segredos** | `gitleaks git --redact -c .gitleaks.toml .` | Varre o histórico. Rode antes de abrir PR |
 | **Servidor Dev** | `npm run dev` | Inicia servidor (`localhost:2567`) e Vite (`localhost:5173`) |
 | **Build de Produção** | `npm run build` | Compila o bundle estático do cliente para `client/dist` |
