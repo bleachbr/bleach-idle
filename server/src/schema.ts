@@ -119,7 +119,8 @@ export class Player extends Schema {
 
 export type Interact = "depot" | "shop" | "travel";
 
-export interface DeathReport { by: string; exp: number; gold: number; items: string[]; protected: boolean; at: number }
+/** `invasion`: atenuante da Invasão de Hollows aplicado (#39); ausente em relatórios antigos */
+export interface DeathReport { by: string; exp: number; gold: number; items: string[]; protected: boolean; invasion?: boolean; at: number }
 defineTypes(Player, {
   id: "string", name: "string", charId: "string", form: "uint8",
   x: "int16", y: "int16", dir: "uint8", stepMs: "uint16",

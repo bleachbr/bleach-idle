@@ -19,5 +19,6 @@ export * from "./bossPhases";
 export * from "./arena";
 export * from "./patrols";
 export * from "./offlineReport";
+export * from "./deathPenalty";
 export * from "./potions";
 export * from "./skillGate";
