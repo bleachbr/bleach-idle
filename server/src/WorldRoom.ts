@@ -13,16 +13,17 @@ import {
   expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
   DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, outfitFits, QUEST_BY_ID, huntKinds, MAX_ACTIVE_QUESTS,
-  zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
+  zanNext, reiNext, zanMult, reiMult, trainedDmgMult, AUTO_TRAIN_BURN, potionRefusal,
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
   EVENT_BANNER, EVENT_END_MS, eventLore, type EventBanner, type EventKind, type EventPhase,
-  own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
+  own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, REBIRTH_MAX, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
   applyStatus, tickStatuses, canEntityMove, canEntityAct, effectiveStepMs, formatStatusFlags, clearStatuses, type SkillStatusDef,
   evaluateBossPhase,
   newArenaProgress, getArenaTier, validateStepInterval, ARENA_MIN_LEVEL, ARENA_COUNTDOWN_SEC, ARENA_MATCH_TIMEOUT_SEC, ARENA_WIN_GOLD, ARENA_WIN_SEASON_PTS, type ArenaProgress, type DuelOutcome,
   PATROL_SECTORS, PATROL_DURATIONS, calculatePatrolRewards, canClaimPatrol, patrolRemainingMs, type PatrolState,
-  OFFLINE_MAX_MS, buildOfflineReport,
+  OFFLINE_MAX_MS, buildOfflineReport, GUILD_COST, GUILD_MIN_LEVEL,
+  skillBlock, skillBlockText,
 } from "../../shared/src";
 import * as arenaMgr from "./arenaManager";
 import { findPath, type Pt } from "./path";
@@ -41,10 +42,8 @@ import { claimServerMilestone } from "./milestones";
 import { checkChatMessage, isGm, mutePlayer, sanitizeChatText, unmutePlayer } from "./moderation";
 import { recordAudit } from "./economyAudit";
 
-const GUILD_COST = 500;
 /** Modo Dev (botão que libera tudo para testar): nasce DESLIGADO e só liga com BI_DEV=1 (`npm run dev` já define). */
 const DEV_MODE = flagOn("BI_DEV");
-const GUILD_MIN_LEVEL = 10;
 const GUILD_NAME_RE = /^[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ]{2,19}$/;
 const HELP = [
   "Comandos:",
@@ -67,6 +66,8 @@ const HUNT_RADIUS = 30;
 /** "já estou no lugar de caça": até esta distância da chegada do destino */
 const HUNT_SPOT_RADIUS = 12;
 const REGEN_MS = 2000;
+/** Motivo de técnica bloqueada no Auto Hunt: ninguém lê, então não se monta o texto (#27). */
+const SKILL_BLOCKED = "auto";
 const BAG_OWNER_MS = 60_000; // prioridade de quem matou
 const BAG_TTL_MS = 5 * 60_000; // tempo até o corpo/sacola sumir
 
@@ -184,19 +185,22 @@ export class WorldRoom extends GameRoom<WorldState> {
         // botão único (celular): a técnica mais forte que estiver pronta
         const t = this.targetOf(p) ?? this.nearestMonster(p, CHARS[p.charId].skill.range);
         if (!t) return this.log(p, "Nenhum alvo ao alcance.");
-        for (let i = TECH_SLOTS.length - 1; i >= 0; i--) if (this.trySkill(p, t, now, false, i)) return;
-        this.log(p, "Nenhuma técnica pronta (recarga, reiatsu ou alcance).");
+        // sem nenhuma pronta, mostra o motivo da última tentada (a técnica 1, que todos têm)
+        let why: string | null = null;
+        for (let i = TECH_SLOTS.length - 1; i >= 0; i--) if ((why = this.trySkill(p, t, now, false, i)) === null) return;
+        this.log(p, `Nenhuma técnica pronta. ${why}`);
       } else if (ti >= 0) {
         const tech = techniqueFor(p.charId, ti, p.form);
         if (!tech) return;
         if (p.level < (tech.minLevel ?? 1)) return this.log(p, `${tech.name} se aprende no nível ${tech.minLevel}.`);
         const t = this.targetOf(p) ?? this.nearestMonster(p, tech.range);
         if (!t) return this.log(p, "Nenhum alvo ao alcance.");
-        if (!this.trySkill(p, t, now, false, ti)) this.log(p, `${tech.name} indisponível (recarga, reiatsu ou alcance).`);
+        const why = this.trySkill(p, t, now, false, ti);
+        if (why) this.log(p, why);
       } else if (m?.slot === 2 || m?.slot === 3) {
         const id = this.bestPotion(p, m.slot === 2 ? "hp" : "rei");
         if (!id) this.log(p, m.slot === 2 ? "Sem poções de cura." : "Sem poções de reiatsu.");
-        else if (!this.useConsumable(p, id, now)) this.log(p, `Não dá para usar ${ITEMS[id].name} agora.`);
+        else if (!this.useConsumable(p, id, now)) this.denyConsumable(p, id, now);
       }
     });
     this.registerItemMessages();
@@ -597,7 +601,7 @@ export class WorldRoom extends GameRoom<WorldState> {
         || (kinds && this.nearestMonster(p, HUNT_RADIUS, kinds)) || this.nearestMonster(p, p.autoHunt ? HUNT_RADIUS : VIEW);
       if (t) { p.targetId = t.id; p.follow = true; }
     }
-    if (t && p.autoHunt) for (let i = TECH_SLOTS.length - 1; i >= 0; i--) if (this.trySkill(p, t, now, true, i)) break;
+    if (t && p.autoHunt) for (let i = TECH_SLOTS.length - 1; i >= 0; i--) if (this.trySkill(p, t, now, true, i) === null) break;
 
     if (t && p.follow && now >= p.nextStepAt) {
       const tx = t.x, ty = t.y;
@@ -737,7 +741,8 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private hit(p: Player, t: Player | Monster, mult: number, now: number, skill = false) {
-    mult *= (skill ? reiMult(p.reiryoku) : zanMult(p.zanjutsu)) * rebirthBonus(p.rebirths).dmg * setBonuses(p.equip).total.dmg;
+    // perícia × renascimento × conjuntos (shared/src/damage.ts, a mesma conta da ficha); o estágio entra no rollDamage
+    mult *= trainedDmgMult(p, skill);
     if (!skill) this.train(p, 1, 0);
     if (isPlayer(t)) return this.pvpHit(p, t, mult, now);
     // no mesmo tick a habilidade pode matar e o golpe corpo a corpo acertar o mesmo alvo:
@@ -761,14 +766,21 @@ export class WorldRoom extends GameRoom<WorldState> {
     }
   }
 
-  private trySkill(p: Player, t: Player | Monster, now: number, auto: boolean, i = 0): boolean {
-    if (!canEntityAct(p.statuses, now) || this.inArenaCountdown(p)) return false;
+  /** `null` quando a técnica saiu; senão, o motivo para o chat (#27, travas em shared/src/skillGate.ts).
+   * No Auto Hunt (até 4 chamadas por tick por jogador) ninguém lê o motivo: devolve `SKILL_BLOCKED` sem montar texto. */
+  private trySkill(p: Player, t: Player | Monster, now: number, auto: boolean, i = 0): string | null {
     const sk = techniqueFor(p.charId, i, p.form);
-    if (!sk || p.level < (sk.minLevel ?? 1)) return false;
-    if (now < p.skillReadyAt || now < p.techReady[i] || p.rei < sk.cost || inPZ(mapOf(p), p.x, p.y)) return false;
-    if (auto && p.rei - sk.cost < p.maxRei * 0.3) return false; // Auto Hunt guarda reiatsu para a liberação
-    if (chebyshev(p.x, p.y, t.x, t.y) > sk.range) return false;
-    if (isPlayer(t) && this.cantAttack(p, t)) return false;
+    if (!sk) return auto ? SKILL_BLOCKED : "Técnica indisponível.";
+    // Auto Hunt guarda reiatsu para a liberação (AUTO_REI_RESERVE); PZ e distância só se calculam se as travas baratas passarem
+    const block = skillBlock({
+      now, canAct: canEntityAct(p.statuses, now), arenaCountdown: this.inArenaCountdown(p),
+      level: p.level, minLevel: sk.minLevel, skillReadyAt: p.skillReadyAt, techReadyAt: p.techReady[i],
+      rei: p.rei, maxRei: p.maxRei, cost: sk.cost, auto, inPZ: () => inPZ(mapOf(p), p.x, p.y),
+      dist: () => chebyshev(p.x, p.y, t.x, t.y), range: sk.range,
+    });
+    if (block) return auto ? SKILL_BLOCKED : skillBlockText(sk.name, block);
+    const pvp = isPlayer(t) ? this.cantAttack(p, t) : undefined;
+    if (pvp) return auto ? SKILL_BLOCKED : pvp;
     p.rei -= sk.cost;
     this.train(p, 0, sk.cost);
     p.techReady[i] = now + sk.cdMs;
@@ -789,7 +801,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.hit(p, m, sk.mult * 0.7, now, true);
       this.applySkillStatus(p, m, sk.status, Math.max(1, mHpBefore - m.hp), now);
     }
-    return true;
+    return null;
   }
 
   private useConsumable(p: Player, id: string, now: number): boolean {
@@ -822,6 +834,14 @@ export class WorldRoom extends GameRoom<WorldState> {
     removeItem(p.inv, id, 1);
     this.sendInv(p);
     return true;
+  }
+
+  /** Poção recusada pelo jogador: diz o motivo no chat e sobe um texto só para ele (#41). */
+  private denyConsumable(p: Player, id: string, now: number) {
+    const why = potionRefusal(ITEMS[id], p, now);
+    if (!why) return this.log(p, `Não dá para usar ${ITEMS[id].name} agora.`);
+    this.log(p, why.chat);
+    this.sendTo(p, "fx", { t: "deny", id: p.id, text: why.float });
   }
 
   private regen(p: Player, now: number) {
@@ -1072,7 +1092,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.handle("useItem", (c, m: { index: number }) => {
       const p = this.me(c);
       const s = p?.inv[idx(m?.index, INV_SIZE)];
-      if (p && s && !this.useConsumable(p, s.id, Date.now())) this.log(p, `Não dá para usar ${ITEMS[s.id].name} agora.`);
+      if (p && s) { const now = Date.now(); if (!this.useConsumable(p, s.id, now)) this.denyConsumable(p, s.id, now); }
     });
     this.handle("equip", (c, m: { index: number }) => {
       const p = this.me(c);
@@ -2585,7 +2605,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const need = rebirthLevel(p.rebirths);
       if (p.level < need) return this.log(p, `Renascer exige nível ${need}.`);
       if (Date.now() - p.lastCombatAt < 6000) return this.log(p, "Saia de combate para renascer.");
-      if (p.rebirths >= 250) return;
+      if (p.rebirths >= REBIRTH_MAX) return;
       p.rebirths++;
       p.level = START_LEVEL;
       p.exp = expForLevel(START_LEVEL);
@@ -3171,7 +3191,8 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (!p) return;
       const today = dayKey(Date.now());
       const d = p.prog.daily;
-      if (d.last === today) return this.log(p, "Você já pegou a recompensa de hoje. Volte amanhã.");
+      // na recusa também devolve o Livro: o cliente desabilitou o botão ao clicar e espera o redesenho (#23)
+      if (d.last === today) { this.log(p, "Você já pegou a recompensa de hoje. Volte amanhã."); return show(p); }
       d.streak = d.last === prevDay(today) ? d.streak + 1 : 1;
       d.last = today;
       const got = this.grant(p, DAILY[(d.streak - 1) % DAILY.length]);

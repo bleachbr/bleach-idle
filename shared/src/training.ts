@@ -11,8 +11,11 @@ const GROWTH = 1.12;
 export const zanNext = (lvl: number) => Math.round(ZANJUTSU_BASE * GROWTH ** lvl);
 export const reiNext = (lvl: number) => Math.round(REIRYOKU_BASE * GROWTH ** lvl);
 
-export const zanMult = (lvl: number) => 1 + lvl * 0.02;
-export const reiMult = (lvl: number) => 1 + lvl * 0.03;
+/** dano a mais por nível: Zanjutsu no corpo a corpo, Reiryoku nas técnicas */
+export const ZAN_DMG_PER_LEVEL = 0.02;
+export const REI_DMG_PER_LEVEL = 0.03;
+export const zanMult = (lvl: number) => 1 + lvl * ZAN_DMG_PER_LEVEL;
+export const reiMult = (lvl: number) => 1 + lvl * REI_DMG_PER_LEVEL;
 
 /** Auto Treino: fora de combate, queima esta fração do reiatsu máximo a cada 2 s */
 export const AUTO_TRAIN_BURN = 0.08;

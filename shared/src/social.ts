@@ -9,6 +9,10 @@ export const PARTY_SHARE_BONUS = 0.1;
 export const PARTY_LEVEL_RATIO = 2 / 3;
 export const PARTY_INVITE_MS = 60_000;
 
+/** fundar guilda (`/guilda criar`): custo em kan e nível mínimo */
+export const GUILD_COST = 500;
+export const GUILD_MIN_LEVEL = 10;
+
 /** abaixo deste nível ninguém ataca nem é atacado por jogadores */
 export const PVP_MIN_LEVEL = 10;
 /** dano entre jogadores é reduzido (como no Tibia) */

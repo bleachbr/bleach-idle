@@ -690,6 +690,11 @@ export class GameScene extends Phaser.Scene {
         if (v) this.playFx("heal", v.c.x, v.c.y - 20, { scale: 0.8 });
         if (mine) sfx.heal();
         break;
+      case "deny":
+        // poção recusada (#41): o motivo sobe do personagem; o servidor só manda para quem tentou
+        this.float(v, fx.text ?? "", "#ffb04a", 11);
+        if (mine) sfx.deny();
+        break;
       case "level":
         this.float(v, `NÍVEL ${fx.v}!`, "#ffd84a", 14);
         if (v) this.playFx("level", v.c.x, v.c.y - 28, { scale: 1.3 });

@@ -69,7 +69,7 @@ h1 { font-weight: 700; letter-spacing: .02em; }
 .who .icon-btn, .who button.link.icon-btn { float: none; margin: 0; text-decoration: none; width: 28px; height: 28px; display: inline-grid; place-items: center; border-radius: 4px; }
 /* 1ª linha: nome e nível; 2ª linha: os quatro ícones */
 .who #plevel { font-size: 12px; color: #c9c4da; font-family: var(--title); }
-.who-icons { display: flex; gap: 2px; width: 100%; }
+.who-icons { display: flex; flex-wrap: wrap; gap: 2px; width: 100%; }
 .who .icon-btn::before { margin: 0; }
 .who .icon-btn:hover { background: #ffffff14; }
 #book-btn.ping { position: relative; }
@@ -253,6 +253,10 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 #shop .cos-act { display: flex; gap: 4px; flex-shrink: 0; }
 #shop .cos-act button, #shop .claim, #pass .claim { padding: 4px 10px; background: var(--bg); color: var(--text); border: 1px solid var(--accent); border-radius: 4px; cursor: pointer; font-size: 12px; }
 #shop .cos-act button:disabled { opacity: 0.5; cursor: default; border-color: var(--line); }
+/* título da crônica na leitura: fonte de texto, porque na pixel "Crônica" vira "Orônloa" (C≈O, ic≈lo; #24) */
+#shop .lore-title { font-family: system-ui, sans-serif; }
+/* crônica já lida neste navegador (#38) */
+#shop .lore-read { color: #6aff9a; font-size: 11px; white-space: nowrap; }
 #shop .swatch { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; border: 1px solid #ffffff40; }
 #shop .outfit-pic { width: 48px; height: 48px; flex-shrink: 0; image-rendering: pixelated; background-repeat: no-repeat; }
 #shop .buy-note { margin-top: 10px; font-style: italic; }
@@ -286,3 +290,11 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 #dev-body .dev-god { width: 100%; }
 #dev-body .dev-god.on { color: #7dff9a; border-color: #7dff9a; }
 #dev-body { overflow-y: auto; padding: 6px 2px 0; }
+
+/* ---------- inventário (issue #25): espaços com cara de botão e destaque ao abrir pelo atalho ---------- */
+#gear .slot:not(:disabled):hover, #gear .slot:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 0 8px #ff8a2a66; outline: none; }
+#inv-title kbd { text-transform: none; letter-spacing: 0; font-size: 10px; }
+#inv-title:focus { outline: none; }
+#gear.flash { animation: inv-flash 1.2s ease-out; }
+@keyframes inv-flash { from { box-shadow: 0 0 0 2px var(--accent), 0 0 16px #ff8a2a99; } to { box-shadow: 0 0 0 2px transparent; } }
+@media (prefers-reduced-motion: reduce) { #gear.flash { animation: none; } }
