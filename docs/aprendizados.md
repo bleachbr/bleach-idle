@@ -318,6 +318,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Na praça de Karakura, loja, depot, portal e templo ficam a 2 ou 3 tiles um do outro. Com raio de 1,5 tile os ícones viravam uma mancha; com ~1 tile se separam. Conferido numa prévia offline (`art/work/minimap_preview.py`, fora do git) nas larguras de 128 e 96 px; a prévia reduz com Lanczos, não com a reamostragem do navegador, então o teste no navegador continua necessário.
 - A primeira mensagem `quests` chega antes de a cena existir: quem precisa dela depois (o minimapa) registra o ouvinte e pede de novo (`room.send("quests")`). O colyseus.js 0.15 aceita mais de um ouvinte por tipo (nanoevents).
 
+## Teste de interface com o Playwright do `test/` (M3-02)
+
+- Mudança de cliente se confere num navegador de verdade sem infraestrutura nova: o `test/` (Jogador-IA) já traz o `playwright`. Basta `npm install` e `npx playwright install chromium` dentro de `test/`, subir o servidor do jogo servindo o build (`DB_FILE` temporário, `PORT`, `STATIC_DIR=client/dist`) e um script que importa o `playwright` de `test/`. Foi assim que as abas do chat foram conferidas (8 verificações, sem erro no console). É o caminho que o M5-03 vai formalizar.
+- Três tropeços do roteiro: nome de personagem só aceita letras e espaço (`Nome: de 3 a 16 letras (espaços permitidos)`), então um sufixo com número falha; o limite de contas por IP (F-14, padrão `REGISTER_MAX_IP` de 5 por hora) barrou a criação depois de várias rodadas no mesmo banco, então cada rodada nova usa um banco novo; e editar o roteiro com `Get-Content`/`Set-Content` do PowerShell 5 estraga os acentos (lê UTF-8 como ANSI), o que quebrou uma expressão regular com "não". O roteiro em si não está no repositório: fica para o M5-03, que define a pasta `e2e/`.
+
 ## Foco de teclado: `blur()` no handler do campo muda o que os ouvintes de `window` veem (R-14)
 
 - O `keydown` de um `<input>` roda antes de o evento subir até `window`. Se o handler do campo chama `blur()`, quando o ouvinte de `window` confere `document.activeElement` o campo já não está focado, e ele trata a tecla como se viesse do jogo (o Esc do chat também fecha as janelas; o Enter que envia volta a focar o chat). Para saber de onde a tecla veio, confira `e.target`, ou chame `stopPropagation` no handler do campo.
@@ -334,6 +339,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Sintoma:** o Jogador-IA leu "Orônloa: A Cidade Quieta" no título da crônica. Parecia mojibake, mas o dado está em UTF-8 correto (`shared/src/shop.ts`, `ô` = `c3 b4`) e a Pixelify Sans tem todos os glifos (cmap conferido com fontTools nos pesos 500 e 700). O título é DOM, não texto do Phaser.
 - **Causa:** o `h3` da leitura herdava a fonte pixel (`theme.css`, regra de `h1, h2, h3`). Renderizado a 16 px em negrito, "C" e "O" diferem em 5 pixels (15 na Arial Bold) e "ic" e "lo" em 4 (9 na Arial): a palavra fica ambígua para quem lê, pessoa ou modelo de visão.
 - **Regra:** fonte pixel fica em botões, rótulos curtos e números. Título de texto para ler (nome de crônica, frases) usa a fonte de texto; aqui, `#shop .lore-title`. Antes de tratar achado de "texto corrompido" vindo de captura de tela, confira os bytes do dado e o cmap da fonte.
+
+## Workspace que não entra na imagem Docker (M5-03)
+
+- `e2e/` é workspace da raiz, mas o Dockerfile só copia os `package.json` de `client`, `server` e `shared` antes do `npm ci`. Com a pasta ausente, o `npm ci` passa e não instala as dependências dela (conferido repetindo o passo do Dockerfile numa pasta temporária com o `package-lock.json` real: sem `@playwright/test`, com `tsx`). O `.dockerignore` também tira `e2e` do contexto.
+- `Add-Content` do PowerShell não põe quebra de linha antes do texto quando o arquivo não termina com uma: o `e2e/test-results/` grudou na última linha do `.gitignore`, que era a regra de um arquivo de credencial. Conferir com `git check-ignore -v` depois de mexer no `.gitignore`.
 
 ## Fluxo de publicação: uma branch e um PR por entrega
 
@@ -371,3 +381,12 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Causa:** o `Dockerfile` roda `node --import tsx server/src/index.ts` a partir de `/app`, a raiz do repositório, que não tem `tsconfig.json`. O tsx procura o tsconfig a partir do cwd, subindo pelas pastas, e não desce até `server/`; o `useDefineForClassFields: false` do `server/tsconfig.json` não valia. Sem tsconfig, o esbuild do tsx (alvo `node<versão>`) segue a semântica padrão de campos de classe: os campos de `server/src/schema.ts` (`hp = 1`, `name = ""`) viram propriedades comuns que escondem os acessores do `defineTypes`, e o Colyseus não registra nenhuma mudança. Em casa não aparece, porque o `npm start` roda `tsx src/index.ts` de dentro de `server/`.
 - **Solução:** `ENV TSX_TSCONFIG_PATH=/app/server/tsconfig.json` no estágio final do `Dockerfile`. O caminho é absoluto porque o tsx resolve um relativo contra o cwd de cada processo e encerra com `Cannot resolve tsconfig` se não achar (por exemplo, um `docker exec -w /app/server`). `server/test/container-runtime.test.ts` lê o WORKDIR, o ENV e o CMD do Dockerfile, roda a sonda `server/test/helpers/schemaProbe.ts` com eles e confere que o nome do jogador sai codificado; sem a linha, o teste falha.
 - **Regra:** rodar TypeScript direto pode perder as opções do `tsconfig.json` sem aviso: o tsx, quando o cwd não está na pasta dele nem abaixo; o type stripping do Node (`--experimental-strip-types`), sempre, porque ignora o tsconfig. Com schema do Colyseus por `defineTypes`, isso não quebra a inicialização nem o `/healthz`: só a sincronização. Ao mudar o comando ou o WORKDIR do container, confira o estado de um cliente real, não só o healthcheck.
+
+---
+
+## 13. "Botão não responde" que era rolagem (#23)
+
+- **Sintoma (Jogador-IA, rodada `2026-11-01-12-47`):** o Grinder clicou em "Pegar a recompensa de hoje" nos passos 12 a 16 e de novo no 208, e registrou nos passos 17 e 209 que o botão não respondia; o Explorador clicou nos passos 38 e 109 e registrou o mesmo no 110. Em todas as capturas a sequência continua em 0 dias. Os cenários `progress` e `hunt` provam que o handler `daily` paga e recusa o segundo resgate.
+- **Causa:** nas capturas citadas na issue (`grinder/screenshots/passo-017.png`, `grinder/screenshots/passo-209.png`, `explorador/screenshots/passo-038.png`, e também `explorador/screenshots/passo-110.png`), a área visível do painel do Livro termina por volta de y=540, cortando os cartões dos dias, e o botão não aparece. Os relatórios mostram todos os cliques em (786,620): abaixo das três missões, dentro do `#book-body` com `overflow-y: auto`. O agente clica na coordenada do centro do elemento, e ali está o chat. Uma pessoa precisaria rolar o painel para achar o botão.
+- **Solução:** a recompensa de entrada vem antes das missões (`client/src/bookDaily.ts`), o botão desabilita e mostra "Pegando…" no clique, e a recusa do servidor ("já pegou hoje") também devolve o `book`, para o botão não ficar parado.
+- **Regra:** antes de corrigir achado de IA sobre clique, olhe a captura e confira se o alvo está visível dentro do painel; ação principal de uma aba fica no topo, não depois de conteúdo de tamanho variável.
