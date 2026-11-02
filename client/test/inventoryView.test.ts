@@ -1,0 +1,94 @@
+import { describe, it, expect } from "vitest";
+import { formatSlotAria, formatInventoryCount, itemDetailHtml, isItemLevelLocked } from "../src/inventoryView";
+import { ITEMS } from "../../shared/src";
+
+describe("Lote 3: Usabilidade do Inventário e Acessibilidade de Slots", () => {
+  it("formatSlotAria gera texto descritivo claro em vez de BUTTON vazio ou apenas quantidade", () => {
+    // Slot vazio do inventário
+    expect(formatSlotAria(null)).toBe("Slot de inventário vazio");
+
+    // Slot vazio de equipamento
+    expect(formatSlotAria(null, "weapon")).toContain("Arma (vazio)");
+    expect(formatSlotAria(null, "armor")).toContain("Corpo (vazio)");
+
+    // Slot com item empilhável (ex.: 13 poções de vida)
+    const pocaoSlot = { id: "pocao_vida", qty: 13 };
+    const pocaoAria = formatSlotAria(pocaoSlot);
+    expect(pocaoAria).toContain("Poção de Cura (13)");
+    expect(pocaoAria).toContain("Recupera");
+
+    // Slot com equipamento (ex.: Manto de Sternritter)
+    const mantoSlot = { id: "manto_sternritter", qty: 1 };
+    const mantoAria = formatSlotAria(mantoSlot);
+    expect(mantoAria).toContain("Manto de Sternritter");
+    expect(mantoAria).toContain("Corpo");
+    expect(mantoAria).toContain("Defesa +22");
+    expect(mantoAria).toContain("Nível 105+");
+  });
+
+  it("formatInventoryCount calcula taxa de ocupação e alerta de inventário cheio", () => {
+    const emptyInv = Array(20).fill(null);
+    expect(formatInventoryCount(emptyInv)).toEqual({
+      used: 0,
+      total: 20,
+      isFull: false,
+      text: "0/20 slots",
+    });
+
+    const halfInv = [...Array(10).fill({ id: "pocao_vida", qty: 1 }), ...Array(10).fill(null)];
+    expect(formatInventoryCount(halfInv)).toEqual({
+      used: 10,
+      total: 20,
+      isFull: false,
+      text: "10/20 slots",
+    });
+
+    const fullInv = Array(20).fill({ id: "garra", qty: 1 });
+    expect(formatInventoryCount(fullInv)).toEqual({
+      used: 20,
+      total: 20,
+      isFull: true,
+      text: "20/20 slots (cheio)",
+    });
+  });
+
+  it("isItemLevelLocked identifica corretamente itens que o jogador não tem nível para equipar", () => {
+    const manto = { id: "manto_sternritter", qty: 1 }; // minLevel: 105
+    expect(isItemLevelLocked(manto, 1)).toBe(true);
+    expect(isItemLevelLocked(manto, 50)).toBe(true);
+    expect(isItemLevelLocked(manto, 105)).toBe(false);
+    expect(isItemLevelLocked(manto, 120)).toBe(false);
+
+    const espada = { id: "espada_madeira", qty: 1 }; // sem minLevel ou minLevel 1
+    expect(isItemLevelLocked(espada, 1)).toBe(false);
+
+    expect(isItemLevelLocked(null, 1)).toBe(false);
+  });
+
+  it("itemDetailHtml gera painel com nome, atributos e aviso explícito de nível insuficiente", () => {
+    // Quando nenhum item está selecionado
+    const emptyDetail = itemDetailHtml(null, 1);
+    expect(emptyDetail).toContain("Passe o mouse ou clique em um item");
+
+    // Item com nível bloqueado (Manto de Sternritter para jogador nível 5)
+    const lockedDetail = itemDetailHtml({ id: "manto_sternritter", qty: 1 }, 5);
+    expect(lockedDetail).toContain("Manto de Sternritter");
+    expect(lockedDetail).toContain("Corpo");
+    expect(lockedDetail).toContain("<b>Defesa</b> +22");
+    expect(lockedDetail).toContain("<b>HP</b> +220");
+    expect(lockedDetail).toContain("Exige nível 105");
+    expect(lockedDetail).toContain("seu nível atual é 5");
+    expect(lockedDetail).toContain("Nível insuficiente");
+
+    // Item consumível que pode ser usado
+    const pocaoDetail = itemDetailHtml({ id: "pocao_vida", qty: 5 }, 1);
+    expect(pocaoDetail).toContain("Poção de Cura");
+    expect(pocaoDetail).toContain("Quantidade: 5");
+    expect(pocaoDetail).toContain("Clique para usar");
+
+    // Equipamento que pode ser equipado (Haori de Capitão para nível 20)
+    const haoriDetail = itemDetailHtml({ id: "haori", qty: 1 }, 20);
+    expect(haoriDetail).toContain("Haori de Capitão");
+    expect(haoriDetail).toContain("Clique para equipar");
+  });
+});

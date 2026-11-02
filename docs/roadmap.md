@@ -100,6 +100,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-16 | Pacote de correções do Jogador-IA: `noHd` no `boneco`, `Tab` (`nextTarget`) ignorando `dummy`, exclusividade de janelas flutuantes + `Esc`, confirmação ao trocar de personagem e handlers `welcome`/`fx` na entrada da sala | M | | Feito | test/ |
 | F-17 | Jogador-IA: modo Dev desligado por omissão, 30 min padrão, alvo remoto (bleach.acoplum.com) e make ia-play-prod | M | F-16 | Feito | test/ |
 | F-18 | Novidades no login, lobby e menu: histórico, indicador de leitura e metadados do deploy | P | F-13 | Feito | /release, shared/src/releases.ts |
+| F-21 | Inventário & Usabilidade de Itens: acessibilidade de slots com aria-label, indicador de capacidade X/20, painel de detalhes #item-detail, feedback visual de nível mínimo e suporte a duplo clique (Lote 3 do Playtest) | M | | Feito | client/ |
 
 Recomendação: fazer F-12 antes de M4, porque as salas instanciadas dependem do Colyseus e é melhor não construir sobre uma versão com advisory.
 
