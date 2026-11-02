@@ -6,24 +6,35 @@ const input = (type?: string) => ({ tagName: "INPUT", type });
 
 describe("keyBelongsToField", () => {
   it("campo de texto, lista, área de texto e contenteditable ficam com a tecla", () => {
-    expect(keyBelongsToField(input("text"))).toBe(true);
-    expect(keyBelongsToField(input("password"))).toBe(true);
-    expect(keyBelongsToField(input("search"))).toBe(true);
-    expect(keyBelongsToField(input())).toBe(true); // <input> sem type é texto
-    expect(keyBelongsToField({ tagName: "SELECT" })).toBe(true); // #hunt-spot deixava passar setas, dígitos, T e R
-    expect(keyBelongsToField({ tagName: "textarea" })).toBe(true);
-    expect(keyBelongsToField({ tagName: "DIV", isContentEditable: true })).toBe(true);
+    expect(keyBelongsToField(input("text"), "KeyW")).toBe(true);
+    expect(keyBelongsToField(input("password"), "KeyW")).toBe(true);
+    expect(keyBelongsToField(input("search"), "KeyW")).toBe(true);
+    expect(keyBelongsToField(input(), "KeyW")).toBe(true); // <input> sem type é texto
+    expect(keyBelongsToField({ tagName: "SELECT" }, "ArrowUp")).toBe(true); // #hunt-spot deixava passar setas, dígitos, T e R
+    expect(keyBelongsToField({ tagName: "textarea" }, "KeyW")).toBe(true);
+    expect(keyBelongsToField({ tagName: "DIV", isContentEditable: true }, "KeyW")).toBe(true);
   });
 
   it("range, checkbox, radio e botões não bloqueiam os atalhos", () => {
     // os controles do Auto Helper são <input type="range">: antes seguravam WASD até perder o foco
-    for (const t of ["range", "checkbox", "radio", "button", "submit", "reset", "RANGE"]) expect(keyBelongsToField(input(t))).toBe(false);
-    expect(keyBelongsToField({ tagName: "BUTTON" })).toBe(false);
-    expect(keyBelongsToField({ tagName: "CANVAS" })).toBe(false);
-    expect(keyBelongsToField({ tagName: "DIV", isContentEditable: false })).toBe(false);
+    for (const t of ["range", "checkbox", "radio", "button", "submit", "reset", "RANGE"]) expect(keyBelongsToField(input(t), "KeyW")).toBe(false);
+    expect(keyBelongsToField({ tagName: "BUTTON" }, "KeyW")).toBe(false);
+    expect(keyBelongsToField({ tagName: "CANVAS" }, "KeyW")).toBe(false);
+    expect(keyBelongsToField({ tagName: "DIV", isContentEditable: false }, "KeyW")).toBe(false);
+  });
+
+  it("no range, só as teclas que movem o controle ficam com ele", () => {
+    // o GameScene cancela as setas: sem isso, o teclado perderia o controle do deslizante do Auto Helper
+    for (const code of ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"]) {
+      expect(keyBelongsToField(input("range"), code)).toBe(true);
+    }
+    for (const code of ["KeyW", "KeyA", "KeyS", "KeyD", "KeyT", "KeyR", "Digit1", "Tab"]) {
+      expect(keyBelongsToField(input("range"), code)).toBe(false);
+    }
+    expect(keyBelongsToField(input("checkbox"), "ArrowUp")).toBe(false); // a seta só é do campo no range
   });
 
   it("alvo que não é elemento não bloqueia", () => {
-    for (const t of [null, undefined, "INPUT", 7, {}, { tagName: 3 }]) expect(keyBelongsToField(t)).toBe(false);
+    for (const t of [null, undefined, "INPUT", 7, {}, { tagName: 3 }]) expect(keyBelongsToField(t, "KeyW")).toBe(false);
   });
 });

@@ -971,7 +971,7 @@ export class GameScene extends Phaser.Scene {
 
   private bindKeys() {
     const dirOf: Record<string, number> = { KeyS: 0, ArrowDown: 0, KeyA: 1, ArrowLeft: 1, KeyD: 2, ArrowRight: 2, KeyW: 3, ArrowUp: 3 };
-    const typing = (e: KeyboardEvent) => keyBelongsToField(e.target);
+    const typing = (e: KeyboardEvent) => keyBelongsToField(e.target, e.code);
     const down = (e: KeyboardEvent) => {
       if (typing(e)) return;
       if (e.code in dirOf) {

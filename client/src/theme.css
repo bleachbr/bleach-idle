@@ -69,9 +69,9 @@ h1 { font-weight: 700; letter-spacing: .02em; }
 .who .icon-btn, .who button.link.icon-btn { float: none; margin: 0; text-decoration: none; width: 28px; height: 28px; display: inline-grid; place-items: center; border-radius: 4px; }
 /* 1ª linha: nome e nível; 2ª linha: os quatro ícones */
 .who #plevel { font-size: 12px; color: #c9c4da; font-family: var(--title); }
-.who-icons { display: flex; gap: 2px; width: 100%; }
-/* com o ⚙ de opções (R-14) são 9 ícones: espaço igual entre eles para caber na barra sem rolar */
-.who-icons { gap: 4px; }
+/* com o ⚙ de opções (R-14) são 9 ícones: 24 px cada cabem numa linha no desktop; em tela estreita, os que sobram descem em vez de sair da barra */
+.who-icons { display: flex; flex-wrap: wrap; gap: 3px; width: 100%; }
+.who-icons .icon-btn { flex: 0 0 24px; }
 .who-icons button.link.icon-btn + button.link.icon-btn { margin-right: 0; }
 .who .icon-btn::before { margin: 0; }
 .who .icon-btn:hover { background: #ffffff14; }

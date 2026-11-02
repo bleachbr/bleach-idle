@@ -77,6 +77,8 @@ export function initOptions(game: Phaser.Game, closeWindows: (keep?: string) => 
       const hint = document.createElement("p");
       hint.className = "hint";
       hint.textContent = t.hint;
+      hint.id = `opt-hint-${t.key}`;
+      check.setAttribute("aria-describedby", hint.id);
       box.append(row, hint);
       boxes.set(t, check);
     }
