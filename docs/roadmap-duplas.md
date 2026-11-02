@@ -97,7 +97,7 @@ Itens herdados do roadmap e das pendências:
 | 9 | M3-01 | Troca direta 1v1, duas confirmações, mesmo mapa e alcance | M | — | sim | Servidor + UI; handler sensível: skill `seguranca-servidor`, revisão do Waldir |
 | 10 | M3-03 | Filtro de loot do Auto Helper | M | — | sim | Preferências no cliente, validação no servidor |
 | 11 | M3-04 | Banco de guilda com permissões por cargo | M | — | sim | Handler sensível (itens/kan): revisão do Waldir |
-| 12 | M5-03 | Testes E2E no navegador com Playwright | M | — | sim | Login, menus, HUD |
+| 12 | ~~M5-03~~ | ~~Testes E2E no navegador com Playwright~~ | M | — | sim | Login, menus, HUD |
 | 13 | — | Visual de equipamentos além do haori e da máscara | M | — | sim | Pendências §2; ganha ID quando entrar |
 | 14 | — | Interiores de edifícios (quartéis, loja do Kisuke) | G | M1-03 recomendado | sim | Pendências §5; ganha ID quando entrar |
 

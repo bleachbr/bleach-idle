@@ -23,7 +23,7 @@
 O jogo roda como em produção: o servidor do jogo entrega o build e o WebSocket na mesma origem (`server/src/http.ts`, com a CSP `connect-src 'self' ws: wss:`). Assim o teste pega erro de CSP e de origem, e não precisa de `VITE_SERVER`.
 
 O `globalSetup` do Playwright faz duas coisas:
-1. Gera o build do cliente **numa pasta temporária** (`npm -w client run build -- --outDir <tmp>/dist`), sem `VITE_SERVER`. Gerar em `client/dist` sobrescreveria o build local de quem desenvolve.
+1. Gera o build do cliente **numa pasta temporária** (o Vite direto pelo `node`, `vite build --outDir <tmp>/dist`, sem shell; implementado assim no lugar de `npm -w client run build`, que no Windows pede `shell: true`), sem `VITE_SERVER`. Gerar em `client/dist` sobrescreveria o build local de quem desenvolve.
 2. Sobe o servidor com `node --import tsx server/src/index.ts` e estas variáveis:
    - `PORT=2580` e `STATIC_DIR=<tmp>/dist`;
    - `DB_FILE` no mesmo diretório temporário;
@@ -33,7 +33,7 @@ O `globalSetup` do Playwright faz duas coisas:
 
    Espera a linha "Servidor do mundo" na saída, com limite de 30 s. A página é `http://localhost:2580`.
 
-O `globalTeardown` derruba o servidor e apaga o diretório temporário. A porta 2580 não briga com `npm run dev` (2567 e 5173), com a bateria de cenários (2577) nem com o Jogador-IA (2578 e 5183).
+A função que o `globalSetup` devolve faz o papel de teardown: derruba o servidor (sem travar se ele já tinha caído) e apaga o diretório temporário. Se o setup falha no meio, a pasta também é apagada. A saída do servidor fica em `e2e/test-results/server.log`, e o ambiente herdado perde `BACKUP_DIR`, `VITE_SERVER`, `BI_DEV` e `TRUST_PROXY`, para o teste não mexer em pasta de backup nem em outro servidor. A porta 2580 não briga com `npm run dev` (2567 e 5173), com a bateria de cenários (2577) nem com o Jogador-IA (2578 e 5183).
 
 `BI_DEBUG=1` libera mensagens de depuração, e o servidor escuta em todas as interfaces (`gameServer.listen(port)` sem host). Na máquina de quem desenvolve, ele fica acessível na rede local enquanto o teste roda. No CI não importa; em casa, rode numa rede de confiança.
 
@@ -44,8 +44,8 @@ O `globalTeardown` derruba o servidor e apaga o diretório temporário. A porta 
 ### 2.4. CI
 - Job novo `e2e` em `.github/workflows/ci.yml`:
   - `ubuntu-24.04`, Node 24, `timeout-minutes: 15`;
-  - `npm ci`, `npx playwright install --with-deps chromium`, `npm -w e2e test`;
-  - em falha, sobe `e2e/test-results/` como artefato com `actions/upload-artifact` fixado por SHA (a convenção que o `server/test/ci-workflow.test.ts` confere).
+  - `npm ci`, `npm exec -w e2e -- playwright install --with-deps chromium`, `npm run test:e2e`;
+  - em falha, sobe `e2e/test-results/` e `e2e/playwright-report/` como artefato (7 dias) com `actions/upload-artifact` fixado por SHA (a convenção que o `server/test/ci-workflow.test.ts` confere).
 - O job não entra no ruleset no início (PRD §5, item 1).
 - O `server/test/ci-workflow.test.ts` confere o workflow e precisa ser atualizado no mesmo PR.
 
