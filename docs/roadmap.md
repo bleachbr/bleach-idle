@@ -126,7 +126,7 @@ Especificação: `docs/features/status-combate/`. Itens: **M2-01** motor de stat
 
 ## M3: Social avançado
 
-M3-01 a M3-04: `Pronto`, spec aceita em [`features/social-avancado/`](features/social-avancado/PRD-social-avancado.md) (01/11/2026). **M3-01** troca direta 1 contra 1, em duas confirmações, no mesmo mapa e alcance; **M3-02** abas de chat (Geral, Combate, Party, Guilda, Privado); **M3-03** filtro de loot do Auto Helper; **M3-04** banco de guilda com permissões por cargo; **M3-05** moderação de chat (filtro de spam, silenciar, comandos de GM — `Feito`, spec em `docs/features/moderacao-chat/`).
+M3-01 e M3-04: `Pronto`; M3-02 e M3-03: `Feito`. Spec aceita em [`features/social-avancado/`](features/social-avancado/PRD-social-avancado.md) (01/11/2026). **M3-01** troca direta 1 contra 1, em duas confirmações, no mesmo mapa e alcance; **M3-02** abas de chat (Geral, Combate, Party, Guilda, Privado; `Feito`, só cliente, `client/src/chatTabs.ts`); **M3-03** filtro de loot do Auto Helper (`Feito`, `shared/src/lootRules.ts`, cenário `lootfilter`); **M3-04** banco de guilda com permissões por cargo; **M3-05** moderação de chat (filtro de spam, silenciar, comandos de GM — `Feito`, spec em `docs/features/moderacao-chat/`).
 
 ## M4: Dungeons cooperativas e raids
 
@@ -134,7 +134,7 @@ Todos `Precisa de spec`, e depois de F-12. **M4-01** salas instanciadas para a p
 
 ## M5: Contas e infraestrutura
 
-**M5-01** recuperação de senha por e-mail com token assinado (`Feito`, spec em `docs/features/seguranca-contas/`); **M5-02** limite de tentativas persistente em SQLite (`Feito`, spec em `docs/features/seguranca-contas/`); **M5-03** testes de ponta a ponta no navegador com Playwright (`Pronto`, spec aceita em [`features/e2e-navegador/`](features/e2e-navegador/PRD-e2e-navegador.md)); **M5-04** partição do mundo por mapa para centenas de jogadores (`Precisa de spec`; hoje um processo só; limites medidos em [`baseline.md`](baseline.md)).
+**M5-01** recuperação de senha por e-mail com token assinado (`Feito`, spec em `docs/features/seguranca-contas/`); **M5-02** limite de tentativas persistente em SQLite (`Feito`, spec em `docs/features/seguranca-contas/`); **M5-03** testes de ponta a ponta no navegador com Playwright (`Feito`: workspace `e2e/`, `npm run test:e2e` e job `e2e` no CI, ainda não obrigatório; spec em [`features/e2e-navegador/`](features/e2e-navegador/PRD-e2e-navegador.md)); **M5-04** partição do mundo por mapa para centenas de jogadores (`Precisa de spec`; hoje um processo só; limites medidos em [`baseline.md`](baseline.md)).
 
 ## Itens das filas em dupla (R-## e W-##)
 

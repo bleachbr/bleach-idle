@@ -318,6 +318,17 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - Na praça de Karakura, loja, depot, portal e templo ficam a 2 ou 3 tiles um do outro. Com raio de 1,5 tile os ícones viravam uma mancha; com ~1 tile se separam. Conferido numa prévia offline (`art/work/minimap_preview.py`, fora do git) nas larguras de 128 e 96 px; a prévia reduz com Lanczos, não com a reamostragem do navegador, então o teste no navegador continua necessário.
 - A primeira mensagem `quests` chega antes de a cena existir: quem precisa dela depois (o minimapa) registra o ouvinte e pede de novo (`room.send("quests")`). O colyseus.js 0.15 aceita mais de um ouvinte por tipo (nanoevents).
 
+## Filtro de loot: a promessa da tela vale para todos os caminhos do loot (M3-03)
+
+- O filtro diz "item de missão de coleta é sempre pego", mas o loot tinha um segundo caminho que vendia: a Auto Venda do excedente com inventário cheio. A regra só vale se os dois caminhos de `giveLoot` olharem a mesma lista (`collectItems`). Ao prometer algo na tela sobre o loot, conferir `giveLoot` inteiro, não só o trecho novo.
+- Teste de dinheiro tem de olhar o saldo, não só o log: o cenário `lootfilter` soma o kan de cada linha "Loot:" com o preço de cada item vendido e compara com a diferença do `gold`. Uma linha "(vendido)" no log não prova que o kan entrou.
+- Mensagem com objeto vindo do cliente: o msgpack também entrega `Buffer` (bin), e `Object.keys` de um `Buffer` dá uma chave por byte. `parseLootRules` só aceita objeto com protótipo `Object.prototype` ou `null`.
+
+## Teste de interface com o Playwright do `test/` (M3-02)
+
+- Mudança de cliente se confere num navegador de verdade sem infraestrutura nova: o `test/` (Jogador-IA) já traz o `playwright`. Basta `npm install` e `npx playwright install chromium` dentro de `test/`, subir o servidor do jogo servindo o build (`DB_FILE` temporário, `PORT`, `STATIC_DIR=client/dist`) e um script que importa o `playwright` de `test/`. Foi assim que as abas do chat foram conferidas (8 verificações, sem erro no console). É o caminho que o M5-03 vai formalizar.
+- Três tropeços do roteiro: nome de personagem só aceita letras e espaço (`Nome: de 3 a 16 letras (espaços permitidos)`), então um sufixo com número falha; o limite de contas por IP (F-14, padrão `REGISTER_MAX_IP` de 5 por hora) barrou a criação depois de várias rodadas no mesmo banco, então cada rodada nova usa um banco novo; e editar o roteiro com `Get-Content`/`Set-Content` do PowerShell 5 estraga os acentos (lê UTF-8 como ANSI), o que quebrou uma expressão regular com "não". O roteiro em si não está no repositório: fica para o M5-03, que define a pasta `e2e/`.
+
 ## Foco de teclado: `blur()` no handler do campo muda o que os ouvintes de `window` veem (R-14)
 
 - O `keydown` de um `<input>` roda antes de o evento subir até `window`. Se o handler do campo chama `blur()`, quando o ouvinte de `window` confere `document.activeElement` o campo já não está focado, e ele trata a tecla como se viesse do jogo (o Esc do chat também fecha as janelas; o Enter que envia volta a focar o chat). Para saber de onde a tecla veio, confira `e.target`, ou chame `stopPropagation` no handler do campo.
@@ -329,6 +340,17 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Problema:** o servidor mandava `arenaData` e `patrolData` (e, no duelo, `arenaMatchFound` e `arenaResult`), mas o cliente não tinha painel de Arena nem de patrulha e não registrava handler. O colyseus.js avisa `onMessage() not registered for type ...` no console a cada mensagem; o Jogador-IA achou na rodada de 01/11/2026. Mensagem nova no servidor não quebra nada nos testes do Vitest, porque o helper `quiet` cala esse aviso de propósito.
 - **Solução (`client/src/main.ts`):** handlers vazios, registrados em `start()` junto com `welcome` e `fx`, com comentário dizendo que o texto já chega pelo chat. Toda mensagem que o servidor manda ao cliente precisa de handler no mesmo PR, mesmo que vazio enquanto a interface não existe.
 - **Teste no navegador:** `test/regressao/issue-22-arena-patrulha.ts` usa o `Game` do Jogador-IA (servidor isolado na 2578 e Vite na 5183, banco temporário), cria conta e personagem pela tela, sobe ao nível 20 pelo modo Dev (`window.__bi`) e digita `/patrulha` e `/arena entrar|sair` no chat. Além de exigir que o console não tenha o aviso, conta os frames do WebSocket que trazem cada tipo: sem isso, um upgrade que mudasse o texto do aviso deixaria o teste verde sem provar nada. Para saber que os dados já chegaram sem esperar por tempo, o teste usa o `/arena` como barreira: o servidor responde na ordem, então o log dele chega depois das mensagens anteriores. Falhou antes da correção (3 avisos) e passou depois. `arenaMatchFound` e `arenaResult` pedem dois jogadores e ficaram fora do teste.
+
+## 28. Fonte pixel em texto de leitura (issue #24)
+
+- **Sintoma:** o Jogador-IA leu "Orônloa: A Cidade Quieta" no título da crônica. Parecia mojibake, mas o dado está em UTF-8 correto (`shared/src/shop.ts`, `ô` = `c3 b4`) e a Pixelify Sans tem todos os glifos (cmap conferido com fontTools nos pesos 500 e 700). O título é DOM, não texto do Phaser.
+- **Causa:** o `h3` da leitura herdava a fonte pixel (`theme.css`, regra de `h1, h2, h3`). Renderizado a 16 px em negrito, "C" e "O" diferem em 5 pixels (15 na Arial Bold) e "ic" e "lo" em 4 (9 na Arial): a palavra fica ambígua para quem lê, pessoa ou modelo de visão.
+- **Regra:** fonte pixel fica em botões, rótulos curtos e números. Título de texto para ler (nome de crônica, frases) usa a fonte de texto; aqui, `#shop .lore-title`. Antes de tratar achado de "texto corrompido" vindo de captura de tela, confira os bytes do dado e o cmap da fonte.
+
+## Workspace que não entra na imagem Docker (M5-03)
+
+- `e2e/` é workspace da raiz, mas o Dockerfile só copia os `package.json` de `client`, `server` e `shared` antes do `npm ci`. Com a pasta ausente, o `npm ci` passa e não instala as dependências dela (conferido repetindo o passo do Dockerfile numa pasta temporária com o `package-lock.json` real: sem `@playwright/test`, com `tsx`). O `.dockerignore` também tira `e2e` do contexto.
+- `Add-Content` do PowerShell não põe quebra de linha antes do texto quando o arquivo não termina com uma: o `e2e/test-results/` grudou na última linha do `.gitignore`, que era a regra de um arquivo de credencial. Conferir com `git check-ignore -v` depois de mexer no `.gitignore`.
 
 ## Fluxo de publicação: uma branch e um PR por entrega
 
@@ -368,6 +390,13 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Regra:** rodar TypeScript direto pode perder as opções do `tsconfig.json` sem aviso: o tsx, quando o cwd não está na pasta dele nem abaixo; o type stripping do Node (`--experimental-strip-types`), sempre, porque ignora o tsconfig. Com schema do Colyseus por `defineTypes`, isso não quebra a inicialização nem o `/healthz`: só a sincronização. Ao mudar o comando ou o WORKDIR do container, confira o estado de um cliente real, não só o healthcheck.
 
 ---
+
+## Intenção pendente precisa morrer com a próxima ação (issue #26)
+
+- **Sintoma:** na praça de Karakura, clicar no Kisuke às vezes abria o depot. O baú fica a 4 tiles da loja, mas `interact` de longe guarda `pendingInteract` e o tick abre a janela quando o caminho acaba. `move` e `step` trocavam o caminho sem apagar a intenção: quem clicava no depot, mudava de ideia e parava a 2 tiles do baú (por exemplo em (16,13), ao lado do Kisuke) via o depot abrir.
+- **Solução:** `move`, `step` e `target` zeram `pendingInteract`. No cliente, a área de clique da loja é o desenho inteiro (48 px, mais largo que o tile) e vem antes do depot (`client/src/interactHit.ts`).
+- **Teste sem relógio:** `server/test/interact.test.ts` embrulha `open` e `updatePlayer` da sala real (via `matchMaker.getRoomById`) e espera dois ticks do jogador depois da chegada, em vez de esperar tempo: o `pendingInteract` é conferido no começo do `updatePlayer`, antes do passo, então a janela só abriria no tick seguinte ao da chegada.
+- **Regra:** todo estado "faça X quando chegar" precisa ser apagado pelas outras intenções do jogador, não só pela chegada.
 
 ## 13. "Botão não responde" que era rolagem (#23)
 

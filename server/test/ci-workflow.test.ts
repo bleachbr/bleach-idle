@@ -29,4 +29,24 @@ describe("Workflow de CI endurecido (F-11: Q5, Q8, Q9, Q10)", () => {
     expect(ci).toContain("sha256sum -c");
     expect(ci).toContain("gitleaks git --redact -c .gitleaks.toml .");
   });
+
+  it("toda action fixada por SHA completo (nenhuma tag móvel)", () => {
+    const ci = rootFile(".github/workflows/ci.yml");
+    const uses = [...ci.matchAll(/uses:\s*(\S+)/g)].map((m) => m[1]);
+    expect(uses.length).toBeGreaterThan(0);
+    for (const u of uses) expect(u, u).toMatch(/@[0-9a-f]{40}$/);
+  });
+
+  it("job e2e (M5-03): Chromium do Playwright, limite de tempo, artefato só na falha e fora do deploy", () => {
+    const ci = rootFile(".github/workflows/ci.yml");
+    const e2e = ci.slice(ci.indexOf("\n  e2e:"), ci.indexOf("\n  deploy:"));
+    expect(e2e).toContain("runs-on: ubuntu-24.04");
+    expect(e2e).toMatch(/timeout-minutes:\s*15/);
+    expect(e2e).toContain("playwright install --with-deps chromium");
+    expect(e2e).toContain("npm run test:e2e");
+    expect(e2e).toContain("actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9");
+    expect(e2e).toMatch(/if:\s*failure\(\)/);
+    // o job ainda não é obrigatório: o deploy depende só de test e gitleaks
+    expect(ci).toMatch(/needs:\s*\[test, gitleaks\]/);
+  });
 });

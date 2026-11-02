@@ -1,7 +1,7 @@
 // Estado sincronizado com os clientes. defineTypes em vez de decorators para
 // não depender de configuração de decorators no tsx/esbuild.
 import { Schema, MapSchema, defineTypes } from "@colyseus/schema";
-import { INV_SIZE, DEPOT_SIZE, newProgress, type Slot, type EquipSlot, type QuestState, type Progress, type StatusMap } from "../../shared/src";
+import { INV_SIZE, DEPOT_SIZE, newProgress, type Slot, type EquipSlot, type QuestState, type Progress, type StatusMap, type LootRules } from "../../shared/src";
 
 export class Player extends Schema {
   id = "";
@@ -57,6 +57,8 @@ export class Player extends Schema {
   statuses: StatusMap = {};
   /** traje da Loja de Cristais (R-13): não vai no estado, todos o veem pelo `look` */
   cosOutfit = "";
+  /** filtro de loot do Auto Helper (M3-03): item -> vender ou ignorar; sem regra, pega */
+  lootRules: LootRules = {};
   accountId = 0; // conta dona do personagem (carteira de cristais)
   path: { x: number; y: number }[] = [];
   follow = false;
@@ -119,7 +121,8 @@ export class Player extends Schema {
 
 export type Interact = "depot" | "shop" | "travel";
 
-export interface DeathReport { by: string; exp: number; gold: number; items: string[]; protected: boolean; at: number }
+/** `invasion`: atenuante da Invasão de Hollows aplicado (#39); ausente em relatórios antigos */
+export interface DeathReport { by: string; exp: number; gold: number; items: string[]; protected: boolean; invasion?: boolean; at: number }
 defineTypes(Player, {
   id: "string", name: "string", charId: "string", form: "uint8",
   x: "int16", y: "int16", dir: "uint8", stepMs: "uint16",

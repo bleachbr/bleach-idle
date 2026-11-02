@@ -8,22 +8,22 @@ import { WorldState, Player, Monster, Bag, type DeathReport, type Interact } fro
 import {
   walkable, nearestWalkable, resumeAt, inPZ, type GameMap,
   PARTY_MAX, PARTY_SHARE_RANGE, PARTY_SHARE_BONUS, PARTY_LEVEL_RATIO, PARTY_INVITE_MS,
-  INVASION, PVP_MIN_LEVEL, PVP_DAMAGE, PVP_LOCK_MS, SKULL_PER_KILL_MS, SKULL_MAX_MS, SKULL_ITEM_LOSS, SKULL_GOLD_LOSS, RECALL_COMBAT_MS, RECALL_COOLDOWN_MS, TRAVEL,
+  INVASION, PVP_MIN_LEVEL, PVP_DAMAGE, PVP_LOCK_MS, SKULL_PER_KILL_MS, SKULL_MAX_MS, RECALL_COMBAT_MS, RECALL_COOLDOWN_MS, TRAVEL,
   CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir,
-  expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev, DEATH_EXP_LOSS,
+  expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
-  DEATH_ITEM_LOSS, DEATH_GOLD_LOSS, lookOf, outfitFits, QUEST_BY_ID, huntKinds, MAX_ACTIVE_QUESTS,
-  zanNext, reiNext, zanMult, reiMult, AUTO_TRAIN_BURN,
-  rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
+  lookOf, outfitFits, QUEST_BY_ID, huntKinds, MAX_ACTIVE_QUESTS,
+  zanNext, reiNext, zanMult, reiMult, trainedDmgMult, AUTO_TRAIN_BURN, potionRefusal,
+  rollLoot, addItem, isPureLoot, applyLootRules, collectItems, parseLootRules, seenLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
   EVENT_BANNER, EVENT_END_MS, eventLore, type EventBanner, type EventKind, type EventPhase,
-  own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
+  own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, REBIRTH_MAX, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
   applyStatus, tickStatuses, canEntityMove, canEntityAct, effectiveStepMs, formatStatusFlags, clearStatuses, type SkillStatusDef,
   evaluateBossPhase,
   newArenaProgress, getArenaTier, validateStepInterval, ARENA_MIN_LEVEL, ARENA_COUNTDOWN_SEC, ARENA_MATCH_TIMEOUT_SEC, ARENA_WIN_GOLD, ARENA_WIN_SEASON_PTS, type ArenaProgress, type DuelOutcome,
   PATROL_SECTORS, PATROL_DURATIONS, calculatePatrolRewards, canClaimPatrol, patrolRemainingMs, type PatrolState,
-  OFFLINE_MAX_MS, buildOfflineReport,
-  skillBlock, skillBlockText,
+  OFFLINE_MAX_MS, buildOfflineReport, GUILD_COST, GUILD_MIN_LEVEL,
+  skillBlock, skillBlockText, deathPenalty, inPvpCombat,
 } from "../../shared/src";
 import * as arenaMgr from "./arenaManager";
 import { findPath, type Pt } from "./path";
@@ -42,10 +42,8 @@ import { claimServerMilestone } from "./milestones";
 import { checkChatMessage, isGm, mutePlayer, sanitizeChatText, unmutePlayer } from "./moderation";
 import { recordAudit } from "./economyAudit";
 
-const GUILD_COST = 500;
 /** Modo Dev (botão que libera tudo para testar): nasce DESLIGADO e só liga com BI_DEV=1 (`npm run dev` já define). */
 const DEV_MODE = flagOn("BI_DEV");
-const GUILD_MIN_LEVEL = 10;
 const GUILD_NAME_RE = /^[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ]{2,19}$/;
 const HELP = [
   "Comandos:",
@@ -133,6 +131,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const p = this.me(c);
       if (!p || this.inArenaCountdown(p) || !Number.isInteger(m?.x) || !Number.isInteger(m?.y) || !walkable(mapOf(p), m.x, m.y)) return;
       p.follow = false;
+      p.pendingInteract = ""; // andar para outro lado desiste do depot/loja clicado antes (#26)
       p.path = findPath(p.x, p.y, (x, y) => x === m.x && y === m.y, (x, y) => !walkable(mapOf(p), x, y));
     });
     this.handle("step", (c, m: { dir: number }) => {
@@ -143,12 +142,14 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (!p || this.inArenaCountdown(p) || !Number.isInteger(dir) || !(dir in DIR_VEC)) return;
       const [dx, dy] = DIR_VEC[dir as Dir];
       p.follow = false;
+      p.pendingInteract = "";
       p.dir = dir;
       p.path = walkable(mapOf(p), p.x + dx, p.y + dy) ? [{ x: p.x + dx, y: p.y + dy }] : [];
     });
     this.handle("target", (c, m: { id: string }) => {
       const p = this.me(c);
       if (!p) return;
+      p.pendingInteract = "";
       if (!m?.id || m.id === p.targetId) { p.targetId = ""; p.follow = false; return; }
       const mo = this.state.monsters.get(m.id);
       if (mo) {
@@ -166,6 +167,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.handle("nextTarget", (c) => {
       const p = this.me(c);
       if (!p) return;
+      p.pendingInteract = ""; // trocar de alvo desiste do depot/loja clicado antes, como `target` (#26)
       const list = [...this.state.monsters.values()]
         .filter((mo) => sameMap(p, mo) && (!mo.owner || mo.owner === p.id) && !MONSTERS[mo.kind]?.dummy && chebyshev(p.x, p.y, mo.x, mo.y) <= VIEW)
         .sort((a, b) => chebyshev(p.x, p.y, a.x, a.y) - chebyshev(p.x, p.y, b.x, b.y));
@@ -198,7 +200,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       } else if (m?.slot === 2 || m?.slot === 3) {
         const id = this.bestPotion(p, m.slot === 2 ? "hp" : "rei");
         if (!id) this.log(p, m.slot === 2 ? "Sem poções de cura." : "Sem poções de reiatsu.");
-        else if (!this.useConsumable(p, id, now)) this.log(p, `Não dá para usar ${ITEMS[id].name} agora.`);
+        else if (!this.useConsumable(p, id, now)) this.denyConsumable(p, id, now);
       }
     });
     this.registerItemMessages();
@@ -244,6 +246,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (typeof m?.autoRestock === "boolean") p.autoRestock = m.autoRestock;
       if (typeof m?.autoHeal === "number") p.autoHeal = Math.max(0, Math.min(90, Math.round(m.autoHeal)));
     });
+    this.registerLootMessages();
     this.handle("chat", (c, m: { text: string }) => {
       const p = this.me(c);
       const text = sanitizeChatText(m?.text);
@@ -308,6 +311,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.sendInv(p);
     this.sendGuild(p);
     this.sendQuests(p);
+    this.sendLootRules(p);
     client.send("dailyReady", { ready: p.prog.daily.last !== dayKey(Date.now()) });
     const unread = mailbox.unreadCount(p.id);
     if (unread) this.log(p, `Você tem ${unread} carta(s) no correio. Use /correio.`);
@@ -378,6 +382,8 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.rebirths = saved.rebirths ?? 0;
     p.autoTrain = !!saved.autoTrain;
     p.autoSell = !!saved.autoSell;
+    // save antigo ou adulterado: item fora do catálogo e valor estranho saem, e o resto vale
+    p.lootRules = parseLootRules(saved.lootRules) ?? {};
     p.huntSpot = TRAVEL.some((t) => t.id === saved.huntSpot) ? saved.huntSpot! : "";
     p.autoReturn = !!saved.autoReturn;
     p.autoRei = saved.autoRei ?? 0;
@@ -687,7 +693,8 @@ export class WorldRoom extends GameRoom<WorldState> {
           t.hp -= dmg;
           t.lastCombatAt = now;
           this.broadcast("fx", { t: "dmg", id: t.id, v: dmg, from: m.id });
-          if (t.hp <= 0) this.killPlayer(t, def.name);
+          // Hollow da invasão ativa (não o chefe mundial, que também é `invader`): penalidade reduzida (#39)
+          if (t.hp <= 0) this.killPlayer(t, def.name, "", m.invader && !m.world && !!this.invasion);
         }
       }
     } else if (!m.path.length && now >= m.nextWanderAt) {
@@ -739,7 +746,8 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private hit(p: Player, t: Player | Monster, mult: number, now: number, skill = false) {
-    mult *= (skill ? reiMult(p.reiryoku) : zanMult(p.zanjutsu)) * rebirthBonus(p.rebirths).dmg * setBonuses(p.equip).total.dmg;
+    // perícia × renascimento × conjuntos (shared/src/damage.ts, a mesma conta da ficha); o estágio entra no rollDamage
+    mult *= trainedDmgMult(p, skill);
     if (!skill) this.train(p, 1, 0);
     if (isPlayer(t)) return this.pvpHit(p, t, mult, now);
     // no mesmo tick a habilidade pode matar e o golpe corpo a corpo acertar o mesmo alvo:
@@ -833,6 +841,14 @@ export class WorldRoom extends GameRoom<WorldState> {
     return true;
   }
 
+  /** Poção recusada pelo jogador: diz o motivo no chat e sobe um texto só para ele (#41). */
+  private denyConsumable(p: Player, id: string, now: number) {
+    const why = potionRefusal(ITEMS[id], p, now);
+    if (!why) return this.log(p, `Não dá para usar ${ITEMS[id].name} agora.`);
+    this.log(p, why.chat);
+    this.sendTo(p, "fx", { t: "deny", id: p.id, text: why.float });
+  }
+
   private regen(p: Player, now: number) {
     if (p.hp <= 0) return;
     const fight = now - p.lastCombatAt < 6000;
@@ -878,17 +894,20 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.giveLoot(killer, m.kind, m);
   }
 
-  private killPlayer(p: Player, by: string, killerId = "") {
+  /** `invasionMob`: morto direto por um Hollow da invasão ativa (atenuante do #39, `deathPenalty`) */
+  private killPlayer(p: Player, by: string, killerId = "", invasionMob = false) {
     if (p.devGod) { p.hp = p.maxHp; return; }
     if (p.map === "dangai") return this.dangaiDeath(p, by);
     const deathAt = { map: p.map, x: p.x, y: p.y };
     const dropped: Slot[] = [];
     // Amuleto da Alma (o "Band of Loss" daqui): protege XP, itens e dinheiro, e se desfaz
     const skulled = p.skullUntil > Date.now();
-    const prot = !skulled && p.equip.amulet === "amuleto_alma";
-    const itemLoss = skulled ? SKULL_ITEM_LOSS : DEATH_ITEM_LOSS;
+    const pvpRecent = inPvpCombat(Date.now(), p.pvpUntil, p.lastAttackedAt);
+    const pen = deathPenalty({ skulled, amulet: p.equip.amulet === "amuleto_alma", invasionMob, pvpRecent });
+    const prot = pen.protected;
+    const itemLoss = pen.item;
     if (prot) delete p.equip.amulet;
-    const loss = prot ? 0 : Math.floor(p.exp * DEATH_EXP_LOSS);
+    const loss = prot ? 0 : Math.floor(p.exp * pen.exp);
     const items: string[] = [];
     let goldLost = 0;
     if (!prot) {
@@ -900,7 +919,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.inv.forEach((sl, i) => {
         if (sl && Math.random() < itemLoss) { items.push(`${sl.qty}x ${ITEMS[sl.id].name}`); dropped.push({ ...sl }); p.inv[i] = null; }
       });
-      goldLost = Math.floor(p.gold * (skulled ? SKULL_GOLD_LOSS : DEATH_GOLD_LOSS));
+      goldLost = Math.floor(p.gold * pen.gold);
       p.gold -= goldLost;
       // estilo Tibia: o que se perde fica no corpo; em PvP, quem matou tem prioridade
       if (dropped.length || goldLost)
@@ -926,13 +945,13 @@ export class WorldRoom extends GameRoom<WorldState> {
     p.autoHunt = back;
     p.pvpUntil = 0;
 
-    const report: DeathReport = { by, exp: loss, gold: goldLost, items, protected: prot, at: Date.now() };
+    const report: DeathReport = { by, exp: loss, gold: goldLost, items, protected: prot, invasion: pen.invasion, at: Date.now() };
     if (p.online) this.sendTo(p, "death", report);
     else p.offlineDeaths.push(report);
     const after = back ? "O Auto Helper volta à caça." : p.autoReturn && p.deathTimes.length >= 3 ? "3 mortes em 10 min: Auto Hunt desligado." : "Auto Hunt desligado.";
     this.log(p, prot
       ? `Você foi morto por ${by}. O Amuleto da Alma se desfez e protegeu XP e itens. ${after}`
-      : `Você foi morto por ${by}: perdeu ${loss} XP, ${goldLost} kan${items.length ? " e " + items.join(", ") : ""}. ${after}`);
+      : `Você foi morto por ${by}: perdeu ${loss} XP, ${goldLost} kan${items.length ? " e " + items.join(", ") : ""}.${pen.invasion ? " Na invasão não se perdem itens, e a XP e o kan perdidos caem pela metade." : ""} ${after}`);
     this.sendInv(p);
     db.save(p.id, this.toSave(p), true); // morte não espera o save periódico
   }
@@ -1081,7 +1100,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.handle("useItem", (c, m: { index: number }) => {
       const p = this.me(c);
       const s = p?.inv[idx(m?.index, INV_SIZE)];
-      if (p && s && !this.useConsumable(p, s.id, Date.now())) this.log(p, `Não dá para usar ${ITEMS[s.id].name} agora.`);
+      if (p && s) { const now = Date.now(); if (!this.useConsumable(p, s.id, now)) this.denyConsumable(p, s.id, now); }
     });
     this.handle("equip", (c, m: { index: number }) => {
       const p = this.me(c);
@@ -1213,7 +1232,13 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.dailyStep(p, "gold", loot.gold);
     const got: string[] = [];
     let overflow: Slot[] = [];
-    for (const s of loot.items) {
+    // filtro de loot (M3-03): vender vira kan na hora, ignorar fica no chão de ninguém; item de missão de coleta é sempre pego
+    const keep = collectItems(p.quests.active);
+    const filtered = applyLootRules(loot.items, p.lootRules, keep);
+    for (const s of filtered.sell) got.push(`${s.qty}x ${ITEMS[s.id].name} (vendido)`);
+    p.gold += filtered.gold;
+    p.hunt.gold += filtered.gold;
+    for (const s of filtered.take) {
       p.hunt.items[s.id] = (p.hunt.items[s.id] ?? 0) + s.qty;
       if (!p.online) p.offItems[s.id] = (p.offItems[s.id] ?? 0) + s.qty;
       const n = addItem(p.inv, s.id, s.qty);
@@ -1221,10 +1246,12 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (n < s.qty) overflow.push({ id: s.id, qty: s.qty - n });
     }
     if (overflow.length && p.autoSell) {
-      // Auto Venda: loot puro que não coube vira kan (preço da loja); equipamento e consumível seguem para a sacola
+      // Auto Venda: loot puro que não coube vira kan (preço da loja); equipamento, consumível e item de missão de
+      // coleta seguem para a sacola (o filtro promete que o item de missão é sempre pego)
+      const sellable = (s: Slot) => isPureLoot(ITEMS[s.id]) && !keep.has(s.id);
       let sold = 0;
-      for (const s of overflow) if (isPureLoot(ITEMS[s.id])) { sold += ITEMS[s.id].sell * s.qty; got.push(`${s.qty}x ${ITEMS[s.id].name} (vendido)`); }
-      overflow = overflow.filter((s) => !isPureLoot(ITEMS[s.id]));
+      for (const s of overflow) if (sellable(s)) { sold += ITEMS[s.id].sell * s.qty; got.push(`${s.qty}x ${ITEMS[s.id].name} (vendido)`); }
+      overflow = overflow.filter((s) => !sellable(s));
       p.gold += sold;
       p.hunt.gold += sold;
     }
@@ -1251,6 +1278,27 @@ export class WorldRoom extends GameRoom<WorldState> {
   private open(p: Player, kind: Interact) {
     if (kind === "shop") this.tutorial(p, "shop");
     for (const c of this.clients) if (this.sessions.get(c.sessionId) === p.id) c.send("open", { kind });
+  }
+
+  /** Filtro de loot do Auto Helper (M3-03): o cliente manda o mapa inteiro; item fora do catálogo e valor estranho saem. */
+  private registerLootMessages() {
+    this.handle("lootRules", (c, m: { rules?: unknown }) => {
+      const p = this.me(c);
+      if (!p) return;
+      // sem "rules": só pede a lista de novo (a janela abre e os itens vistos podem ter crescido)
+      if (m?.rules === undefined) return this.sendLootRules(p);
+      const rules = parseLootRules(m?.rules);
+      if (!rules) return this.log(p, "Filtro de loot inválido.");
+      p.lootRules = rules;
+      this.sendLootRules(p);
+    });
+  }
+
+  /** Regras do filtro de loot e os itens que o personagem já viu: o loot das espécies já abatidas e o que está no inventário. */
+  private sendLootRules(p: Player) {
+    const inInv = p.inv.flatMap((s) => (s ? [s.id] : []));
+    const seen = [...new Set([...seenLoot(p.prog.bestiary), ...inInv, ...Object.keys(p.lootRules)])];
+    this.sendTo(p, "lootRules", { rules: p.lootRules, seen, keep: [...collectItems(p.quests.active)] });
   }
 
   private sendInv(p: Player) {
@@ -2594,7 +2642,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const need = rebirthLevel(p.rebirths);
       if (p.level < need) return this.log(p, `Renascer exige nível ${need}.`);
       if (Date.now() - p.lastCombatAt < 6000) return this.log(p, "Saia de combate para renascer.");
-      if (p.rebirths >= 250) return;
+      if (p.rebirths >= REBIRTH_MAX) return;
       p.rebirths++;
       p.level = START_LEVEL;
       p.exp = expForLevel(START_LEVEL);
@@ -3416,7 +3464,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       name: p.name, charId: p.charId, level: p.level, exp: p.exp, hp: p.hp, rei: Math.round(p.rei), map: p.map, x: p.x, y: p.y,
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip,
       autoTarget: p.autoTarget, autoHunt: p.autoHunt, autoHeal: p.autoHeal, frags: p.frags, quests: p.quests, skullUntil: p.skullUntil, rebirths: p.rebirths, prog: p.prog, forge: p.forge, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
-      autoTrain: p.autoTrain, autoSell: p.autoSell, ignore: p.ignore, huntSpot: p.huntSpot, autoReturn: p.autoReturn, autoRei: p.autoRei, autoBankai: p.autoBankai, autoBox: p.autoBox, autoRestock: p.autoRestock, cos: this.cosOf(p), zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
+      autoTrain: p.autoTrain, autoSell: p.autoSell, lootRules: p.lootRules, ignore: p.ignore, huntSpot: p.huntSpot, autoReturn: p.autoReturn, autoRei: p.autoRei, autoBankai: p.autoBankai, autoBox: p.autoBox, autoRestock: p.autoRestock, cos: this.cosOf(p), zanjutsu: p.zanjutsu, zanTries: p.zanTries, reiryoku: p.reiryoku, reiTries: p.reiTries,
       offline: p.online ? undefined : snapshotOffline(p),
     };
   }
