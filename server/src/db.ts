@@ -24,6 +24,8 @@ export interface SaveData {
   rebirths?: number;
   autoTrain?: boolean;
   autoSell?: boolean;
+  /** filtro de loot (M3-03); ausente em saves antigos = pegar tudo */
+  lootRules?: Record<string, string>;
   ignore?: string[];
   zanjutsu?: number;
   zanTries?: number;

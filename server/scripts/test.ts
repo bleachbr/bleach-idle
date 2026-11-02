@@ -11,7 +11,7 @@ const PORT = 2577;
 const serverDir = fileURLToPath(new URL("..", import.meta.url));
 const tmp = mkdtempSync(join(tmpdir(), "bleach-test-"));
 const env = { ...process.env, PORT: String(PORT), DB_FILE: join(tmp, "test.sqlite"), BI_URL: `ws://localhost:${PORT}`, LOGIN_MAX_FAILS_IP: "1000000", REGISTER_MAX_IP: "1000000", INVASION_FIRST_MS: "999999999", WORLDBOSS_FIRST_MS: "999999999", WORLDBOSS_HP: "3000", BI_DEBUG: "1", BI_DEV: "1" };
-const ALL = ["mapcheck", "robust", "accounts", "bankai", "outfit", "items", "death", "social", "social2", "quests", "training", "bags", "market", "progress", "forge", "hunt", "invasion", "lasnoches", "account2", "rebirth", "dangai", "helper", "evolucao", "loja", "temporada", "skull", "bot", "spawncount", "dev", "endgame", "restart"];
+const ALL = ["mapcheck", "robust", "accounts", "bankai", "outfit", "items", "death", "social", "social2", "quests", "training", "bags", "market", "progress", "forge", "hunt", "lootfilter", "invasion", "lasnoches", "account2", "rebirth", "dangai", "helper", "evolucao", "loja", "temporada", "skull", "bot", "spawncount", "dev", "endgame", "restart"];
 const only = process.argv.slice(2);
 const scenarios = only.length ? only : ALL;
 
