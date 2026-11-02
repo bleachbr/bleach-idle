@@ -136,6 +136,11 @@ main { position: relative; }
 #chatlog .pm { color: #d9a8ff; }
 #chatlog .party { color: #7dff8a; }
 #chatlog .guild { color: #7fd6ff; }
+/* abas do chat (M3-02): a de mensagem nova ganha a cor de destaque */
+#chat-tabs { display: flex; gap: 2px; padding: 3px 6px 0; border-bottom: 1px solid var(--line); background: var(--bg); flex: none; overflow-x: auto; }
+#chat-tabs button { padding: 2px 8px; border: 1px solid var(--line); border-bottom: 0; border-radius: 4px 4px 0 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; white-space: nowrap; }
+#chat-tabs button[aria-selected="true"] { color: var(--text); background: var(--panel); border-color: var(--accent); }
+#chat-tabs button.new { color: var(--gold, #ffcf5a); font-weight: 700; }
 code { background: var(--line); border-radius: 3px; padding: 0 4px; font-size: 12px; }
 .tag { color: #7fd6ff; }
 .member.off { opacity: .5; }
