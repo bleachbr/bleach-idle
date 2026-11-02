@@ -195,6 +195,8 @@ export function levelMilestone(level: number): { gold: number; items?: { id: str
 // permanentes: subir de novo é mais rápido e o personagem fica mais forte a cada ciclo.
 
 export const REBIRTH = { baseLevel: 60, stepLevel: 5, maxLevel: 100, exp: 0.1, dmg: 0.05, hp: 0.05 };
+/** máximo de renascimentos aceito pelo servidor (handler "rebirth" do WorldRoom.ts) */
+export const REBIRTH_MAX = 250;
 /** nível exigido para o próximo renascimento */
 export const rebirthLevel = (n: number) => Math.min(REBIRTH.maxLevel, REBIRTH.baseLevel + REBIRTH.stepLevel * n);
 export const rebirthBonus = (n: number) => ({ exp: 1 + REBIRTH.exp * n, dmg: 1 + REBIRTH.dmg * n, hp: 1 + REBIRTH.hp * n });

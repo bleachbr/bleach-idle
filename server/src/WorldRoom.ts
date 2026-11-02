@@ -17,7 +17,7 @@ import {
   rollLoot, addItem, isPureLoot, setBonuses, newProgress, bestiaryDmgMult, bestiaryLootMult, bestiaryStage, bestiaryStages, BESTIARY_KINDS, BOSSES,
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
   EVENT_BANNER, EVENT_END_MS, eventLore, type EventBanner, type EventKind, type EventPhase,
-  own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
+  own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, REBIRTH_MAX, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
   applyStatus, tickStatuses, canEntityMove, canEntityAct, effectiveStepMs, formatStatusFlags, clearStatuses, type SkillStatusDef,
   evaluateBossPhase,
   newArenaProgress, getArenaTier, validateStepInterval, ARENA_MIN_LEVEL, ARENA_COUNTDOWN_SEC, ARENA_MATCH_TIMEOUT_SEC, ARENA_WIN_GOLD, ARENA_WIN_SEASON_PTS, type ArenaProgress, type DuelOutcome,
@@ -2603,7 +2603,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const need = rebirthLevel(p.rebirths);
       if (p.level < need) return this.log(p, `Renascer exige nível ${need}.`);
       if (Date.now() - p.lastCombatAt < 6000) return this.log(p, "Saia de combate para renascer.");
-      if (p.rebirths >= 250) return;
+      if (p.rebirths >= REBIRTH_MAX) return;
       p.rebirths++;
       p.level = START_LEVEL;
       p.exp = expForLevel(START_LEVEL);
