@@ -126,7 +126,7 @@ Especificação: `docs/features/status-combate/`. Itens: **M2-01** motor de stat
 
 ## M3: Social avançado
 
-M3-01 a M3-04: `Pronto`, spec aceita em [`features/social-avancado/`](features/social-avancado/PRD-social-avancado.md) (01/11/2026). **M3-01** troca direta 1 contra 1, em duas confirmações, no mesmo mapa e alcance; **M3-02** abas de chat (Geral, Combate, Party, Guilda, Privado); **M3-03** filtro de loot do Auto Helper; **M3-04** banco de guilda com permissões por cargo; **M3-05** moderação de chat (filtro de spam, silenciar, comandos de GM — `Feito`, spec em `docs/features/moderacao-chat/`).
+M3-01, M3-03 e M3-04: `Pronto`; M3-02: `Feito`. Spec aceita em [`features/social-avancado/`](features/social-avancado/PRD-social-avancado.md) (01/11/2026). **M3-01** troca direta 1 contra 1, em duas confirmações, no mesmo mapa e alcance; **M3-02** abas de chat (Geral, Combate, Party, Guilda, Privado; `Feito`, só cliente, `client/src/chatTabs.ts`); **M3-03** filtro de loot do Auto Helper; **M3-04** banco de guilda com permissões por cargo; **M3-05** moderação de chat (filtro de spam, silenciar, comandos de GM — `Feito`, spec em `docs/features/moderacao-chat/`).
 
 ## M4: Dungeons cooperativas e raids
 

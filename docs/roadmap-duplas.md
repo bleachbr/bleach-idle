@@ -93,7 +93,7 @@ Itens herdados do roadmap e das pendências:
 | 5 | ~~M2-07~~ | ~~Tempo de recarga numérico no HUD~~ | P | — | spec de M2 | Já existia: cada técnica mostra os segundos que faltam (`renderTechs`) |
 | 6 | ~~M2-06~~ | ~~Efeitos visuais de status (cor no sprite, ícone, número de dano contínuo)~~ | M | M2-01 (Waldir) | spec de M2 | Fatia de cliente do pacote M2 |
 | 7 | ~~F-10~~ | ~~Trocar `sleep` fixo por `vi.waitFor`/`once` e limpar ruído do Vitest~~ | M | — | não | Feito no Vitest; nos cenários segue como rotina, junto com cada teste que tocar |
-| 8 | M3-02 | Abas de chat (Geral, Combate, Party, Guilda, Privado) | M | — | sim | |
+| 8 | ~~M3-02~~ | ~~Abas de chat (Geral, Combate, Party, Guilda, Privado)~~ | M | — | sim | |
 | 9 | M3-01 | Troca direta 1v1, duas confirmações, mesmo mapa e alcance | M | — | sim | Servidor + UI; handler sensível: skill `seguranca-servidor`, revisão do Waldir |
 | 10 | M3-03 | Filtro de loot do Auto Helper | M | — | sim | Preferências no cliente, validação no servidor |
 | 11 | M3-04 | Banco de guilda com permissões por cargo | M | — | sim | Handler sensível (itens/kan): revisão do Waldir |
