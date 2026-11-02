@@ -14,6 +14,7 @@ import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
 import { ChatBook, CHAT_MAX, CHAT_TABS, parseTab, type ChatLineData, type ChatTab } from "./chatTabs";
 import { initReleases } from "./releases";
+import { initInventoryShortcut } from "./inventoryShortcut";
 import { huntResetButton, huntResetDoneLabel, isHuntEmpty } from "./huntReset";
 import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
 
@@ -232,6 +233,7 @@ function start(room: Room<any>, myId: string) {
     if (e.code === "Escape" && document.activeElement !== chatin) closeWindows();
   });
   $("#travel-btn").onclick = () => inventory.openTravel();
+  initInventoryShortcut();
   $("#rebirth-btn").onclick = () => {
     const me = room.state.players.get(myId);
     if (!me) return;
