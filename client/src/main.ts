@@ -6,12 +6,15 @@ import { Client, type Room } from "colyseus.js";
 import { CHARS, ITEMS, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, rebirthBonus, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
+import { browserStore, loadLoreRead, markLoreRead } from "./loreRead";
 import { bindEvents } from "./events";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
+import { ChatBook, CHAT_MAX, CHAT_TABS, parseTab, type ChatLineData, type ChatTab } from "./chatTabs";
 import { initReleases } from "./releases";
 import { huntResetButton, huntResetDoneLabel, isHuntEmpty } from "./huntReset";
+import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
 
 initReleases();
 
@@ -215,7 +218,7 @@ function start(room: Room<any>, myId: string) {
   // canais: local (sem ch), pm, party, guild, sys (avisos do servidor) e lore (narração dos eventos)
   room.onMessage("chat", (m: { from: string; text: string; ch?: string }) => {
     const prefix = m.ch === "pm" ? "[pm] " : m.ch === "party" ? "[party] " : m.ch === "guild" ? "[guilda] " : "";
-    chatLine(m.from ? `${prefix}${m.from}: ${m.text}` : `${prefix}${m.text}`, m.ch && m.ch !== "sys" ? m.ch : m.from ? "" : "sys");
+    chatLine(m.from ? `${prefix}${m.from}: ${m.text}` : `${prefix}${m.text}`, m.ch && m.ch !== "sys" ? m.ch : m.from ? "" : "sys", "chat", m.ch, m.ch === "pm" ? m.from : "");
   });
   bindGuild(room, closeWindows);
   bindBook(room, closeWindows);
@@ -240,30 +243,42 @@ function start(room: Room<any>, myId: string) {
   showMute();
   mute.onclick = () => { sfx.setMuted(!sfx.isMuted()); showMute(); };
   bindHd(game);
-  room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log"));
+  room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log", "log"));
   room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[]; zanGain?: number; reiGain?: number; zanjutsu?: number; reiryoku?: number; kills?: number; items?: string[] }) => {
     const sign = (n: number) => (n >= 0 ? "+" : "") + n;
     const skills = [m.zanGain ? `Zanjutsu ${sign(m.zanGain)} (agora ${m.zanjutsu})` : "", m.reiGain ? `Reiryoku ${sign(m.reiGain)} (agora ${m.reiryoku})` : ""].filter(Boolean).join(", ");
-    chatLine(`Tempo offline: ${m.minutes} min, ${m.kills ?? 0} abates, ${sign(m.exp)} XP, ${sign(m.gold)} kan${skills ? `, ${skills}` : ""}. Você está no nível ${m.level}.`, "log");
-    if (m.items?.length) chatLine(`Loot offline: ${m.items.slice(0, 8).join(", ")}${m.items.length > 8 ? ` e mais ${m.items.length - 8} tipos` : ""}.`, "log");
+    chatAlert(`Tempo offline: ${m.minutes} min, ${m.kills ?? 0} abates, ${sign(m.exp)} XP, ${sign(m.gold)} kan${skills ? `, ${skills}` : ""}. Você está no nível ${m.level}.`, "log", "log");
+    if (m.items?.length) chatAlert(`Loot offline: ${m.items.slice(0, 8).join(", ")}${m.items.length > 8 ? ` e mais ${m.items.length - 8} tipos` : ""}.`, "log", "log");
     if (m.deaths?.length) showDeath(m.deaths, true);
   });
   room.onMessage("death", (d: DeathReport) => showDeath([d], false));
   $("#death-ok").onclick = () => ($("#death").hidden = true);
-  room.onLeave((code) => chatLine(code === 4001
+  room.onLeave((code) => chatAlert(code === 4001
     ? "Este personagem entrou em outra janela. Esta sessão foi encerrada."
-    : "Conexão perdida. Recarregue a página para entrar de novo.", "sys"));
+    : "Conexão perdida. Recarregue a página para entrar de novo.", "sys", "chat", "sys"));
 
   bindAuto(room);
   bindParty(room, myId);
   syncClock(room);
   const chatin = $<HTMLInputElement>("#chatin");
+  openChatTab(chat.active);
   window.addEventListener("keydown", (e) => {
     if (e.code === "Enter" && document.activeElement !== chatin) { e.preventDefault(); chatin.focus(); }
   });
   chatin.addEventListener("keydown", (e) => {
     if (e.code === "Enter") {
-      if (chatin.value.trim()) room.send("chat", { text: chatin.value });
+      if (chatin.value.trim()) {
+        // a aba aberta decide o canal: Party vira /p, Guilda /g, Privado /pm para a última conversa
+        const out = chat.outgoing(chatin.value);
+        if ("error" in out) {
+          // o texto fica no campo: é só pôr o "/pm Nome," na frente
+          chat.notice({ text: out.error, cls: "sys" });
+          appendChatLine({ text: out.error, cls: "sys" });
+          return;
+        }
+        room.send("chat", { text: out.text });
+        chat.sent(Date.now(), out.text);
+      }
       chatin.value = "";
       chatin.blur();
     } else if (e.code === "Escape") chatin.blur();
@@ -461,6 +476,7 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
   let data: { crystals: number; owned: string[]; equip: Partial<Record<string, string>> } | null = null;
   let tab: CosKind = "aura";
   let reading = "";
+  const loreRead = loadLoreRead(browserStore());
   const hex = (n: number) => `#${n.toString(16).padStart(6, "0")}`;
   const render = () => {
     if (!data) return;
@@ -470,9 +486,11 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
     const body = $("#shop-body");
     if (reading) {
       const x = COSMETIC[reading];
-      body.innerHTML = `<h3>${escHtml(x.name)}</h3>${(x.text ?? []).map((t) => `<p>${escHtml(t)}</p>`).join("")}
-        <p class="hint">Título desta crônica: <b style="color:${hex(x.color)}">${escHtml(x.title ?? "")}</b></p><button type="button" class="claim" data-back>Voltar</button>`;
-      body.querySelector<HTMLButtonElement>("[data-back]")!.onclick = () => { reading = ""; render(); };
+      // voltar no topo e no fim: o texto é longo e o botão de baixo ficava fora da vista (#38)
+      const back = `<button type="button" class="claim" data-back>← Voltar à lista de crônicas</button>`;
+      body.innerHTML = `${back}<h3>${escHtml(x.name)}</h3>${(x.text ?? []).map((t) => `<p>${escHtml(t)}</p>`).join("")}
+        <p class="hint">Título desta crônica: <b style="color:${hex(x.color)}">${escHtml(x.title ?? "")}</b></p>${back}`;
+      body.querySelectorAll<HTMLButtonElement>("[data-back]").forEach((b) => (b.onclick = () => { reading = ""; render(); }));
       return;
     }
     const kind = COS_KINDS.find((k) => k.kind === tab)!;
@@ -490,10 +508,10 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
           : `<span class="swatch" style="background:${hex(x.color)};box-shadow:0 0 8px ${hex(x.color2 ?? x.color)}"></span>`;
         const desc = x.desc + (tab === "outfit" && !fits ? ` Não muda o visual de ${CHARS[charId]?.name ?? "este personagem"}.` : "");
         const action = !own ? `<button type="button" data-buy="${x.id}" ${data!.crystals < x.price ? `disabled title="Faltam ${x.price - data!.crystals} cristais (ganhe na recompensa diária e conquistas)"` : ""}>💎 ${x.price}</button>`
-          : tab === "lore" ? `<button type="button" data-read="${x.id}">Ler</button><button type="button" data-equip="${x.id}" ${on ? "disabled" : ""}>${on ? "Título em uso" : "Usar título"}</button>`
+          : tab === "lore" ? `<button type="button" data-read="${x.id}">${loreRead.has(x.id) ? "Reler" : "Ler"}</button><button type="button" data-equip="${x.id}" ${on ? "disabled" : ""}>${on ? "Título em uso" : "Usar título"}</button>`
           : on ? `<button type="button" data-off="${slot}">Tirar</button>` : `<button type="button" data-equip="${x.id}">Usar</button>`;
         const label = tab === "title" || tab === "lore" ? `<b style="color:${hex(x.color)}">« ${escHtml(titleText(x.id))} »</b>` : `<b>${escHtml(x.name)}</b>`;
-        return `<div class="cos${own ? " own" : ""}${on ? " on" : ""}">${swatch}<div class="cos-text">${label}${tab === "lore" ? ` <small>${escHtml(x.name)}</small>` : ""}<div class="hint">${escHtml(desc)}</div></div><div class="cos-act">${action}</div></div>`;
+        return `<div class="cos${own ? " own" : ""}${on ? " on" : ""}">${swatch}<div class="cos-text">${label}${tab === "lore" ? ` <small>${escHtml(x.name)}</small>${loreRead.has(x.id) ? ` <span class="lore-read">✓ Lida</span>` : ""}` : ""}<div class="hint">${escHtml(desc)}</div></div><div class="cos-act">${action}</div></div>`;
       }).join("") +
       `<p class="hint buy-note">Compra de cristais com dinheiro: ainda não está aberta.</p>`;
     // compra em dois cliques: o primeiro pede confirmação no próprio botão
@@ -504,7 +522,7 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
     }));
     body.querySelectorAll<HTMLButtonElement>("[data-equip]").forEach((b) => (b.onclick = () => room.send("shopEquip", { id: b.dataset.equip })));
     body.querySelectorAll<HTMLButtonElement>("[data-off]").forEach((b) => (b.onclick = () => room.send("shopEquip", { kind: b.dataset.off })));
-    body.querySelectorAll<HTMLButtonElement>("[data-read]").forEach((b) => (b.onclick = () => { reading = b.dataset.read!; render(); }));
+    body.querySelectorAll<HTMLButtonElement>("[data-read]").forEach((b) => (b.onclick = () => { reading = b.dataset.read!; markLoreRead(browserStore(), reading, loreRead); render(); }));
   };
   room.onMessage("shopData", (d: typeof data) => { data = d; closeWindows("#shop"); panel.hidden = false; render(); });
   room.onMessage("crystals", (m: { crystals: number }) => { if (data) { data.crystals = m.crystals; render(); } });
@@ -518,8 +536,7 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
   let tab = "bestiario";
   // o jogador zerou a Caçada e nada foi contado desde então (rótulo "✔ Contagem zerada" no botão)
   let huntJustReset = false;
-  const reward = (r: { gold: number; items?: { id: string; qty: number }[] }) =>
-    [r.gold ? `${r.gold} kan` : "", ...(r.items ?? []).map((i) => `${i.qty}x ${ITEMS[i.id]?.name ?? i.id}`)].filter(Boolean).join(" + ");
+  const reward = rewardText;
   const bar = (have: number, need: number) => `<div class="bar"><i style="width:${Math.min(100, (have / need) * 100)}%"></i></div>`;
   const render = () => {
     panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === tab)));
@@ -571,11 +588,19 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
       const ms = data.missions;
       const missions = `<h3>Missões de hoje</h3><p class="hint">Cada uma paga ${ms.gold} kan e ${ms.exp} XP sozinha ao completar; as três juntas dão uma Caixa do Kisuke${ms.bonus ? " (já ganha)" : ""}.</p>` +
         ms.list.map((m: any) => `<div class="ach${m.done ? " done" : ""}"><b>${escHtml(m.text)}</b><div class="hint">${m.done ? "Feita" : `${m.have}/${m.need}`}</div>${m.done ? "" : bar(m.have, m.need)}</div>`).join("");
-      body.innerHTML = missions + `<h3>Recompensa de entrada</h3><p class="hint">Pegue uma vez por dia (o dia vira à meia-noite de Brasília). Perder um dia zera a sequência.</p>
-        <div><b>Sequência: ${d.streak} ${d.streak === 1 ? "dia" : "dias"}</b></div>
-        <div class="days">${d.rewards.map((r: any, i: number) => `<div class="${i < d.index || (d.claimed && i === d.index) ? "got" : ""}${i === d.index ? " today" : ""}"><b>Dia ${i + 1}</b><br>${reward(r)}</div>`).join("")}</div>
-        <button type="button" class="claim" ${d.claimed ? `disabled title="Recompensa diária já resgatada hoje. Volte após a meia-noite de Brasília."` : ""}>${d.claimed ? "Já pegou hoje" : "Pegar a recompensa de hoje"}</button>`;
-      body.querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("daily");
+      body.innerHTML = dailyTabHtml(d, missions);
+      // retorno na hora; o "book" que o servidor devolve (resgate ou recusa) redesenha a aba
+      body.querySelector<HTMLButtonElement>(".claim")!.onclick = (e) => {
+        const b = e.currentTarget as HTMLButtonElement;
+        b.disabled = true;
+        b.textContent = claimPendingLabel;
+        room.send("daily");
+        // sem "book" de volta (servidor lento ou mensagem perdida), o botão não fica preso em "Pegando…";
+        // se o "book" chegou, a aba foi redesenhada e este botão já saiu do DOM
+        window.setTimeout(() => {
+          if (b.isConnected && b.textContent === claimPendingLabel) { b.disabled = false; b.textContent = claimLabel; }
+        }, claimTimeoutMs);
+      };
     }
   };
   room.onMessage("book", (d: any) => { data = d; if (panel.hidden) { closeWindows("#book"); panel.hidden = false; } render(); });
@@ -781,12 +806,67 @@ function bindAuto(room: Room<any>) {
   }
 }
 
-function chatLine(text: string, cls: string) {
+function chatLine(text: string, cls: string, kind: "chat" | "log" = "chat", ch?: string, from = ""): ChatTab[] {
+  const tabs = chat.add(kind, ch, { text, cls }, Date.now(), from);
+  if (tabs.includes(chat.active)) appendChatLine({ text, cls });
+  renderChatTabs();
+  return tabs;
+}
+
+/** Aviso que ninguém pode perder (queda da conexão, relatório offline): também na aba aberta. */
+function chatAlert(text: string, cls: string, kind: "chat" | "log", ch?: string) {
+  if (chatLine(text, cls, kind, ch).includes(chat.active)) return;
+  chat.notice({ text, cls });
+  appendChatLine({ text, cls });
+}
+
+// ---------- abas do chat (M3-02) ----------
+
+const chat = new ChatBook();
+try { chat.setActive(parseTab(localStorage.getItem("bi.chatTab"))); } catch { /* sem armazenamento: começa em Geral */ }
+
+function appendChatLine(l: ChatLineData) {
   const log = $("#chatlog");
   const div = document.createElement("div");
-  if (cls) div.className = cls;
-  div.textContent = text;
+  if (l.cls) div.className = l.cls;
+  div.textContent = l.text;
   log.append(div);
-  while (log.children.length > 200) log.firstChild!.remove();
+  while (log.children.length > CHAT_MAX) log.firstChild!.remove();
   log.scrollTop = log.scrollHeight;
+}
+
+function renderChatTabs() {
+  const bar = $("#chat-tabs");
+  if (!bar.children.length) {
+    for (const t of CHAT_TABS) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("role", "tab");
+      b.dataset.tab = t.id;
+      b.onclick = () => openChatTab(t.id);
+      bar.append(b);
+    }
+  }
+  for (const b of bar.querySelectorAll<HTMLButtonElement>("button")) {
+    const t = CHAT_TABS.find((x) => x.id === b.dataset.tab)!;
+    const n = chat.unread[t.id];
+    b.textContent = n ? `${t.label} ${n > 99 ? "99+" : n}` : t.label;
+    b.setAttribute("aria-selected", String(t.id === chat.active));
+    b.setAttribute("aria-controls", "chatlog");
+    b.classList.toggle("new", n > 0);
+  }
+  // o campo diz para onde vai o texto (no Privado, com quem é a conversa, que muda quando chega pm de outra pessoa)
+  const placeholder = chat.active === "privado" ? (chat.pmWith ? `Enter para responder a ${chat.pmWith}` : "Escreva /pm Nome, mensagem")
+    : chat.active === "party" || chat.active === "guilda" ? `Enter para falar em ${CHAT_TABS.find((x) => x.id === chat.active)!.label}`
+    : "Enter para conversar";
+  $<HTMLInputElement>("#chatin").placeholder = `${placeholder} · /ajuda para comandos`;
+}
+
+function openChatTab(tab: ChatTab) {
+  chat.setActive(tab);
+  try { localStorage.setItem("bi.chatTab", tab); } catch { /* só nesta sessão */ }
+  const log = $("#chatlog");
+  log.replaceChildren();
+  for (const l of chat.lines[tab]) appendChatLine(l);
+  renderChatTabs();
 }
