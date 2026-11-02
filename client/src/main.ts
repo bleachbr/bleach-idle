@@ -11,6 +11,7 @@ import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
 import { sfx } from "./sfx";
 import { initReleases } from "./releases";
+import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
 
 initReleases();
 
@@ -515,8 +516,7 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
   const panel = $("#book");
   let data: any = null;
   let tab = "bestiario";
-  const reward = (r: { gold: number; items?: { id: string; qty: number }[] }) =>
-    [r.gold ? `${r.gold} kan` : "", ...(r.items ?? []).map((i) => `${i.qty}x ${ITEMS[i.id]?.name ?? i.id}`)].filter(Boolean).join(" + ");
+  const reward = rewardText;
   const bar = (have: number, need: number) => `<div class="bar"><i style="width:${Math.min(100, (have / need) * 100)}%"></i></div>`;
   const render = () => {
     panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === tab)));
@@ -564,11 +564,19 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
       const ms = data.missions;
       const missions = `<h3>Missões de hoje</h3><p class="hint">Cada uma paga ${ms.gold} kan e ${ms.exp} XP sozinha ao completar; as três juntas dão uma Caixa do Kisuke${ms.bonus ? " (já ganha)" : ""}.</p>` +
         ms.list.map((m: any) => `<div class="ach${m.done ? " done" : ""}"><b>${escHtml(m.text)}</b><div class="hint">${m.done ? "Feita" : `${m.have}/${m.need}`}</div>${m.done ? "" : bar(m.have, m.need)}</div>`).join("");
-      body.innerHTML = missions + `<h3>Recompensa de entrada</h3><p class="hint">Pegue uma vez por dia (o dia vira à meia-noite de Brasília). Perder um dia zera a sequência.</p>
-        <div><b>Sequência: ${d.streak} ${d.streak === 1 ? "dia" : "dias"}</b></div>
-        <div class="days">${d.rewards.map((r: any, i: number) => `<div class="${i < d.index || (d.claimed && i === d.index) ? "got" : ""}${i === d.index ? " today" : ""}"><b>Dia ${i + 1}</b><br>${reward(r)}</div>`).join("")}</div>
-        <button type="button" class="claim" ${d.claimed ? `disabled title="Recompensa diária já resgatada hoje. Volte após a meia-noite de Brasília."` : ""}>${d.claimed ? "Já pegou hoje" : "Pegar a recompensa de hoje"}</button>`;
-      body.querySelector<HTMLButtonElement>(".claim")!.onclick = () => room.send("daily");
+      body.innerHTML = dailyTabHtml(d, missions);
+      // retorno na hora; o "book" que o servidor devolve (resgate ou recusa) redesenha a aba
+      body.querySelector<HTMLButtonElement>(".claim")!.onclick = (e) => {
+        const b = e.currentTarget as HTMLButtonElement;
+        b.disabled = true;
+        b.textContent = claimPendingLabel;
+        room.send("daily");
+        // sem "book" de volta (servidor lento ou mensagem perdida), o botão não fica preso em "Pegando…";
+        // se o "book" chegou, a aba foi redesenhada e este botão já saiu do DOM
+        window.setTimeout(() => {
+          if (b.isConnected && b.textContent === claimPendingLabel) { b.disabled = false; b.textContent = claimLabel; }
+        }, claimTimeoutMs);
+      };
     }
   };
   room.onMessage("book", (d: any) => { data = d; if (panel.hidden) { closeWindows("#book"); panel.hidden = false; } render(); });
