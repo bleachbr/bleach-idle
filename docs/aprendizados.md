@@ -403,3 +403,12 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Causa:** nas capturas citadas na issue (`grinder/screenshots/passo-017.png`, `grinder/screenshots/passo-209.png`, `explorador/screenshots/passo-038.png`, e também `explorador/screenshots/passo-110.png`), a área visível do painel do Livro termina por volta de y=540, cortando os cartões dos dias, e o botão não aparece. Os relatórios mostram todos os cliques em (786,620): abaixo das três missões, dentro do `#book-body` com `overflow-y: auto`. O agente clica na coordenada do centro do elemento, e ali está o chat. Uma pessoa precisaria rolar o painel para achar o botão.
 - **Solução:** a recompensa de entrada vem antes das missões (`client/src/bookDaily.ts`), o botão desabilita e mostra "Pegando…" no clique, e a recusa do servidor ("já pegou hoje") também devolve o `book`, para o botão não ficar parado.
 - **Regra:** antes de corrigir achado de IA sobre clique, olhe a captura e confira se o alvo está visível dentro do painel; ação principal de uma aba fica no topo, não depois de conteúdo de tamanho variável.
+
+---
+
+## 14. Tutorial com Call-to-Action interativo e atalhos de HUD (F-22)
+
+- **Sintoma:** No playtest automatizado (#73, #75, #89, #99, #108, #110, #118, #120, #121, #122, #181, #182, #188, #190, #284, #306), jogadores e agentes ficavam parados tentando cumprir os passos "Ligue o Auto Hunt" e "Abra o Livro" do tutorial de primeiros passos. O `#tutorial-list` apresentava apenas texto estático sem indicativo de como proceder.
+- **Causa:** Tutoriais de onboarding em jogos idle precisam transformar intenção informativa em ação imediata. Sem botões de ação contextuais ou atalhos mapeados, o usuário busca comandos no chat ou não encontra os menus correspondentes.
+- **Solução:** `client/src/tutorialView.ts` desacopla a formatação e renderização dos passos, gerando botões contextuais com classe `.tut-act` diretamente no item pendente (`[Ligar Auto Hunt (H)]`, `[Abrir Livro (L)]`, `[Viajar]`, `[Liberar]`). O servidor passou a enviar `{ id, text, done }` estruturado na mensagem `tutorial`. Também foram adicionadas as teclas de atalho <kbd>H</kbd> para toggle de caça automática e <kbd>L</kbd> para alternar o Livro, ambas documentadas no modal de ajuda de atalhos (`index.html`).
+

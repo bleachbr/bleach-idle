@@ -100,6 +100,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-16 | Pacote de correções do Jogador-IA: `noHd` no `boneco`, `Tab` (`nextTarget`) ignorando `dummy`, exclusividade de janelas flutuantes + `Esc`, confirmação ao trocar de personagem e handlers `welcome`/`fx` na entrada da sala | M | | Feito | test/ |
 | F-17 | Jogador-IA: modo Dev desligado por omissão, 30 min padrão, alvo remoto (bleach.acoplum.com) e make ia-play-prod | M | F-16 | Feito | test/ |
 | F-18 | Novidades no login, lobby e menu: histórico, indicador de leitura e metadados do deploy | P | F-13 | Feito | /release, shared/src/releases.ts |
+| F-22 | HUD Interativo nos Primeiros Passos e Atalhos de Automação: botões de ação contextuais no `#tutorial-list` ([Ligar Auto Hunt (H)], [Abrir Livro (L)], [Viajar], [Liberar]), atalhos <kbd>H</kbd> e <kbd>L</kbd> no teclado com documentação no modal de atalhos e protocolo `tutorial` com ID estruturado (#73, #75, #89, #99, #108, #110, #118, #120, #121, #122, #181, #182, #188, #190, #284, #306) | P | | Feito | client/src/tutorialView.ts, server/src/WorldRoom.ts |
 
 Recomendação: fazer F-12 antes de M4, porque as salas instanciadas dependem do Colyseus e é melhor não construir sobre uma versão com advisory.
 
