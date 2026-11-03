@@ -30,6 +30,12 @@ test("HUD mostra nome, as 4 técnicas e o kit inicial", async ({ page }) => {
   await expect(page.locator("#pname")).toHaveText(name);
   await expect(page.locator("#techs kbd")).toHaveCount(4);
   await expect(page.locator("#inv .slot .icon").first()).toBeVisible();
+  const seasonBtn = page.locator("#season-btn");
+  await expect(seasonBtn).toBeVisible();
+  await expect(seasonBtn).toHaveText("★");
+  await expect(seasonBtn).toHaveAttribute("aria-label", "Passe de Temporada (★)");
+  await seasonBtn.click();
+  await expect(page.locator("#pass")).toBeVisible();
 });
 
 test("chat: Enter manda a fala, que aparece no chat", async ({ page }) => {

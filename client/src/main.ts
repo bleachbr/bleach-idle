@@ -23,6 +23,7 @@ import { huntResetButton, huntResetDoneLabel, isHuntEmpty } from "./huntReset";
 import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
 import { renderTutorialStep, dispatchTutorialAction } from "./tutorialView";
 import { bindMail, getMailInbox, getUnreadMailCount, resetMailInbox } from "./mail";
+import { toggleSeasonPass } from "./seasonButton";
 
 initReleases();
 
@@ -463,7 +464,7 @@ function bindSeason(room: Room<any>, closeWindows: (keep?: string) => void) {
     }
   };
   room.onMessage("season", (m: Season) => { st = m; if (m.open) { closeWindows("#pass"); panel.hidden = false; } render(); });
-  $("#season-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("seasonOpen"); };
+  $("#season-btn").onclick = () => toggleSeasonPass(panel, (action) => room.send(action));
   $("#pass-close").onclick = () => (panel.hidden = true);
   // fim de semana de XP em dobro: aviso fixo no painel
   const line = $("#event-line");

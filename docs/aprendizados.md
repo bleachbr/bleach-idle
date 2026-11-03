@@ -4,6 +4,18 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ---
 
+## Botão de acesso direto ao Passe de Temporada (★) e acessibilidade no HUD (Fix HUD Temporada)
+
+No playtest automatizado, a persona `grinder` recebia avisos frequentes no chat após abates e marcos de progressão: *"Passe de temporada: nível X! Pegue seus prêmios no botão ★."*. Contudo, os jogadores e agentes tinham dificuldade para encontrar ou acionar o botão na interface.
+- **Causa raiz:** O botão `#season-btn` na barra `.who-icons` utilizava exclusivamente um sprite CSS de fundo (`data-ico="star"`), sem texto interno (`innerText === ""`), sem atributo `aria-label` e com um tooltip genérico (`title="Passe de temporada (grátis)"`) que não continha o caractere estrela anunciado pelo servidor. Para leitores de acessibilidade, rotinas de playtest e jogadores guiados pelo chat, o elemento não correspondia ao esperado "botão ★".
+- **Solução implementada:**
+  1. Inclusão do glifo visível `★` diretamente como conteúdo do botão no DOM, estilizado com classe `.star-btn` em dourado (`var(--gold)`), com `font-size: 16px` e efeito hover que não sobrepõe a moldura ou elementos adjacentes;
+  2. Supressão do pseudo-elemento `::before` de background do `data-ico="star"` via CSS para evitar duplicação ou overflow no layout compacto de 26x26 px da barra de ícones;
+  3. Adição de `aria-label="Passe de Temporada (★)"`, `title="Passe de Temporada (★, grátis)"` e `aria-controls="pass"`, alinhando os nomes acessíveis no DOM;
+  4. Extração e encapsulamento da lógica de alternância da janela em módulo dedicado (`client/src/seasonButton.ts`), testado determinística e isoladamente com Vitest e Playwright E2E.
+
+---
+
 ## Carregamento visual do mundo e centralização de câmera (F-19 / Issue #65)
 
 Ao entrar no mundo (especialmente com personagem existente após retorno do lobby), o Phaser realiza o carregamento assíncrono de dezenas de spritesheets, mapas e tilesets via HTTP (`preload()`).
