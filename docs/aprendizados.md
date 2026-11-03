@@ -475,3 +475,17 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
   2. Implementados aliases universais no servidor para sussurro (`/w`, `/whisper`, `/s`, `/sussurro`, `/msg`, `/tell`), ranking (`/rank`) e guilda (`/guilda listar`).
   3. Atualizada regex do cliente `pmTarget` para cobrir todos os aliases de sussurro e associar automaticamente ao destinatário atual.
   4. Adicionados placeholders contextuais orientando o usuário em cada aba do chat (`Sussurrar: /w Nome, mensagem...`, `Chat de grupo: /p mensagem...`, `Chat de guilda: /g mensagem...`, `Canal de combate (somente leitura)`).
+
+---
+
+## 19. Feedback de Navegação no Minimapa, Categorização de Ajuda e Layout do Depot (F-25)
+
+- **Sintoma:** No playtest automatizado (#68, #70, #119, #184, #194, #195), múltiplos achados apontavam ausência de feedback de rota ou clique ao interagir com o minimapa para navegar, poluição por rolagem excessiva ao digitar `/ajuda` no chat e sobreposição do modal do Depot (`#depot`) cobrindo o minimapa e elementos do canto da tela.
+- **Causa:**
+  1. O minimapa enviava o comando de movimento pela rede sem nenhum retorno visual no próprio canvas para indicar que o clique foi registrado ou para onde o personagem estava caminhando.
+  2. O comando `/ajuda` emitia 13 linhas avulsas consecutivas sem segmentação por tema, estourando a altura do histórico de chat.
+  3. O `#modal` estava fixado com `top: 12px; right: 12px` sobrepondo diretamente o `#minimap` (`top: 8px; right: 8px`).
+- **Solução (`client/src/minimapPing.ts`, `client/src/GameScene.ts`, `server/src/WorldRoom.ts`, `client/src/style.css`):**
+  1. Criado `minimapPing.ts` e renderização de rota tracejada luminosa com anel de pulso concêntrico no minimapa no momento do clique, desativando automaticamente assim que o personagem alcança o tile.
+  2. Reestruturado o comando `/ajuda` no servidor com categorias claras (`/ajuda auto`, `/ajuda social`, `/ajuda sistema`), mantendo o formato compacto sem spam.
+  3. Centralizado `#modal` (`left: 50%; transform: translateX(-50%)`) com `z-index: 25`, evitando sobreposição do minimapa em desktop e mobile.

@@ -45,20 +45,36 @@ import { recordAudit } from "./economyAudit";
 /** Modo Dev (botão que libera tudo para testar): nasce DESLIGADO e só liga com BI_DEV=1 (`npm run dev` já define). */
 const DEV_MODE = flagOn("BI_DEV");
 const GUILD_NAME_RE = /^[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ]{2,19}$/;
+const HELP_CATEGORIES: Record<string, string[]> = {
+  auto: [
+    "Comandos de Automação:",
+    "/autohunt [on|off] — liga ou desliga a caça automática de monstros",
+    "/helper [on|off] — Auto Helper completo (Auto Hunt + Auto Target)",
+    "/patrulha [iniciar|resgatar|cancelar|lista] — patrulhas idle de Hollows",
+    "/livro — abre o Livro (bestiário, conquistas, diário e caçada)",
+  ],
+  social: [
+    "Comandos de Social & Mensagens:",
+    "/w Nome, mensagem (ou /s, /msg, /tell, /pm) — mensagem privada",
+    "/p mensagem — chat do grupo · /g mensagem — chat da guilda",
+    `/guilda criar Nome (${GUILD_COST} kan, nível ${GUILD_MIN_LEVEL}+) · /guilda convidar|aceitar|recusar`,
+    "/guilda listar (ou info, membros) · /guilda sair · /guilda lider Nome · /guilda depositar N",
+    "/ignorar [Nome] — ignora mensagens ou lista jogadores ignorados",
+  ],
+  sistema: [
+    "Comandos de Sistema & Conteúdo:",
+    "/ranking (ou /rank) — abre o ranking geral de poder e nível",
+    "/arena [entrar|sair|desistir] — arena ranqueada de duelos 1v1",
+    "/cronicas — exibe a crônica semanal ativa e detalhes",
+    "/correio — abre a caixa de correio",
+  ],
+};
+
 const HELP = [
-  "Comandos:",
-  "/autohunt [on|off] — liga ou desliga o Auto Hunt · /helper [on|off] — Auto Helper completo",
-  "/livro — abre o Livro (bestiário, conquistas, diário e caçada)",
-  "/pm Nome, mensagem (ou /w, /s, /msg, /tell) — mensagem privada",
-  "/p mensagem — chat da party · /g mensagem — chat da guilda",
-  `/guilda criar Nome (${GUILD_COST} kan, nível ${GUILD_MIN_LEVEL}+) · /guilda convidar Nome · /guilda aceitar · /guilda recusar`,
-  "/guilda sair · /guilda expulsar Nome · /guilda lider Nome · /guilda depositar N · /guilda sacar N (líder) · /guilda info|listar",
-  "/ranking (ou /rank) — abre o ranking",
-  "/patrulha [iniciar|resgatar|cancelar|lista] — patrulhas de Hollows",
-  "/cronicas — exibe a crônica semanal ativa e onde encontrá-la",
-  "/correio — abre sua caixa de correio",
-  "/ignorar Nome — liga ou desliga as mensagens dessa pessoa · /ignorar — mostra a lista",
-  "/arena [entrar|sair|desistir] — arena de duelos 1v1 ranqueada",
+  "Comandos do Jogo (digite /ajuda auto, /ajuda social ou /ajuda sistema para filtrar):",
+  ...HELP_CATEGORIES.auto,
+  ...HELP_CATEGORIES.social,
+  ...HELP_CATEGORIES.sistema,
 ];
 
 const ARENA_SPAWN_P1 = { map: "dangai", x: 20, y: 13 };
@@ -1571,8 +1587,18 @@ export class WorldRoom extends GameRoom<WorldState> {
     const rest = restParts.join(" ").trim();
     switch (cmd.toLowerCase()) {
       case "ajuda":
-      case "help":
-        return HELP.forEach((l) => this.sendTo(p, "chat", { from: "", text: l, ch: "sys" }));
+      case "help": {
+        const cat = rest.toLowerCase();
+        const lines =
+          cat === "auto" || cat === "hunt"
+            ? HELP_CATEGORIES.auto
+            : cat === "social" || cat === "chat" || cat === "msg" || cat === "guilda"
+            ? HELP_CATEGORIES.social
+            : cat === "sistema" || cat === "game" || cat === "geral"
+            ? HELP_CATEGORIES.sistema
+            : HELP;
+        return lines.forEach((l) => this.sendTo(p, "chat", { from: "", text: l, ch: "sys" }));
+      }
       case "autohunt":
       case "hunt": {
         const arg = rest.toLowerCase();

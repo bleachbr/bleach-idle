@@ -7,6 +7,7 @@ import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, title
 import { pickClick, interactHint, interactNear } from "./interactHit";
 import { serverNow } from "./clock";
 import { fixedMarks, questTargetKinds, targetAreas, type FixedMark } from "./minimapMarks";
+import { createMinimapPing, isPingActive, pingPulseRadius, type MinimapPing } from "./minimapPing";
 import { parseStatusFlags, desiredTint, dotHitStyle, STATUS_LOOK } from "./statusFx";
 import type { StatusKind } from "../../shared/src/combatStatus";
 
@@ -1054,6 +1055,8 @@ export class GameScene extends Phaser.Scene {
   private nextMinimapAt = 0;
   /** marcadores do mapa atual que não mudam (zona protegida, portal, loja, NPCs) */
   private minimapFixed: FixedMark[] = [];
+  /** feedback de destino ao clicar no minimapa (#68, #70, #194, #195) */
+  private minimapPing: MinimapPing | null = null;
   /** missões do Kisuke, para marcar onde caçar o alvo (a mesma mensagem que o painel de missões recebe) */
   private quests: QuestState = { active: {}, done: [] };
 
@@ -1102,6 +1105,7 @@ export class GameScene extends Phaser.Scene {
       const rect = c.getBoundingClientRect();
       const x = Math.floor(((e.clientX - rect.left) / rect.width) * data.width);
       const y = Math.floor(((e.clientY - rect.top) / rect.height) * data.height);
+      this.minimapPing = createMinimapPing(x, y, performance.now());
       this.room.send("move", { x, y });
     };
   }
@@ -1148,6 +1152,34 @@ export class GameScene extends Phaser.Scene {
     for (const p of this.room.state.players.values()) {
       if (p.map !== this.mapId || p.id === this.myId) continue;
       dot(p.x, p.y, me.partyId && p.partyId === me.partyId ? "#7dff8a" : "#6cc0ff", 2);
+    }
+    // marcador animado e rota de destino ao clicar no minimapa (#68, #70, #194, #195)
+    const now = performance.now();
+    if (this.minimapPing && isPingActive(this.minimapPing, me.x, me.y, now)) {
+      const px = cx(this.minimapPing.x);
+      const py = cx(this.minimapPing.y);
+      const mx = cx(me.x);
+      const my = cx(me.y);
+      ctx.beginPath();
+      ctx.setLineDash([4, 3]);
+      ctx.strokeStyle = "rgba(92, 225, 230, 0.75)";
+      ctx.lineWidth = 1.5;
+      ctx.moveTo(mx, my);
+      ctx.lineTo(px, py);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const r = pingPulseRadius(this.minimapPing, now, K * 0.9);
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.strokeStyle = "#5ce1e6";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(px, py, K * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+    } else {
+      this.minimapPing = null;
     }
     dot(me.x, me.y, "#000000", 4);
     dot(me.x, me.y, "#ffffff", 3);
