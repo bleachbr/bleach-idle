@@ -125,7 +125,12 @@
         <section class="release-link"><button type="button" class="link" data-releases>Novidades</button><small data-release-version>Consultando última atualização…</small></section>
       </aside>
       <main>
-        <div id="game"></div>
+        <div id="game">
+          <div id="game-loading" class="game-loading">
+            <div class="game-spinner"></div>
+            <p>Entrando no mundo…</p>
+          </div>
+        </div>
         <canvas id="minimap" title="Minimapa: clique para andar até lá"></canvas>
         <div id="ctx" hidden></div>
         <div id="ranking" hidden>

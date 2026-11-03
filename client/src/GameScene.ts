@@ -313,6 +313,9 @@ export class GameScene extends Phaser.Scene {
     this.room.send("quests");
     this.input.on("pointerdown", (ptr: Phaser.Input.Pointer) => this.onClick(ptr));
     this.bindKeys();
+    this.scale.refresh();
+    const loader = document.getElementById("game-loading");
+    if (loader) loader.classList.add("ready");
   }
 
   // ---------- entidades ----------
@@ -388,6 +391,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     if (id === this.myId) {
+      this.cameras.main.centerOn(c.x, c.y); // centraliza na hora no personagem sem deslizar de (0,0)
       this.cameras.main.startFollow(c, true, 0.18, 0.18, 0, 0); // segue com leve amortecimento
       this.onMe(e);
     }
@@ -915,6 +919,8 @@ export class GameScene extends Phaser.Scene {
     this.mapObjects.push(tm as unknown as Phaser.GameObjects.GameObject);
     this.cameras.main.setBounds(0, 0, tm.widthInPixels, tm.heightInPixels);
     this.cameras.main.setBackgroundColor(id === "hueco" ? "#0b0b12" : "#000000");
+    const me = this.views.get(this.myId);
+    if (me) this.cameras.main.centerOn(me.c.x, me.c.y);
     this.buildMinimap(id);
     this.makeParticleTextures();
     this.startAmbient(id);

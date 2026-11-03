@@ -4,6 +4,18 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ---
 
+## Carregamento visual do mundo e centralização de câmera (F-19 / Issue #65)
+
+Ao entrar no mundo (especialmente com personagem existente após retorno do lobby), o Phaser realiza o carregamento assíncrono de dezenas de spritesheets, mapas e tilesets via HTTP (`preload()`).
+- **Armadilha do canvas preto:** A interface `#app` se tornava visível antes do término do carregamento da cena. Como o canvas padrão do Phaser inicializa com fundo preto (`#000000`), a tela de jogo permanecia em um retângulo preto vazio por 1 a 2 segundos enquanto a HUD em DOM já exibia o personagem, induzindo tanto jogadores quanto personas de IA a acreditarem que o canvas havia congelado ou quebrado ("canvas totalmente preto ao entrar no mundo").
+- **Posicionamento inicial da câmera:** O método `startFollow` iniciava com amortecimento (`lerp: 0.18`), fazendo com que o viewport partisse de `(0, 0)` e deslizasse lentamente até a praça de Karakura ou o spawn correspondente. Se a posição `(0, 0)` estivesse fora dos limites visuais do mapa, o viewport iniciava em área vazia.
+- **Solução implementada:**
+  1. Criação de um overlay dedicado de carregamento (`#game-loading` com spinner e "Entrando no mundo…") cobrindo o `#game` até o disparo do `create()` do Phaser;
+  2. Centralização imediata da câmera no personagem (`this.cameras.main.centerOn(c.x, c.y)`) antes de iniciar o `startFollow`, garantindo que o viewport já nasce enquadrado no jogador sem glide do canto superior esquerdo;
+  3. Atualização síncrona da escala (`this.scale.refresh()` e `requestAnimationFrame`) logo após o unhide do contêiner flexível do canvas.
+
+---
+
 ## Novidades vinculadas à versão servida (F-18)
 
 Um push na `main` não comprova que o deploy terminou. `/release` entrega as
