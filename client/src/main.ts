@@ -969,7 +969,7 @@ function renderChatTabs() {
     : chat.active === "guilda"
     ? "Chat de guilda: /g mensagem..."
     : chat.active === "combate"
-    ? "Canal de combate (somente leitura)"
+    ? "Canal de combate (mensagens vão para o Geral)"
     : "Enter para conversar...";
   $<HTMLInputElement>("#chatin").placeholder = `${placeholder} · /ajuda para comandos`;
 }

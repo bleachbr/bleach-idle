@@ -828,14 +828,14 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.reiPotionReadyAt = now + 1000;
     } else if (def.boost) {
       const key = def.boost === "exp" ? "expBoostUntil" : "lootBoostUntil";
-      if (p[key] - now > BOOST_MAX_MS - BOOST_MS) return this.log(p, "Já tem o máximo de 6 h desse bônus."), false;
+      if (p[key] - now > BOOST_MAX_MS - BOOST_MS) return this.logThrottled(p, "Já tem o máximo de 6 h desse bônus.", 1500, "boost_max"), false;
       p[key] = Math.max(p[key], now) + BOOST_MS;
       this.log(p, `${def.name}: ${def.boost === "exp" ? "+50% de XP" : "+30% de chance de loot"} por mais 1 h (restam ${Math.ceil((p[key] - now) / 60000)} min).`);
     } else if (def.box) {
       const prize = rollBox();
       removeItem(p.inv, id, 1);
       const n = addItem(p.inv, prize.id, prize.qty);
-      if (n < prize.qty) { addItem(p.inv, id, 1); removeItem(p.inv, prize.id, n); this.sendInv(p); return this.log(p, "Inventário sem espaço para o prêmio."), false; }
+      if (n < prize.qty) { addItem(p.inv, id, 1); removeItem(p.inv, prize.id, n); this.sendInv(p); return this.logThrottled(p, "Inventário sem espaço para o prêmio.", 1500, "inv_full_box"), false; }
       this.log(p, `Caixa do Kisuke: ${prize.qty}x ${ITEMS[prize.id].name}!`);
       this.sendInv(p);
       return true;
@@ -852,7 +852,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.logThrottled(p, `Não dá para usar ${ITEMS[id].name} agora.`, 1500, `deny:${id}`);
       return;
     }
-    this.logThrottled(p, why.chat, 1500, `deny:${why.float}`);
+    this.logThrottled(p, why.chat, 1500, `deny:${why.chat}`);
     this.sendTo(p, "fx", { t: "deny", id: p.id, text: why.float });
   }
 
@@ -3567,6 +3567,7 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   /** Emite mensagem de log com janela de espera para evitar poluição repetitiva no chat (F-24). */
   private logThrottled(p: Player, text: string, windowMs = 2000, key = text): boolean {
+    if (!p.online) return false;
     const k = `${p.id}:${key}`;
     const now = Date.now();
     const last = this.throttledLogs.get(k) ?? 0;
