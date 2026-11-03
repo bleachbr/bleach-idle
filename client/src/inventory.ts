@@ -83,13 +83,35 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
     render();
   });
 
-  let inspected: { slot: Slot | null; equipSlot?: EquipSlot } | null = null;
+  let inspected: { slot: Slot | null; equipSlot?: EquipSlot; slotIndex?: number } | null = null;
   const renderDetail = () => {
     const box = $("#item-detail");
-    if (box) box.innerHTML = itemDetailHtml(inspected?.slot ?? null, myLevel(), inspected?.equipSlot);
+    const isFull = state ? formatInventoryCount(state.inv).isFull : false;
+    if (box) {
+      box.innerHTML = itemDetailHtml(inspected?.slot ?? null, myLevel(), inspected?.equipSlot, isFull);
+      const actionBtn = box.querySelector<HTMLButtonElement>("button.detail-action:not(:disabled)");
+      if (actionBtn && inspected?.slot) {
+        actionBtn.onclick = () => {
+          if (inspected?.slotIndex !== undefined && inspected.slotIndex >= 0) {
+            handleInventorySlotClick(inspected.slot, inspected.slotIndex, {
+              open,
+              playerLevel: myLevel(),
+              isInventoryFull: isFull,
+              send: (type, data) => room.send(type, data),
+              onInspect: (item) => {
+                inspected = { slot: item, slotIndex: inspected?.slotIndex };
+                renderDetail();
+              },
+            });
+          } else if (inspected?.equipSlot) {
+            room.send("unequip", { slot: inspected.equipSlot });
+          }
+        };
+      }
+    }
   };
 
-  function slotButton(s: Slot | null, onClick: (() => void) | null, extraTitle = "", equipSlot?: EquipSlot) {
+  function slotButton(s: Slot | null, onClick: (() => void) | null, extraTitle = "", equipSlot?: EquipSlot, slotIndex?: number) {
     const b = document.createElement("button");
     b.className = "slot";
     b.type = "button";
@@ -105,7 +127,7 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
     }
 
     const inspect = () => {
-      inspected = { slot: s, equipSlot };
+      inspected = { slot: s, equipSlot, slotIndex };
       renderDetail();
     };
 
@@ -163,7 +185,7 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
     if (hintEl) {
       hintEl.textContent = cnt.isFull
         ? "Inventário cheio (20/20). Guarde no baú ou venda no Kisuke."
-        : "Clique para equipar ou usar. Baú (depot) e loja ficam na praça.";
+        : "Duplo clique para equipar ou usar. Baú (depot) e loja ficam na praça.";
       hintEl.classList.toggle("warn", cnt.isFull);
     }
     renderDetail();
@@ -187,13 +209,14 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
       handleInventorySlotClick(s, index, {
         open,
         playerLevel: myLevel(),
+        isInventoryFull: cnt.isFull,
         send: (type, data) => room.send(type, data),
         onInspect: (item) => {
-          inspected = { slot: item };
+          inspected = { slot: item, slotIndex: index };
           renderDetail();
         },
       });
-    }, hint)));
+    }, hint, undefined, index)));
 
     if (!open) return;
     $("#modal-title").textContent = open === "depot" ? "Depot" : open === "shop" ? "Loja do Kisuke" : "Viagem";

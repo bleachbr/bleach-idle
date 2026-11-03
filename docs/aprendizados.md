@@ -447,6 +447,23 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 ---
 
+## 20. Clareza de Ações no Inventário, Trava em 20/20 e Identificação de Empilháveis (Itens 4 e 5, F-21)
+
+- **Sintoma:** No playtest com personas e agentes automatizados, três pontos de fricção foram identificados no inventário:
+  1. Tooltips e ações enganosas: os textos no `#item-detail` e dicas indicavam "Clique para usar" ou "Clique para equipar", mas o usuário espera selecionar o item para ler atributos antes de consumir, demandando duplo clique ou acionamento explícito no painel.
+  2. Trava em inventário cheio (20/20): ao inspecionar e tentar abrir pacotes/caixas de recompensas (ex.: Caixa do Kisuke) com o inventário lotado, o cliente permitia cliques repetidos em vão que eram rejeitados pelo servidor com spam de log ("Inventário sem espaço para o prêmio.").
+  3. Acessibilidade em pilhas: elementos de itens empilháveis expunham apenas o número na árvore de acessibilidade (ex.: `<button>100</button>`), impedindo que leitores de tela ou agentes de teste identificassem o item imediatamente.
+- **Causa raiz:**
+  1. O texto de ação no `#item-detail` usava "Clique para...", conflitando com o comportamento de clique simples de seleção/inspeção do slot.
+  2. Não havia verificação visual nem bloqueio do botão "Usar" no cliente com base no estado de ocupação (`isFull`) para consumíveis com `box: true`.
+  3. `formatSlotAria` gerava `(${s.qty})` sem unidade descritiva ou omitia a indicação de quantidade em certos estados.
+- **Solução (`client/src/inventoryView.ts`, `client/src/inventory.ts`, `client/src/style.css`, `client/index.html`):**
+  1. Textos refinados para "⚡ Duplo clique para equipar" e "🧪 Duplo clique para usar", alinhados com a dica do inventário (`#inv-hint`).
+  2. Botão dedicado `.detail-action` no `#item-detail` que executa a ação correspondente do item inspecionado e fica visualmente desabilitado com o aviso informativo `⛔ Inventário cheio (20/20) para abrir` quando `d.box && isInventoryFull`, prevenindo cliques repetidos em vão tanto no botão quanto via `handleInventorySlotClick`.
+  3. `formatSlotAria` atualizado para formatar `${nome} (${quantidade} un)` para itens empilháveis (`d.stack || s.qty > 1`), tornando a árvore de elementos imediatamente legível para tecnologias assistivas e agentes.
+
+---
+
 ## 16. Tutorial com Call-to-Action interativo e atalhos de HUD (F-22)
 
 - **Sintoma:** No playtest automatizado (#73, #75, #89, #99, #108, #110, #118, #120, #121, #122, #181, #182, #188, #190, #284, #306), jogadores e agentes ficavam parados tentando cumprir os passos "Ligue o Auto Hunt" e "Abra o Livro" do tutorial de primeiros passos. O `#tutorial-list` apresentava apenas texto estático sem indicativo de como proceder.
