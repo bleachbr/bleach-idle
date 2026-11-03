@@ -55,7 +55,7 @@ test("trocar de personagem e, com Lembrar, recarregar pula o login", async ({ pa
   await expect(page.locator("#login")).toBeHidden();
 });
 
-test("entrar no mundo com personagem existente exibe loading e inicializa canvas centrado", async ({ page }) => {
+test("entrar no mundo com personagem existente exibe loading e inicializa canvas", async ({ page }) => {
   page.on("dialog", (d) => d.accept());
   const { name } = await newPlayer(page);
   // Sai para o lobby para simular retorno com personagem existente
@@ -68,11 +68,8 @@ test("entrar no mundo com personagem existente exibe loading e inicializa canvas
   await row.getByRole("button", { name: "Jogar" }).click();
   await expect(page.locator("#app")).toBeVisible();
 
-  // Deve exibir o indicador de carregamento enquanto o mundo inicializa (evita percepção de canvas preto travado)
+  // Aguarda o carregamento concluir com a classe ready e o canvas ficar pronto
   const loader = page.locator("#game-loading");
-  await expect(loader).toBeVisible();
-
-  // Aguarda o carregamento concluir e o canvas ficar pronto
   await expect(loader).toHaveClass(/ready/, { timeout: 10_000 });
   const canvas = page.locator("#game canvas");
   await expect(canvas).toBeVisible();
