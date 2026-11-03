@@ -103,6 +103,23 @@ export function prevDay(key: string): string {
   return dayKey(Date.parse(`${key}T12:00:00Z`) + 3 * 3600_000 - 24 * 3600_000);
 }
 
+/** Timestamp (ms) da próxima meia-noite no fuso de Brasília (UTC-3). */
+export function nextDailyReset(ms: number): number {
+  const br = new Date(ms - 3 * 3600_000);
+  const nextDayMidnightUtc = Date.UTC(
+    br.getUTCFullYear(),
+    br.getUTCMonth(),
+    br.getUTCDate() + 1,
+    0, 0, 0, 0
+  );
+  return nextDayMidnightUtc + 3 * 3600_000;
+}
+
+/** Tempo restante em ms até a próxima meia-noite de Brasília. */
+export function dailyResetRemainingMs(ms: number): number {
+  return Math.max(0, nextDailyReset(ms) - ms);
+}
+
 export interface ChronicleProgress {
   activeWeekKey: string;
   questKills: number;
