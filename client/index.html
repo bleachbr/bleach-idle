@@ -74,6 +74,8 @@
           <h2 data-ico="scroll">Atalhos</h2>
           <div><kbd>2</kbd> Poção de Cura (<span id="potions">0</span>)</div>
           <div><kbd>3</kbd> Poção de Reiatsu (<span id="rei-potions">0</span>)</div>
+          <div><kbd>H</kbd> Ligar ou desligar o Auto Hunt</div>
+          <div><kbd>L</kbd> Livro (diário, bestiário e caçada)</div>
           <div><kbd>I</kbd> Inventário e equipamento (ou <kbd>B</kbd>)</div>
           <div><kbd>T</kbd> Liberar o estágio mais alto da evolução ↔ voltar</div>
           <div><kbd>R</kbd> Voltar à cidade</div>
@@ -86,9 +88,10 @@
           <div id="atkdef"></div>
           <div id="sets"></div>
           <div id="equip" class="grid"></div>
-          <h2 id="inv-title" data-ico="chest" tabindex="-1">Inventário <kbd title="Atalho: tecla I">I</kbd> <span id="gold"></span></h2>
+          <h2 id="inv-title" data-ico="chest" tabindex="-1">Inventário <span id="inv-count" class="inv-count" title="Slots ocupados"></span> <kbd title="Atalho: tecla I">I</kbd> <span id="gold"></span></h2>
           <div id="inv" class="grid"></div>
-          <p class="hint">Clique para equipar ou usar. Baú (depot) e loja ficam na praça.</p>
+          <div id="item-detail" class="item-detail" aria-live="polite"></div>
+          <p id="inv-hint" class="hint">Clique para equipar ou usar. Baú (depot) e loja ficam na praça.</p>
         </section>
         <section id="tutorial" hidden>
           <h2 data-ico="star">Primeiros passos</h2>

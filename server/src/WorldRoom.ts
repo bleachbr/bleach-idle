@@ -23,7 +23,7 @@ import {
   newArenaProgress, getArenaTier, validateStepInterval, ARENA_MIN_LEVEL, ARENA_COUNTDOWN_SEC, ARENA_MATCH_TIMEOUT_SEC, ARENA_WIN_GOLD, ARENA_WIN_SEASON_PTS, type ArenaProgress, type DuelOutcome,
   PATROL_SECTORS, PATROL_DURATIONS, calculatePatrolRewards, canClaimPatrol, patrolRemainingMs, type PatrolState,
   OFFLINE_MAX_MS, buildOfflineReport, GUILD_COST, GUILD_MIN_LEVEL,
-  skillBlock, skillBlockText, deathPenalty, inPvpCombat,
+  skillBlock, skillBlockText, deathPenalty, inPvpCombat, activeChronicle,
 } from "../../shared/src";
 import * as arenaMgr from "./arenaManager";
 import { findPath, type Pt } from "./path";
@@ -47,12 +47,16 @@ const DEV_MODE = flagOn("BI_DEV");
 const GUILD_NAME_RE = /^[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ]{2,19}$/;
 const HELP = [
   "Comandos:",
+  "/autohunt [on|off] — liga ou desliga o Auto Hunt · /helper [on|off] — Auto Helper completo",
+  "/livro — abre o Livro (bestiário, conquistas, diário e caçada)",
   "/pm Nome, mensagem — mensagem privada",
   "/p mensagem — chat da party · /g mensagem — chat da guilda",
   `/guilda criar Nome (${GUILD_COST} kan, nível ${GUILD_MIN_LEVEL}+) · /guilda convidar Nome · /guilda aceitar · /guilda recusar`,
   "/guilda sair · /guilda expulsar Nome · /guilda lider Nome · /guilda depositar N · /guilda sacar N (líder) · /guilda info",
   "/ranking — abre o ranking",
-  "/patrulha — status da patrulha idle · /patrulha resgatar · /patrulha cancelar",
+  "/patrulha [iniciar|resgatar|cancelar|lista] — patrulhas de Hollows",
+  "/cronicas — exibe a crônica semanal ativa e onde encontrá-la",
+  "/correio — abre sua caixa de correio",
   "/ignorar Nome — liga ou desliga as mensagens dessa pessoa · /ignorar — mostra a lista",
   "/arena [entrar|sair|desistir] — arena de duelos 1v1 ranqueada",
 ];
@@ -1566,6 +1570,61 @@ export class WorldRoom extends GameRoom<WorldState> {
       case "ajuda":
       case "help":
         return HELP.forEach((l) => this.sendTo(p, "chat", { from: "", text: l, ch: "sys" }));
+      case "autohunt":
+      case "hunt": {
+        const arg = rest.toLowerCase();
+        if (arg === "off" || arg === "desligar" || (arg === "" && p.autoHunt)) {
+          p.autoHunt = false;
+          return this.log(p, "Auto Hunt desligado.");
+        }
+        p.autoHunt = true;
+        this.tutorial(p, "auto");
+        return this.log(p, "Auto Hunt ligado: caça monstros automaticamente.");
+      }
+      case "helper":
+      case "auto": {
+        const arg = rest.toLowerCase();
+        if (arg === "off" || arg === "desligar") {
+          p.autoHunt = false;
+          p.autoTarget = false;
+          return this.log(p, "Auto Helper desligado.");
+        }
+        if (arg === "on" || arg === "ligar") {
+          p.autoHunt = true;
+          p.autoTarget = true;
+          this.tutorial(p, "auto");
+          return this.log(p, "Auto Helper ligado (Auto Hunt + Auto Alvo).");
+        }
+        return this.log(p, `Auto Helper: Hunt ${p.autoHunt ? "LIGADO" : "desligado"}, Alvo ${p.autoTarget ? "LIGADO" : "desligado"}. Use /autohunt ou /helper [on|off].`);
+      }
+      case "party":
+      case "grupo": {
+        if (rest) {
+          const party = this.parties.get(p.partyId);
+          if (!party) return this.log(p, "Você não está numa party.");
+          const chk = checkChatMessage(p.id, rest);
+          if (!chk.ok) return chk.reason ? this.log(p, chk.reason) : undefined;
+          for (const id of party.members) {
+            const x = this.state.players.get(id);
+            if (x && !x.ignore.includes(p.id)) this.sendTo(x, "chat", { from: p.name, text: chk.text, ch: "party" });
+          }
+          return;
+        }
+        const party = this.parties.get(p.partyId);
+        if (!party) return this.log(p, "Você não está numa party. Convide jogadores pelo menu lateral ou clique no personagem.");
+        const members = party.members.map((id) => this.state.players.get(id)?.name ?? id).join(", ");
+        return this.log(p, `Party (${party.members.length}/${PARTY_MAX}): ${members}. Para falar: /p mensagem`);
+      }
+      case "livro":
+      case "book":
+      case "missoes":
+        return this.sendBookData(p);
+      case "cronicas":
+      case "cronica":
+      case "chronicles": {
+        const c = activeChronicle(Date.now());
+        return this.log(p, `Crônica da semana: ${c.title}. Fale com o NPC no Seireitei (Soul Society).`);
+      }
       case "ignorar": {
         if (!rest) return this.log(p, p.ignore.length ? `Ignorando: ${p.ignore.join(", ")}.` : "Você não ignora ninguém.");
         const id = rest.toLowerCase().trim();
@@ -1792,6 +1851,8 @@ export class WorldRoom extends GameRoom<WorldState> {
         return this.refreshGuild(g.id);
       }
       case "info":
+      case "list":
+      case "membros":
       case "":
         if (!g) return this.log(p, "Você não está numa guilda. /guilda criar Nome para fundar uma.");
         return this.sendGuild(p);
@@ -2540,8 +2601,8 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private patrolCommand(p: Player, rest: string) {
-    const [sub] = rest.trim().split(/\s+/);
-    const action = (sub ?? "").toLowerCase();
+    const parts = rest.trim().split(/\s+/);
+    const action = (parts[0] ?? "").toLowerCase();
     if (action === "resgatar" || action === "claim") {
       this.claimPatrol(p);
     } else if (action === "cancelar" || action === "cancel") {
@@ -2549,10 +2610,45 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.prog.patrol = null;
       this.log(p, "Patrulha cancelada.");
       this.sendPatrolData(p);
+    } else if (action === "iniciar" || action === "start") {
+      const sectorArg = parts[1] ?? "";
+      const durArg = Number(parts[2]);
+      const available = Object.values(PATROL_SECTORS).filter((s) => p.level >= s.minLevel);
+      if (!available.length) return this.log(p, "Nenhum setor de patrulha liberado para seu nível.");
+      const chosen = sectorArg
+        ? (own(PATROL_SECTORS, sectorArg) ?? available.find((s) => s.name.toLowerCase().includes(sectorArg.toLowerCase())))
+        : available[available.length - 1];
+      if (!chosen) {
+        const list = available.map((s) => `${s.id} (${s.name})`).join(", ");
+        return this.log(p, `Setores disponíveis: ${list}. Uso: /patrulha iniciar <setor> [horas: 1, 4, 8, 12]`);
+      }
+      const dur = PATROL_DURATIONS.includes(durArg as any) ? durArg : 1;
+      const now = Date.now();
+      if (p.prog.patrol) {
+        if (canClaimPatrol(p.prog.patrol, now)) {
+          return this.log(p, "Resgate a recompensa da sua patrulha concluída antes de iniciar outra (/patrulha resgatar).");
+        }
+        return this.log(p, "Você já tem uma patrulha em andamento. Use /patrulha para ver o tempo restante.");
+      }
+      const party = p.partyId ? this.parties.get(p.partyId) : undefined;
+      const hasPartyBonus = !!party && party.members.some((mid) => mid !== p.id && this.state.players.get(mid)?.online);
+      p.prog.patrol = {
+        sectorId: chosen.id,
+        durationHours: dur,
+        startedAt: now,
+        completedAt: now + dur * 3600_000,
+        partyBonus: hasPartyBonus,
+      };
+      this.log(p, `Patrulha iniciada: ${chosen.name} por ${dur}h!${hasPartyBonus ? " (+15% bônus de grupo)" : ""}`);
+      this.sendPatrolData(p);
+    } else if (action === "lista" || action === "setores") {
+      const available = Object.values(PATROL_SECTORS).filter((s) => p.level >= s.minLevel);
+      const list = available.map((s) => `${s.id} (${s.name}, nível ${s.minLevel}+)`).join(" · ");
+      return this.log(p, `Setores: ${list}. Uso: /patrulha iniciar <setor> [horas: 1, 4, 8, 12]`);
     } else {
       const patrol = p.prog.patrol;
       if (!patrol) {
-        this.log(p, "Nenhuma patrulha em andamento. Abra a interface de patrulhas para iniciar.");
+        this.log(p, "Nenhuma patrulha em andamento. Use /patrulha iniciar [setor] [horas] ou /patrulha lista.");
       } else if (canClaimPatrol(patrol, Date.now())) {
         this.log(p, `Patrulha em ${PATROL_SECTORS[patrol.sectorId]?.name ?? patrol.sectorId} CONCLUÍDA! Digite /patrulha resgatar.`);
       } else {
@@ -2800,7 +2896,7 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   private sendTutorial(p: Player) {
     const done = p.prog.tut ?? [];
-    this.sendTo(p, "tutorial", done.length >= TUTORIAL.length ? null : TUTORIAL.map((t) => ({ text: t.text, done: done.includes(t.id) })));
+    this.sendTo(p, "tutorial", done.length >= TUTORIAL.length ? null : TUTORIAL.map((t) => ({ id: t.id, text: t.text, done: done.includes(t.id) })));
   }
 
   /** Missões diárias do dia; sorteia de novo quando o dia vira. */
@@ -3181,47 +3277,48 @@ export class WorldRoom extends GameRoom<WorldState> {
     }
   }
 
+  private sendBookData(p: Player) {
+    const s = this.stats(p);
+    const today = dayKey(Date.now());
+    const d = p.prog.daily;
+    const alive = d.last === today || d.last === prevDay(today);
+    this.sendTo(p, "book", {
+      bestiary: BESTIARY_KINDS().map((kind) => {
+        const kills = p.prog.bestiary[kind] ?? 0, stage = bestiaryStage(kind, kills), def = MONSTERS[kind];
+        return {
+          kind, name: def.name, sprite: def.sprite, kills, stage, stages: bestiaryStages(kind), boss: BOSSES.has(kind),
+          // o estágio 1 revela os números; o 2 revela o loot
+          hp: stage >= 1 ? def.hp : 0, exp: stage >= 1 ? def.exp : 0,
+          loot: stage >= 2 ? (LOOT[kind]?.items ?? []).map((e) => ({ name: ITEMS[e.item].name, chance: e.chance })) : null,
+        };
+      }),
+      hunt: { ...p.hunt, now: Date.now(), items: Object.entries(p.hunt.items).map(([id, n]) => ({ name: ITEMS[id].name, icon: ITEMS[id].icon, n })).sort((a, b) => b.n - a.n) },
+      ach: ACHIEVEMENTS.map((a) => ({ name: a.name, desc: a.desc, done: p.prog.ach.includes(a.id), have: Math.min(s[a.stat], a.need), need: a.need, reward: a.reward })),
+      missions: (() => {
+        const dm = this.dailyOf(p);
+        const r = dailyReward(p.level);
+        return {
+          bonus: dm.bonus, gold: r.gold, exp: Math.round((expForLevel(p.level + 1) - expForLevel(p.level)) * r.expFrac),
+          list: dm.list.map((m) => ({ text: dailyText(m, (id) => MONSTERS[id].name), have: m.have, need: m.need, done: m.done })),
+        };
+      })(),
+      daily: {
+        claimed: d.last === today,
+        streak: alive ? d.streak : 0,
+        rewards: DAILY,
+        // posição no ciclo de 7 do resgate de hoje (já feito ou não)
+        index: d.last === today ? (d.streak - 1) % DAILY.length : (alive ? d.streak : 0) % DAILY.length,
+      },
+    });
+  }
+
   private registerBookMessages() {
-    const show = (p: Player) => {
-      const s = this.stats(p);
-      const today = dayKey(Date.now());
-      const d = p.prog.daily;
-      const alive = d.last === today || d.last === prevDay(today);
-      this.sendTo(p, "book", {
-        bestiary: BESTIARY_KINDS().map((kind) => {
-          const kills = p.prog.bestiary[kind] ?? 0, stage = bestiaryStage(kind, kills), def = MONSTERS[kind];
-          return {
-            kind, name: def.name, sprite: def.sprite, kills, stage, stages: bestiaryStages(kind), boss: BOSSES.has(kind),
-            // o estágio 1 revela os números; o 2 revela o loot
-            hp: stage >= 1 ? def.hp : 0, exp: stage >= 1 ? def.exp : 0,
-            loot: stage >= 2 ? (LOOT[kind]?.items ?? []).map((e) => ({ name: ITEMS[e.item].name, chance: e.chance })) : null,
-          };
-        }),
-        hunt: { ...p.hunt, now: Date.now(), items: Object.entries(p.hunt.items).map(([id, n]) => ({ name: ITEMS[id].name, icon: ITEMS[id].icon, n })).sort((a, b) => b.n - a.n) },
-        ach: ACHIEVEMENTS.map((a) => ({ name: a.name, desc: a.desc, done: p.prog.ach.includes(a.id), have: Math.min(s[a.stat], a.need), need: a.need, reward: a.reward })),
-        missions: (() => {
-          const dm = this.dailyOf(p);
-          const r = dailyReward(p.level);
-          return {
-            bonus: dm.bonus, gold: r.gold, exp: Math.round((expForLevel(p.level + 1) - expForLevel(p.level)) * r.expFrac),
-            list: dm.list.map((m) => ({ text: dailyText(m, (id) => MONSTERS[id].name), have: m.have, need: m.need, done: m.done })),
-          };
-        })(),
-        daily: {
-          claimed: d.last === today,
-          streak: alive ? d.streak : 0,
-          rewards: DAILY,
-          // posição no ciclo de 7 do resgate de hoje (já feito ou não)
-          index: d.last === today ? (d.streak - 1) % DAILY.length : (alive ? d.streak : 0) % DAILY.length,
-        },
-      });
-    };
-    this.handle("book", (c) => { const p = this.me(c); if (p) show(p); });
+    this.handle("book", (c) => { const p = this.me(c); if (p) this.sendBookData(p); });
     this.handle("huntReset", (c) => {
       const p = this.me(c);
       if (!p) return;
       p.hunt = { since: Date.now(), exp: 0, gold: 0, kills: 0, items: {} };
-      show(p);
+      this.sendBookData(p);
     });
     this.handle("daily", (c) => {
       const p = this.me(c);
@@ -3229,7 +3326,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const today = dayKey(Date.now());
       const d = p.prog.daily;
       // na recusa também devolve o Livro: o cliente desabilitou o botão ao clicar e espera o redesenho (#23)
-      if (d.last === today) { this.log(p, "Você já pegou a recompensa de hoje. Volte amanhã."); return show(p); }
+      if (d.last === today) { this.log(p, "Você já pegou a recompensa de hoje. Volte amanhã."); return this.sendBookData(p); }
       d.streak = d.last === prevDay(today) ? d.streak + 1 : 1;
       d.last = today;
       const got = this.grant(p, DAILY[(d.streak - 1) % DAILY.length]);
@@ -3240,7 +3337,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.sendTo(p, "dailyReady", { ready: false });
       this.tutorial(p, "daily");
       this.checkAchievements(p);
-      show(p);
+      this.sendBookData(p);
     });
   }
 

@@ -21,6 +21,7 @@ import { initCharacterSheet } from "./characterSheetDialog";
 import { initInventoryShortcut } from "./inventoryShortcut";
 import { huntResetButton, huntResetDoneLabel, isHuntEmpty } from "./huntReset";
 import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
+import { renderTutorialStep, dispatchTutorialAction } from "./tutorialView";
 
 initReleases();
 
@@ -232,14 +233,23 @@ function start(room: Room<any>, myId: string) {
     chatLine(m.from ? `${prefix}${m.from}: ${m.text}` : `${prefix}${m.text}`, m.ch && m.ch !== "sys" ? m.ch : m.from ? "" : "sys", "chat", m.ch, m.ch === "pm" ? m.from : "");
   });
   bindGuild(room, closeWindows);
-  bindBook(room, closeWindows);
+  bindBook(room, myId, closeWindows);
   bindShop(room, myId, closeWindows);
   bindSeason(room, closeWindows);
   bindEvents(room);
   bindDev(room, myId, closeWindows);
   bindDangai(room, myId);
+  const chatin = $<HTMLInputElement>("#chatin");
   window.addEventListener("keydown", (e) => {
-    if (e.code === "Escape" && document.activeElement !== chatin) closeWindows();
+    if (e.code === "Escape") {
+      if (e.target === chatin || document.activeElement === chatin) {
+        e.preventDefault();
+        chatin.value = "";
+        chatin.blur();
+      } else {
+        closeWindows();
+      }
+    }
   });
   $("#travel-btn").onclick = () => inventory.openTravel();
   initInventoryShortcut();
@@ -269,7 +279,6 @@ function start(room: Room<any>, myId: string) {
   bindLootFilter(room);
   bindParty(room, myId);
   syncClock(room);
-  const chatin = $<HTMLInputElement>("#chatin");
   openChatTab(chat.active);
   window.addEventListener("keydown", (e) => {
     if (e.code === "Enter" && document.activeElement !== chatin) { e.preventDefault(); chatin.focus(); }
@@ -290,7 +299,11 @@ function start(room: Room<any>, myId: string) {
       }
       chatin.value = "";
       chatin.blur();
-    } else if (e.code === "Escape") chatin.blur();
+    } else if (e.code === "Escape") {
+      e.preventDefault();
+      chatin.value = "";
+      chatin.blur();
+    }
   });
 }
 
@@ -551,7 +564,7 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
   $("#shop-close").onclick = () => (panel.hidden = true);
 }
 
-function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
+function bindBook(room: Room<any>, myId: string, closeWindows: (keep?: string) => void) {
   const panel = $("#book");
   let data: any = null;
   let tab = "bestiario";
@@ -624,11 +637,41 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
       };
     }
   };
+  const openBookTab = (targetTab: string) => {
+    tab = targetTab;
+    if (panel.hidden) {
+      if (data) {
+        closeWindows("#book");
+        panel.hidden = false;
+        render();
+      } else {
+        room.send("book");
+      }
+    } else {
+      render();
+    }
+  };
   room.onMessage("book", (d: any) => { data = d; if (panel.hidden) { closeWindows("#book"); panel.hidden = false; } render(); });
   room.onMessage("dailyReady", (m: { ready: boolean }) => $("#book-btn").classList.toggle("ping", m.ready));
-  room.onMessage("tutorial", (steps: { text: string; done: boolean }[] | null) => {
+  room.onMessage("tutorial", (steps: { id?: string; text: string; done: boolean }[] | null) => {
     $("#tutorial").hidden = !steps;
-    if (steps) $("#tutorial-list").innerHTML = steps.map((s) => `<div class="tut${s.done ? " done" : ""}">${s.done ? "✔" : "○"} ${escHtml(s.text)}</div>`).join("");
+    if (steps) {
+      const list = $("#tutorial-list");
+      list.innerHTML = steps.map(renderTutorialStep).join("");
+      list.querySelectorAll<HTMLButtonElement>(".tut-act").forEach((b) => {
+        b.onclick = () => {
+          dispatchTutorialAction(b.dataset.act ?? "", {
+            auto: () => {
+              const me = room.state.players.get(myId);
+              room.send("auto", { autoHunt: !me?.autoHunt });
+            },
+            book: () => openBookTab("diario"),
+            travel: () => $("#travel-btn")?.click(),
+            bankai: () => room.send("transform"),
+          });
+        };
+      });
+    }
   });
   $("#book-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("book"); };
   // a aba Caçada muda sozinha: atualiza enquanto estiver aberta
