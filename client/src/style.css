@@ -280,6 +280,7 @@ body.touch #touch { bottom: 120px; }
 #book .days div.got { opacity: .5; }
 #book .days div.today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
 #book .claim { display: block; margin: 8px auto; padding: 8px 18px; }
+#book .daily-reset-hint { text-align: center; margin: -4px 0 8px; font-size: 11px; color: var(--muted); }
 
 /* forja: nível no canto do espaço de equipamento */
 .equip-slot[data-forge]::after { content: attr(data-forge); position: absolute; right: 2px; top: 1px; font-size: 10px; font-weight: bold; color: #ffcf5a; text-shadow: 0 1px 0 #000; }

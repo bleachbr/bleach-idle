@@ -542,3 +542,15 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
   3. Registramos `bindMail(room)` no ciclo de vida de conexão em `client/src/main.ts:start()`, garantindo que a sala do Colyseus nunca receba `"mail"` sem handler, e resetamos o cache com `resetMailInbox()` na troca de personagem.
   4. Adicionamos teste unitário determinístico em `client/test/mail.test.ts` e teste E2E no Playwright em `e2e/tests/jogador.spec.ts` validando que `/correio` no chat traz a listagem sem emitir nenhum aviso do colyseus.js no console do navegador.
 
+---
+
+## 21. Livro de Progresso: Contagem Regressiva de Reset Diário e Contador de Conquistas (F-26)
+
+- **Sintoma:** No playtest automatizado e feedback das personas, a aba Diário exibia "Já pegou hoje" sem informar quando a próxima recompensa diária estaria disponível, gerando incerteza sobre o momento do reset. Já na aba Conquistas, o jogador precisava alternar para a aba e rolar a lista inteira para ter noção de quantas conquistas já havia completado e quantas ainda faltavam.
+- **Causa:**
+  1. O botão `.claim` do Diário continha um tooltip genérico ("Volte após a meia-noite de Brasília") sem contagem regressiva temporal nem informação clara sobre o tempo restante.
+  2. Na aba Conquistas, o botão da aba possuía apenas o rótulo fixo "Conquistas", sem visibilidade externa de progresso, e a contagem vivia apenas dentro de um parágrafo auxiliar `<p class="hint">` no corpo do painel.
+- **Solução (`shared/src/progress.ts`, `client/src/bookDaily.ts`, `client/src/bookAchievements.ts`, `client/src/main.ts`, `client/src/style.css`):**
+  1. Criação de `nextDailyReset` e `dailyResetRemainingMs` em `shared/src/progress.ts`, calculando a meia-noite de Brasília (UTC-3) com isolamento temporal e funções determinísticas sem dependência do fuso do ambiente.
+  2. Implementação de `formatDailyResetRemaining` e exibição do tempo restante tanto no tooltip do botão (`Recompensa diária já resgatada hoje. Próximo resgate em Xh Ym (meia-noite de Brasília).`) quanto no texto complementar logo abaixo (`.daily-reset-hint`), mantendo a atualização periódica no cliente sem requisições adicionais de rede.
+  3. Módulo `bookAchievements.ts` fornecendo `achievementsTabLabel` para exibir dinamicamente `Conquistas (X/Y)` no botão da aba no cabeçalho do Livro (visível em qualquer aba sem precisar alternar) e `achievementsHeaderHtml` para destacar o título `<h3>Conquistas (X/Y)</h3>` no topo do corpo da aba.
