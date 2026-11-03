@@ -489,3 +489,16 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
   1. Criado `minimapPing.ts` e renderização de rota tracejada luminosa com anel de pulso concêntrico no minimapa no momento do clique, desativando automaticamente assim que o personagem alcança o tile.
   2. Reestruturado o comando `/ajuda` no servidor com categorias claras (`/ajuda auto`, `/ajuda social`, `/ajuda sistema`), mantendo o formato compacto sem spam.
   3. Centralizado `#modal` (`left: 50%; transform: translateX(-50%)`) com `z-index: 25`, evitando sobreposição do minimapa em desktop e mobile.
+
+---
+
+## 20. Registro e sanitização de handlers de mensagens Colyseus no cliente (`mail` e ausência de warnings)
+
+- **Sintoma:** Ao executar o comando `/correio` (ou receber notificações de correio do servidor), a biblioteca colyseus.js emitia `[warning] colyseus.js: onMessage() not registered for type 'mail'` no console do navegador.
+- **Causa:** O servidor `WorldRoom.ts` dispara `this.sendTo(p, "mail", { inbox })` ao listar a caixa de correio via `/correio` ou mensagem `mailList`. O cliente registrava diversos outros tipos de mensagem em `start()`, mas não possuía handler para o evento `"mail"`.
+- **Solução (`shared/src/mail.ts`, `client/src/mail.ts`, `client/src/main.ts`):**
+  1. Extraímos os tipos compartilhados `MailItem` e `MailMsg` em `shared/src/mail.ts`, garantindo que cliente e servidor compartilhem o mesmo contrato de dados.
+  2. Criamos o módulo `client/src/mail.ts` com sanitização Zero-Trust para cada campo de cada carta recebida (`id` inteiro positivo, strings, `gold` não-negativo, sanitização de slots de anexos) e controle de estado local (`getMailInbox`, `getUnreadMailCount`).
+  3. Registramos `bindMail(room)` no ciclo de vida de conexão em `client/src/main.ts:start()`, garantindo que a sala do Colyseus nunca receba `"mail"` sem handler, e resetamos o cache com `resetMailInbox()` na troca de personagem.
+  4. Adicionamos teste unitário determinístico em `client/test/mail.test.ts` e teste E2E no Playwright em `e2e/tests/jogador.spec.ts` validando que `/correio` no chat traz a listagem sem emitir nenhum aviso do colyseus.js no console do navegador.
+
