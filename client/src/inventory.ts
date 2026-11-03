@@ -7,6 +7,10 @@ import {
   QUESTS, QUEST_BY_ID, SETS, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, forgeBonus, type QuestState,
   type ItemDef, type Slot, type EquipSlot,
 } from "../../shared/src";
+import {
+  formatSlotAria, formatInventoryCount, isItemLevelLocked, itemDetailHtml, itemTooltipText,
+  handleInventorySlotClick,
+} from "./inventoryView";
 
 interface InvMsg {
   gold: number;
@@ -26,20 +30,6 @@ const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySe
 export function iconHtml(icon: number, qty?: number) {
   const pos = `-${(icon % 4) * 32}px -${Math.floor(icon / 4) * 32}px`;
   return `<span class="icon" style="background-position:${pos}"></span>${qty && qty > 1 ? `<b class="qty">${qty}</b>` : ""}`;
-}
-
-function tooltip(d: ItemDef) {
-  const parts = [d.name];
-  const set = SETS.find((s) => s.pieces.includes(d.id));
-  if (set) parts.push(`Conjunto ${set.name} (${set.pieces.length} peças)`);
-  if (d.slot) parts.push(SLOT_LABEL[d.slot]);
-  if (d.atk) parts.push(`Ataque +${d.atk}`);
-  if (d.def) parts.push(`Defesa +${d.def}`);
-  if (d.hp) parts.push(`HP +${d.hp}`);
-  if (d.rei) parts.push(`Reiatsu +${d.rei}`);
-  if (d.minLevel) parts.push(`Nível ${d.minLevel}+`);
-  if (d.desc) parts.push(d.desc);
-  return parts.join(" · ");
 }
 
 export function initInventory(room: Room<any>, onPanel: (open: boolean) => void, myLevel: () => number, myPos: () => { x: number; y: number } | undefined) {
@@ -93,17 +83,48 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
     render();
   });
 
-  function slotButton(s: Slot | null, onClick: (() => void) | null, extraTitle = "") {
+  let inspected: { slot: Slot | null; equipSlot?: EquipSlot } | null = null;
+  const renderDetail = () => {
+    const box = $("#item-detail");
+    if (box) box.innerHTML = itemDetailHtml(inspected?.slot ?? null, myLevel(), inspected?.equipSlot);
+  };
+
+  function slotButton(s: Slot | null, onClick: (() => void) | null, extraTitle = "", equipSlot?: EquipSlot) {
     const b = document.createElement("button");
     b.className = "slot";
     b.type = "button";
+    b.setAttribute("aria-label", formatSlotAria(s, equipSlot));
+    const lvlLocked = isItemLevelLocked(s, myLevel());
+    if (lvlLocked) b.classList.add("req-level");
+
     if (s) {
       const d = ITEMS[s.id];
       b.innerHTML = iconHtml(d.icon, s.qty);
-      b.title = tooltip(d) + extraTitle;
+      const reqHint = lvlLocked ? ` (Exige nível ${d.minLevel} · você é nível ${myLevel()})` : "";
+      b.title = itemTooltipText(d) + reqHint + extraTitle;
     }
-    if (onClick && s) b.onclick = onClick;
-    else b.disabled = !s;
+
+    const inspect = () => {
+      inspected = { slot: s, equipSlot };
+      renderDetail();
+    };
+
+    b.onmouseenter = inspect;
+    b.onfocus = inspect;
+
+    if (onClick && s) {
+      b.onclick = () => {
+        inspect();
+        onClick();
+      };
+      b.ondblclick = () => {
+        inspect();
+        onClick();
+      };
+    } else {
+      b.disabled = !s;
+      if (!s) b.onclick = inspect;
+    }
     return b;
   }
 
@@ -130,26 +151,48 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
     $("#rei-potions").textContent = String(count("pocao_rei") + count("pocao_rei_grande"));
     renderTracker(count);
 
+    // contagem de ocupação do inventário
+    const cnt = formatInventoryCount(st.inv);
+    const countEl = $("#inv-count");
+    if (countEl) {
+      countEl.textContent = `${cnt.used}/${cnt.total}`;
+      countEl.classList.toggle("full", cnt.isFull);
+      countEl.title = cnt.isFull ? "Inventário cheio (20/20 slots)" : `${cnt.used} de ${cnt.total} slots ocupados`;
+    }
+    const hintEl = $("#inv-hint");
+    if (hintEl) {
+      hintEl.textContent = cnt.isFull
+        ? "Inventário cheio (20/20). Guarde no baú ou venda no Kisuke."
+        : "Clique para equipar ou usar. Baú (depot) e loja ficam na praça.";
+      hintEl.classList.toggle("warn", cnt.isFull);
+    }
+    renderDetail();
+
     // equipamento: clicar desequipa
     const eq = $("#equip");
     eq.replaceChildren(...EQUIP_SLOTS.map((slot) => {
       const id = st.equip[slot];
-      const b = slotButton(id ? { id, qty: 1 } : null, () => room.send("unequip", { slot }));
+      const s = id ? { id, qty: 1 } : null;
+      const b = slotButton(s, () => room.send("unequip", { slot }), "", slot);
       b.dataset.label = SLOT_LABEL[slot];
       const lv = st.forge?.[slot] ?? 0;
       if (lv && id) { b.dataset.forge = `+${lv}`; b.title += ` · Forja +${lv}`; }
       b.classList.add("equip-slot");
-      if (!id) b.title = SLOT_LABEL[slot];
       return b;
     }));
 
     // inventário: com o depot aberto, clicar guarda; senão equipa ou usa
     const hint = open === "depot" ? " · clique para guardar no depot" : "";
     $("#inv").replaceChildren(...st.inv.map((s, index) => slotButton(s, () => {
-      const d = ITEMS[s!.id];
-      if (open === "depot") room.send("depot", { op: "put", index });
-      else if (d.slot) room.send("equip", { index });
-      else if (d.heal || d.restoreRei || d.boost || d.box) room.send("useItem", { index });
+      handleInventorySlotClick(s, index, {
+        open,
+        playerLevel: myLevel(),
+        send: (type, data) => room.send(type, data),
+        onInspect: (item) => {
+          inspected = { slot: item };
+          renderDetail();
+        },
+      });
     }, hint)));
 
     if (!open) return;
@@ -227,8 +270,8 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
         const d = ITEMS[id];
         const row = document.createElement("div");
         row.className = "shop-row";
-        row.title = tooltip(d);
-        row.innerHTML = `<span class="slot static">${iconHtml(d.icon)}</span><span class="name">${d.name}<small>${tooltip(d).split(" · ").slice(1).join(" · ")}</small></span><span class="price">${d.buy} ${CURRENCY}</span>`;
+        row.title = itemTooltipText(d);
+        row.innerHTML = `<span class="slot static">${iconHtml(d.icon)}</span><span class="name">${d.name}<small>${itemTooltipText(d).split(" · ").slice(1).join(" · ")}</small></span><span class="price">${d.buy} ${CURRENCY}</span>`;
         for (const qty of d.stack ? [1, 10] : [1]) {
           const b = document.createElement("button");
           b.type = "button";

@@ -418,9 +418,37 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 ---
 
-## 14. Tutorial com Call-to-Action interativo e atalhos de HUD (F-22)
+## 14. Foco no Input de Chat e Hotkeys Presas em Jogos Canvas (Lote 2 do Playtest)
+
+- **Sintoma:** Bots e jogadores ficavam presos com o foco retido no `<input id="chatin">`. Quando tentavam andar com WASD ou usar técnicas (1-9), os comandos viravam texto no input (ex: "w", "a", "s", "AH", "AHF/a"). Ao clicar no mapa ou no canvas, o navegador mantinha o foco no input porque o canvas WebGL não rouba o activeElement do DOM. Pressionar `Escape` também mantinha os caracteres incompletos no valor do input.
+- **Solução (`client/src/main.ts`, `client/src/GameScene.ts`):**
+  1. No `GameScene.onClick`, `document.activeElement.blur()` desfaz o foco ativo caso o usuário clique no mundo para andar, interagir ou atacar.
+  2. Pressionar `Escape` no `chatin` ou no listener global com `document.activeElement === chatin` limpa o buffer (`chatin.value = ""`) e desfoca o campo (`chatin.blur()`), restaurando os atalhos de teclado.
+  3. No servidor (`server/src/WorldRoom.ts`), suporte direto via chat para automação e aliases mais tentados (`/autohunt`, `/hunt`, `/helper`, `/auto`, `/party`, `/livro`, `/patrulha iniciar`, `/cronicas`).
+- **Regra:** Em jogos 2D híbridos (DOM + Canvas), cliques no canvas precisam liberar o foco de inputs para devolver o fluxo aos atalhos globais de teclado, e `Escape` no chat deve limpar qualquer rascunho acidental.
+
+---
+
+## 15. Usabilidade do Inventário, Acessibilidade de Slots e Feedback Visual de Equipamento (Lote 3 do Playtest)
+
+- **Sintoma:** Em testes com personas e leitores de acessibilidade, mais de 100 achados apontavam slots como meros botões sem nome (`BUTTON` ou apenas a quantidade numérica como texto `13`), recusa de equipar sem indicação visual do motivo (ex.: Manto de Sternritter exigindo nível 105 sendo clicado por personagem nível 1 sem nenhum feedback imediato), ausência de contagem de slots ocupados (`20/20 slots`) e expectativa de duplo clique para equipar.
+- **Causa raiz:**
+  1. Ícones eram apenas `span` vazios com `background-position`. O único nó de texto dentro do `<button>` era a quantidade numérica `<b class="qty">13</b>`, deixando a árvore de acessibilidade cega.
+  2. O único local com informações do item era o atributo nativo HTML `title`, que depende de hover prolongado do mouse (inexistente em touch ou foco de teclado e invisível no clique rápido).
+  3. Slots vazios de equipamento tinham `disabled`, ignorando cliques e impedindo qualquer feedback caso o jogador tentasse clicar no slot de destino após inspecionar um item.
+- **Solução (`client/src/inventory.ts`, `client/src/inventoryView.ts`, `client/src/style.css`):**
+  1. Extraímos `inventoryView.ts` com funções puras e testes determinísticos em `client/test/inventoryView.test.ts`.
+  2. `formatSlotAria` injeta `aria-label` completo em todos os slots (nome, quantidade, slot e atributos).
+  3. Adicionado indicador de ocupação no cabeçalho do inventário (`#inv-count`, ex.: `14/20 slots`) com classe `.full` em destaque quando atinge 20/20.
+  4. Adicionado painel dedicado de detalhes (`#item-detail`), que atualiza ao passar o mouse, focar via teclado ou clicar no slot, destacando nível exigido, atributos e ação sugerida (`Clique para equipar` / `Clique para usar`).
+  5. Itens bloqueados por nível recebem classe `.req-level` (borda avermelhada, opacidade e ícone 🔒) e aviso explícito no painel (`⚠️ Exige nível 105 (seu nível atual é X)`).
+  6. Suporte nativo a duplo clique (`ondblclick`) espelhando o clique simples para equipar.
+- **Regra:** Em interfaces de inventário com ícones gráficos em sprite/CSS, todo slot precisa de `aria-label` acessível, feedback visual explícito para itens não equipáveis por nível e área de texto dedicada para atributos que não dependa do atraso do `title` do navegador.
+
+---
+
+## 16. Tutorial com Call-to-Action interativo e atalhos de HUD (F-22)
 
 - **Sintoma:** No playtest automatizado (#73, #75, #89, #99, #108, #110, #118, #120, #121, #122, #181, #182, #188, #190, #284, #306), jogadores e agentes ficavam parados tentando cumprir os passos "Ligue o Auto Hunt" e "Abra o Livro" do tutorial de primeiros passos. O `#tutorial-list` apresentava apenas texto estático sem indicativo de como proceder.
 - **Causa:** Tutoriais de onboarding em jogos idle precisam transformar intenção informativa em ação imediata. Sem botões de ação contextuais ou atalhos mapeados, o usuário busca comandos no chat ou não encontra os menus correspondentes.
 - **Solução:** `client/src/tutorialView.ts` desacopla a formatação e renderização dos passos, gerando botões contextuais com classe `.tut-act` diretamente no item pendente (`[Ligar Auto Hunt (H)]`, `[Abrir Livro (L)]`, `[Viajar]`, `[Liberar]`). O servidor passou a enviar `{ id, text, done }` estruturado na mensagem `tutorial`. Também foram adicionadas as teclas de atalho <kbd>H</kbd> para toggle de caça automática e <kbd>L</kbd> para alternar o Livro, ambas documentadas no modal de ajuda de atalhos (`index.html`).
-
