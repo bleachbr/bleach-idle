@@ -173,5 +173,87 @@ describe("Lote 2: Comandos de automação, chat e aliases no servidor", () => {
     expect(joined).toContain("/autohunt");
     expect(joined).toContain("/patrulha");
     expect(joined).toContain("/cronicas");
+    expect(joined).toContain("/temporada");
+    expect(joined).toContain("/loja");
+    expect(joined).toContain("/bau");
+    expect(joined).toContain("/atributos");
+  });
+
+  it("comando /temporada e /passe abrem o painel do Passe de Temporada", async () => {
+    const { world } = await createPlayerAndJoin();
+    // O onJoin já envia uma mensagem inicial de season (com open: false) para sincronizar os pontos
+    await once<any>(world, "season");
+
+    const seasonPromise1 = once<any>(world, "season");
+    world.send("chat", { text: "/temporada" });
+    const s1 = await seasonPromise1;
+    expect(s1.open).toBe(true);
+    expect(s1.id).toBeDefined();
+
+    const seasonPromise2 = once<any>(world, "season");
+    world.send("chat", { text: "/passe" });
+    const s2 = await seasonPromise2;
+    expect(s2.open).toBe(true);
+  });
+
+  it("comando /loja abre a loja do Kisuke quando perto e recusa quando longe", async () => {
+    const { world, charName } = await createPlayerAndJoin();
+    const serverRoom = matchMaker.getRoomById(world.id) as any;
+    await vi.waitFor(() => expect(serverRoom.state.players.get(charName)).toBeDefined(), { timeout: 5000, interval: 25 });
+    const p = serverRoom.state.players.get(charName);
+
+    // No spawn (templo: 16, 14), está a 2 tiles da loja (18, 12): abre diretamente
+    const openPromise = once<any>(world, "open");
+    world.send("chat", { text: "/loja" });
+    const res = await openPromise;
+    expect(res.kind).toBe("shop");
+
+    // Longe da loja (ex.: em 25, 25): não abre e avisa para se aproximar
+    p.x = 25;
+    p.y = 25;
+    const logPromise = waitForLog(world, (t) => t.includes("Chegue perto da loja"));
+    world.send("chat", { text: "/loja" });
+    const log = await logPromise;
+    expect(log).toContain("Chegue perto da loja");
+  });
+
+  it("comando /bau e /depot abrem o depósito quando perto e recusam quando longe", async () => {
+    const { world, charName } = await createPlayerAndJoin();
+    const serverRoom = matchMaker.getRoomById(world.id) as any;
+    await vi.waitFor(() => expect(serverRoom.state.players.get(charName)).toBeDefined(), { timeout: 5000, interval: 25 });
+    const p = serverRoom.state.players.get(charName);
+
+    // No spawn (16, 14), está a 2 tiles do depot (14, 12): abre diretamente
+    const openPromise1 = once<any>(world, "open");
+    world.send("chat", { text: "/bau" });
+    const res1 = await openPromise1;
+    expect(res1.kind).toBe("depot");
+
+    const openPromise2 = once<any>(world, "open");
+    world.send("chat", { text: "/depot" });
+    const res2 = await openPromise2;
+    expect(res2.kind).toBe("depot");
+
+    // Longe do depot (ex.: em 25, 25): não abre e avisa para se aproximar
+    p.x = 25;
+    p.y = 25;
+    const logPromise = waitForLog(world, (t) => t.includes("Chegue perto do baú"));
+    world.send("chat", { text: "/bau" });
+    const log = await logPromise;
+    expect(log).toContain("Chegue perto do baú");
+  });
+
+  it("comando /atributos exibe atributos no log e emite evento sheet para o cliente", async () => {
+    const { world } = await createPlayerAndJoin();
+
+    const sheetPromise = once<any>(world, "sheet");
+    const logPromise = waitForLog(world, (t) => t.includes("Atributos de"));
+    world.send("chat", { text: "/atributos" });
+
+    await sheetPromise;
+    const log = await logPromise;
+    expect(log).toContain("Atributos de");
+    expect(log).toContain("HP");
+    expect(log).toContain("Poder");
   });
 });

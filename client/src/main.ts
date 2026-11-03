@@ -201,8 +201,10 @@ function start(room: Room<any>, myId: string) {
 
   const WINDOWS = ["#ranking", "#book", "#pass", "#dev", "#shop"];
   let inventory: ReturnType<typeof initInventory>;
+  let sheet: ReturnType<typeof initCharacterSheet>;
   const closeWindows = (keep?: string) => {
     if (keep !== "#modal") inventory?.close();
+    if (keep !== "#sheet-dialog") sheet?.close();
     for (const w of WINDOWS) if (w !== keep) $(w).hidden = true;
   };
   inventory = initInventory(room, (open) => {
@@ -211,7 +213,7 @@ function start(room: Room<any>, myId: string) {
   },
     () => room.state.players.get(myId)?.level ?? 1,
     () => { const p = room.state.players.get(myId); return p ? { x: p.x, y: p.y } : undefined; });
-  const sheet = initCharacterSheet(room, () => room.state.players.get(myId), serverNow);
+  sheet = initCharacterSheet(room, () => room.state.players.get(myId), serverNow, closeWindows);
   const onMe = (p: any) => {
     renderStats(p);
     inventory.onMove(p.x, p.y);
