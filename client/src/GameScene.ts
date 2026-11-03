@@ -1007,6 +1007,15 @@ export class GameScene extends Phaser.Scene {
       else if (e.code === "Escape") this.room.send("target", { id: "" });
       else if (e.code === "KeyT") this.room.send("transform");
       else if (e.code === "KeyR") this.room.send("recall");
+      else if (e.code === "KeyH") {
+        e.preventDefault();
+        const me = this.room.state.players.get(this.myId);
+        if (me) this.room.send("auto", { autoHunt: !me.autoHunt });
+      }
+      else if (e.code === "KeyL") {
+        e.preventDefault();
+        document.querySelector<HTMLButtonElement>("#book-btn")?.click();
+      }
       else if (e.code === "KeyE" || (e.code === "Space" && !(e.target instanceof HTMLButtonElement))) {
         // interage com o que estiver ao alcance (loja antes do depot); o servidor confere a distância
         const me = this.room.state.players.get(this.myId);

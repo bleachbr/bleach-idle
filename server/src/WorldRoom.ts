@@ -2896,7 +2896,7 @@ export class WorldRoom extends GameRoom<WorldState> {
 
   private sendTutorial(p: Player) {
     const done = p.prog.tut ?? [];
-    this.sendTo(p, "tutorial", done.length >= TUTORIAL.length ? null : TUTORIAL.map((t) => ({ text: t.text, done: done.includes(t.id) })));
+    this.sendTo(p, "tutorial", done.length >= TUTORIAL.length ? null : TUTORIAL.map((t) => ({ id: t.id, text: t.text, done: done.includes(t.id) })));
   }
 
   /** Missões diárias do dia; sorteia de novo quando o dia vira. */

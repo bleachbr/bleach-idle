@@ -289,8 +289,16 @@ body.touch #touch { bottom: 120px; }
 #book h3 { margin: 10px 0 2px; font-size: 13px; color: var(--accent); }
 /* celular: as janelas do ranking e do livro começam abaixo do botão do menu (☰) */
 @media (max-width: 720px) { #ranking, #book { top: 56px; max-height: calc(100% - 230px); } }
-#tutorial .tut { font-size: 12px; padding: 2px 0; color: var(--text); }
-#tutorial .tut.done { color: var(--muted); text-decoration: line-through; }
+#tutorial-list { display: flex; flex-direction: column; gap: 6px; }
+#tutorial .tut { font-size: 12px; padding: 6px 8px; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--line); border-radius: 4px; color: var(--text); display: flex; flex-direction: column; gap: 4px; }
+#tutorial .tut.done { color: var(--muted); opacity: 0.6; }
+#tutorial .tut.done .tut-text { text-decoration: line-through; }
+#tutorial .tut-header { display: flex; align-items: flex-start; gap: 6px; }
+#tutorial .tut-check { font-weight: bold; color: var(--accent); }
+#tutorial .tut.done .tut-check { color: #70ff94; }
+#tutorial .tut-act { align-self: flex-start; padding: 3px 8px; background: var(--accent); color: #1a1822; font-weight: 700; font-size: 11px; border: 0; border-radius: 3px; cursor: pointer; transition: filter 0.15s; }
+#tutorial .tut-act:hover { filter: brightness(1.2); }
+#tutorial .tut-hint { font-size: 10px; color: var(--muted); font-style: italic; }
 #rebirth-btn { margin-top: 6px; width: 100%; padding: 6px; border: 1px solid #ffcf5a; border-radius: 4px; background: linear-gradient(90deg, #3a2a08, #5a3f0a); color: #ffe7a3; font-weight: 700; cursor: pointer; animation: rebirth-glow 1.6s ease-in-out infinite alternate; }
 @keyframes rebirth-glow { from { box-shadow: 0 0 2px #ffcf5a55; } to { box-shadow: 0 0 10px #ffcf5acc; } }
 /* desafio do Dangai: barra no topo do mapa */

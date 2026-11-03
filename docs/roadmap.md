@@ -103,6 +103,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-19 | Carregamento visual do mundo e centralização de câmera no login (#65) | P | F-16 | Feito | client/ |
 | F-20 | Chat & Automação: desfoque com clique no jogo, Escape para limpar e desfocar campo, suporte a comandos `/autohunt`, `/hunt`, `/helper`, `/auto`, `/party`, `/livro`, `/patrulha iniciar` e `/cronicas` (Lote 2 do Playtest) | M | | Feito | client/, server/ |
 | F-21 | Inventário & Usabilidade de Itens: acessibilidade de slots com aria-label, indicador de capacidade X/20, painel de detalhes #item-detail, feedback visual de nível mínimo e suporte a duplo clique (Lote 3 do Playtest) | M | | Feito | client/ |
+| F-22 | HUD Interativo nos Primeiros Passos e Atalhos de Automação: botões de ação contextuais no `#tutorial-list` ([Ligar Auto Hunt (H)], [Abrir Livro (L)], [Viajar], [Liberar]), atalhos <kbd>H</kbd> e <kbd>L</kbd> no teclado com documentação no modal de atalhos e protocolo `tutorial` com ID estruturado (#73, #75, #89, #99, #108, #110, #118, #120, #121, #122, #181, #182, #188, #190, #284, #306) | P | | Feito | client/src/tutorialView.ts, server/src/WorldRoom.ts |
 
 Recomendação: fazer F-12 antes de M4, porque as salas instanciadas dependem do Colyseus e é melhor não construir sobre uma versão com advisory.
 

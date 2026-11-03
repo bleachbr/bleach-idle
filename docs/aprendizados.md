@@ -444,3 +444,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
   5. Itens bloqueados por nível recebem classe `.req-level` (borda avermelhada, opacidade e ícone 🔒) e aviso explícito no painel (`⚠️ Exige nível 105 (seu nível atual é X)`).
   6. Suporte nativo a duplo clique (`ondblclick`) espelhando o clique simples para equipar.
 - **Regra:** Em interfaces de inventário com ícones gráficos em sprite/CSS, todo slot precisa de `aria-label` acessível, feedback visual explícito para itens não equipáveis por nível e área de texto dedicada para atributos que não dependa do atraso do `title` do navegador.
+
+---
+
+## 16. Tutorial com Call-to-Action interativo e atalhos de HUD (F-22)
+
+- **Sintoma:** No playtest automatizado (#73, #75, #89, #99, #108, #110, #118, #120, #121, #122, #181, #182, #188, #190, #284, #306), jogadores e agentes ficavam parados tentando cumprir os passos "Ligue o Auto Hunt" e "Abra o Livro" do tutorial de primeiros passos. O `#tutorial-list` apresentava apenas texto estático sem indicativo de como proceder.
+- **Causa:** Tutoriais de onboarding em jogos idle precisam transformar intenção informativa em ação imediata. Sem botões de ação contextuais ou atalhos mapeados, o usuário busca comandos no chat ou não encontra os menus correspondentes.
+- **Solução:** `client/src/tutorialView.ts` desacopla a formatação e renderização dos passos, gerando botões contextuais com classe `.tut-act` diretamente no item pendente (`[Ligar Auto Hunt (H)]`, `[Abrir Livro (L)]`, `[Viajar]`, `[Liberar]`). O servidor passou a enviar `{ id, text, done }` estruturado na mensagem `tutorial`. Também foram adicionadas as teclas de atalho <kbd>H</kbd> para toggle de caça automática e <kbd>L</kbd> para alternar o Livro, ambas documentadas no modal de ajuda de atalhos (`index.html`).
