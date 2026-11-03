@@ -415,3 +415,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Causa:** nas capturas citadas na issue (`grinder/screenshots/passo-017.png`, `grinder/screenshots/passo-209.png`, `explorador/screenshots/passo-038.png`, e também `explorador/screenshots/passo-110.png`), a área visível do painel do Livro termina por volta de y=540, cortando os cartões dos dias, e o botão não aparece. Os relatórios mostram todos os cliques em (786,620): abaixo das três missões, dentro do `#book-body` com `overflow-y: auto`. O agente clica na coordenada do centro do elemento, e ali está o chat. Uma pessoa precisaria rolar o painel para achar o botão.
 - **Solução:** a recompensa de entrada vem antes das missões (`client/src/bookDaily.ts`), o botão desabilita e mostra "Pegando…" no clique, e a recusa do servidor ("já pegou hoje") também devolve o `book`, para o botão não ficar parado.
 - **Regra:** antes de corrigir achado de IA sobre clique, olhe a captura e confira se o alvo está visível dentro do painel; ação principal de uma aba fica no topo, não depois de conteúdo de tamanho variável.
+
+---
+
+## 15. Hitbox de NPCs e aviso flutuante de interação (F-23, #126, #127)
+
+- **Sintoma:** No playtest automatizado (#126, #127), a persona grinder relatou repetidamente dificuldade para interagir com o Kisuke na praça ("cliques no sprite não abrem consistentemente a loja, missões e forja").
+- **Causa:** O Kisuke possui 48 px de altura, mais o rótulo de nome ("Kisuke") a 50 px da base e o aviso flutuante de interação ("Kisuke: E / Espaço / clique") a até 80 px da base. Porém, `SHOP_H` estava restrito a `48 + 14 = 62 px` e exigia obrigatoriamente coordenadas dentro dessa caixa vertical estrita. Cliques no próprio tile do Kisuke (na sombra/pés) ou acima no balão flutuante de instrução falhavam o teste de colisão da loja e caíam no fallback de movimento (`move`), tentando andar até um tile bloqueado.
+- **Solução:** `interactAt` em `client/src/interactHit.ts` ampliou a caixa para 56 px de largura e 84 px de altura vertical, além de garantir que qualquer clique no próprio tile da loja `(tx === m.shop.x && ty === m.shop.y)` acione a interação imediatamente.

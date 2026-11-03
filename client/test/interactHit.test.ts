@@ -36,6 +36,12 @@ describe("clique na loja, no depot e no portal (#26)", () => {
     expect(interactAt(m, ...center(6, 5))).toBe("depot"); // meio do baú continua sendo depot
   });
 
+  it("cliques no nome ou aviso flutuante acima do Kisuke e no tile da loja abrem a loja (#126, #127)", () => {
+    const cx = 18 * TILE + TILE / 2, foot = 13 * TILE;
+    expect(interactAt(karakura, cx, foot - 70)).toBe("shop"); // aviso flutuante / rótulo acima da cabeça
+    expect(interactAt(karakura, cx - 26, foot - 20)).toBe("shop"); // clique na largura confortável do NPC
+  });
+
   it("mapa sem loja nem depot não abre nada", () => {
     expect(interactAt({}, ...center(18, 12))).toBeNull();
   });

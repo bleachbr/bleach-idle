@@ -101,6 +101,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-17 | Jogador-IA: modo Dev desligado por omissão, 30 min padrão, alvo remoto (bleach.acoplum.com) e make ia-play-prod | M | F-16 | Feito | test/ |
 | F-18 | Novidades no login, lobby e menu: histórico, indicador de leitura e metadados do deploy | P | F-13 | Feito | /release, shared/src/releases.ts |
 | F-19 | Carregamento visual do mundo e centralização de câmera no login (#65) | P | F-16 | Feito | client/ |
+| F-23 | Interação com NPCs e Loja do Kisuke: ampliação da área de clique para cobrir o rótulo/aviso flutuante e o próprio tile na praça (#126, #127) | P | | Feito | client/src/interactHit.ts |
 
 Recomendação: fazer F-12 antes de M4, porque as salas instanciadas dependem do Colyseus e é melhor não construir sobre uma versão com advisory.
 
