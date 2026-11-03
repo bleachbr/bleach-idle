@@ -5,19 +5,19 @@ import { TILE, INTERACT_RANGE, chebyshev, type GameMap } from "../../shared/src"
 export type InteractKind = "shop" | "depot" | "travel";
 type Places = Pick<GameMap, "shop" | "depot" | "gate">;
 
-/** desenho do Kisuke (npc_shop.png, 48 x 48) com a base no pé do tile, mais o nome por cima */
-const SHOP_W = 48, SHOP_H = 48 + 14;
+/** desenho do Kisuke (npc_shop.png, 48 x 48) com a base no pé do tile, mais o nome e aviso flutuante por cima */
+const SHOP_W = 56, SHOP_H = 48 + 36;
 
 const tileOf = (w: number) => Math.floor(w / TILE);
 
 /** O que o clique em (wx, wy), em pixels do mundo, abre. A loja vem primeiro: o desenho dela é maior
  * que o tile e, onde encosta em outro objeto, o jogador mirou no Kisuke. */
 export function interactAt(m: Places, wx: number, wy: number): InteractKind | null {
+  const tx = tileOf(wx), ty = tileOf(wy);
   if (m.shop) {
     const cx = m.shop.x * TILE + TILE / 2, foot = (m.shop.y + 1) * TILE;
-    if (Math.abs(wx - cx) <= SHOP_W / 2 && wy <= foot && wy >= foot - SHOP_H) return "shop";
+    if ((Math.abs(wx - cx) <= SHOP_W / 2 && wy <= foot && wy >= foot - SHOP_H) || (tx === m.shop.x && ty === m.shop.y)) return "shop";
   }
-  const tx = tileOf(wx), ty = tileOf(wy);
   if (m.depot && tx === m.depot.x && ty === m.depot.y) return "depot";
   if (m.gate && tx === m.gate.x && ty === m.gate.y) return "travel";
   return null;
