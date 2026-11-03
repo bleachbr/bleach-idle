@@ -241,7 +241,7 @@ function start(room: Room<any>, myId: string) {
   const chatin = $<HTMLInputElement>("#chatin");
   window.addEventListener("keydown", (e) => {
     if (e.code === "Escape") {
-      if (document.activeElement === chatin) {
+      if (e.target === chatin || document.activeElement === chatin) {
         e.preventDefault();
         chatin.value = "";
         chatin.blur();

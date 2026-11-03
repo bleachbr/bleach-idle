@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { Client } from "colyseus.js";
 import { matchMaker } from "@colyseus/core";
 import { startTestServer, stopTestServer, once, quiet } from "./helpers/testServer";
+import { activeChronicle } from "../../shared/src/chronicles";
 
 describe("Lote 2: Comandos de automação, chat e aliases no servidor", () => {
   let url: string;
@@ -93,6 +94,11 @@ describe("Lote 2: Comandos de automação, chat e aliases no servidor", () => {
     const log = await logPromise;
     expect(log.text).toContain("Auto Helper");
 
+    const autoLogPromise = once<{ text: string }>(world, "log");
+    world.send("chat", { text: "/auto" });
+    const autoLog = await autoLogPromise;
+    expect(autoLog.text).toContain("Auto Helper");
+
     world.send("chat", { text: "/helper on" });
     await vi.waitFor(() => {
       expect(p.autoHunt).toBe(true);
@@ -137,9 +143,12 @@ describe("Lote 2: Comandos de automação, chat e aliases no servidor", () => {
   it("comando /cronicas exibe lore da semana atual", async () => {
     const { world } = await createPlayerAndJoin();
     const logPromise = once<{ text: string }>(world, "log");
+    const before = Date.now();
     world.send("chat", { text: "/cronicas" });
     const log = await logPromise;
-    expect(log.text).toContain("Crônica da semana");
+    const after = Date.now();
+    const titles = [activeChronicle(before).title, activeChronicle(after).title];
+    expect(titles.some((title) => log.text.includes(`Crônica da semana: ${title}.`))).toBe(true);
   });
 
   it("comando /livro envia dados do livro (bestiário, diário, conquistas)", async () => {
