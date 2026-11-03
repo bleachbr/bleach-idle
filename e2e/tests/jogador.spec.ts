@@ -42,6 +42,22 @@ test("chat: Enter manda a fala, que aparece no chat", async ({ page }) => {
   await expect(page.locator("#chatlog")).toContainText(text);
 });
 
+test("comando /correio no chat não emite aviso do colyseus no console (#22)", async ({ page }) => {
+  const colyseusWarns: string[] = [];
+  page.on("console", (msg) => {
+    const text = msg.text();
+    if (text.includes("onMessage() not registered for type 'mail'")) {
+      colyseusWarns.push(text);
+    }
+  });
+  await newPlayer(page);
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("/correio");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#chatlog")).toContainText("Correio vazio");
+  expect(colyseusWarns).toEqual([]);
+});
+
 test("trocar de personagem e, com Lembrar, recarregar pula o login", async ({ page }) => {
   // o Playwright recusa diálogos por padrão; "Trocar de personagem?" precisa ser aceito
   page.on("dialog", (d) => d.accept());

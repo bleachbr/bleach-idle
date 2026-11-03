@@ -23,3 +23,4 @@ export * from "./lootRules";
 export * from "./deathPenalty";
 export * from "./potions";
 export * from "./skillGate";
+export * from "./mail";

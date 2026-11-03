@@ -22,6 +22,7 @@ import { initInventoryShortcut } from "./inventoryShortcut";
 import { huntResetButton, huntResetDoneLabel, isHuntEmpty } from "./huntReset";
 import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
 import { renderTutorialStep, dispatchTutorialAction } from "./tutorialView";
+import { bindMail, getMailInbox, getUnreadMailCount, resetMailInbox } from "./mail";
 
 initReleases();
 
@@ -189,8 +190,10 @@ function start(room: Room<any>, myId: string) {
   // patrulha no chat (log/sys). Os dados estruturados ficam para a interface futura, mas precisam
   // de handler: sem ele o colyseus.js avisa no console a cada mensagem (issue #22)
   for (const type of ["arenaData", "arenaMatchFound", "arenaResult", "patrolData"]) room.onMessage(type, () => {});
+  bindMail(room);
   $("#exit-btn").onclick = async () => {
     if (!confirm("Trocar de personagem? Com Auto Hunt ligado, ele segue caçando offline.")) return;
+    resetMailInbox();
     await room.leave(); // com Auto Hunt ligado, o personagem segue caçando offline
     location.reload();
   };
@@ -224,7 +227,7 @@ function start(room: Room<any>, myId: string) {
     const sent: unknown[] = [];
     const send = room.send.bind(room);
     room.send = ((type: any, msg?: any) => { sent.push([type, msg]); if (sent.length > 50) sent.shift(); send(type, msg); }) as typeof room.send;
-    Object.assign(window, { __bi: { room, game, sent } });
+    Object.assign(window, { __bi: { room, game, sent, getMailInbox, getUnreadMailCount } });
   }
 
   // canais: local (sem ch), pm, party, guild, sys (avisos do servidor) e lore (narração dos eventos)
