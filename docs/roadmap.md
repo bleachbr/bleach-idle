@@ -107,6 +107,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-23 | Interação com NPCs e Loja do Kisuke: ampliação da área de clique para cobrir o rótulo/aviso flutuante e o próprio tile na praça (#126, #127) | P | | Feito | client/src/interactHit.ts |
 | F-24 | Chat Social, Aliases e Throttle de Avisos Repetitivos: aliases de PM (`/w`, `/s`, `/msg`, `/tell`), `/rank`, `/guilda listar`, placeholders contextuais nas abas e amortecimento de logs de recusa e inventário cheio (Lote 6 do Playtest) | P | | Feito | client/src/chatTabs.ts, client/src/main.ts, server/src/WorldRoom.ts |
 | F-25 | Feedback de Navegação no Minimapa, Categorização do `/ajuda` e Layout Centralizado do Depot: ping animado e rota tracejada ao clicar no minimapa (#68, #70, #194, #195), subfiltros estruturados `/ajuda auto|social|sistema` (#184) e posicionamento centralizado sem sobreposição do minimapa para `#modal` (#119) | P | | Feito | client/src/minimapPing.ts, client/src/GameScene.ts, client/src/style.css, server/src/WorldRoom.ts |
+| F-26 | Aliases de Utilidade no Chat (/temporada, /passe, /loja, /bau, /atributos): atalhos para Passe de Temporada, Loja do Kisuke e Baú na praça com validação de proximidade, ficha de atributos com sincronização no log e `<dialog>`, e categorização no `/ajuda sistema` | P | | Feito | client/src/characterSheetDialog.ts, client/src/main.ts, server/src/WorldRoom.ts |
 
 Recomendação: fazer F-12 antes de M4, porque as salas instanciadas dependem do Colyseus e é melhor não construir sobre uma versão com advisory.
 

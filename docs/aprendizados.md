@@ -16,6 +16,17 @@ No playtest automatizado, a persona `grinder` recebia avisos frequentes no chat 
 
 ---
 
+## Aliases de utilidade no chat e autoridade de proximidade (F-26 / Issue #188)
+
+Jogadores e personas de teste frequentemente tentam interagir com atalhos intuitivos de chat ao receber avisos do sistema (como notificações de nível do Passe de Temporada ou inventário cheio 20/20 instruindo a visitar o Kisuke ou o baú).
+
+- **Autoridade do servidor e proximidade em comandos de chat:** Ao criar comandos que interagem com o mundo físico (`/loja` e `/bau` ou `/depot`), a verificação de proximidade (`near(p, kind)` com raio Chebyshev de `INTERACT_RANGE = 2`) deve ser rigorosamente preservada no servidor autoritativo. Jogadores distantes recebem aviso contextual orientando a aproximação na praça, impedindo acessos remotos indevidos a estoques e lojas a partir de mapas de caça.
+- **Ciclo de mensagens do Colyseus e prevenção de erro 4002:** O envio de novos eventos do servidor para o cliente (como `"sheet"` para abrir a ficha do personagem via `/atributos`) exige registro explícito de handlers no cliente e inclusão na lista `KNOWN_ROOM_MESSAGES` em suítes de teste para evitar que o Colyseus desconecte o cliente com código 4002 por mensagem desconhecida.
+- **Coordenação de janelas nativas `<dialog>` com painéis DOM:** A ficha do personagem utiliza `<dialog id="sheet-dialog">` nativo. Integrar o controle desse modal ao `closeWindows` centralizado garante que a abertura de abas concorrentes (como passe ou ranking) feche a ficha e vice-versa, sem conflito de camadas visuais ou foco preso.
+- **Transparência em abas de chat secundárias:** Comandos utilitários iniciados com barra (`/`) devem sair sem injeção de prefixos de canal (`/p`, `/g`, `/pm`) mesmo se o jogador estiver digitando com as abas Party, Guilda ou Privado ativas.
+
+---
+
 ## Carregamento visual do mundo e centralização de câmera (F-19 / Issue #65)
 
 Ao entrar no mundo (especialmente com personagem existente após retorno do lobby), o Phaser realiza o carregamento assíncrono de dezenas de spritesheets, mapas e tilesets via HTTP (`preload()`).

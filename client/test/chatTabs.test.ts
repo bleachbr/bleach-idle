@@ -73,6 +73,12 @@ describe("envio pela aba", () => {
     expect(b.outgoing("/ignorar Zé")).toEqual({ text: "/ignorar Zé" });
     b.setActive("guilda");
     expect(b.outgoing("boa noite")).toEqual({ text: "/g boa noite" });
+    expect(b.outgoing("/temporada")).toEqual({ text: "/temporada" });
+    expect(b.outgoing("/passe")).toEqual({ text: "/passe" });
+    expect(b.outgoing("/loja")).toEqual({ text: "/loja" });
+    expect(b.outgoing("/bau")).toEqual({ text: "/bau" });
+    expect(b.outgoing("/depot")).toEqual({ text: "/depot" });
+    expect(b.outgoing("/atributos")).toEqual({ text: "/atributos" });
     b.setActive("geral");
     expect(b.outgoing("oi")).toEqual({ text: "oi" });
   });

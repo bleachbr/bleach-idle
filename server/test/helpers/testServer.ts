@@ -46,6 +46,7 @@ const KNOWN_ROOM_MESSAGES = [
   "arenaResult",
   "patrolData",
   "mail",
+  "sheet",
 ];
 
 function registerDefaultHandlers<T extends Room>(room: T): T {
