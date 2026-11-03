@@ -460,3 +460,18 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Sintoma:** No playtest automatizado (#126, #127), a persona grinder relatou repetidamente dificuldade para interagir com o Kisuke na praça ("cliques no sprite não abrem consistentemente a loja, missões e forja").
 - **Causa:** O Kisuke possui 48 px de altura, mais o rótulo de nome ("Kisuke") a 50 px da base e o aviso flutuante de interação ("Kisuke: E / Espaço / clique") a até 80 px da base. Porém, `SHOP_H` estava restrito a `48 + 14 = 62 px` e exigia obrigatoriamente coordenadas dentro dessa caixa vertical estrita. Cliques no próprio tile do Kisuke (na sombra/pés) ou acima no balão flutuante de instrução falhavam o teste de colisão da loja e caíam no fallback de movimento (`move`), tentando andar até um tile bloqueado.
 - **Solução:** `interactAt` em `client/src/interactHit.ts` ampliou a caixa para 56 px de largura e 84 px de altura vertical, além de garantir que qualquer clique no próprio tile da loja `(tx === m.shop.x && ty === m.shop.y)` acione a interação imediatamente.
+
+---
+
+## 18. Aliases de Chat Social, Placeholders Contextuais e Throttle de Avisos Repetitivos (F-24)
+
+- **Sintoma:** No playtest automatizado (#151, #155-#159, #162, #177, #225, #244, #245, #247, #263, #265, #266, #268, #269, #270, #300, #314), jogadores e bots de teste relataram desconforto com comandos comuns de MMORPG não reconhecidos (`/w`, `/s`, `/msg`, `/tell` para mensagens privadas, `/rank` para ranking e `/guilda listar`), falta de orientação visual nos placeholders ao mudar de aba no chat (aba Privado, Party, Guilda e Combate) e spam de mensagens repetitivas ("Inventário cheio.", "HP cheio: Poção fica para quando precisar", etc.) poluindo rapidamente o histórico do chat.
+- **Causa:**
+  1. O servidor tratava estritamente apenas `/pm` para whisper e `/ranking`, rejeitando os sinônimos habituais de jogadores de MMORPGs.
+  2. A regex de rastreamento de destinatário privado do cliente (`pmTarget`) só capturava `/pm`, ignorando os demais aliases para sincronizar a conversa bidirecional.
+  3. Tentativas de desequipar ou usar poções em loops rápidos disparavam notificações individuais sem taxa de amortecimento (throttle).
+- **Solução (`server/src/WorldRoom.ts`, `client/src/chatTabs.ts`, `client/src/main.ts`):**
+  1. Adicionado amortecedor de logs por jogador (`logThrottled`), limitando mensagens repetidas idênticas em janelas de 1,5s a 3s para recusas de consumíveis, desequipamentos e sacolas no chão com inventário cheio.
+  2. Implementados aliases universais no servidor para sussurro (`/w`, `/whisper`, `/s`, `/sussurro`, `/msg`, `/tell`), ranking (`/rank`) e guilda (`/guilda listar`).
+  3. Atualizada regex do cliente `pmTarget` para cobrir todos os aliases de sussurro e associar automaticamente ao destinatário atual.
+  4. Adicionados placeholders contextuais orientando o usuário em cada aba do chat (`Sussurrar: /w Nome, mensagem...`, `Chat de grupo: /p mensagem...`, `Chat de guilda: /g mensagem...`, `Canal de combate (somente leitura)`).

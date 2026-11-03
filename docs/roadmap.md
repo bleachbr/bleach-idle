@@ -105,6 +105,7 @@ Vem antes de abrir o jogo a mais gente e antes de construir em cima de M1. Evid�
 | F-21 | Inventário & Usabilidade de Itens: acessibilidade de slots com aria-label, indicador de capacidade X/20, painel de detalhes #item-detail, feedback visual de nível mínimo e suporte a duplo clique (Lote 3 do Playtest) | M | | Feito | client/ |
 | F-22 | HUD Interativo nos Primeiros Passos e Atalhos de Automação: botões de ação contextuais no `#tutorial-list` ([Ligar Auto Hunt (H)], [Abrir Livro (L)], [Viajar], [Liberar]), atalhos <kbd>H</kbd> e <kbd>L</kbd> no teclado com documentação no modal de atalhos e protocolo `tutorial` com ID estruturado (#73, #75, #89, #99, #108, #110, #118, #120, #121, #122, #181, #182, #188, #190, #284, #306) | P | | Feito | client/src/tutorialView.ts, server/src/WorldRoom.ts |
 | F-23 | Interação com NPCs e Loja do Kisuke: ampliação da área de clique para cobrir o rótulo/aviso flutuante e o próprio tile na praça (#126, #127) | P | | Feito | client/src/interactHit.ts |
+| F-24 | Chat Social, Aliases e Throttle de Avisos Repetitivos: aliases de PM (`/w`, `/s`, `/msg`, `/tell`), `/rank`, `/guilda listar`, placeholders contextuais nas abas e amortecimento de logs de recusa e inventário cheio (Lote 6 do Playtest) | P | | Feito | client/src/chatTabs.ts, client/src/main.ts, server/src/WorldRoom.ts |
 
 Recomendação: fazer F-12 antes de M4, porque as salas instanciadas dependem do Colyseus e é melhor não construir sobre uma versão com advisory.
 
