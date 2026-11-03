@@ -180,6 +180,8 @@ registerPWA();
 
 function start(room: Room<any>, myId: string) {
   show("app");
+  const loader = $("#game-loading");
+  if (loader) loader.classList.remove("ready");
   // registra logo ao entrar para o Colyseus não avisar enquanto a cena do Phaser carrega
   room.onMessage("welcome", () => {});
   room.onMessage("fx", () => {});
@@ -216,6 +218,7 @@ function start(room: Room<any>, myId: string) {
   initTouch(room, (dir) => (game.scene.getScene("game") as GameScene | null)?.setTouchDir(dir));
   // girar o celular, abrir o teclado ou o menu muda o tamanho: reajusta o canvas na hora
   new ResizeObserver(() => game.scale.refresh()).observe($("#game"));
+  requestAnimationFrame(() => game.scale.refresh());
   // depuração no navegador (só em dev): window.__bi.room.state, window.__bi.sent
   if (import.meta.env.DEV) {
     const sent: unknown[] = [];
