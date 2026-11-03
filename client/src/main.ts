@@ -21,7 +21,7 @@ import { initCharacterSheet } from "./characterSheetDialog";
 import { initInventoryShortcut } from "./inventoryShortcut";
 import { huntResetButton, huntResetDoneLabel, isHuntEmpty } from "./huntReset";
 import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
-import { achievementsTabLabel, achievementsHeaderHtml } from "./bookAchievements";
+import { achievementsTabLabel, achievementsHeaderHtml, achievementsBodyHtml, updateBookAchievementsTab } from "./bookAchievements";
 import { renderTutorialStep, dispatchTutorialAction } from "./tutorialView";
 import { bindMail, getMailInbox, getUnreadMailCount, resetMailInbox } from "./mail";
 import { toggleSeasonPass } from "./seasonButton";
@@ -581,8 +581,7 @@ function bindBook(room: Room<any>, myId: string, closeWindows: (keep?: string) =
   const bar = (have: number, need: number) => `<div class="bar"><i style="width:${Math.min(100, (have / need) * 100)}%"></i></div>`;
   const render = () => {
     panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === tab)));
-    const achTab = panel.querySelector<HTMLButtonElement>('.tabs button[data-tab="conquistas"]');
-    if (achTab && data?.ach) achTab.textContent = achievementsTabLabel(data.ach);
+    updateBookAchievementsTab(panel, data?.ach);
     if (!data) return;
     const body = $("#book-body");
     if (tab === "bestiario") {
@@ -599,10 +598,11 @@ function bindBook(room: Room<any>, myId: string, closeWindows: (keep?: string) =
           </div>`;
         }).join("");
     } else if (tab === "conquistas") {
-      body.innerHTML = achievementsHeaderHtml(data.ach) + data.ach
+      const listHtml = data.ach
         .sort((a: any, b: any) => Number(a.done) - Number(b.done) || b.have / b.need - a.have / a.need)
         .map((a: any) => `<div class="ach${a.done ? " done" : ""}"><b>${escHtml(a.name)}</b> <span class="hint">${escHtml(a.desc)}</span>
           <div class="hint">${a.done ? "Feita" : `${a.have}/${a.need}`} · ${reward(a.reward)}</div>${a.done ? "" : bar(a.have, a.need)}</div>`).join("");
+      body.innerHTML = achievementsBodyHtml(data.ach, listHtml);
     } else if (tab === "cacada") {
       const h = data.hunt;
       if (!isHuntEmpty(h)) huntJustReset = false;
