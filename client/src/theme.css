@@ -284,6 +284,9 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 #pass .tier.ready .note { color: var(--gold); }
 #pass button.tier:hover, #pass button.tier:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 #pass .excl { color: #ffb04a; }
+.star-btn { font-size: 16px; line-height: 1; color: var(--gold); }
+#season-btn[data-ico="star"]::before { display: none; }
+.star-btn:hover { color: #fff; text-shadow: 0 0 6px var(--gold); }
 #season-btn.ping { position: relative; }
 #season-btn.ping::after { content: ""; position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 1px #000, 0 0 6px var(--accent); }
 #event-line { color: #ffd34a; font-size: 12px; margin-top: 2px; }
