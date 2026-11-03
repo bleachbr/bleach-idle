@@ -49,11 +49,11 @@ const HELP = [
   "Comandos:",
   "/autohunt [on|off] — liga ou desliga o Auto Hunt · /helper [on|off] — Auto Helper completo",
   "/livro — abre o Livro (bestiário, conquistas, diário e caçada)",
-  "/pm Nome, mensagem — mensagem privada",
+  "/pm Nome, mensagem (ou /w, /s, /msg, /tell) — mensagem privada",
   "/p mensagem — chat da party · /g mensagem — chat da guilda",
   `/guilda criar Nome (${GUILD_COST} kan, nível ${GUILD_MIN_LEVEL}+) · /guilda convidar Nome · /guilda aceitar · /guilda recusar`,
-  "/guilda sair · /guilda expulsar Nome · /guilda lider Nome · /guilda depositar N · /guilda sacar N (líder) · /guilda info",
-  "/ranking — abre o ranking",
+  "/guilda sair · /guilda expulsar Nome · /guilda lider Nome · /guilda depositar N · /guilda sacar N (líder) · /guilda info|listar",
+  "/ranking (ou /rank) — abre o ranking",
   "/patrulha [iniciar|resgatar|cancelar|lista] — patrulhas de Hollows",
   "/cronicas — exibe a crônica semanal ativa e onde encontrá-la",
   "/correio — abre sua caixa de correio",
@@ -845,11 +845,14 @@ export class WorldRoom extends GameRoom<WorldState> {
     return true;
   }
 
-  /** Poção recusada pelo jogador: diz o motivo no chat e sobe um texto só para ele (#41). */
+  /** Poção recusada pelo jogador: diz o motivo no chat (com throttle) e sobe um texto só para ele (#41, F-24). */
   private denyConsumable(p: Player, id: string, now: number) {
     const why = potionRefusal(ITEMS[id], p, now);
-    if (!why) return this.log(p, `Não dá para usar ${ITEMS[id].name} agora.`);
-    this.log(p, why.chat);
+    if (!why) {
+      this.logThrottled(p, `Não dá para usar ${ITEMS[id].name} agora.`, 1500, `deny:${id}`);
+      return;
+    }
+    this.logThrottled(p, why.chat, 1500, `deny:${why.float}`);
     this.sendTo(p, "fx", { t: "deny", id: p.id, text: why.float });
   }
 
@@ -1123,7 +1126,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const p = this.me(c);
       const id = p && EQUIP_SLOTS.includes(m?.slot) ? p.equip[m.slot] : undefined;
       if (!p || !id) return;
-      if (addItem(p.inv, id, 1) !== 1) return this.log(p, "Inventário cheio.");
+      if (addItem(p.inv, id, 1) !== 1) return this.logThrottled(p, "Inventário cheio.", 1500, "inv_full");
       delete p.equip[m.slot];
       this.recompute(p);
       this.sendInv(p);
@@ -1148,7 +1151,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       const s = from[i];
       if (!s) return;
       const moved = addItem(to, s.id, s.qty);
-      if (!moved) return this.log(p, m.op === "put" ? "Depot cheio." : "Inventário cheio.");
+      if (!moved) return this.logThrottled(p, m.op === "put" ? "Depot cheio." : "Inventário cheio.", 1500, m.op === "put" ? "depot_full" : "inv_full");
       s.qty -= moved;
       if (s.qty <= 0) from[i] = null;
       this.sendInv(p);
@@ -1261,7 +1264,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     }
     if (overflow.length) {
       this.dropBag(at, "sacola", "Loot", overflow, 0, this.partyOf(p.id));
-      this.log(p, "Inventário cheio: o loot que não coube ficou numa sacola no chão (reservada a você por 1 min).");
+      this.logThrottled(p, "Inventário cheio: o loot que não coube ficou numa sacola no chão (reservada a você por 1 min).", 3000, "inv_full_loot");
     }
     this.log(p, `Loot: ${loot.gold} kan${got.length ? ", " + got.join(", ") : ""}.`);
     if (p.autoBox) for (let i = 0; i < 5 && countItem(p.inv, "caixa_kisuke") > 0; i++) if (!this.useConsumable(p, "caixa_kisuke", Date.now())) break;
@@ -1638,13 +1641,19 @@ export class WorldRoom extends GameRoom<WorldState> {
         p.ignore.push(id);
         return this.log(p, `Ignorando ${rest}: as mensagens dele não chegam mais a você.`);
       }
-      case "pm": {
+      case "pm":
+      case "w":
+      case "whisper":
+      case "s":
+      case "sussurro":
+      case "msg":
+      case "tell": {
         // "Nome, mensagem" (nomes podem ter espaço); sem vírgula, a 1ª palavra é o nome
         const i = rest.indexOf(",");
         const [to, msg] = i >= 0 ? [rest.slice(0, i), rest.slice(i + 1).trim()] : [rest.split(" ")[0], rest.split(" ").slice(1).join(" ")];
         const v = this.findPlayer(to);
         if (!v || !v.online) return this.log(p, `${to || "?"} não está online.`);
-        if (!msg) return this.log(p, "Uso: /pm Nome, mensagem");
+        if (!msg) return this.log(p, `Uso: /${cmd} Nome, mensagem`);
         const chk = checkChatMessage(p.id, msg);
         if (!chk.ok) return chk.reason ? this.log(p, chk.reason) : undefined;
         if (!v.ignore.includes(p.id)) this.sendTo(v, "chat", { from: p.name, text: chk.text, ch: "pm" });
@@ -1717,6 +1726,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       case "patrol":
         return this.patrolCommand(p, rest);
       case "ranking":
+      case "rank":
         return this.sendTo(p, "ranking", this.ranking());
       default:
         return this.log(p, `Comando desconhecido: /${cmd}. Digite /ajuda.`);
@@ -1852,6 +1862,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       }
       case "info":
       case "list":
+      case "listar":
       case "membros":
       case "":
         if (!g) return this.log(p, "Você não está numa guilda. /guilda criar Nome para fundar uma.");
@@ -2024,7 +2035,7 @@ export class WorldRoom extends GameRoom<WorldState> {
         if (sl.qty > 0) full = true;
       }
       b.items = b.items.filter((sl) => sl.qty > 0);
-      if (full) this.log(p, "Inventário cheio: parte ficou no chão.");
+      if (full) this.logThrottled(p, "Inventário cheio: parte ficou no chão.", 3000, "inv_full_bag");
       this.sendInv(p);
       if (!b.items.length && !b.gold) this.state.bags.delete(b.id);
       else show(p, b);
@@ -3550,6 +3561,19 @@ export class WorldRoom extends GameRoom<WorldState> {
   private me(c: Client) {
     const id = this.sessions.get(c.sessionId);
     return id ? this.state.players.get(id) : undefined;
+  }
+
+  private throttledLogs = new Map<string, number>();
+
+  /** Emite mensagem de log com janela de espera para evitar poluição repetitiva no chat (F-24). */
+  private logThrottled(p: Player, text: string, windowMs = 2000, key = text): boolean {
+    const k = `${p.id}:${key}`;
+    const now = Date.now();
+    const last = this.throttledLogs.get(k) ?? 0;
+    if (now - last < windowMs) return false;
+    this.throttledLogs.set(k, now);
+    this.log(p, text);
+    return true;
   }
 
   private log(p: Player, text: string) {

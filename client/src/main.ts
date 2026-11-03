@@ -962,9 +962,15 @@ function renderChatTabs() {
     b.classList.toggle("new", n > 0);
   }
   // o campo diz para onde vai o texto (no Privado, com quem é a conversa, que muda quando chega pm de outra pessoa)
-  const placeholder = chat.active === "privado" ? (chat.pmWith ? `Enter para responder a ${chat.pmWith}` : "Escreva /pm Nome, mensagem")
-    : chat.active === "party" || chat.active === "guilda" ? `Enter para falar em ${CHAT_TABS.find((x) => x.id === chat.active)!.label}`
-    : "Enter para conversar";
+  const placeholder = chat.active === "privado"
+    ? (chat.pmWith ? `Enter para responder a ${chat.pmWith}` : "Sussurrar: /w Nome, mensagem...")
+    : chat.active === "party"
+    ? "Chat de grupo: /p mensagem..."
+    : chat.active === "guilda"
+    ? "Chat de guilda: /g mensagem..."
+    : chat.active === "combate"
+    ? "Canal de combate (somente leitura)"
+    : "Enter para conversar...";
   $<HTMLInputElement>("#chatin").placeholder = `${placeholder} · /ajuda para comandos`;
 }
 
