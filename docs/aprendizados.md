@@ -1,5 +1,13 @@
 # Aprendizados Técnicos do Projeto (Bleach Idle)
 
+## Renovação de arte sem alterar mapas (03/11/2026)
+
+- O atlas pode ser refeito por catálogo de chaves sem regenerar o Tiled. SHA-256 registra versões revisadas. Nesta entrega, cinco mapas ficaram intactos e dois receberam somente quatro flags de solidez cada, após autorização de Rafael para ajustar o cenário à arte. Comparar JSON inteiro e matriz de colisão com baselines prova o limite da mudança.
+- Gerar o objeto inteiro e depois fatiar conserva as emendas entre células do atlas. Chão, objetos e partes acima do personagem continuam separados nas camadas existentes; detalhes menores reutilizados também podem ser exportados como objetos inteiros.
+- Preservar somente a proporção da fonte não basta: uma fachada estreita numa caixa larga pode tornar células sólidas completamente transparentes. Fontes largas e normalização pelo footprint resolveram lojas/casas de madeira. Para os quatro cantos vazios de outra casa por mapa, Rafael autorizou retirar apenas a solidez desses cantos. O teste Pillow cruza alpha antigo/novo com os sólidos usados; valida ausência de novas paredes invisíveis, sem esconder as preexistentes.
+- Versionar também a URL do PNG evita depender da atualização em segundo plano do worker anterior. O E2E verifica as URLs e o carregamento, mas não simula um PWA com worker antigo instalado.
+- No Windows, testes de deploy que chamam `bash` precisam de `C:\Program Files\Git\bin` no `PATH`; a falta do executável produz `status: null`, não uma falha do script.
+
 Este documento reúne lições práticas, decisões arquiteturais e armadilhas superadas ao longo da construção do **Bleach Idle**. O objetivo é preservar o conhecimento acumulado e evitar que futuras sessões ou agentes repitam erros já solucionados.
 
 ---

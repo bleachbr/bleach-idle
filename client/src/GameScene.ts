@@ -122,7 +122,7 @@ const py = (y: number) => y * TILE + TILE;
 const MINIMAP_K = 4;
 const MINIMAP_LEGEND = "Losango roxo: portal (com anel dourado, o alvo da missão está em outro mapa). Quadrado dourado: loja; laranja: depot. Cruz: templo. Círculo amarelo: NPC. Verde claro: zona protegida. Tracejado dourado: onde caçar o alvo da missão; ponto dourado: monstro do alvo.";
 /** versão dos .tmj na URL: subir junto com o CACHE de client/public/sw.js quando um mapa mudar (2: NPCs no soul.tmj, M1-03) */
-const MAP_VERSION = 2;
+const MAP_VERSION = 3;
 
 export class GameScene extends Phaser.Scene {
   /** quadros de andar por direção (4 ou 8), pela largura da folha carregada: nunca diverge da imagem */
@@ -270,7 +270,8 @@ export class GameScene extends Phaser.Scene {
     // o service worker antigo ainda controla a página na primeira carga depois do deploy e serviria o .tmj velho do cache
     for (const id of MAP_IDS) {
       this.load.tilemapTiledJSON(`map_${id}`, `/maps/${id}.tmj?v=${MAP_VERSION}`);
-      this.load.image(`tiles_${id}`, `/maps/${id}_tiles.png`);
+      // Versiona também o atlas: o worker antigo ainda pode servir a arte anterior na primeira carga.
+      this.load.image(`tiles_${id}`, `/maps/${id}_tiles.png?v=${MAP_VERSION}`);
     }
   }
 

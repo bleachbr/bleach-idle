@@ -1,5 +1,12 @@
 # Pendências e Débitos Técnicos Registrados
 
+## Renovação dos mapas (03/11/2026)
+
+- **Resolvido:** Rafael autorizou o ajuste pequeno do cenário à arte nova. Somente os quatro cantos de `casa0_6x5` em Karakura e Falsa tornaram-se andáveis; corpo da casa, camadas e objetos de lógica preservados. Regressões Vitest/Pillow e revisão independente confirmaram a mudança restrita, sem novas paredes invisíveis. Publicação continua dependendo de autorização conforme AGENTS.md §6.7.
+
+- Arte entregue localmente em `feat/renovacao-visual-mapas`, com objetos principais novos e detalhes secundários reutilizados identificados no manifesto. Layouts e animações ambientais existentes preservados; não inclui redesenho das ruas nem novas animações de objetos.
+- O teste de navegador confirma URLs versionadas e respostas dos sete PNGs; um teste específico de atualização de PWA com um service worker antigo instalado permanece fora desta entrega. A inspeção visual cobre as sete composições; só Karakura foi capturada dentro do jogo em navegador.
+
 Este documento mapeia todas as pendências conhecidas, limitações da arquitetura atual e débitos técnicos acumulados no **Bleach Idle**.
 
 ---

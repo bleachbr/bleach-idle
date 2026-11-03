@@ -158,6 +158,8 @@ Descrição, ordem e dependências em [`roadmap-duplas.md`](roadmap-duplas.md). 
 
 ## Sem marco
 
+- **Renovação visual dos sete mapas (Rafael, 03/11/2026):** validada localmente na branch `feat/renovacao-visual-mapas`, aguardando autorização para publicação. [Spec](features/renovacao-mapas/PRD-renovacao-mapas.md). Layouts preservados com ajuste pontual de colisão aprovado nos quatro cantos vazios de uma casa em Karakura/Falsa. Fontes, objetos transparentes e montagem em `art/maps/renewal/`. Typecheck, 439 Vitest, 8 E2E, regressão Pillow, build e 29 verificações mapcheck aprovados; revisão independente sem bloqueios na correção.
+
 Visual de equipamentos além do haori e da máscara, e interiores de edifícios ([`pendencias.md`](pendencias.md) §2 e §5). Entram num marco quando alguém propuser a spec.
 
 ## Decisões tomadas

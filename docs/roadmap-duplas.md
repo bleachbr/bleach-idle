@@ -10,6 +10,8 @@ Item riscado já foi implementado (status no `roadmap.md`). Ele continua na fila
 
 ## As duas filas
 
+Entrega adicional de Rafael (03/11/2026): renovação visual dos sete mapas, mantendo os layouts por decisão confirmada no pedido. Trabalho isolado em `feat/renovacao-visual-mapas`; status e spec no [roadmap](roadmap.md#sem-marco). Não altera nem reserva os itens de gameplay das filas.
+
 As filas são **estanques**: ninguém puxa item da fila do outro. Mas os **temas são mistos em cada uma** — os dois tocam `server/`, `client/`, `shared/` e mapas. O critério de repartição não é camada, é pacote de funcionalidade:
 
 - **Item inteiro para uma pessoa.** Cada entrega cruza as camadas que precisar (handler no `WorldRoom`, fórmula em `shared`, HUD no `client`, mapa `.tmj`) na mesma branch, do começo ao fim. Exceções explícitas estão marcadas nas tabelas.

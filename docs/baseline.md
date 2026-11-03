@@ -1,5 +1,11 @@
 # Linha de base de qualidade e desempenho
 
+## Renovação dos mapas — 03/11/2026
+
+Windows, Node 24.12.0, worktree `feat/renovacao-visual-mapas`, base `2432a43`. Soma dos sete `client/public/maps/*_tiles.png`: 531.533 bytes antes (fontes em `art/maps/renewal/retained/`) e 1.903.364 depois. O número de atlases e suas dimensões não mudaram; fontes geradas em alta resolução ficam em `art/`, fora do build público. Não foi medido FPS nem tempo de carregamento em rede.
+
+Validação: `npm run typecheck`; `npm test` (439 testes em 78 arquivos, Git Bash no PATH); `npm run test:e2e` (8 testes, 20 s); `npm run build` (5,62 s, JS 1.720,64 kB / 416,48 kB gzip, aviso de chunk grande já existente); `python art/maps/renewal/test_assemble.py` (1 regressão visual); `cd server; npx tsx scripts/test.ts mapcheck` (29 verificações, servidor isolado). A bateria completa dos demais cenários e gitleaks não foram executados. Revisão independente confirmou exatamente quatro flags de colisão alteradas por mapa em Karakura/Falsa; os outros cinco mapas permanecem intactos.
+
 Medida em 31/10/2026 (sábado), sobre a `main` no commit `84e0180` mais as mudanças deste PR (que não alteram código de produção), num Apple M4 de 10 núcleos com macOS e Node 22.23.2. Serve para saber se uma mudança piorou algo: reexecute o comando na sua máquina, com ela ociosa, antes de comparar números.
 
 ## Qualidade
