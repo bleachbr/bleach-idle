@@ -9,6 +9,7 @@ import {
 } from "../../shared/src";
 import {
   formatSlotAria, formatInventoryCount, isItemLevelLocked, itemDetailHtml, itemTooltipText,
+  handleInventorySlotClick,
 } from "./inventoryView";
 
 interface InvMsg {
@@ -183,17 +184,15 @@ export function initInventory(room: Room<any>, onPanel: (open: boolean) => void,
     // inventário: com o depot aberto, clicar guarda; senão equipa ou usa
     const hint = open === "depot" ? " · clique para guardar no depot" : "";
     $("#inv").replaceChildren(...st.inv.map((s, index) => slotButton(s, () => {
-      const d = ITEMS[s!.id];
-      if (open === "depot") room.send("depot", { op: "put", index });
-      else if (d.slot) {
-        if (d.minLevel && myLevel() < d.minLevel) {
-          inspected = { slot: s };
+      handleInventorySlotClick(s, index, {
+        open,
+        playerLevel: myLevel(),
+        send: (type, data) => room.send(type, data),
+        onInspect: (item) => {
+          inspected = { slot: item };
           renderDetail();
-          return;
-        }
-        room.send("equip", { index });
-      }
-      else if (d.heal || d.restoreRei || d.boost || d.box) room.send("useItem", { index });
+        },
+      });
     }, hint)));
 
     if (!open) return;

@@ -96,3 +96,41 @@ export function itemDetailHtml(s: Slot | null, userLevel: number, equipSlot?: Eq
     </div>
   `.trim();
 }
+
+export interface InventorySlotClickOptions {
+  open?: string | null;
+  playerLevel: number;
+  send: (type: string, data: any) => void;
+  onInspect?: (slot: Slot) => void;
+}
+
+export function handleInventorySlotClick(
+  slot: Slot | null | undefined,
+  index: number,
+  opts: InventorySlotClickOptions
+): boolean {
+  if (!slot) return false;
+  const d = ITEMS[slot.id];
+  if (!d) return false;
+
+  if (opts.open === "depot") {
+    opts.send("depot", { op: "put", index });
+    return true;
+  }
+
+  if (d.slot) {
+    if (d.minLevel && opts.playerLevel < d.minLevel) {
+      opts.onInspect?.(slot);
+      return false;
+    }
+    opts.send("equip", { index });
+    return true;
+  }
+
+  if (d.heal || d.restoreRei || d.boost || d.box) {
+    opts.send("useItem", { index });
+    return true;
+  }
+
+  return false;
+}

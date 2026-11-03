@@ -1,5 +1,11 @@
-import { describe, it, expect } from "vitest";
-import { formatSlotAria, formatInventoryCount, itemDetailHtml, isItemLevelLocked } from "../src/inventoryView";
+import { describe, it, expect, vi } from "vitest";
+import {
+  formatSlotAria,
+  formatInventoryCount,
+  itemDetailHtml,
+  isItemLevelLocked,
+  handleInventorySlotClick,
+} from "../src/inventoryView";
 import { ITEMS } from "../../shared/src";
 
 describe("Lote 3: Usabilidade do Inventário e Acessibilidade de Slots", () => {
@@ -59,7 +65,7 @@ describe("Lote 3: Usabilidade do Inventário e Acessibilidade de Slots", () => {
     expect(isItemLevelLocked(manto, 105)).toBe(false);
     expect(isItemLevelLocked(manto, 120)).toBe(false);
 
-    const espada = { id: "espada_madeira", qty: 1 }; // sem minLevel ou minLevel 1
+    const espada = { id: "zanpakuto", qty: 1 }; // sem minLevel
     expect(isItemLevelLocked(espada, 1)).toBe(false);
 
     expect(isItemLevelLocked(null, 1)).toBe(false);
@@ -90,5 +96,57 @@ describe("Lote 3: Usabilidade do Inventário e Acessibilidade de Slots", () => {
     const haoriDetail = itemDetailHtml({ id: "haori", qty: 1 }, 20);
     expect(haoriDetail).toContain("Haori de Capitão");
     expect(haoriDetail).toContain("Clique para equipar");
+  });
+
+  it("handleInventorySlotClick bloqueia envio de equip quando o jogador não tem nível suficiente", () => {
+    const send = vi.fn();
+    const onInspect = vi.fn();
+
+    // Manto de Sternritter exige nível 105; jogador está nível 10
+    const manto = { id: "manto_sternritter", qty: 1 };
+    const handled = handleInventorySlotClick(manto, 3, {
+      playerLevel: 10,
+      send,
+      onInspect,
+    });
+
+    expect(handled).toBe(false);
+    expect(send).not.toHaveBeenCalledWith("equip", expect.anything());
+    expect(onInspect).toHaveBeenCalledWith(manto);
+
+    // Quando o jogador atinge nível suficiente (105+), equipa normalmente
+    send.mockClear();
+    onInspect.mockClear();
+    const allowed = handleInventorySlotClick(manto, 3, {
+      playerLevel: 105,
+      send,
+      onInspect,
+    });
+
+    expect(allowed).toBe(true);
+    expect(send).toHaveBeenCalledWith("equip", { index: 3 });
+    expect(onInspect).not.toHaveBeenCalled();
+  });
+
+  it("handleInventorySlotClick encaminha para depot ou useItem conforme o contexto", () => {
+    const send = vi.fn();
+
+    // Com depot aberto, guarda no depot em vez de equipar
+    const espada = { id: "zanpakuto", qty: 1 };
+    handleInventorySlotClick(espada, 0, {
+      open: "depot",
+      playerLevel: 10,
+      send,
+    });
+    expect(send).toHaveBeenCalledWith("depot", { op: "put", index: 0 });
+
+    // Item consumível chama useItem
+    send.mockClear();
+    const pocao = { id: "pocao_vida", qty: 2 };
+    handleInventorySlotClick(pocao, 1, {
+      playerLevel: 10,
+      send,
+    });
+    expect(send).toHaveBeenCalledWith("useItem", { index: 1 });
   });
 });
