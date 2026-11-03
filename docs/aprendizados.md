@@ -426,3 +426,21 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
   2. Pressionar `Escape` no `chatin` ou no listener global com `document.activeElement === chatin` limpa o buffer (`chatin.value = ""`) e desfoca o campo (`chatin.blur()`), restaurando os atalhos de teclado.
   3. No servidor (`server/src/WorldRoom.ts`), suporte direto via chat para automação e aliases mais tentados (`/autohunt`, `/hunt`, `/helper`, `/auto`, `/party`, `/livro`, `/patrulha iniciar`, `/cronicas`).
 - **Regra:** Em jogos 2D híbridos (DOM + Canvas), cliques no canvas precisam liberar o foco de inputs para devolver o fluxo aos atalhos globais de teclado, e `Escape` no chat deve limpar qualquer rascunho acidental.
+
+---
+
+## 15. Usabilidade do Inventário, Acessibilidade de Slots e Feedback Visual de Equipamento (Lote 3 do Playtest)
+
+- **Sintoma:** Em testes com personas e leitores de acessibilidade, mais de 100 achados apontavam slots como meros botões sem nome (`BUTTON` ou apenas a quantidade numérica como texto `13`), recusa de equipar sem indicação visual do motivo (ex.: Manto de Sternritter exigindo nível 105 sendo clicado por personagem nível 1 sem nenhum feedback imediato), ausência de contagem de slots ocupados (`20/20 slots`) e expectativa de duplo clique para equipar.
+- **Causa raiz:**
+  1. Ícones eram apenas `span` vazios com `background-position`. O único nó de texto dentro do `<button>` era a quantidade numérica `<b class="qty">13</b>`, deixando a árvore de acessibilidade cega.
+  2. O único local com informações do item era o atributo nativo HTML `title`, que depende de hover prolongado do mouse (inexistente em touch ou foco de teclado e invisível no clique rápido).
+  3. Slots vazios de equipamento tinham `disabled`, ignorando cliques e impedindo qualquer feedback caso o jogador tentasse clicar no slot de destino após inspecionar um item.
+- **Solução (`client/src/inventory.ts`, `client/src/inventoryView.ts`, `client/src/style.css`):**
+  1. Extraímos `inventoryView.ts` com funções puras e testes determinísticos em `client/test/inventoryView.test.ts`.
+  2. `formatSlotAria` injeta `aria-label` completo em todos os slots (nome, quantidade, slot e atributos).
+  3. Adicionado indicador de ocupação no cabeçalho do inventário (`#inv-count`, ex.: `14/20 slots`) com classe `.full` em destaque quando atinge 20/20.
+  4. Adicionado painel dedicado de detalhes (`#item-detail`), que atualiza ao passar o mouse, focar via teclado ou clicar no slot, destacando nível exigido, atributos e ação sugerida (`Clique para equipar` / `Clique para usar`).
+  5. Itens bloqueados por nível recebem classe `.req-level` (borda avermelhada, opacidade e ícone 🔒) e aviso explícito no painel (`⚠️ Exige nível 105 (seu nível atual é X)`).
+  6. Suporte nativo a duplo clique (`ondblclick`) espelhando o clique simples para equipar.
+- **Regra:** Em interfaces de inventário com ícones gráficos em sprite/CSS, todo slot precisa de `aria-label` acessível, feedback visual explícito para itens não equipáveis por nível e área de texto dedicada para atributos que não dependa do atraso do `title` do navegador.
