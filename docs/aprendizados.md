@@ -2,6 +2,8 @@
 
 ## Composição contínua e escala jogável (04/11/2026)
 
+- Pré-publicação: o E2E media o minimapa antes de `#game-loading.ready`; o trace mostrava o canvas ainda com título inicial e proporção padrão. Esperar o mapa montado e medir o retângulo em cada clique elimina a corrida. A caminhada passou em três execuções consecutivas depois da correção, sem mudar movimento/colisão do jogo.
+
 - Trocar o atlas preservando cada posição não resolve uma composição fragmentada. Após autorização de Rafael, o chão passou a paisagem contínua e os objetos a sprites completos ordenados pelos pés, mantendo colisão/lógica autoritativas no Tiled. `worldScenes.test.ts` confere equivalência de objetos editor/runtime, pontos preservados, navegação e espaço para mobs no raio de spawn.
 - A proporção se avalia na câmera com os atores reais, não somente na imagem reduzida do mapa. O E2E percorre mais de dez células usando a matriz real e confirma mobs na câmera. Referências vestidas e prévias de composição não devem virar fundo jogável com objetos fundidos.
 - Mudanças autorizadas de layout podem invalidar fixtures com coordenadas fixas: o teste #26 usava (10,16), agora dentro de um prédio. A rua (13,16) mantém a mesma intenção pendente, destino e verificações de cancelamento; a lógica de interação não precisou mudar.

@@ -37,8 +37,10 @@ test("Karakura contínua: percorre o cenário e mostra personagem com mobs reais
     await expect.poll(() => !!me(), { timeout: 5000 }).toBe(true);
     const start = { x: me().x, y: me().y };
     const minimap = page.locator("#minimap");
-    const box = (await minimap.boundingBox())!;
     await expect(page.locator("#game-loading")).toHaveClass(/ready/);
+    // O canvas começa com proporção padrão e muda quando o mapa é montado.
+    // Medir antes disso envia o clique para outra célula, conforme a carga da máquina.
+    await expect(minimap).toHaveAttribute("title", /^Karakura: clique/);
     await page.screenshot({ path: info.outputPath("karakura-personagem-praca.png") });
     const map = parseMap("karakura", JSON.parse(readFileSync(new URL("../../client/public/maps/karakura.tmj", import.meta.url), "utf8")));
     const threats = [...observer.state.monsters.values()] as { map: string; kind: string; x: number; y: number }[];
@@ -50,6 +52,7 @@ test("Karakura contínua: percorre o cenário e mostra personagem com mobs reais
     // globais usam o mesmo retângulo que o handler, incluindo a borda do minimapa.
     const waypoints = path.filter((_, i) => i % 6 === 5 || i === path.length - 1);
     for (const { x, y } of waypoints) {
+      const box = (await minimap.boundingBox())!;
       await page.mouse.click(box.x + box.width * (x + .5) / map.w, box.y + box.height * (y + .5) / map.h);
       await expect.poll(() => Math.max(Math.abs(me().x - x), Math.abs(me().y - y)), { timeout: 5000 }).toBe(0);
     }
