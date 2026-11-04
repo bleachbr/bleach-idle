@@ -7,10 +7,13 @@ import hashlib
 import json
 import math
 import random
+import sys
 from pathlib import Path
 from PIL import Image
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent))
+from chroma import remove_exterior_magenta
 ROOT = HERE.parents[2]
 OUT = ROOT / "client/public/maps/scenes"
 MAP_PATH = ROOT / "client/public/maps/karakura.tmj"
@@ -18,12 +21,12 @@ T = 32
 
 
 def rgba(path):
-    image = Image.open(path).convert("RGBA")
-    image.putdata([(r, g, b, 0 if r > 130 and b > 110 and g < 110 and r > g*1.5 and b > g*1.5 else a)
-                   for r, g, b, a in image.getdata()])
+    image = remove_exterior_magenta(Image.open(path))
     box = image.getbbox()
-    assert box, path
-    assert box[0] > 0 and box[1] > 0 and box[2] < image.width and box[3] < image.height, f"Recorte toca borda: {path}"
+    if not box:
+        raise RuntimeError(f"Objeto vazio: {path}")
+    if not (box[0] > 0 and box[1] > 0 and box[2] < image.width and box[3] < image.height):
+        raise RuntimeError(f"Recorte toca borda: {path}")
     return image.crop(box)
 
 
@@ -130,12 +133,14 @@ def main():
         ("kurosaki-clinic", 7, 28, 176),
         ("kurosaki-clinic", 25, 8, 176),
     ]:
-        assert place(name, x, y, width, "building"), f"Construção conflita: {name} ({x},{y})"
+        if not place(name, x, y, width, "building"):
+            raise RuntimeError(f"Construção conflita: {name} ({x},{y})")
     for obj in logic["objects"]:
         if obj.get("type") in ("depot", "portal"):
             name = "depot" if obj["type"] == "depot" else "senkaimon"
             # Handlers de interação validam estes pontos no servidor; a imagem não muda sua regra.
-            assert place(name, obj["x"]/T, math.floor(obj["y"]/T)+1, 64 if name == "senkaimon" else 32, "interactive", block=False)
+            if not place(name, obj["x"]/T, math.floor(obj["y"]/T)+1, 64 if name == "senkaimon" else 32, "interactive", block=False):
+                raise RuntimeError(f"Objeto interativo não posicionado: {name}")
     for x, y in [(12, 12), (21, 12), (12, 18), (21, 18), (15, 24), (28, 23)]:
         place("streetlight", x, y, 28, "streetlight")
     for x, y in [(12, 19), (21, 19), (19, 23)]:
@@ -155,7 +160,8 @@ def main():
             if g < r*1.07 or g < b*1.08:
                 continue
             place("zelkova", x, y, rng.choice([72, 80, 88, 96]), "tree")
-    assert len(props) > 35, len(props)
+    if len(props) <= 35:
+        raise RuntimeError(f"Cena incompleta: {len(props)} props")
 
     # Toda navegação deriva da mesma composição. Água fica na camada de chão;
     # objetos têm uma camada de colisão explícita, oculta apenas no editor visual.

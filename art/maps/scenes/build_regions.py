@@ -156,15 +156,21 @@ def standard(map_id, catalog):
                     x, y = int(o["x"]//T), int(o["y"]//T)
                     reserved.update((x+dx, y+dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1))
         blockers = [0]*(w*h)
+        solid_gids = {ts["firstgid"]+t["id"] for ts in data["tilesets"] for t in ts.get("tiles", [])
+                      if any(p["name"] == "solido" and p["value"] is True for p in t.get("properties", []))}
+        occupied = {(i%w, i//w) for layer in data["layers"] if layer["type"] == "tilelayer" and layer["name"] != "acima"
+                    for i, gid in enumerate(layer["data"]) if gid & 0x1fffffff in solid_gids}
         for x, y in [(6, 26), (15, 27), (33, 28), (43, 31), (30, 37)]:
             points = {(gx, gy) for gy in range(y-3, y) for gx in range(x-2, x+2)}
-            if points & reserved: continue
+            if points & (reserved | occupied): continue
             props.append({"id": f"rukongai-house-{x}-{y}", "kind": "building", "image": "/maps/scenes/soul/rukongai-house.webp",
                           "x": x*T, "y": y*T, "width": 128, "height": 128*house.height/house.width, "sortY": y*T})
             for gx, gy in points: blockers[gy*w+gx] = catalog["soul"]["keys"]["muro10"]+1
         data["layers"].append({"id": 5, "name": "colisao_cenario", "type": "tilelayer", "x": 0, "y": 0,
                                "width": w, "height": h, "visible": False, "opacity": 1, "data": blockers})
     if map_id == "lasnoches":
+        # Limite norte monumental: o topo segue intencionalmente além do mundo.
+        # O mapa representa o acesso, não uma miniatura de toda a fachada de Las Noches.
         gate = new_prop("lasnoches-gate", "lasnoches-gate.png", 704)
         props.append({"id": "lasnoches-monumental-front", "kind": "building", **gate, "x": 24*T, "y": 5.5*T, "sortY": 5.5*T})
         blockers = [0]*(w*h)
@@ -220,15 +226,18 @@ def custom(map_id, catalog):
         wall = new_prop("koryu", "dangai-koryu-wall.png", 96, h*T)
         # A zona segura original começa em x=2: a faixa esquerda fica nas duas
         # colunas externas, sem cortar a área de chegada.
-        assert put("koryu-left", {**wall, "width": 64}, 1, h, "boundary", (0, 0, 2, h))
+        if not put("koryu-left", {**wall, "width": 64}, 1, h, "boundary", (0, 0, 2, h)):
+            raise RuntimeError("Koryu esquerdo conflita com área reservada")
         flipped = ImageOps.mirror(Image.open(ROOT/"client/public"/wall["image"].lstrip("/")))
         flipped.save(OUT/"landmarks/koryu-right.webp", quality=95)
-        assert put("koryu-right", {**wall, "image": "/maps/scenes/landmarks/koryu-right.webp"}, w-1.5, h, "boundary", (w-3, 0, 3, h))
+        if not put("koryu-right", {**wall, "image": "/maps/scenes/landmarks/koryu-right.webp"}, w-1.5, h, "boundary", (w-3, 0, 3, h)):
+            raise RuntimeError("Koryu direito conflita com área reservada")
         portal = {"image": "/maps/scenes/senkaimon.webp", "width": 64, "height": 96}
         put("portal", portal, 4.5, 11, "interactive")
     else:
         palace = new_prop("silbern", "silbern-front.png", 512)
-        assert put("silbern", palace, 24, 9.5, "building", (17, 1, 14, 8))
+        if not put("silbern", palace, 24, 9.5, "building", (17, 1, 14, 8)):
+            raise RuntimeError("Silbern conflita com área reservada")
         smaller = {**palace, "width": 224, "height": palace["height"]*224/512}
         for x, y in [(6, 15), (41, 18), (6, 30), (41, 34)]:
             put("quincy-frontage", smaller, x, y, "building", (int(x)-3, int(y)-4, 6, 4))
@@ -279,13 +288,21 @@ def falsa(city, catalog):
     return data, result
 
 
+def composite_visible(canvas, prop, x, y):
+    """Recorte explícito para marcos que continuam além dos limites do mundo."""
+    left, top = max(0, -x), max(0, -y)
+    right, bottom = min(prop.width, canvas.width-x), min(prop.height, canvas.height-y)
+    if right > left and bottom > top:
+        canvas.alpha_composite(prop.crop((left, top, right, bottom)), (max(0, x), max(0, y)))
+
+
 def preview(map_id, scene):
     image = Image.open(ROOT/"client/public"/scene["ground"].lstrip("/")).convert("RGBA")
     image = image.resize((scene["width"], scene["height"]), Image.Resampling.LANCZOS)
     for p in sorted(scene["props"], key=lambda p:p["sortY"]):
         prop = Image.open(ROOT/"client/public"/p["image"].lstrip("/")).convert("RGBA")
         prop = prop.resize((round(p["width"]), round(p["height"])), Image.Resampling.LANCZOS)
-        image.alpha_composite(prop, (round(p["x"]-p["width"]/2), round(p["y"]-p["height"])))
+        composite_visible(image, prop, round(p["x"]-p["width"]/2), round(p["y"]-p["height"]))
     image.convert("RGB").save(HERE/f"{map_id}-composed-preview.png")
 
 

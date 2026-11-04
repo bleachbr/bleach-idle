@@ -30,7 +30,8 @@ def main():
                 alpha = mask.crop((x*32, y*32, (x+1)*32, (y+1)*32))
                 if alpha.getextrema()[1] <= 96:
                     empty.add((x, y))
-        assert not empty, f"{name}: sólidos sem cobertura visual: {sorted(empty)}"
+        if empty:
+            raise SystemExit(f"{name}: sólidos sem cobertura visual: {sorted(empty)}")
         print(f"{name}: sólidos de objetos com cobertura visual")
 
 
