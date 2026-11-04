@@ -2,6 +2,8 @@
 
 ## Composição contínua e escala jogável (04/11/2026)
 
+- Download de textura não prova que o renderer criou o cenário. A regressão direta verifica chão e props dos sete mapas, com escala e profundidade; uma falha simulada no chão reproduziu a falta de fallback antes da guarda `textures.exists`. A viagem de navegador pelos sete destinos também passa a rodar em um passo separado do CI, com Dev limitado ao servidor temporário dessa execução.
+
 - A revisão remota encontrou `assert place(...)`/`assert put(...)`: com `python -O` essas chamadas desapareciam junto da validação. Chamadas e guardas das ferramentas agora usam condições/exceções explícitas; nove regressões Python cobrem também execução otimizada e falhas antes de qualquer gravação pública.
 - Remover toda a faixa de magenta apagava roxo legítimo; preservar toda região interna deixava fundo rosa entre folhas. A limpeza agora remove componentes conectados à borda ou a uma semente quase magenta, preservando as regiões roxas internas sem chave. Os 10.325 pixels roxos do pilar são preservados; Zelkova foi validada nas três escalas do teste e no WebP exportado. Prévia e alpha dos sólidos foram conferidos depois de reconstruir os assets.
 - Ao adicionar uma casa ao Rukongai, reservar apenas os pontos lógicos não bastava: o footprint também deve respeitar sólidos de objetos existentes. A colocação conflitante de (30,37) foi rejeitada, mantendo as árvores; Soul ficou com 50 props. Fachadas monumentais que continuam fora do mundo precisam de recorte explícito na prévia, sem reduzir arbitrariamente sua escala para caber no mapa.

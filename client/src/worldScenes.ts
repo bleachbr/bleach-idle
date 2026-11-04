@@ -36,7 +36,7 @@ export function preloadWorldScenes(scene: Phaser.Scene, version: number) {
 /** Objetos completos compartilham a profundidade dos pés dos personagens. */
 export function drawWorldScene(scene: Phaser.Scene, id: string): Phaser.GameObjects.GameObject[] | undefined {
   const map = scenes[id];
-  if (!map) return undefined;
+  if (!map || !scene.textures.exists(textureKey(map.ground))) return undefined;
   const objects: Phaser.GameObjects.GameObject[] = [
     scene.add.image(0, 0, textureKey(map.ground)).setOrigin(0).setDisplaySize(map.width, map.height).setDepth(-10),
   ];

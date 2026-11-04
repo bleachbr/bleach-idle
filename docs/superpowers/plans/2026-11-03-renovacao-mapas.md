@@ -1,5 +1,7 @@
 # Plano de renovação dos mapas
 
+**Registro histórico da primeira revisão (03/11/2026).** Este plano foi superado pelo redesenho autorizado de composição e caminhos. O escopo atual está no [PRD](../../features/renovacao-mapas/PRD-renovacao-mapas.md) e na [revisão de composição](../../features/renovacao-mapas/REVISAO-composicao.md): chão contínuo nos sete mapas e objetos completos separados. As restrições e o checklist abaixo documentam a etapa inicial.
+
 **Objetivo:** renovar a arte dos sete mapas preservando integralmente os layouts aprovados.
 **Arquitetura:** substituir apenas os pixels dos atlases existentes. Fontes geradas, objetos transparentes e catálogo de recortes ficam em art/maps/renewal. Cinco mapas ficam intactos; dois recebem somente as quatro flags de colisão por mapa aprovadas por Rafael, sem mover camadas ou objetos de lógica.
 **Tecnologias:** image_gen, Pillow, Phaser, Tiled JSON e Vitest.
