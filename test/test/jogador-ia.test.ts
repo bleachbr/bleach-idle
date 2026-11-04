@@ -118,7 +118,7 @@ test("changelogFor usa a revisão publicada e avisa quantos commits da main aind
   try {
     // produção em shas[1]; a main está em shas[3]; checkpoint anterior em shas[0]
     const c = changelogFor(dir, { previous: shas[0], head: shas[1], main: shas[3] });
-    const [noAr, aviso] = c.split("AVISO");
+    const [aviso, noAr] = c.split("\n---\n"); // o AVISO vem primeiro: o prompt do agente corta o texto em 3000 caracteres
     assert.match(noAr, /fix: no ar/);
     assert.doesNotMatch(noAr, /so na main A|so na main B/, "commit que a produção não tem não pode vir como novidade no ar");
     assert.match(aviso, /2 commits/);
@@ -152,4 +152,38 @@ test("prepareSource com revisão publicada conhecida usa essa revisão e não a 
   assert.match(src.origem, /revisão publicada/);
   assert.doesNotMatch(src.origem, /desconhecida/);
   assert.match(src.changelog, /AVISO: o servidor testado está em/); // a main tem ao menos 1 commit a mais
+});
+
+test("changelogFor avisa também quando a revisão testada não é ancestral da main (histórico divergente)", async () => {
+  const { changelogFor } = await import("../src/source.js");
+  const { dir, shas } = repoComCommits("feat: base");
+  const git = (...a: string[]) => execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", ...a], { cwd: dir, encoding: "utf8" }).trim();
+  try {
+    git("checkout", "-q", "-b", "producao"); writeFileSync(join(dir, "client.txt"), "p\n"); git("commit", "-qam", "fix: so na producao");
+    const head = git("rev-parse", "HEAD");
+    git("checkout", "-q", shas[0]); git("checkout", "-q", "-b", "outra-main"); writeFileSync(join(dir, "client.txt"), "m\n"); git("commit", "-qam", "feat: so na outra linha");
+    const main = git("rev-parse", "HEAD");
+    const c = changelogFor(dir, { head, main });
+    assert.match(c, /AVISO/);
+    assert.match(c, /não é ancestral da main/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("o prompt do agente não manda relatar como bug o que o AVISO diz que não está no ar", async () => {
+  const { readFileSync } = await import("node:fs");
+  const agent = readFileSync(new URL("../src/agent.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(agent, /Novidades da main/, "rótulo fixo 'da main' engana quando o código testado é a revisão publicada");
+  assert.match(agent, /AVISO/);
+});
+
+test("o AVISO fica no começo do changelog, onde o corte de 3000 caracteres do prompt não o alcança", async () => {
+  const { changelogFor } = await import("../src/source.js");
+  const msgs = ["feat: base", ...Array.from({ length: 70 }, (_, i) => `fix: mudança número ${i} com uma descrição bem comprida para encher o texto`), "feat: so na main"];
+  const { dir, shas } = repoComCommits(...msgs);
+  try {
+    const c = changelogFor(dir, { previous: shas[0], head: shas[shas.length - 2], main: shas[shas.length - 1] });
+    assert.ok(c.length > 3000, `o caso só vale com changelog longo (${c.length})`);
+    assert.match(c.slice(0, 3000), /AVISO/);
+    assert.match(c.slice(0, 3000), /1 commit atrás/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });

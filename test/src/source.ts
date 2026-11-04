@@ -44,11 +44,16 @@ export function changelogFor(repo: string, { previous, head, main }: { previous?
       + git(repo, "log", "--no-merges", "-n", "15", "--format=- %h %s", head);
   } else log = "Primeira sessão (sem checkpoint). Últimos commits do código testado:\n" + git(repo, "log", "--no-merges", "-n", "15", "--format=- %h %s", head);
 
-  if (head === main || !isAncestor(repo, head, main)) return log;
+  if (head === main) return log;
+  // o AVISO vem ANTES do log: o prompt do agente corta o changelog em 3000 caracteres (agent.ts) e o fim seria perdido
+  if (!isAncestor(repo, head, main)) {
+    return `AVISO: o servidor testado (${head.slice(0, 7)}) não é ancestral da main (${main.slice(0, 7)}): as linhas divergiram, então não dá para dizer quais commits da main faltam nele. `
+      + `Se algo descrito na main não existir no servidor, não relate como bug.\n---\n${log}`;
+  }
   const atraso = Number(git(repo, "rev-list", "--count", `${head}..${main}`));
   const faltam = git(repo, "log", "--no-merges", "-n", "10", "--format=- %h %s", `${head}..${main}`);
-  return `${log}\n\nAVISO: o servidor testado está em ${head.slice(0, 7)}, ${atraso} commit${atraso === 1 ? "" : "s"} atrás da main (${main.slice(0, 7)}). `
-    + `O que está abaixo AINDA NÃO ESTÁ NO AR: não relate como bug a ausência disso.\n${faltam}`;
+  return `AVISO: o servidor testado está em ${head.slice(0, 7)}, ${atraso} commit${atraso === 1 ? "" : "s"} atrás da main (${main.slice(0, 7)}). `
+    + `Os commits abaixo AINDA NÃO ESTÃO NO AR: não relate como bug a ausência deles.\n${faltam}\n---\n${log}`;
 }
 
 /** `deployedRevision`: com `targetUrl`, a revisão que o servidor remoto publicou (`fetchDeployedRevision`). Se faltar ou não
@@ -65,8 +70,8 @@ export function prepareSource(runsDir: string, local: boolean, targetUrl = "", d
   const head = publicada ?? sha;
   let changelog = changelogFor(REPO, { previous, head, main: sha });
   if (targetUrl && !publicada) {
-    changelog += `\n\nAVISO: não consegui descobrir a revisão publicada em ${targetUrl} (${deployedRevision ? "ela não existe no clone local; rode git fetch" : "GET /release falhou"}). `
-      + "O changelog acima é o da main e pode listar recursos que o servidor testado ainda não tem: não relate a ausência deles como bug.";
+    changelog = `AVISO: não consegui descobrir a revisão publicada em ${targetUrl} (${deployedRevision ? "ela não existe no clone local; rode git fetch" : "GET /release falhou"}). `
+      + `O changelog abaixo é o da main e pode listar recursos que o servidor testado ainda não tem: não relate a ausência deles como bug.\n---\n${changelog}`;
     origem += " (revisão publicada desconhecida)";
   } else if (publicada) origem = `remoto (${targetUrl}) na revisão publicada`;
 

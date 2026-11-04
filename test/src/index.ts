@@ -210,7 +210,7 @@ const sum = [
   `| :--- | ${results.map(() => ":---").join(" | ")} |`,
   ...cover,
   "",
-  "## Novidades da main",
+  `## Novidades até ${src.sha.slice(0, 7)}`,
   "",
   "```",
   src.changelog,
