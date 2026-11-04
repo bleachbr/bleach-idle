@@ -63,9 +63,9 @@ export function changelogFor(repo: string, { previous, head, main }: { previous?
 
 /** `deployedRevision`: com `targetUrl`, a revisão que o servidor remoto publicou (`fetchDeployedRevision`). Se faltar ou não
  * existir no clone local, o changelog cai na origin/main e o texto diz que não dá para garantir que o que está lá já foi ao ar. */
-export function prepareSource(runsDir: string, local: boolean, targetUrl = "", deployedRevision?: string): Source {
+export function prepareSource(runsDir: string, local: boolean, targetUrl = "", deployedRevision?: string, fetchMain: () => void = () => git(REPO, "fetch", "origin", "main", "--quiet")): Source {
   let origem = targetUrl ? `remoto (${targetUrl})` : "origin/main";
-  try { git(REPO, "fetch", "origin", "main", "--quiet"); }
+  try { fetchMain(); }
   catch { origem = targetUrl ? `remoto (${targetUrl})` : "origin/main (fetch falhou: usando a última versão já baixada)"; console.log("aviso: git fetch falhou; usando origin/main local"); }
   const sha = git(REPO, "rev-parse", "origin/main");
   const cpFile = join(runsDir, "checkpoint.json");

@@ -35,7 +35,7 @@ test("Game configura baseUrl padrão para localhost e aceita targetUrl remoto", 
 });
 
 test("prepareSource suporta targetUrl remoto sem exigir worktree local", () => {
-  const src = prepareSource("/tmp/mock-runs", false, "https://bleach.acoplum.com");
+  const src = prepareSource("/tmp/mock-runs", false, "https://bleach.acoplum.com", undefined, () => {});
   // sem a revisão publicada o cabeçalho do relatório avisa que o changelog é o da main (#342)
   assert.equal(src.origem, "remoto (https://bleach.acoplum.com) (revisão publicada desconhecida)");
   assert.match(src.changelog, /não consegui descobrir a revisão publicada/);
@@ -147,7 +147,7 @@ test("prepareSource com revisão publicada conhecida usa essa revisão e não a 
   let anterior: string;
   try { anterior = execFileSync("git", ["rev-parse", "origin/main~1"], { cwd: repo, encoding: "utf8" }).trim(); }
   catch { return t.skip("clone raso: sem origin/main~1"); }
-  const src = prep(mkdtempSync(join(tmpdir(), "bleach-ia-runs-")), false, "https://bleach.acoplum.com", anterior);
+  const src = prep(mkdtempSync(join(tmpdir(), "bleach-ia-runs-")), false, "https://bleach.acoplum.com", anterior, () => {});
   assert.equal(src.sha, anterior);
   assert.match(src.origem, /revisão publicada/);
   assert.doesNotMatch(src.origem, /desconhecida/);
@@ -206,9 +206,10 @@ test("sem a revisão publicada o checkpoint não deve ser gravado (a main não �
   const { prepareSource: prep } = await import("../src/source.js");
   const repo = new URL("../..", import.meta.url).pathname;
   const runs = () => mkdtempSync(join(tmpdir(), "bleach-ia-runs-"));
-  assert.equal(prep(runs(), false, "https://bleach.acoplum.com").checkpointConfiavel, false);
-  assert.equal(prep(runs(), false, "https://bleach.acoplum.com", "0".repeat(40)).checkpointConfiavel, false); // SHA que o clone não conhece
+  const semRede = () => {}; // sem git fetch de rede: o teste não pode depender do remoto (pode travar até 3 min)
+  assert.equal(prep(runs(), false, "https://bleach.acoplum.com", undefined, semRede).checkpointConfiavel, false);
+  assert.equal(prep(runs(), false, "https://bleach.acoplum.com", "0".repeat(40), semRede).checkpointConfiavel, false); // SHA que o clone não conhece
   let anterior = "";
   try { anterior = execFileSync("git", ["rev-parse", "origin/main~1"], { cwd: repo, encoding: "utf8" }).trim(); } catch { return; }
-  assert.equal(prep(runs(), false, "https://bleach.acoplum.com", anterior).checkpointConfiavel, true);
+  assert.equal(prep(runs(), false, "https://bleach.acoplum.com", anterior, semRede).checkpointConfiavel, true);
 });
