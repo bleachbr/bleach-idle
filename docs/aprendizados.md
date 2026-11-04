@@ -2,6 +2,8 @@
 
 ## Composição contínua e escala jogável (04/11/2026)
 
+- Minimap e hitboxes precisam acompanhar a apresentação: o minimapa agora reduz chão/props novos, sem interpretar a camada oculta de colisão como arte, e os portais usam os limites do sprite para o clique. Teleporte atualiza profundidade junto da posição. Se qualquer textura de cenário falha, a entrada fica pausada com nova tentativa explícita; não se oferece o atlas antigo com colisões do layout novo. No E2E de falha, o service worker é bloqueado somente nesse caso, pois respostas do worker contornavam a interceptação `page.route` e ocultavam a falha simulada.
+
 - Download de textura não prova que o renderer criou o cenário. A regressão direta verifica chão e props dos sete mapas, com escala e profundidade; uma falha simulada no chão reproduziu a falta de fallback antes da guarda `textures.exists`. A viagem de navegador pelos sete destinos também passa a rodar em um passo separado do CI, com Dev limitado ao servidor temporário dessa execução.
 
 - A revisão remota encontrou `assert place(...)`/`assert put(...)`: com `python -O` essas chamadas desapareciam junto da validação. Chamadas e guardas das ferramentas agora usam condições/exceções explícitas; nove regressões Python cobrem também execução otimizada e falhas antes de qualquer gravação pública.

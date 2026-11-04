@@ -1,7 +1,7 @@
 // Cena principal: desenha o mapa, espelha o estado do servidor e envia intenções.
 // Nada de simulação aqui: posições, dano e XP vêm todos do servidor.
 import Phaser from "phaser";
-import { drawWorldScene, preloadWorldScenes } from "./worldScenes";
+import { drawWorldScene, drawWorldSceneMinimap, missingWorldSceneTextures, preloadWorldScenes, showWorldSceneLoadFailure } from "./worldScenes";
 import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
 import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, titleText, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, npcById, type GameMap, type QuestState } from "../../shared/src";
@@ -278,6 +278,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
+    if (missingWorldSceneTextures(this).length) {
+      showWorldSceneLoadFailure();
+      this.scene.pause();
+      return;
+    }
     for (const id of MAP_IDS) this.maps[id] = parseMap(id, this.cache.tilemap.get(`map_${id}`).data);
     this.cameras.main.setRoundPixels(true);
     this.showMap(this.room.state.players.get(this.myId)?.map ?? HOME_MAP);
@@ -425,6 +430,7 @@ export class GameScene extends Phaser.Scene {
     v.lastMoveAt = this.time.now;
     if (far) {
       v.c.setPosition(px(x), py(y));
+      v.c.setDepth(py(y));
       if (v.id === this.myId) {
         // teleporte: a câmera pula junto, sem atravessar o mapa deslizando
         const cam = this.cameras.main;
@@ -1067,41 +1073,43 @@ export class GameScene extends Phaser.Scene {
   /** missões do Kisuke, para marcar onde caçar o alvo (a mesma mensagem que o painel de missões recebe) */
   private quests: QuestState = { active: {}, done: [] };
 
-  /** Fundo do minimapa: 1 pixel por tile, na cor média do tile mais alto (sem a camada "acima"). */
+  /** Fundo do minimapa: composição contínua reduzida; mapas legados usam a cor média dos tiles visíveis, sem "acima". */
   private buildMinimap(id: string) {
     const c = this.minimap;
     if (!c) return;
     const data = this.cache.tilemap.get(`map_${id}`).data;
-    const img = this.textures.get(`tiles_${id}`).getSourceImage() as HTMLImageElement;
-    const src = document.createElement("canvas");
-    src.width = img.width;
-    src.height = img.height;
-    const sctx = src.getContext("2d", { willReadFrequently: true })!;
-    sctx.drawImage(img, 0, 0);
-    const cols = img.width / TILE;
-    const avg = new Map<number, [number, number, number]>();
-    const colorOf = (gid: number) => {
-      if (!avg.has(gid)) {
-        const t = gid - 1;
-        const px = sctx.getImageData((t % cols) * TILE, Math.floor(t / cols) * TILE, TILE, TILE).data;
-        let r = 0, g = 0, b = 0, n = 0;
-        for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 128) { r += px[i]; g += px[i + 1]; b += px[i + 2]; n++; }
-        avg.set(gid, n ? [r / n, g / n, b / n] : [0, 0, 0]);
-      }
-      return avg.get(gid)!;
-    };
-    const out = new ImageData(data.width, data.height);
-    const layers = (data.layers as any[]).filter((l) => l.type === "tilelayer" && l.name !== "acima");
-    for (let i = 0; i < data.width * data.height; i++) {
-      let gid = 0;
-      for (const l of layers) if (l.data[i]) gid = l.data[i] & 0x1fffffff;
-      const [r, g, b] = gid ? colorOf(gid) : [0, 0, 0];
-      out.data.set([r, g, b, 255], i * 4);
-    }
     const base = document.createElement("canvas");
     base.width = data.width;
     base.height = data.height;
-    base.getContext("2d")!.putImageData(out, 0, 0);
+    if (!drawWorldSceneMinimap(this, id, base)) {
+      const img = this.textures.get(`tiles_${id}`).getSourceImage() as HTMLImageElement;
+      const src = document.createElement("canvas");
+      src.width = img.width;
+      src.height = img.height;
+      const sctx = src.getContext("2d", { willReadFrequently: true })!;
+      sctx.drawImage(img, 0, 0);
+      const cols = img.width / TILE;
+      const avg = new Map<number, [number, number, number]>();
+      const colorOf = (gid: number) => {
+        if (!avg.has(gid)) {
+          const t = gid - 1;
+          const px = sctx.getImageData((t % cols) * TILE, Math.floor(t / cols) * TILE, TILE, TILE).data;
+          let r = 0, g = 0, b = 0, n = 0;
+          for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 128) { r += px[i]; g += px[i + 1]; b += px[i + 2]; n++; }
+          avg.set(gid, n ? [r / n, g / n, b / n] : [0, 0, 0]);
+        }
+        return avg.get(gid)!;
+      };
+      const out = new ImageData(data.width, data.height);
+      const layers = (data.layers as any[]).filter((l) => l.type === "tilelayer" && l.visible !== false && l.name !== "acima");
+      for (let i = 0; i < data.width * data.height; i++) {
+        let gid = 0;
+        for (const l of layers) if (l.data[i]) gid = l.data[i] & 0x1fffffff;
+        const [r, g, b] = gid ? colorOf(gid) : [0, 0, 0];
+        out.data.set([r, g, b, 255], i * 4);
+      }
+      base.getContext("2d")!.putImageData(out, 0, 0);
+    }
     this.minimapBase = base;
     // o canvas fica MINIMAP_K vezes maior que o mapa, para os marcadores terem forma (o CSS mantém a largura na tela)
     c.width = data.width * MINIMAP_K;

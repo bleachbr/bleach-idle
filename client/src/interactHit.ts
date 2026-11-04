@@ -1,9 +1,10 @@
 // Clique e tecla de interação com loja, depot e portal (#26). Puro, para testar sem Phaser.
 // O servidor continua decidindo tudo (`interact` em WorldRoom.ts confere a distância e anda até lá).
 import { TILE, INTERACT_RANGE, chebyshev, type GameMap } from "../../shared/src";
+import { worldScenePortalAt } from "./worldScenes";
 
 export type InteractKind = "shop" | "depot" | "travel";
-type Places = Pick<GameMap, "shop" | "depot" | "gate">;
+type Places = Pick<GameMap, "shop" | "depot" | "gate"> & Partial<Pick<GameMap, "id">>;
 
 /** desenho do Kisuke (npc_shop.png, 48 x 48) com a base no pé do tile, mais o nome e aviso flutuante por cima */
 const SHOP_W = 56, SHOP_H = 48 + 36;
@@ -19,7 +20,7 @@ export function interactAt(m: Places, wx: number, wy: number): InteractKind | nu
     if ((Math.abs(wx - cx) <= SHOP_W / 2 && wy <= foot && wy >= foot - SHOP_H) || (tx === m.shop.x && ty === m.shop.y)) return "shop";
   }
   if (m.depot && tx === m.depot.x && ty === m.depot.y) return "depot";
-  if (m.gate && tx === m.gate.x && ty === m.gate.y) return "travel";
+  if (m.gate && (worldScenePortalAt(m.id, wx, wy) || (tx === m.gate.x && ty === m.gate.y))) return "travel";
   return null;
 }
 

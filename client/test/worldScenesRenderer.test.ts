@@ -20,6 +20,13 @@ describe("renderização dos cenários contínuos", () => {
     expect(image).not.toHaveBeenCalled();
   });
 
+  it("não cria uma cena parcial quando falta a textura de um prop", () => {
+    const { scene, image } = renderer(true);
+    vi.mocked(scene.textures.exists).mockImplementation((key) => key !== `world-scene:${scenes.karakura.props[0].image}`);
+    expect(drawWorldScene(scene, "karakura")).toBeUndefined();
+    expect(image).not.toHaveBeenCalled();
+  });
+
   it("cria o chão e cada prop dos sete mapas com a escala e profundidade previstas", () => {
     for (const [id, map] of Object.entries(scenes)) {
       const { scene, image } = renderer(true);

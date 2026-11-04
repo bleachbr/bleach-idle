@@ -45,6 +45,13 @@ describe("clique na loja, no depot e no portal (#26)", () => {
   it("mapa sem loja nem depot não abre nada", () => {
     expect(interactAt({}, ...center(18, 12))).toBeNull();
   });
+
+  it("abre viagem nas bordas e no topo do Senkaimon ampliado", () => {
+    expect(interactAt(karakura, 498, 360)).toBe("travel");
+    expect(interactAt(karakura, 558, 360)).toBe("travel");
+    expect(interactAt(karakura, 528, 294)).toBe("travel");
+    expect(interactAt(karakura, 495, 360)).toBeNull();
+  });
 });
 
 describe("ordem do clique: outro jogador, depois loja, depot e portal (#26)", () => {

@@ -4,6 +4,21 @@ import { TRAVEL } from "../../shared/src/social";
 import { readFileSync } from "node:fs";
 import { newPlayer } from "./helpers";
 
+test.describe("falha no download do cenário", () => {
+  // O worker atende fetch por conta própria e contorna page.route; esta falha
+  // precisa atingir o download do Phaser, sem uma resposta válida do cache.
+  test.use({ serviceWorkers: "block" });
+  test("falha de imagem do cenário bloqueia entrada e oferece nova tentativa", async ({ page }) => {
+    let blocked = 0;
+    await page.route(/\/maps\/scenes\/depot\.webp\?/, (route) => { blocked++; return route.abort(); });
+    await newPlayer(page);
+    await expect(page.locator("#game-loading")).toContainText("Não foi possível carregar o cenário");
+    await expect(page.locator("#game-loading")).not.toHaveClass(/ready/);
+    await expect(page.getByRole("button", { name: "Tentar novamente", exact: true })).toBeVisible();
+    expect(blocked).toBeGreaterThan(0);
+  });
+});
+
 test("carrega os sete atlases por URLs versionadas e captura Karakura", async ({ page }, info) => {
   // Simula a URL antiga indisponível: a primeira visita após uma atualização
   // precisa carregar os pixels novos, mesmo com um worker anterior no navegador.
