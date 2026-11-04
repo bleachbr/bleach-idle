@@ -273,6 +273,9 @@ def main():
                           "height": Image.open(path).height} for path in sorted((HERE / "props").glob("*.png"))]
     manifest_text = json.dumps(manifest, ensure_ascii=False, indent=2)+"\n"
     # Só publica após validar fontes, dimensões, previews e metadados de TODOS os atlases.
+    # A gravação do conjunto não é transacional: se falhar ou for interrompida,
+    # execute novamente a montagem COMPLETA antes de servir/publicar esses arquivos.
+    # Nunca execute esta ferramenta diretamente no diretório servido em produção.
     for path, content in encoded.items():
         path.write_bytes(content)
     (HERE / "manifest.json").write_text(manifest_text, encoding="utf-8")
