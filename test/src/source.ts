@@ -9,7 +9,9 @@ import { fileURLToPath } from "node:url";
 export const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const git = (cwd: string, ...args: string[]) => execFileSync("git", args, { cwd, encoding: "utf8", timeout: 60_000, maxBuffer: 8e6 }).trim();
 
-export type Source = { dir: string; sha: string; previous?: string; changelog: string; origem: string };
+/** `checkpointConfiavel`: `sha` é de fato o código testado. Falso quando a revisão publicada não pôde ser descoberta e o
+ * changelog caiu na main: gravar o checkpoint aí marcaria como "já testado" um commit que o servidor nem tem. */
+export type Source = { dir: string; sha: string; previous?: string; changelog: string; origem: string; checkpointConfiavel: boolean };
 
 /** SHA completo (40 hex) ou nada: o valor vem de um servidor remoto e vai parar numa linha de comando do git. */
 export function parseRevision(body: unknown): string | undefined {
@@ -51,9 +53,12 @@ export function changelogFor(repo: string, { previous, head, main }: { previous?
       + `Se algo descrito na main não existir no servidor, não relate como bug.\n---\n${log}`;
   }
   const atraso = Number(git(repo, "rev-list", "--count", `${head}..${main}`));
-  const faltam = git(repo, "log", "--no-merges", "-n", "10", "--format=- %h %s", `${head}..${main}`);
+  // lista curta e com linhas cortadas: assunto comprido não pode empurrar o log para fora dos 3000 caracteres do prompt
+  const faltam = git(repo, "log", "--no-merges", "-n", "10", "--format=- %h %s", `${head}..${main}`).split("\n").map((l) => l.slice(0, 110)).join("\n");
+  const listados = faltam ? faltam.split("\n").length : 0;
   return `AVISO: o servidor testado está em ${head.slice(0, 7)}, ${atraso} commit${atraso === 1 ? "" : "s"} atrás da main (${main.slice(0, 7)}). `
-    + `Os commits abaixo AINDA NÃO ESTÃO NO AR: não relate como bug a ausência deles.\n${faltam}\n---\n${log}`;
+    + `Todos os ${atraso} commits entre eles AINDA NÃO ESTÃO NO AR, também os que não aparecem aqui; não relate como bug a ausência deles. `
+    + `${listados < atraso ? `Os ${listados} mais recentes` : "Eles"}:\n${faltam}\n---\n${log}`;
 }
 
 /** `deployedRevision`: com `targetUrl`, a revisão que o servidor remoto publicou (`fetchDeployedRevision`). Se faltar ou não
@@ -75,15 +80,15 @@ export function prepareSource(runsDir: string, local: boolean, targetUrl = "", d
     origem += " (revisão publicada desconhecida)";
   } else if (publicada) origem = `remoto (${targetUrl}) na revisão publicada`;
 
-  if (targetUrl) return { dir: REPO, sha: head, previous, changelog, origem };
-  if (local) return { dir: REPO, sha, previous, changelog, origem: "árvore local (--local)" };
+  if (targetUrl) return { dir: REPO, sha: head, previous, changelog, origem, checkpointConfiavel: !!publicada };
+  if (local) return { dir: REPO, sha, previous, changelog, origem: "árvore local (--local)", checkpointConfiavel: true };
 
   // checkout isolado da main (git worktree) em tmpdir para não entrar no glob do Vitest da raiz
   const dir = join(tmpdir(), "bleach-ia-main");
   if (existsSync(join(dir, ".git"))) git(dir, "checkout", "--detach", "--force", sha);
   else git(REPO, "worktree", "add", "--detach", dir, sha);
   if (!existsSync(join(dir, "node_modules"))) symlinkSync(join(REPO, "node_modules"), join(dir, "node_modules"));
-  return { dir, sha, previous, changelog, origem };
+  return { dir, sha, previous, changelog, origem, checkpointConfiavel: true };
 }
 
 export function saveCheckpoint(runsDir: string, sha: string) {

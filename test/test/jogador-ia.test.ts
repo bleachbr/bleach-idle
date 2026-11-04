@@ -173,7 +173,7 @@ test("o prompt do agente não manda relatar como bug o que o AVISO diz que não 
   const { readFileSync } = await import("node:fs");
   const agent = readFileSync(new URL("../src/agent.ts", import.meta.url), "utf8");
   assert.doesNotMatch(agent, /Novidades da main/, "rótulo fixo 'da main' engana quando o código testado é a revisão publicada");
-  assert.match(agent, /AVISO/);
+  assert.match(agent, /MENOS o que o AVISO do texto disser que ainda não está no ar/); // a exceção inteira, não só a palavra
 });
 
 test("o AVISO fica no começo do changelog, onde o corte de 3000 caracteres do prompt não o alcança", async () => {
@@ -186,4 +186,29 @@ test("o AVISO fica no começo do changelog, onde o corte de 3000 caracteres do p
     assert.match(c.slice(0, 3000), /AVISO/);
     assert.match(c.slice(0, 3000), /1 commit atrás/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("o AVISO limita a lista do que falta e diz quantos commits faltam de fato", async () => {
+  const { changelogFor } = await import("../src/source.js");
+  const longo = (i: number) => `feat: recurso ${i} ${"descrição muito comprida ".repeat(8)}`;
+  const { dir, shas } = repoComCommits("feat: base", "fix: no ar", ...Array.from({ length: 40 }, (_, i) => longo(i)));
+  try {
+    const c = changelogFor(dir, { previous: shas[0], head: shas[1], main: shas[shas.length - 1] });
+    const aviso = c.split("\n---\n")[0];
+    assert.match(aviso, /Todos os 40 commits/, "o total real, não só os listados");
+    assert.ok(aviso.split("\n").filter((l) => l.startsWith("- ")).length <= 10, "no máximo 10 linhas");
+    assert.ok(aviso.length <= 1500, `aviso grande demais (${aviso.length}) e come o espaço do changelog no prompt`);
+    assert.match(c.slice(0, 3000), /fix: no ar/, "o changelog do que está no ar ainda cabe no corte do prompt");
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("sem a revisão publicada o checkpoint não deve ser gravado (a main não é o que o servidor roda)", async () => {
+  const { prepareSource: prep } = await import("../src/source.js");
+  const repo = new URL("../..", import.meta.url).pathname;
+  const runs = () => mkdtempSync(join(tmpdir(), "bleach-ia-runs-"));
+  assert.equal(prep(runs(), false, "https://bleach.acoplum.com").checkpointConfiavel, false);
+  assert.equal(prep(runs(), false, "https://bleach.acoplum.com", "0".repeat(40)).checkpointConfiavel, false); // SHA que o clone não conhece
+  let anterior = "";
+  try { anterior = execFileSync("git", ["rev-parse", "origin/main~1"], { cwd: repo, encoding: "utf8" }).trim(); } catch { return; }
+  assert.equal(prep(runs(), false, "https://bleach.acoplum.com", anterior).checkpointConfiavel, true);
 });

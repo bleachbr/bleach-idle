@@ -171,7 +171,8 @@ try {
 } finally {
   await game.stop();
 }
-if (started) saveCheckpoint(runsDir, src.sha);
+if (started && src.checkpointConfiavel) saveCheckpoint(runsDir, src.sha);
+else if (started) console.log("checkpoint não gravado: a revisão publicada era desconhecida, então a main não vale como código testado");
 
 // ---------- relatórios ----------
 for (const r of results) writeFileSync(join(runDir, r.persona, "relatorio.md"), reportOf(r));
