@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { Agent, AREAS, Memoria, PERSONAS, finalReview, type Finding, type Review } from "./agent.js";
 import { Game, Player } from "./game.js";
 import { MODEL, fmtCost, requireKey } from "./llm.js";
-import { prepareSource, saveCheckpoint } from "./source.js";
+import { prepareSource, saveCheckpoint, fetchDeployedRevision } from "./source.js";
 
 requireKey();
 const arg = (name: string, def: string) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? (process.argv[i + 1] ?? def) : def; };
@@ -35,7 +35,10 @@ const stamp = new Date().toISOString().replace(/[:T]/g, "-").slice(0, 16);
 const runDir = join(runsDir, stamp);
 
 const dbFile = join(runsDir, "jogo.sqlite"); // contas persistentes entre rodadas locais
-const src = prepareSource(runsDir, flag("local"), TARGET_URL);
+// servidor remoto: o changelog é o do que ele está rodando (/release), não o da main (#342)
+const deployed = TARGET_URL ? await fetchDeployedRevision(TARGET_URL) : undefined;
+if (TARGET_URL) console.log(deployed ? `revisão publicada em ${TARGET_URL}: ${deployed.slice(0, 7)}` : `aviso: não consegui ler ${TARGET_URL}/release; o changelog será o da main, com aviso`);
+const src = prepareSource(runsDir, flag("local"), TARGET_URL, deployed);
 console.log(`código: ${src.origem} @ ${src.sha.slice(0, 7)}${src.previous ? ` (checkpoint ${src.previous.slice(0, 7)})` : " (sem checkpoint)"}`);
 
 const game = new Game(src.dir, dbFile, TARGET_URL, ENABLE_DEV, COMPRESS_VIDEO);
@@ -168,7 +171,8 @@ try {
 } finally {
   await game.stop();
 }
-if (started) saveCheckpoint(runsDir, src.sha);
+if (started && src.checkpointConfiavel) saveCheckpoint(runsDir, src.sha);
+else if (started) console.log("checkpoint não gravado: a revisão publicada era desconhecida, então a main não vale como código testado");
 
 // ---------- relatórios ----------
 for (const r of results) writeFileSync(join(runDir, r.persona, "relatorio.md"), reportOf(r));
@@ -207,7 +211,7 @@ const sum = [
   `| :--- | ${results.map(() => ":---").join(" | ")} |`,
   ...cover,
   "",
-  "## Novidades da main",
+  `## Novidades até ${src.sha.slice(0, 7)}`,
   "",
   "```",
   src.changelog,

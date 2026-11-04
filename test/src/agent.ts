@@ -97,7 +97,7 @@ export class Agent {
       this.focus ? `Foco desta sessão: ${this.focus}` : "",
       `Passo ${n} (${remaining}). Conta: login "${this.acct.login}", senha "${this.acct.pass}". Nome do personagem: "${this.acct.char}". ${this.accountExists ? "A conta e o personagem JÁ EXISTEM de sessões anteriores: apenas entre (login) e jogue o personagem existente; só crie se o login falhar." : "Conta nova: crie a conta e o personagem; se a conta já existir, faça login direto."}`,
       `FASE: ${this.phase}`,
-      `Novidades da main (testar quando fizer sentido; se algo descrito não existir ou não funcionar, registre):\n${this.changelog.slice(0, 3000)}`,
+      `Novidades do código testado (testar quando fizer sentido; se algo descrito aqui não existir ou não funcionar, registre, MENOS o que o AVISO do texto disser que ainda não está no ar):\n${this.changelog.slice(0, 3000)}`,
       `Objetivo atual: ${this.objective}`,
       this.same >= 2 ? `ATENÇÃO: a tela está IGUAL há ${this.same} passos. Se não é esperado (ex.: caçando), mude de estratégia e registre como possível bug/UX se parecer travado.` : "",
       `Áreas ainda não experimentadas: ${Object.keys(AREAS).filter((a) => !this.covered.has(a) && !(this.mem.data.cobertura[a] > 0)).map((a) => `${a} (${AREAS[a]})`).join("; ") || "todas"}`,

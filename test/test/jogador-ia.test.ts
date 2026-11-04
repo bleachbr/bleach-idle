@@ -35,8 +35,10 @@ test("Game configura baseUrl padrão para localhost e aceita targetUrl remoto", 
 });
 
 test("prepareSource suporta targetUrl remoto sem exigir worktree local", () => {
-  const src = prepareSource("/tmp/mock-runs", false, "https://bleach.acoplum.com");
-  assert.equal(src.origem, "remoto (https://bleach.acoplum.com)");
+  const src = prepareSource("/tmp/mock-runs", false, "https://bleach.acoplum.com", undefined, () => {});
+  // sem a revisão publicada o cabeçalho do relatório avisa que o changelog é o da main (#342)
+  assert.equal(src.origem, "remoto (https://bleach.acoplum.com) (revisão publicada desconhecida)");
+  assert.match(src.changelog, /não consegui descobrir a revisão publicada/);
   assert.ok(src.dir);
   assert.ok(src.sha);
 });
@@ -75,4 +77,151 @@ test("compressVideoToMp4 comprime WebM para MP4 WhatsApp e apaga o original", (t
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
+});
+
+// #342: com --prod o changelog vem da revisão publicada (GET /release), não da origin/main. Sem rede e sem relógio:
+// um repositório git temporário com commits conhecidos e um fetch falso.
+function repoComCommits(...msgs: string[]): { dir: string; shas: string[] } {
+  const dir = mkdtempSync(join(tmpdir(), "bleach-ia-repo-"));
+  const git = (...a: string[]) => execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", ...a], { cwd: dir, encoding: "utf8" }).trim();
+  git("init", "-q", "-b", "main");
+  const shas = msgs.map((m, i) => {
+    writeFileSync(join(dir, "client.txt"), `${i}\n`);
+    git("add", "."); git("commit", "-q", "-m", m);
+    return git("rev-parse", "HEAD");
+  });
+  return { dir, shas };
+}
+
+test("parseRevision só aceita SHA completo vindo do /release", async () => {
+  const { parseRevision } = await import("../src/source.js");
+  const sha = "2432a43699876f3c273002644d337a3a7b8594a7";
+  assert.equal(parseRevision({ revision: sha }), sha);
+  assert.equal(parseRevision({ revision: sha.toUpperCase() }), sha);
+  for (const ruim of [undefined, null, {}, { revision: "" }, { revision: "abc" }, { revision: "--upload-pack=x" }, { revision: 42 }, { revision: `${sha}0` }, "texto"])
+    assert.equal(parseRevision(ruim), undefined, JSON.stringify(ruim));
+});
+
+test("fetchDeployedRevision lê a revisão publicada e devolve undefined se a rede ou o corpo falharem", async () => {
+  const { fetchDeployedRevision } = await import("../src/source.js");
+  const sha = "2432a43699876f3c273002644d337a3a7b8594a7";
+  const ok = async (url: string) => { assert.equal(url, "https://x.test/release"); return new Response(JSON.stringify({ revision: sha, entries: [] })); };
+  assert.equal(await fetchDeployedRevision("https://x.test/", ok), sha); // barra final não duplica
+  assert.equal(await fetchDeployedRevision("https://x.test", async () => new Response("<html>", { status: 200 })), undefined);
+  assert.equal(await fetchDeployedRevision("https://x.test", async () => new Response("{}", { status: 500 })), undefined);
+  assert.equal(await fetchDeployedRevision("https://x.test", async () => { throw new Error("offline"); }), undefined);
+});
+
+test("changelogFor usa a revisão publicada e avisa quantos commits da main ainda não estão no ar", async () => {
+  const { changelogFor } = await import("../src/source.js");
+  const { dir, shas } = repoComCommits("feat: base", "fix: no ar", "feat: so na main A", "feat: so na main B");
+  try {
+    // produção em shas[1]; a main está em shas[3]; checkpoint anterior em shas[0]
+    const c = changelogFor(dir, { previous: shas[0], head: shas[1], main: shas[3] });
+    const [aviso, noAr] = c.split("\n---\n"); // o AVISO vem primeiro: o prompt do agente corta o texto em 3000 caracteres
+    assert.match(noAr, /fix: no ar/);
+    assert.doesNotMatch(noAr, /so na main A|so na main B/, "commit que a produção não tem não pode vir como novidade no ar");
+    assert.match(aviso, /2 commits/);
+    assert.match(aviso, /so na main A/); // o aviso diz o que ainda não está no ar, para o agente ignorar
+    assert.match(aviso, /so na main B/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("changelogFor sem atraso não avisa, e checkpoint que não é ancestral cai nos últimos commits", async () => {
+  const { changelogFor } = await import("../src/source.js");
+  const { dir, shas } = repoComCommits("feat: base", "fix: um", "fix: dois");
+  try {
+    assert.doesNotMatch(changelogFor(dir, { previous: shas[0], head: shas[2], main: shas[2] }), /AVISO/);
+    assert.match(changelogFor(dir, { previous: shas[2], head: shas[2], main: shas[2] }), /Sem mudanças/);
+    // a produção voltou para uma revisão mais antiga que o checkpoint: nada de intervalo invertido
+    const volta = changelogFor(dir, { previous: shas[2], head: shas[1], main: shas[2] });
+    assert.match(volta, /não é ancestral|anterior à/i);
+    assert.match(volta, /fix: um/);
+    assert.match(volta, /AVISO/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("prepareSource com revisão publicada conhecida usa essa revisão e não a origin/main", async (t) => {
+  const { prepareSource: prep } = await import("../src/source.js");
+  const repo = new URL("../..", import.meta.url).pathname;
+  let anterior: string;
+  try { anterior = execFileSync("git", ["rev-parse", "origin/main~1"], { cwd: repo, encoding: "utf8" }).trim(); }
+  catch { return t.skip("clone raso: sem origin/main~1"); }
+  const src = prep(mkdtempSync(join(tmpdir(), "bleach-ia-runs-")), false, "https://bleach.acoplum.com", anterior, () => {});
+  assert.equal(src.sha, anterior);
+  assert.match(src.origem, /revisão publicada/);
+  assert.doesNotMatch(src.origem, /desconhecida/);
+  assert.match(src.changelog, /AVISO: o servidor testado está em/); // a main tem ao menos 1 commit a mais
+});
+
+test("changelogFor avisa também quando a revisão testada não é ancestral da main (histórico divergente)", async () => {
+  const { changelogFor } = await import("../src/source.js");
+  const { dir, shas } = repoComCommits("feat: base");
+  const git = (...a: string[]) => execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", ...a], { cwd: dir, encoding: "utf8" }).trim();
+  try {
+    git("checkout", "-q", "-b", "producao"); writeFileSync(join(dir, "client.txt"), "p\n"); git("commit", "-qam", "fix: so na producao");
+    const head = git("rev-parse", "HEAD");
+    git("checkout", "-q", shas[0]); git("checkout", "-q", "-b", "outra-main"); writeFileSync(join(dir, "client.txt"), "m\n"); git("commit", "-qam", "feat: so na outra linha");
+    const main = git("rev-parse", "HEAD");
+    const c = changelogFor(dir, { head, main });
+    assert.match(c, /AVISO/);
+    assert.match(c, /não é ancestral da main/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("o prompt do agente não manda relatar como bug o que o AVISO diz que não está no ar", async () => {
+  const { readFileSync } = await import("node:fs");
+  const agent = readFileSync(new URL("../src/agent.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(agent, /Novidades da main/, "rótulo fixo 'da main' engana quando o código testado é a revisão publicada");
+  assert.match(agent, /MENOS o que o AVISO do texto disser que ainda não está no ar/); // a exceção inteira, não só a palavra
+});
+
+test("o AVISO fica no começo do changelog, onde o corte de 3000 caracteres do prompt não o alcança", async () => {
+  const { changelogFor } = await import("../src/source.js");
+  const msgs = ["feat: base", ...Array.from({ length: 70 }, (_, i) => `fix: mudança número ${i} com uma descrição bem comprida para encher o texto`), "feat: so na main"];
+  const { dir, shas } = repoComCommits(...msgs);
+  try {
+    const c = changelogFor(dir, { previous: shas[0], head: shas[shas.length - 2], main: shas[shas.length - 1] });
+    assert.ok(c.length > 3000, `o caso só vale com changelog longo (${c.length})`);
+    assert.match(c.slice(0, 3000), /AVISO/);
+    assert.match(c.slice(0, 3000), /1 commit atrás/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("o AVISO limita a lista do que falta e diz quantos commits faltam de fato", async () => {
+  const { changelogFor } = await import("../src/source.js");
+  const longo = (i: number) => `feat: recurso ${i} ${"descrição muito comprida ".repeat(8)}`;
+  const { dir, shas } = repoComCommits("feat: base", "fix: no ar", ...Array.from({ length: 40 }, (_, i) => longo(i)));
+  try {
+    const c = changelogFor(dir, { previous: shas[0], head: shas[1], main: shas[shas.length - 1] });
+    const aviso = c.split("\n---\n")[0];
+    assert.match(aviso, /Todos os 40 commits/, "o total real, não só os listados");
+    assert.ok(aviso.split("\n").filter((l) => l.startsWith("- ")).length <= 10, "no máximo 10 linhas");
+    assert.ok(aviso.length <= 1500, `aviso grande demais (${aviso.length}) e come o espaço do changelog no prompt`);
+    assert.match(c.slice(0, 3000), /fix: no ar/, "o changelog do que está no ar ainda cabe no corte do prompt");
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("sem a revisão publicada o checkpoint não deve ser gravado (a main não é o que o servidor roda)", async () => {
+  const { prepareSource: prep } = await import("../src/source.js");
+  const repo = new URL("../..", import.meta.url).pathname;
+  const runs = () => mkdtempSync(join(tmpdir(), "bleach-ia-runs-"));
+  const semRede = () => {}; // sem git fetch de rede: o teste não pode depender do remoto (pode travar até 3 min)
+  assert.equal(prep(runs(), false, "https://bleach.acoplum.com", undefined, semRede).checkpointConfiavel, false);
+  assert.equal(prep(runs(), false, "https://bleach.acoplum.com", "0".repeat(40), semRede).checkpointConfiavel, false); // SHA que o clone não conhece
+  let anterior = "";
+  try { anterior = execFileSync("git", ["rev-parse", "origin/main~1"], { cwd: repo, encoding: "utf8" }).trim(); } catch { return; }
+  assert.equal(prep(runs(), false, "https://bleach.acoplum.com", anterior, semRede).checkpointConfiavel, true);
+});
+
+test("produção adiantada da main (main é ancestral da revisão testada) não vira falso 'divergente'", async () => {
+  const { changelogFor } = await import("../src/source.js");
+  // main local ficou para trás (git fetch falhou); a revisão publicada tem a main inteira e mais um commit
+  const { dir, shas } = repoComCommits("feat: base", "feat: main local", "fix: já no ar, além da main local");
+  try {
+    const c = changelogFor(dir, { head: shas[2], main: shas[1] });
+    assert.doesNotMatch(c, /linhas divergiram|não é ancestral da main/, "produção à frente da main não é histórico divergente");
+    assert.match(c, /adiantad|à frente/i); // aviso específico: a main local pode estar velha
+    assert.match(c, /fix: já no ar/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
