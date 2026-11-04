@@ -2,6 +2,8 @@
 
 ## Cenários contínuos — 04/11/2026
 
+Após corrigir os apontamentos da revisão: reconstruídos atlases, props e cenas; nove regressões Python passaram em modo normal e `-O`, além de tipos, 478 Vitest, build, cobertura dos sólidos dos sete mapas, regressão Pillow e dez E2E (44,7 s; uma captura opt-in ignorada). Soul tem 50 props, sem a casa sobreposta às árvores. As 44 imagens de cena somam agora 7.134.386 bytes; os sete atlases, 1.901.522 bytes. Estimativa RGBA das cenas permanece 89.758.720 bytes. Valores abaixo preservam o histórico de medições anteriores.
+
 Pré-publicação autorizada por Rafael: integrada `origin/main` em `9ba1211`, sem conflitos; nota de atualização dos sete cenários em `shared/src/releases.ts`. Tipos, 478 testes em 84 arquivos e build aprovados após a integração (JS 1.802,20 kB / 425,37 kB gzip). Gitleaks 8.30.1 baixado da release oficial com SHA-256 conferido: 259 commits examinados, nenhum segredo encontrado. As medições abaixo precedem a integração; preservadas como histórico do desenvolvimento.
 
 O E2E após integração revelou medição prematura do minimapa: trace capturou o título inicial antes de carregar o mapa. Teste corrigido para esperar montagem e medir em cada clique; `npm exec -w e2e -- playwright test zz-evento.spec.ts --grep 'Karakura contínua' --repeat-each 3`: três aprovações consecutivas (44,5 s).

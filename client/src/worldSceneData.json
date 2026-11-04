@@ -880,16 +880,6 @@
         "width": 128,
         "height": 100.5,
         "sortY": 992
-      },
-      {
-        "id": "rukongai-house-30-37",
-        "kind": "building",
-        "image": "/maps/scenes/soul/rukongai-house.webp",
-        "x": 960,
-        "y": 1184,
-        "width": 128,
-        "height": 100.5,
-        "sortY": 1184
       }
     ]
   },
