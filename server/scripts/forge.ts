@@ -1,6 +1,7 @@
 // Forja do Kisuke (nível por espaço), Pergaminho de Treino, Caixa do Kisuke e escolha da poção.
-import { nearestWalkable, countItem, forgeBonus, forgeCost, equipBonus, gearBonus, setBonuses, BOOST_MS } from "../../shared/src";
+import { nearestWalkable, countItem, forgeBonus, forgeCost, equipBonus, gearBonus, setBonuses, BOOST_MS, chebyshev, INTERACT_RANGE, walkable, inPZ } from "../../shared/src";
 import { HOME } from "../src/maps";
+import { findPath } from "../src/path";
 import { play, patchSave, sleep, ok, done } from "./lib";
 
 ok("forja: arma +2 atq, anel +10 vida, resto +1 def por nível", forgeBonus("weapon", 3).atk === 6 && forgeBonus("ring", 2).hp === 20 && forgeBonus("boots", 4).def === 4);
@@ -41,9 +42,17 @@ a.room.send("forge", { slot: "nada" });
 await sleep(150);
 
 // longe do Kisuke não forja
-const far = nearestWalkable(HOME, nearShop.x + 6, nearShop.y + 2);
+// O prédio novo ocupa o antigo destino: nearestWalkable podia devolver (20,12),
+// ainda no alcance 2 da loja. Procure uma rua conectada e realmente distante.
+const farPath = findPath(nearShop.x, nearShop.y,
+  (x, y) => inPZ(HOME, x, y) && chebyshev(x, y, shop.x, shop.y) >= INTERACT_RANGE + 3,
+  (x, y) => !walkable(HOME, x, y));
+const far = farPath.at(-1);
+if (!far) throw new Error("Forja: falta destino protegido fora do alcance da loja");
 a.room.send("move", far);
 for (let i = 0; i < 30 && (a.me().x !== far.x || a.me().y !== far.y); i++) await sleep(200);
+ok("bot alcança uma rua fora do alcance da loja", a.me().x === far.x && a.me().y === far.y
+  && chebyshev(a.me().x, a.me().y, shop.x, shop.y) > INTERACT_RANGE);
 const lv = a.inv().forge.weapon;
 a.room.send("forge", { slot: "weapon" });
 await sleep(300);
