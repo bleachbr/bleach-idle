@@ -1157,7 +1157,8 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (this.near(p, m.kind)) return this.open(p, m.kind);
       // anda até ficar ao alcance; o tick abre a janela quando o caminho acabar
       const at = this.placeOf(p, m.kind);
-      if (!at) return;
+      // o botão "Ir ao Kisuke" do tutorial cai aqui fora da Karakura: sem aviso, parecia quebrado (#343). Começa igual ao /loja
+      if (!at) return m.kind === "shop" ? this.log(p, "Não há loja neste mapa. O Kisuke fica na praça de Karakura (tecla R volta à cidade).") : undefined;
       p.follow = false;
       p.path = findPath(p.x, p.y, (x, y) => chebyshev(x, y, at.x, at.y) <= INTERACT_RANGE, (x, y) => !walkable(mapOf(p), x, y));
       p.pendingInteract = p.path.length ? m.kind : "";

@@ -8,12 +8,12 @@ export interface TutorialStepData {
 
 const escHtml = (t: string) => t.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 
-export type TutorialActionId = "auto" | "book" | "travel" | "bankai";
+export type TutorialActionId = "auto" | "book" | "shop" | "bankai";
 
 export interface TutorialActionHandlers {
   auto: () => void;
   book: () => void;
-  travel: () => void;
+  shop: () => void;
   bankai: () => void;
 }
 
@@ -21,7 +21,7 @@ export function tutorialAction(act: string): TutorialActionId | null {
   switch (act) {
     case "auto":
     case "book":
-    case "travel":
+    case "shop":
     case "bankai":
       return act;
     default:
@@ -51,7 +51,7 @@ export function renderTutorialStep(step: TutorialStepData): string {
     } else if (act === "daily" || txt.includes("livro") || txt.includes("diária")) {
       actionHtml = `<button type="button" class="tut-act" data-act="book" title="Atalho: tecla L">Abrir Livro (L)</button>`;
     } else if (act === "shop" || act === "quest" || txt.includes("kisuke")) {
-      actionHtml = `<button type="button" class="tut-act" data-act="travel" title="Viajar até o Kisuke (Atalho: E ou Espaço na praça)">Ir ao Kisuke</button>`;
+      actionHtml = `<button type="button" class="tut-act" data-act="shop" title="Ir até o Kisuke e abrir a loja (Atalho: E ou Espaço na praça)">Ir ao Kisuke</button>`;
     } else if (act === "bankai" || txt.includes("bankai")) {
       actionHtml = `<button type="button" class="tut-act" data-act="bankai" title="Atalho: tecla T">Bankai (T)</button>`;
     } else if (act === "kill" || txt.includes("derrote")) {
