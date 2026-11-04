@@ -5,13 +5,18 @@ import { test, expect } from "@playwright/test";
 import { newPlayer } from "./helpers";
 
 // O personagem nasce sempre no mesmo tile da praça e a câmera o centraliza; com a janela fixa em 1280x720
-// (playwright.config.ts) o sprite do Kisuke aparece sempre neste ponto da tela (corpo do NPC, não o prédio).
-const KISUKE = { x: 890, y: 140 };
+// (playwright.config.ts) o sprite do Kisuke aparece sempre neste ponto da tela. É o tronco do NPC, um tile acima
+// do tile da loja (18, 12): só o retângulo do desenho (interactAt) aceita esse clique, então o teste cobre a
+// hitbox do #330 e não apenas o tile (estimativa a partir de screenshot; se a câmera ou o spawn mudarem, ajuste).
+const KISUKE = { x: 890, y: 115 };
 
 const passoKisuke = (page: import("@playwright/test").Page) => page.locator("#tutorial-list .tut", { hasText: "Visite o Kisuke" });
 
 test("clicar no sprite do Kisuke abre a loja e conclui o passo do tutorial", async ({ page }) => {
   await newPlayer(page);
+  // "entrou no mundo" vem do servidor; o clique só vale depois que a cena do Phaser registrou o pointerdown, e
+  // GameScene.create() acende .ready no loader logo depois disso (no CI o clique chegava antes e caía no vazio)
+  await expect(page.locator("#game-loading")).toHaveClass(/ready/);
   await expect(passoKisuke(page)).not.toHaveClass(/done/);
   await page.mouse.click(KISUKE.x, KISUKE.y);
   await expect(page.locator("#modal-title")).toHaveText("Loja do Kisuke");
