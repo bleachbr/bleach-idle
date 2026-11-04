@@ -49,6 +49,11 @@ export function changelogFor(repo: string, { previous, head, main }: { previous?
   if (head === main) return log;
   // o AVISO vem ANTES do log: o prompt do agente corta o changelog em 3000 caracteres (agent.ts) e o fim seria perdido
   if (!isAncestor(repo, head, main)) {
+    // a main está contida na revisão testada: a produção está à frente (provável git fetch desatualizado), não divergente
+    if (isAncestor(repo, main, head)) {
+      return `AVISO: o servidor testado (${head.slice(0, 7)}) está À FRENTE da main local (${main.slice(0, 7)}) — a main baixada aqui pode estar velha (git fetch falhou?). `
+        + `O servidor tem tudo o que está na main e ainda mais; trate o que descrevo como já no ar.\n---\n${log}`;
+    }
     return `AVISO: o servidor testado (${head.slice(0, 7)}) não é ancestral da main (${main.slice(0, 7)}): as linhas divergiram, então não dá para dizer quais commits da main faltam nele. `
       + `Se algo descrito na main não existir no servidor, não relate como bug.\n---\n${log}`;
   }

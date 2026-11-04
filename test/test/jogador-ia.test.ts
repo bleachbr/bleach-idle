@@ -213,3 +213,15 @@ test("sem a revisão publicada o checkpoint não deve ser gravado (a main não �
   try { anterior = execFileSync("git", ["rev-parse", "origin/main~1"], { cwd: repo, encoding: "utf8" }).trim(); } catch { return; }
   assert.equal(prep(runs(), false, "https://bleach.acoplum.com", anterior, semRede).checkpointConfiavel, true);
 });
+
+test("produção adiantada da main (main é ancestral da revisão testada) não vira falso 'divergente'", async () => {
+  const { changelogFor } = await import("../src/source.js");
+  // main local ficou para trás (git fetch falhou); a revisão publicada tem a main inteira e mais um commit
+  const { dir, shas } = repoComCommits("feat: base", "feat: main local", "fix: já no ar, além da main local");
+  try {
+    const c = changelogFor(dir, { head: shas[2], main: shas[1] });
+    assert.doesNotMatch(c, /linhas divergiram|não é ancestral da main/, "produção à frente da main não é histórico divergente");
+    assert.match(c, /adiantad|à frente/i); // aviso específico: a main local pode estar velha
+    assert.match(c, /fix: já no ar/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
