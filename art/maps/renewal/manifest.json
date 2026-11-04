@@ -2,15 +2,15 @@
   "generator": "image_gen (built-in)",
   "maps": {
     "karakura": {
-      "sha256": "7cb99f4ba4dae8e4bbbc79fbb4444719faa8407c5596014908ba6c12cca00ef8",
+      "sha256": "8a5e0811457ec150ebf4c96005fa02946f857504421d42986947bcd6fa2a17e8",
       "previousSha256": "62c7447fc29d1b3a0d3b2e4724bfd2c6f4c9e4c30790773a8d77fcabe36fd9ae"
     },
     "soul": {
-      "sha256": "ce9c9ceed1805663fe24885b81c182d7e8e1c1289c41f21aec2dd73867c44168",
+      "sha256": "30febb4fadc7f3493a31ba87b02cd40bf1f0cfec828f1a05b6c18fc23585730a",
       "previousSha256": "9c4e473d083af17ec431d622af9e064d4ce5ded26739817b029ac9b993677b22"
     },
     "hueco": {
-      "sha256": "2903e75df68f843656de8d97350829d1d0c1e27d6baff607b34d8545c2f415ae",
+      "sha256": "b45f089ca18d059d043c3c1d6ecbfcb2d995027fa1818926b1abde91f406fbf5",
       "previousSha256": "96c7a2eb3f93ce337ebf962b2416a916a16f1ef2153e39e74eb63b20de6044cd"
     },
     "lasnoches": {
@@ -18,15 +18,15 @@
       "previousSha256": "21ccb5df18d163a90c9a3fd055a9cc6928d00a5124ae273574144a1a5461b557"
     },
     "dangai": {
-      "sha256": "18acc16a83ea635e7495a0b1b237cbc57174525e2f8bd1b3812a70e29eca87eb",
+      "sha256": "db96803fb37b9f848658f3ac83ab58c617b5cbbb3d50a3786cb82b477c8fa6fd",
       "previousSha256": "06698a9484f51709a478ed3f35013e773534bbfbe06e81c15db49cb9da1ed0dd"
     },
     "falsa": {
-      "sha256": "443624224524b25afc4c5d48daa966db7880cb4bb260291e2c8ab2dbd97417c9",
+      "sha256": "4359828cd135e5a0363270576cdf39b1ffb517737da89bfdaf5ccade5fecef24",
       "previousSha256": "7ee0d9f38eaa9908e60e31a90e35b63f834d459bfb284ca57c1ccc8cfc0374b3"
     },
     "wandenreich": {
-      "sha256": "e6d54559306d6df7d424db6a6627654af8813a6c4fa4bc6ac41f485f0dd3b0f2",
+      "sha256": "f84f4a895ed938ff04e9de6dc5ccc7f791df097b47f73b57b8065bc19f77ba14",
       "previousSha256": "bdf91ebd5144585d4557a9050d4e94b5983ce17ce1bb74a03073014fdafa07d4"
     }
   },
