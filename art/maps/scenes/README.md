@@ -20,3 +20,9 @@ Verificações: `npx vitest run client/test/worldScenes.test.ts` (lógica, equiv
 Capturas dos sete destinos em `runtime/`, reunidas em `runtime-contact-sheet.jpg`. Reprodução no PowerShell: `$env:BI_MAP_PREVIEW='1'; npm exec -w e2e -- playwright test mapas.spec.ts --grep viaja`. A opção liga Dev explicitamente somente no servidor temporário para viajar com nível 150 e imortalidade; o E2E padrão mantém Dev desligado e ignora esse teste de captura.
 
 Direção por região e fontes oficiais: `docs/features/renovacao-mapas/REFERENCIAS-lore.md`. Limitações de carga e cobertura: `docs/baseline.md` e `docs/pendencias.md`.
+
+## Revisão das ferramentas
+
+`python art/maps/scenes/test_tools.py` cobre remoção de fundo sem apagar detalhes internos roxos, preservação das chamadas de posicionamento com Python otimizado, falha de cobertura sob `-O`, conflitos entre casas/árvores, validação antes de publicar atlases e clipping explícito das prévias. Os mesmos testes podem rodar com `python -O`.
+
+A fachada de Las Noches é um limite ambiental ao norte: sua largura de 704 px é intencional, com o topo continuando além do mundo. Não é um portal atravessável nem uma miniatura de todo o palácio. As células bloqueadas visíveis precisam continuar cobertas pela parte inferior da fachada. A prévia recorta explicitamente a região que cabe no canvas, sem passar coordenadas negativas ao compositor.

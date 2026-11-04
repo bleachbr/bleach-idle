@@ -5,12 +5,16 @@ catalog.json fixa os índices e hashes dos mapas existentes; retained/ guarda
 os detalhes secundários reutilizados, explicitamente separados das fontes novas.
 """
 import hashlib
+import io
 import json
 import re
+import sys
 from pathlib import Path
 from PIL import Image
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent))
+from chroma import remove_exterior_magenta
 ROOT = HERE.parents[2]
 MAPS = ROOT / "client/public/maps"
 T = 32
@@ -34,8 +38,8 @@ def tile(atlas, index):
 
 
 def put(atlas, keys, name, image):
-    assert name in keys, name
-    assert image.size == (T, T)
+    if name not in keys or image.size != (T, T):
+        raise RuntimeError(f"Tile inválido: {name}, {image.size}")
     index = keys[name]
     # paste substitui também pixels transparentes; alpha_composite deixaria a arte antiga por baixo.
     atlas.paste(image, (index % 8 * T, index // 8 * T))
@@ -89,13 +93,12 @@ def ground(atlas, keys, map_id):
 
 def sprite(name, width, height, footprint=None):
     """Recorta magenta, preserva proporção, ancora embaixo e exporta objeto inteiro."""
-    source = Image.open(HERE / f"{name}.png").convert("RGBA")
-    data = [(r, g, b, 0 if r > 130 and b > 110 and g < 110 and r > g * 1.5 and b > g * 1.5 else a)
-            for r, g, b, a in source.getdata()]
-    source.putdata(data)
+    source = remove_exterior_magenta(Image.open(HERE / f"{name}.png"))
     bbox = source.getbbox()
-    assert bbox, f"Objeto vazio: {name}"
-    assert bbox[0] > 0 and bbox[1] > 0 and bbox[2] < source.width and bbox[3] < source.height, f"Objeto toca borda: {name}"
+    if not bbox:
+        raise RuntimeError(f"Objeto vazio: {name}")
+    if not (bbox[0] > 0 and bbox[1] > 0 and bbox[2] < source.width and bbox[3] < source.height):
+        raise RuntimeError(f"Objeto toca borda: {name}")
     source = source.crop(bbox)
     result = Image.new("RGBA", (width*T, height*T))
     if footprint:
@@ -106,7 +109,8 @@ def sprite(name, width, height, footprint=None):
         # A fonte deve nascer na proporção certa; só normaliza pequenas variações
         # do gerador, sem estreitar a fachada e criar paredes invisíveis.
         ratio_error = abs((source.width/source.height)/(target[0]/target[1])-1)
-        assert ratio_error < .16, f"Regenerar {name} na proporção do footprint: {ratio_error:.1%}"
+        if ratio_error >= .16:
+            raise RuntimeError(f"Regenerar {name} na proporção do footprint: {ratio_error:.1%}")
         body = source.resize(target, Image.Resampling.BOX)
         result.alpha_composite(body, (x0, y0))
     else:
@@ -230,7 +234,17 @@ def main():
         (HERE / folder).mkdir(exist_ok=True)
     # Verifica TODOS os mapas antes de escrever qualquer atlas.
     for map_id, entry in CATALOG.items():
-        assert digest(MAPS / f"{map_id}.tmj") == entry["mapSha256"], f"Mapa editado: {map_id}; revisar catálogo antes de continuar"
+        if digest(MAPS / f"{map_id}.tmj") != entry["mapSha256"]:
+            raise RuntimeError(f"Mapa editado: {map_id}; revisar catálogo antes de continuar")
+    sources = []
+    for prompt in sorted(HERE.glob("*.prompt.txt")):
+        image = prompt.name.replace(".prompt.txt", ".png")
+        if not (HERE / image).is_file():
+            raise RuntimeError(f"Fonte ausente: {image}")
+        record = {"image": image, "prompt": prompt.name}
+        if image in ("city-shop.png", "city-wood-house.png"):
+            record["reference"] = f"footprint-guide-{2 if image == 'city-shop.png' else 3}.png"
+        sources.append(record)
     atlases = {}
     retained = []
     for map_id in GROUNDS:
@@ -241,26 +255,27 @@ def main():
         atlases[map_id] = atlas
     atlases["falsa"] = tint(atlases["karakura"], (171, 145, 221), .36, .87)
     atlases["wandenreich"] = tint(atlases["soul"], (210, 231, 255), .73, 1.18)
-    manifest = {"generator": "image_gen (built-in)", "maps": {}, "sources": []}
+    manifest = {"generator": "image_gen (built-in)", "maps": {}, "sources": sources}
+    encoded = {}
     for map_id, atlas in atlases.items():
         path = MAPS / f"{map_id}_tiles.png"
         expected = json.loads((MAPS / f"{map_id}.tmj").read_text(encoding="utf-8"))["tilesets"][0]
-        assert atlas.size == (expected["imagewidth"], expected["imageheight"])
-        atlas.save(path, optimize=True)
-        manifest["maps"][map_id] = {"sha256": digest(path), "previousSha256": digest(HERE/"retained"/path.name)}
+        if atlas.size != (expected["imagewidth"], expected["imageheight"]):
+            raise RuntimeError(f"Dimensões incorretas: {map_id}")
+        buffer = io.BytesIO()
+        atlas.save(buffer, format="PNG", optimize=True)
+        encoded[path] = buffer.getvalue()
+        manifest["maps"][map_id] = {"sha256": hashlib.sha256(encoded[path]).hexdigest(), "previousSha256": digest(HERE/"retained"/path.name)}
         preview(map_id, atlas)
         print(f"{map_id}: {atlas.width}x{atlas.height}, mapa intacto")
-    for prompt in sorted(HERE.glob("*.prompt.txt")):
-        image = prompt.name.replace(".prompt.txt", ".png")
-        assert (HERE / image).is_file(), image
-        record = {"image": image, "prompt": prompt.name}
-        if image in ("city-shop.png", "city-wood-house.png"):
-            record["reference"] = f"footprint-guide-{2 if image == 'city-shop.png' else 3}.png"
-        manifest["sources"].append(record)
     manifest["retainedProps"] = retained
     manifest["props"] = [{"file": str(path.relative_to(HERE)).replace("\\", "/"), "width": Image.open(path).width,
                           "height": Image.open(path).height} for path in sorted((HERE / "props").glob("*.png"))]
-    (HERE / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+    manifest_text = json.dumps(manifest, ensure_ascii=False, indent=2)+"\n"
+    # Só publica após validar fontes, dimensões, previews e metadados de TODOS os atlases.
+    for path, content in encoded.items():
+        path.write_bytes(content)
+    (HERE / "manifest.json").write_text(manifest_text, encoding="utf-8")
 
 
 if __name__ == "__main__":
