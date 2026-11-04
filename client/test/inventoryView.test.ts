@@ -17,16 +17,21 @@ describe("Lote 3: Usabilidade do Inventário e Acessibilidade de Slots", () => {
     expect(formatSlotAria(null, "weapon")).toContain("Arma (vazio)");
     expect(formatSlotAria(null, "armor")).toContain("Corpo (vazio)");
 
-    // Slot com item empilhável (ex.: 13 poções de vida)
+    // Slot com item empilhável (ex.: 13 poções de vida e pilha de 100 pedras)
     const pocaoSlot = { id: "pocao_vida", qty: 13 };
     const pocaoAria = formatSlotAria(pocaoSlot);
-    expect(pocaoAria).toContain("Poção de Cura (13)");
+    expect(pocaoAria).toContain("Poção de Cura (13 un)");
     expect(pocaoAria).toContain("Recupera");
+
+    const pedraSlot = { id: "pedra_reishi", qty: 100 };
+    const pedraAria = formatSlotAria(pedraSlot);
+    expect(pedraAria).toContain("Pedra de Reishi (100 un)");
 
     // Slot com equipamento (ex.: Manto de Sternritter)
     const mantoSlot = { id: "manto_sternritter", qty: 1 };
     const mantoAria = formatSlotAria(mantoSlot);
     expect(mantoAria).toContain("Manto de Sternritter");
+    expect(mantoAria).not.toMatch(/\(\d+\s*un\)/);
     expect(mantoAria).toContain("Corpo");
     expect(mantoAria).toContain("Defesa +22");
     expect(mantoAria).toContain("Nível 105+");
@@ -90,12 +95,23 @@ describe("Lote 3: Usabilidade do Inventário e Acessibilidade de Slots", () => {
     const pocaoDetail = itemDetailHtml({ id: "pocao_vida", qty: 5 }, 1);
     expect(pocaoDetail).toContain("Poção de Cura");
     expect(pocaoDetail).toContain("Quantidade: 5");
-    expect(pocaoDetail).toContain("Clique para usar");
+    expect(pocaoDetail).toContain("Duplo clique para usar");
 
     // Equipamento que pode ser equipado (Haori de Capitão para nível 20)
     const haoriDetail = itemDetailHtml({ id: "haori", qty: 1 }, 20);
     expect(haoriDetail).toContain("Haori de Capitão");
-    expect(haoriDetail).toContain("Clique para equipar");
+    expect(haoriDetail).toContain("Duplo clique para equipar");
+
+    // Item do tipo pacote/caixa com inventário cheio (20/20): botão usar deve ficar desabilitado
+    const caixaSlot = { id: "caixa_kisuke", qty: 1 };
+    const caixaFull = itemDetailHtml(caixaSlot, 1, undefined, true);
+    expect(caixaFull).toContain("disabled");
+    expect(caixaFull).toContain("Inventário cheio (20/20)");
+
+    // Item caixa com inventário livre: liberado para usar
+    const caixaOk = itemDetailHtml(caixaSlot, 1, undefined, false);
+    expect(caixaOk).not.toContain("disabled");
+    expect(caixaOk).toContain("Duplo clique para usar");
   });
 
   it("handleInventorySlotClick bloqueia envio de equip quando o jogador não tem nível suficiente", () => {
@@ -148,5 +164,31 @@ describe("Lote 3: Usabilidade do Inventário e Acessibilidade de Slots", () => {
       send,
     });
     expect(send).toHaveBeenCalledWith("useItem", { index: 1 });
+
+    // Caixa de recompensa (ex.: Caixa do Kisuke) é bloqueada quando inventário está cheio (20/20)
+    send.mockClear();
+    const onInspect = vi.fn();
+    const caixa = { id: "caixa_kisuke", qty: 1 };
+    const caixaBlocked = handleInventorySlotClick(caixa, 2, {
+      playerLevel: 10,
+      isInventoryFull: true,
+      send,
+      onInspect,
+    });
+    expect(caixaBlocked).toBe(false);
+    expect(send).not.toHaveBeenCalledWith("useItem", expect.anything());
+    expect(onInspect).toHaveBeenCalledWith(caixa);
+
+    // Caixa liberada quando inventário possui espaço
+    send.mockClear();
+    onInspect.mockClear();
+    const caixaAllowed = handleInventorySlotClick(caixa, 2, {
+      playerLevel: 10,
+      isInventoryFull: false,
+      send,
+      onInspect,
+    });
+    expect(caixaAllowed).toBe(true);
+    expect(send).toHaveBeenCalledWith("useItem", { index: 2 });
   });
 });

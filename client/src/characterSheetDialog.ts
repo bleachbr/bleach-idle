@@ -5,7 +5,12 @@ import type { Room } from "colyseus.js";
 import { characterSheet, type SheetGear, type SheetPlayer } from "./characterSheet";
 import "./characterSheet.css";
 
-export function initCharacterSheet(room: Room<any>, me: () => SheetPlayer | undefined, now: () => number) {
+export function initCharacterSheet(
+  room: Room<any>,
+  me: () => SheetPlayer | undefined,
+  now: () => number,
+  closeWindows?: (keep?: string) => void
+) {
   const dialog = document.querySelector<HTMLDialogElement>("#sheet-dialog")!;
   const body = document.querySelector<HTMLElement>("#sheet-body")!;
   let gear: SheetGear | null = null;
@@ -39,15 +44,18 @@ export function initCharacterSheet(room: Room<any>, me: () => SheetPlayer | unde
       return section;
     }));
   };
-  room.onMessage("inv", (m: SheetGear) => { gear = m; render(); });
-  document.querySelector<HTMLButtonElement>("#sheet-btn")!.onclick = () => {
+  const open = () => {
+    closeWindows?.("#sheet-dialog");
     if (!dialog.open) dialog.showModal();
     shown = "";
     render();
   };
+  room.onMessage("inv", (m: SheetGear) => { gear = m; render(); });
+  room.onMessage("sheet", open);
+  document.querySelector<HTMLButtonElement>("#sheet-btn")!.onclick = open;
   document.querySelector<HTMLButtonElement>("#sheet-close")!.onclick = () => dialog.close();
   window.addEventListener("keydown", (event) => {
     if (dialog.open) event.stopImmediatePropagation();
   }, { capture: true });
-  return { update: render };
+  return { update: render, open, close: () => { if (dialog.open) dialog.close(); } };
 }

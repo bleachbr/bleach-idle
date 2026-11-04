@@ -67,6 +67,10 @@ const HELP_CATEGORIES: Record<string, string[]> = {
     "/arena [entrar|sair|desistir] — arena ranqueada de duelos 1v1",
     "/cronicas — exibe a crônica semanal ativa e detalhes",
     "/correio — abre a caixa de correio",
+    "/temporada (ou /passe) — abre o Passe de Temporada",
+    "/loja — abre a loja do Kisuke (na praça)",
+    "/bau (ou /depot) — abre o baú do depósito (na praça)",
+    "/atributos (ou /status, /ficha) — exibe atributos e abre a ficha do personagem",
   ],
 };
 
@@ -1754,6 +1758,39 @@ export class WorldRoom extends GameRoom<WorldState> {
       case "ranking":
       case "rank":
         return this.sendTo(p, "ranking", this.ranking());
+      case "temporada":
+      case "passe":
+      case "season":
+      case "pass":
+        return this.sendSeason(p, true);
+      case "loja":
+      case "shop": {
+        if (!this.placeOf(p, "shop")) return this.log(p, "Não há loja neste mapa.");
+        if (!this.near(p, "shop")) return this.log(p, "Chegue perto da loja do Kisuke (na praça).");
+        return this.open(p, "shop");
+      }
+      case "bau":
+      case "baú":
+      case "depot": {
+        if (!this.placeOf(p, "depot")) return this.log(p, "Não há baú de depot neste mapa.");
+        if (!this.near(p, "depot")) return this.log(p, "Chegue perto do baú do depot (na praça).");
+        return this.open(p, "depot");
+      }
+      case "atributos":
+      case "atributo":
+      case "stats":
+      case "status":
+      case "ficha": {
+        const b = gearBonus(p.equip, p.forge);
+        const ch = CHARS[p.charId];
+        const atk = Math.round(playerAtk(ch.atk, p.level) + b.atk);
+        const def = Math.round(playerDef(ch.def, p.level) + b.def);
+        this.sendTo(p, "sheet", {});
+        return this.log(
+          p,
+          `Atributos de ${p.name}: Nível ${p.level}${p.rebirths ? ` (✦${p.rebirths})` : ""} · HP ${p.hp}/${p.maxHp} · Reiatsu ${p.rei}/${p.maxRei} · ATK ${atk} · DEF ${def} · Poder ${fmtPower(p.power)}.`
+        );
+      }
       default:
         return this.log(p, `Comando desconhecido: /${cmd}. Digite /ajuda.`);
     }

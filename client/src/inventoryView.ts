@@ -24,7 +24,8 @@ export function formatSlotAria(s: Slot | null, equipSlot?: EquipSlot): string {
   }
   const d = ITEMS[s.id];
   if (!d) return "Item desconhecido";
-  const qtyStr = s.qty > 1 ? ` (${s.qty})` : "";
+  const isStackable = Boolean(d.stack || s.qty > 1);
+  const qtyStr = isStackable ? ` (${s.qty} un)` : "";
   return `${d.name}${qtyStr}: ${itemTooltipText(d)}`;
 }
 
@@ -46,7 +47,12 @@ export function isItemLevelLocked(s: Slot | null, userLevel: number): boolean {
   return !!(d?.minLevel && userLevel < d.minLevel);
 }
 
-export function itemDetailHtml(s: Slot | null, userLevel: number, equipSlot?: EquipSlot): string {
+export function itemDetailHtml(
+  s: Slot | null,
+  userLevel: number,
+  equipSlot?: EquipSlot,
+  isInventoryFull = false
+): string {
   if (!s) {
     return `<div class="item-detail-empty"><p class="hint">Passe o mouse ou clique em um item para ver detalhes e atributos.</p></div>`;
   }
@@ -69,11 +75,15 @@ export function itemDetailHtml(s: Slot | null, userLevel: number, equipSlot?: Eq
 
   let actionText = "";
   if (locked) {
-    actionText = `<span class="detail-action locked">⛔ Nível insuficiente para equipar</span>`;
+    actionText = `<button type="button" class="detail-action locked" disabled>⛔ Nível insuficiente para equipar</button>`;
   } else if (isEquip) {
-    actionText = `<span class="detail-action equip">⚡ Clique para equipar</span>`;
+    actionText = `<button type="button" class="detail-action equip" data-action="equip">⚡ Duplo clique para equipar</button>`;
   } else if (isConsumable) {
-    actionText = `<span class="detail-action use">🧪 Clique para usar</span>`;
+    if (d.box && isInventoryFull) {
+      actionText = `<button type="button" class="detail-action use full" disabled>⛔ Inventário cheio (20/20) para abrir</button>`;
+    } else {
+      actionText = `<button type="button" class="detail-action use" data-action="use">🧪 Duplo clique para usar</button>`;
+    }
   } else if (d.sell) {
     actionText = `<span class="detail-action sell">💰 Valor de venda: ${d.sell} kan</span>`;
   }
@@ -100,6 +110,7 @@ export function itemDetailHtml(s: Slot | null, userLevel: number, equipSlot?: Eq
 export interface InventorySlotClickOptions {
   open?: string | null;
   playerLevel: number;
+  isInventoryFull?: boolean;
   send: (type: string, data: any) => void;
   onInspect?: (slot: Slot) => void;
 }
@@ -125,6 +136,11 @@ export function handleInventorySlotClick(
     }
     opts.send("equip", { index });
     return true;
+  }
+
+  if (d.box && opts.isInventoryFull) {
+    opts.onInspect?.(slot);
+    return false;
   }
 
   if (d.heal || d.restoreRei || d.boost || d.box) {

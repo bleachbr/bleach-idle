@@ -75,4 +75,24 @@ describe("F-25: Comando /ajuda categorizado e paginação (#184)", () => {
     // Não deve conter /arena neste subfiltro
     expect(messages.every((m) => !m.includes("/arena"))).toBe(true);
   });
+
+  it("/ajuda sistema retorna comandos de sistema incluindo /temporada, /loja, /bau e /atributos", async () => {
+    const { world } = await createPlayerAndJoin();
+    const messages: string[] = [];
+    world.onMessage("chat", (m: { text: string; ch?: string }) => {
+      if (m.ch === "sys") messages.push(m.text);
+    });
+
+    world.send("chat", { text: "/ajuda sistema" });
+    await new Promise((r) => setTimeout(r, 200));
+
+    expect(messages.length).toBeGreaterThan(0);
+    expect(messages.some((m) => m.includes("Sistema"))).toBe(true);
+    expect(messages.some((m) => m.includes("/temporada"))).toBe(true);
+    expect(messages.some((m) => m.includes("/loja"))).toBe(true);
+    expect(messages.some((m) => m.includes("/bau"))).toBe(true);
+    expect(messages.some((m) => m.includes("/atributos"))).toBe(true);
+    // Não deve conter comandos de automação neste subfiltro
+    expect(messages.every((m) => !m.includes("/autohunt"))).toBe(true);
+  });
 });

@@ -20,6 +20,29 @@ Este documento reúne lições práticas, decisões arquiteturais e armadilhas s
 
 ---
 
+## Botão de acesso direto ao Passe de Temporada (★) e acessibilidade no HUD (Fix HUD Temporada)
+
+No playtest automatizado, a persona `grinder` recebia avisos frequentes no chat após abates e marcos de progressão: *"Passe de temporada: nível X! Pegue seus prêmios no botão ★."*. Contudo, os jogadores e agentes tinham dificuldade para encontrar ou acionar o botão na interface.
+- **Causa raiz:** O botão `#season-btn` na barra `.who-icons` utilizava exclusivamente um sprite CSS de fundo (`data-ico="star"`), sem texto interno (`innerText === ""`), sem atributo `aria-label` e com um tooltip genérico (`title="Passe de temporada (grátis)"`) que não continha o caractere estrela anunciado pelo servidor. Para leitores de acessibilidade, rotinas de playtest e jogadores guiados pelo chat, o elemento não correspondia ao esperado "botão ★".
+- **Solução implementada:**
+  1. Inclusão do glifo visível `★` diretamente como conteúdo do botão no DOM, estilizado com classe `.star-btn` em dourado (`var(--gold)`), com `font-size: 16px` e efeito hover que não sobrepõe a moldura ou elementos adjacentes;
+  2. Supressão do pseudo-elemento `::before` de background do `data-ico="star"` via CSS para evitar duplicação ou overflow no layout compacto de 26x26 px da barra de ícones;
+  3. Adição de `aria-label="Passe de Temporada (★)"`, `title="Passe de Temporada (★, grátis)"` e `aria-controls="pass"`, alinhando os nomes acessíveis no DOM;
+  4. Extração e encapsulamento da lógica de alternância da janela em módulo dedicado (`client/src/seasonButton.ts`), testado determinística e isoladamente com Vitest e Playwright E2E.
+
+---
+
+## Aliases de utilidade no chat e autoridade de proximidade (F-26 / Issue #188)
+
+Jogadores e personas de teste frequentemente tentam interagir com atalhos intuitivos de chat ao receber avisos do sistema (como notificações de nível do Passe de Temporada ou inventário cheio 20/20 instruindo a visitar o Kisuke ou o baú).
+
+- **Autoridade do servidor e proximidade em comandos de chat:** Ao criar comandos que interagem com o mundo físico (`/loja` e `/bau` ou `/depot`), a verificação de proximidade (`near(p, kind)` com raio Chebyshev de `INTERACT_RANGE = 2`) deve ser rigorosamente preservada no servidor autoritativo. Jogadores distantes recebem aviso contextual orientando a aproximação na praça, impedindo acessos remotos indevidos a estoques e lojas a partir de mapas de caça.
+- **Ciclo de mensagens do Colyseus e prevenção de erro 4002:** O envio de novos eventos do servidor para o cliente (como `"sheet"` para abrir a ficha do personagem via `/atributos`) exige registro explícito de handlers no cliente e inclusão na lista `KNOWN_ROOM_MESSAGES` em suítes de teste para evitar que o Colyseus desconecte o cliente com código 4002 por mensagem desconhecida.
+- **Coordenação de janelas nativas `<dialog>` com painéis DOM:** A ficha do personagem utiliza `<dialog id="sheet-dialog">` nativo. Integrar o controle desse modal ao `closeWindows` centralizado garante que a abertura de abas concorrentes (como passe ou ranking) feche a ficha e vice-versa, sem conflito de camadas visuais ou foco preso.
+- **Transparência em abas de chat secundárias:** Comandos utilitários iniciados com barra (`/`) devem sair sem injeção de prefixos de canal (`/p`, `/g`, `/pm`) mesmo se o jogador estiver digitando com as abas Party, Guilda ou Privado ativas.
+
+---
+
 ## Carregamento visual do mundo e centralização de câmera (F-19 / Issue #65)
 
 Ao entrar no mundo (especialmente com personagem existente após retorno do lobby), o Phaser realiza o carregamento assíncrono de dezenas de spritesheets, mapas e tilesets via HTTP (`preload()`).
@@ -463,6 +486,23 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 ---
 
+## 20. Clareza de Ações no Inventário, Trava em 20/20 e Identificação de Empilháveis (Itens 4 e 5, F-21)
+
+- **Sintoma:** No playtest com personas e agentes automatizados, três pontos de fricção foram identificados no inventário:
+  1. Tooltips e ações enganosas: os textos no `#item-detail` e dicas indicavam "Clique para usar" ou "Clique para equipar", mas o usuário espera selecionar o item para ler atributos antes de consumir, demandando duplo clique ou acionamento explícito no painel.
+  2. Trava em inventário cheio (20/20): ao inspecionar e tentar abrir pacotes/caixas de recompensas (ex.: Caixa do Kisuke) com o inventário lotado, o cliente permitia cliques repetidos em vão que eram rejeitados pelo servidor com spam de log ("Inventário sem espaço para o prêmio.").
+  3. Acessibilidade em pilhas: elementos de itens empilháveis expunham apenas o número na árvore de acessibilidade (ex.: `<button>100</button>`), impedindo que leitores de tela ou agentes de teste identificassem o item imediatamente.
+- **Causa raiz:**
+  1. O texto de ação no `#item-detail` usava "Clique para...", conflitando com o comportamento de clique simples de seleção/inspeção do slot.
+  2. Não havia verificação visual nem bloqueio do botão "Usar" no cliente com base no estado de ocupação (`isFull`) para consumíveis com `box: true`.
+  3. `formatSlotAria` gerava `(${s.qty})` sem unidade descritiva ou omitia a indicação de quantidade em certos estados.
+- **Solução (`client/src/inventoryView.ts`, `client/src/inventory.ts`, `client/src/style.css`, `client/index.html`):**
+  1. Textos refinados para "⚡ Duplo clique para equipar" e "🧪 Duplo clique para usar", alinhados com a dica do inventário (`#inv-hint`).
+  2. Botão dedicado `.detail-action` no `#item-detail` que executa a ação correspondente do item inspecionado e fica visualmente desabilitado com o aviso informativo `⛔ Inventário cheio (20/20) para abrir` quando `d.box && isInventoryFull`, prevenindo cliques repetidos em vão tanto no botão quanto via `handleInventorySlotClick`.
+  3. `formatSlotAria` atualizado para formatar `${nome} (${quantidade} un)` para itens empilháveis (`d.stack || s.qty > 1`), tornando a árvore de elementos imediatamente legível para tecnologias assistivas e agentes.
+
+---
+
 ## 16. Tutorial com Call-to-Action interativo e atalhos de HUD (F-22)
 
 - **Sintoma:** No playtest automatizado (#73, #75, #89, #99, #108, #110, #118, #120, #121, #122, #181, #182, #188, #190, #284, #306), jogadores e agentes ficavam parados tentando cumprir os passos "Ligue o Auto Hunt" e "Abra o Livro" do tutorial de primeiros passos. O `#tutorial-list` apresentava apenas texto estático sem indicativo de como proceder.
@@ -505,3 +545,28 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
   1. Criado `minimapPing.ts` e renderização de rota tracejada luminosa com anel de pulso concêntrico no minimapa no momento do clique, desativando automaticamente assim que o personagem alcança o tile.
   2. Reestruturado o comando `/ajuda` no servidor com categorias claras (`/ajuda auto`, `/ajuda social`, `/ajuda sistema`), mantendo o formato compacto sem spam.
   3. Centralizado `#modal` (`left: 50%; transform: translateX(-50%)`) com `z-index: 25`, evitando sobreposição do minimapa em desktop e mobile.
+
+---
+
+## 20. Registro e sanitização de handlers de mensagens Colyseus no cliente (`mail` e ausência de warnings)
+
+- **Sintoma:** Ao executar o comando `/correio` (ou receber notificações de correio do servidor), a biblioteca colyseus.js emitia `[warning] colyseus.js: onMessage() not registered for type 'mail'` no console do navegador.
+- **Causa:** O servidor `WorldRoom.ts` dispara `this.sendTo(p, "mail", { inbox })` ao listar a caixa de correio via `/correio` ou mensagem `mailList`. O cliente registrava diversos outros tipos de mensagem em `start()`, mas não possuía handler para o evento `"mail"`.
+- **Solução (`shared/src/mail.ts`, `client/src/mail.ts`, `client/src/main.ts`):**
+  1. Extraímos os tipos compartilhados `MailItem` e `MailMsg` em `shared/src/mail.ts`, garantindo que cliente e servidor compartilhem o mesmo contrato de dados.
+  2. Criamos o módulo `client/src/mail.ts` com sanitização Zero-Trust para cada campo de cada carta recebida (`id` inteiro positivo, strings, `gold` não-negativo, sanitização de slots de anexos) e controle de estado local (`getMailInbox`, `getUnreadMailCount`).
+  3. Registramos `bindMail(room)` no ciclo de vida de conexão em `client/src/main.ts:start()`, garantindo que a sala do Colyseus nunca receba `"mail"` sem handler, e resetamos o cache com `resetMailInbox()` na troca de personagem.
+  4. Adicionamos teste unitário determinístico em `client/test/mail.test.ts` e teste E2E no Playwright em `e2e/tests/jogador.spec.ts` validando que `/correio` no chat traz a listagem sem emitir nenhum aviso do colyseus.js no console do navegador.
+
+---
+
+## 21. Livro de Progresso: Contagem Regressiva de Reset Diário e Contador de Conquistas (F-26)
+
+- **Sintoma:** No playtest automatizado e feedback das personas, a aba Diário exibia "Já pegou hoje" sem informar quando a próxima recompensa diária estaria disponível, gerando incerteza sobre o momento do reset. Já na aba Conquistas, o jogador precisava alternar para a aba e rolar a lista inteira para ter noção de quantas conquistas já havia completado e quantas ainda faltavam.
+- **Causa:**
+  1. O botão `.claim` do Diário continha um tooltip genérico ("Volte após a meia-noite de Brasília") sem contagem regressiva temporal nem informação clara sobre o tempo restante.
+  2. Na aba Conquistas, o botão da aba possuía apenas o rótulo fixo "Conquistas", sem visibilidade externa de progresso, e a contagem vivia apenas dentro de um parágrafo auxiliar `<p class="hint">` no corpo do painel.
+- **Solução (`shared/src/progress.ts`, `client/src/bookDaily.ts`, `client/src/bookAchievements.ts`, `client/src/main.ts`, `client/src/style.css`):**
+  1. Criação de `nextDailyReset` e `dailyResetRemainingMs` em `shared/src/progress.ts`, calculando a meia-noite de Brasília (UTC-3) com isolamento temporal e funções determinísticas sem dependência do fuso do ambiente.
+  2. Implementação de `formatDailyResetRemaining` e exibição do tempo restante tanto no tooltip do botão (`Recompensa diária já resgatada hoje. Próximo resgate em Xh Ym (meia-noite de Brasília).`) quanto no texto complementar logo abaixo (`.daily-reset-hint`), mantendo a atualização periódica no cliente sem requisições adicionais de rede.
+  3. Módulo `bookAchievements.ts` fornecendo `achievementsTabLabel` para exibir dinamicamente `Conquistas (X/Y)` no botão da aba no cabeçalho do Livro (visível em qualquer aba sem precisar alternar) e `achievementsHeaderHtml` para destacar o título `<h3>Conquistas (X/Y)</h3>` no topo do corpo da aba.

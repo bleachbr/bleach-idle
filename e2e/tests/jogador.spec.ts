@@ -30,6 +30,12 @@ test("HUD mostra nome, as 4 técnicas e o kit inicial", async ({ page }) => {
   await expect(page.locator("#pname")).toHaveText(name);
   await expect(page.locator("#techs kbd")).toHaveCount(4);
   await expect(page.locator("#inv .slot .icon").first()).toBeVisible();
+  const seasonBtn = page.locator("#season-btn");
+  await expect(seasonBtn).toBeVisible();
+  await expect(seasonBtn).toHaveText("★");
+  await expect(seasonBtn).toHaveAttribute("aria-label", "Passe de Temporada (★)");
+  await seasonBtn.click();
+  await expect(page.locator("#pass")).toBeVisible();
 });
 
 test("chat: Enter manda a fala, que aparece no chat", async ({ page }) => {
@@ -40,6 +46,22 @@ test("chat: Enter manda a fala, que aparece no chat", async ({ page }) => {
   await page.keyboard.type(text);
   await page.keyboard.press("Enter");
   await expect(page.locator("#chatlog")).toContainText(text);
+});
+
+test("comando /correio no chat não emite aviso do colyseus no console (#22)", async ({ page }) => {
+  const colyseusWarns: string[] = [];
+  page.on("console", (msg) => {
+    const text = msg.text();
+    if (text.includes("onMessage() not registered for type 'mail'")) {
+      colyseusWarns.push(text);
+    }
+  });
+  await newPlayer(page);
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("/correio");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#chatlog")).toContainText("Correio vazio");
+  expect(colyseusWarns).toEqual([]);
 });
 
 test("trocar de personagem e, com Lembrar, recarregar pula o login", async ({ page }) => {
