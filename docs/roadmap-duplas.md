@@ -10,7 +10,7 @@ Item riscado já foi implementado (status no `roadmap.md`). Ele continua na fila
 
 ## As duas filas
 
-Entrega adicional de Rafael (04/11/2026): renovação visual dos sete mapas. Após a primeira versão, autorizou redesenhar composição e caminhos, com lore de Bleach e proporções jogáveis; pontos importantes preservados e navegação validada. Trabalho isolado em `feat/renovacao-visual-mapas`; status e spec no [roadmap](roadmap.md#sem-marco). Não altera nem reserva os itens de gameplay das filas.
+Entrega adicional de Rafael (04/11/2026): renovação visual dos sete mapas. Após a primeira versão, autorizou redesenhar composição e caminhos, com lore de Bleach e proporções jogáveis; pontos importantes preservados e navegação validada. Publicação em duas etapas isoladas: fontes/ferramentas no PR #339 e integração jogável no PR #338, respeitando o limite de arquivos do revisor remoto. Status e spec no [roadmap](roadmap.md#sem-marco). Não altera nem reserva os itens de gameplay das filas.
 
 As filas são **estanques**: ninguém puxa item da fila do outro. Mas os **temas são mistos em cada uma** — os dois tocam `server/`, `client/`, `shared/` e mapas. O critério de repartição não é camada, é pacote de funcionalidade:
 
