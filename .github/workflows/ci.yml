@@ -81,6 +81,11 @@ jobs:
       - name: Run browser tests
         run: npm run test:e2e
 
+      - name: Run map travel with Dev
+        env:
+          BI_MAP_PREVIEW: "1"
+        run: npm exec -w e2e -- playwright test -g "viaja pelos sete cenários"
+
       - name: Upload Playwright traces
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
