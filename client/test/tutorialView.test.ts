@@ -21,7 +21,8 @@ describe("Lote 4: Primeiros passos interativos e atalhos de HUD", () => {
     // Passo de Kisuke/Loja pendente
     const shopStep = { id: "shop", text: "Visite o Kisuke na praça (loja, missões e forja)", done: false };
     const shopHtml = renderTutorialStep(shopStep);
-    expect(shopHtml).toContain('data-act="travel"');
+    expect(shopHtml).toContain('data-act="shop"');
+    expect(shopHtml).not.toContain('data-act="travel"'); // abria a janela de Viagem em vez da loja
     expect(shopHtml).toContain("Ir ao Kisuke");
 
     // Passo de Bankai pendente
@@ -48,7 +49,8 @@ describe("Lote 4: Primeiros passos interativos e atalhos de HUD", () => {
   it("tutorialAction mapeia a ação para o identificador correspondente", () => {
     expect(tutorialAction("auto")).toBe("auto");
     expect(tutorialAction("book")).toBe("book");
-    expect(tutorialAction("travel")).toBe("travel");
+    expect(tutorialAction("shop")).toBe("shop");
+    expect(tutorialAction("travel")).toBeNull();
     expect(tutorialAction("bankai")).toBe("bankai");
     expect(tutorialAction("unknown")).toBeNull();
   });
@@ -58,16 +60,16 @@ describe("Lote 4: Primeiros passos interativos e atalhos de HUD", () => {
     const handlers = {
       auto: () => calls.push("auto"),
       book: () => calls.push("book"),
-      travel: () => calls.push("travel"),
+      shop: () => calls.push("shop"),
       bankai: () => calls.push("bankai"),
     };
 
     expect(dispatchTutorialAction("auto", handlers)).toBe(true);
     expect(dispatchTutorialAction("book", handlers)).toBe(true);
-    expect(dispatchTutorialAction("travel", handlers)).toBe(true);
+    expect(dispatchTutorialAction("shop", handlers)).toBe(true);
     expect(dispatchTutorialAction("bankai", handlers)).toBe(true);
     expect(dispatchTutorialAction("invalid", handlers)).toBe(false);
 
-    expect(calls).toEqual(["auto", "book", "travel", "bankai"]);
+    expect(calls).toEqual(["auto", "book", "shop", "bankai"]);
   });
 });

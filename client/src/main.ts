@@ -674,7 +674,8 @@ function bindBook(room: Room<any>, myId: string, closeWindows: (keep?: string) =
               room.send("auto", { autoHunt: !me?.autoHunt });
             },
             book: () => openBookTab("diario"),
-            travel: () => $("#travel-btn")?.click(),
+            // o servidor anda até o Kisuke e abre a loja (o mesmo caminho do clique no NPC); não é a janela de Viagem
+            shop: () => room.send("interact", { kind: "shop" }),
             bankai: () => room.send("transform"),
           });
         };
