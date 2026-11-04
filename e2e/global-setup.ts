@@ -34,6 +34,9 @@ function startServer(tmp: string): Promise<ChildProcess> {
     DB_FILE: join(tmp, "e2e.sqlite"),
     // o fluxo do evento narrado usa debugInvasion; os limites de login e de contas por IP não podem barrar os testes
     BI_DEBUG: "1",
+    // Somente a captura opt-in dos mapas precisa de nível 150 e imortalidade.
+    // O servidor/banco são temporários; o fluxo E2E padrão mantém Dev desligado.
+    BI_DEV: process.env.BI_MAP_PREVIEW === "1" ? "1" : "0",
     LOGIN_MAX_FAILS_IP: "1000000",
     REGISTER_MAX_IP: "1000000",
     // invasão e chefe mundial só quando o teste pedir

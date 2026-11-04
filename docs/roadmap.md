@@ -160,6 +160,8 @@ Descrição, ordem e dependências em [`roadmap-duplas.md`](roadmap-duplas.md). 
 
 ## Sem marco
 
+- **Renovação visual dos sete mapas (Rafael, 04/11/2026):** composição e caminhos redesenhados por autorização posterior à primeira versão. [Spec](features/renovacao-mapas/PRD-renovacao-mapas.md). Chão contínuo, props completos separados e escala de 32 px/célula; recortes coerentes com o lore, preservando pontos lógicos e validando navegação/capacidade dos spawns. Fontes e montagem atual em `art/maps/scenes/`; `renewal/` conserva fontes e atlases de suporte. Revisão independente sem bloqueios; resultados e limites das verificações em [baseline](baseline.md). Entrega em duas etapas revisáveis: [#339 — fontes/ferramentas](https://github.com/bleachbr/bleach-idle/pull/339) e [#338 — integração jogável](https://github.com/bleachbr/bleach-idle/pull/338). Push, merge e produção autorizados por Rafael; cada merge mantém os gates de revisão e CI do projeto.
+
 Visual de equipamentos além do haori e da máscara, e interiores de edifícios ([`pendencias.md`](pendencias.md) §2 e §5). Entram num marco quando alguém propuser a spec.
 
 ## Decisões tomadas

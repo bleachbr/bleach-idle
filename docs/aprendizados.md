@@ -1,5 +1,29 @@
 # Aprendizados Técnicos do Projeto (Bleach Idle)
 
+## Composição contínua e escala jogável (04/11/2026)
+
+- A revisão remota encontrou `assert place(...)`/`assert put(...)`: com `python -O` essas chamadas desapareciam junto da validação. Chamadas e guardas das ferramentas agora usam condições/exceções explícitas; nove regressões Python cobrem também execução otimizada e falhas antes de qualquer gravação pública.
+- Remover toda a faixa de magenta apagava roxo legítimo; preservar toda região interna deixava fundo rosa entre folhas. A limpeza agora remove componentes conectados à borda ou a uma semente quase magenta, preservando as regiões roxas internas sem chave. Os 10.325 pixels roxos do pilar são preservados; Zelkova foi validada nas três escalas do teste e no WebP exportado. Prévia e alpha dos sólidos foram conferidos depois de reconstruir os assets.
+- Ao adicionar uma casa ao Rukongai, reservar apenas os pontos lógicos não bastava: o footprint também deve respeitar sólidos de objetos existentes. A colocação conflitante de (30,37) foi rejeitada, mantendo as árvores; Soul ficou com 50 props. Fachadas monumentais que continuam fora do mundo precisam de recorte explícito na prévia, sem reduzir arbitrariamente sua escala para caber no mapa.
+
+- Pré-publicação: o E2E media o minimapa antes de `#game-loading.ready`; o trace mostrava o canvas ainda com título inicial e proporção padrão. Esperar o mapa montado e medir o retângulo em cada clique elimina a corrida. A caminhada passou em três execuções consecutivas depois da correção, sem mudar movimento/colisão do jogo.
+- A fixture da forja também dependia do layout: `nearestWalkable` do destino antigo devolvia (20,12), distância 2 do Kisuke, ainda dentro do alcance. O cenário agora busca uma rua conectada fora do alcance e confirma a chegada antes da recusa; não foi necessário alterar a forja do jogo.
+- O cenário de Auto Venda não pode exigir ausência de toda sacola quando enfrenta um Hollow Sombrio: ele pode soltar poção, que corretamente não é vendida como loot puro. O CI da etapa somente de arte revelou essa falha antiga; sorteio fixo confirmou fragmento/garra vendidos e poção destinada à sacola. A fixture agora ignora drops não puros, mantendo a Auto Venda sob teste e sem alterar o comportamento do jogo.
+
+- Trocar o atlas preservando cada posição não resolve uma composição fragmentada. Após autorização de Rafael, o chão passou a paisagem contínua e os objetos a sprites completos ordenados pelos pés, mantendo colisão/lógica autoritativas no Tiled. `worldScenes.test.ts` confere equivalência de objetos editor/runtime, pontos preservados, navegação e espaço para mobs no raio de spawn.
+- A proporção se avalia na câmera com os atores reais, não somente na imagem reduzida do mapa. O E2E percorre mais de dez células usando a matriz real e confirma mobs na câmera. Referências vestidas e prévias de composição não devem virar fundo jogável com objetos fundidos.
+- Mudanças autorizadas de layout podem invalidar fixtures com coordenadas fixas: o teste #26 usava (10,16), agora dentro de um prédio. A rua (13,16) mantém a mesma intenção pendente, destino e verificações de cancelamento; a lógica de interação não precisou mudar.
+- Cobertura alpha dos sólidos de objetos é uma regressão útil, mas não prova contornos exatos nem valida água. A união das máscaras deve usar o máximo do alpha, preservando cobertura em sobreposições.
+- O registro abaixo descreve somente a primeira revisão, anterior ao redesenho; seus limites de alteração e métricas não representam o runtime atual.
+
+## Renovação de arte sem alterar mapas (03/11/2026)
+
+- O atlas pode ser refeito por catálogo de chaves sem regenerar o Tiled. SHA-256 registra versões revisadas. Nesta entrega, cinco mapas ficaram intactos e dois receberam somente quatro flags de solidez cada, após autorização de Rafael para ajustar o cenário à arte. Comparar JSON inteiro e matriz de colisão com baselines prova o limite da mudança.
+- Gerar o objeto inteiro e depois fatiar conserva as emendas entre células do atlas. Chão, objetos e partes acima do personagem continuam separados nas camadas existentes; detalhes menores reutilizados também podem ser exportados como objetos inteiros.
+- Preservar somente a proporção da fonte não basta: uma fachada estreita numa caixa larga pode tornar células sólidas completamente transparentes. Fontes largas e normalização pelo footprint resolveram lojas/casas de madeira. Para os quatro cantos vazios de outra casa por mapa, Rafael autorizou retirar apenas a solidez desses cantos. O teste Pillow cruza alpha antigo/novo com os sólidos usados; valida ausência de novas paredes invisíveis, sem esconder as preexistentes.
+- Versionar também a URL do PNG evita depender da atualização em segundo plano do worker anterior. O E2E verifica as URLs e o carregamento, mas não simula um PWA com worker antigo instalado.
+- No Windows, testes de deploy que chamam `bash` precisam de `C:\Program Files\Git\bin` no `PATH`; a falta do executável produz `status: null`, não uma falha do script.
+
 Este documento reúne lições práticas, decisões arquiteturais e armadilhas superadas ao longo da construção do **Bleach Idle**. O objetivo é preservar o conhecimento acumulado e evitar que futuras sessões ou agentes repitam erros já solucionados.
 
 ---
