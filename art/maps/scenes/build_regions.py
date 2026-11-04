@@ -224,9 +224,10 @@ def custom(map_id, catalog):
         return True
     if map_id == "dangai":
         wall = new_prop("koryu", "dangai-koryu-wall.png", 96, h*T)
-        # A zona segura original começa em x=2: a faixa esquerda fica nas duas
-        # colunas externas, sem cortar a área de chegada.
-        if not put("koryu-left", {**wall, "width": 64}, 1, h, "boundary", (0, 0, 2, h)):
+        # O Koryu é matéria em fluxo: alongamos ambos os painéis a 96×altura
+        # do mundo. O terço externo esquerdo fica fora do mapa; os 64 px visíveis
+        # preservam a zona segura original, que começa na coluna x=2.
+        if not put("koryu-left", wall, .5, h, "boundary", (0, 0, 2, h)):
             raise RuntimeError("Koryu esquerdo conflita com área reservada")
         flipped = ImageOps.mirror(Image.open(ROOT/"client/public"/wall["image"].lstrip("/")))
         flipped.save(OUT/"landmarks/koryu-right.webp", quality=95)

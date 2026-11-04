@@ -76,6 +76,8 @@ def seamless(image):
 def ground(atlas, keys, map_id):
     source = Image.open(HERE / f"{map_id}-ground.png").convert("RGBA")
     w, h = source.size
+    if w != h or w % 2:
+        raise RuntimeError(f"Fonte de terreno inválida: {map_id}, {source.size}; esperado quadrado de lado par")
     for n, name in enumerate(GROUNDS[map_id]):
         x, y = n % 2 * (w // 2), n // 2 * (h // 2)
         texture = seamless(source.crop((x, y, x + w // 2, y + h // 2)).resize((128, 128), Image.Resampling.BOX))

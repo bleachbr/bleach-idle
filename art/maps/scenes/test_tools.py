@@ -19,6 +19,31 @@ import build_regions
 
 
 class ArtTools(unittest.TestCase):
+    def test_ground_rejects_invalid_quadrants_before_writes(self):
+        for size in ((12, 8), (9, 9)):
+            with self.subTest(size=size), tempfile.TemporaryDirectory(prefix="bleach-art-test-") as folder:
+                root = Path(folder)
+                (root / "terrain").mkdir()
+                Image.new("RGBA", size, (80, 90, 100, 255)).save(root / "fixture-ground.png")
+                with patch.object(assemble, "HERE", root), patch.object(assemble, "GROUNDS", {"fixture": ["stone"]}):
+                    with self.assertRaisesRegex(RuntimeError, "Fonte de terreno inválida"):
+                        assemble.ground(Image.new("RGBA", (256, 64)), {}, "fixture")
+                self.assertEqual(list((root / "terrain").iterdir()), [])
+
+    def test_dangai_boundary_panels_share_render_scale(self):
+        catalog = json.loads((HERE.parent / "renewal/catalog.json").read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory(prefix="bleach-art-test-") as folder:
+            root = Path(folder)
+            out = root / "client/public/maps/scenes"
+            out.mkdir(parents=True)
+            with patch.object(build_regions, "ROOT", root), patch.object(build_regions, "OUT", out), \
+                    patch.object(build_regions, "append_presentation"):
+                _, scene = build_regions.custom("dangai", catalog)
+        walls = [p for p in scene["props"] if p["kind"] == "boundary"]
+        self.assertEqual(len(walls), 2)
+        self.assertEqual([(p["width"], p["height"]) for p in walls], [(96, scene["height"])] * 2)
+        self.assertEqual(walls[0]["x"] + walls[0]["width"] / 2, 64)
+
     def test_tree_export_has_no_magenta_holes(self):
         clean = assemble.remove_exterior_magenta(Image.open(HERE / "karakura-zelkova.png"))
         clean = clean.crop(clean.getbbox())
@@ -118,8 +143,11 @@ class ArtTools(unittest.TestCase):
                     "layers": [{"type": "tilelayer", "name": "objetos", "data": [1]}]}
             (root / "client/public/maps/fixture.tmj").write_text(json.dumps(data))
             code = f"import sys; from pathlib import Path; sys.path.insert(0, {str(HERE)!r}); import check_scene_alpha as c; c.ROOT=Path({folder!r}); c.main()"
-            result = subprocess.run([sys.executable, "-O", "-c", code], capture_output=True)
+            result = subprocess.run([sys.executable, "-X", "utf8", "-O", "-c", code],
+                                    capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
             self.assertNotEqual(result.returncode, 0, result.stdout)
+            self.assertIn("fixture: sólidos sem cobertura visual:", result.stderr)
+            self.assertNotIn("Traceback", result.stderr)
 
     def test_rukongai_house_does_not_cover_existing_tree_trunks(self):
         catalog = json.loads((HERE.parent / "renewal/catalog.json").read_text(encoding="utf-8"))
