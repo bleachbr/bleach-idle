@@ -1,0 +1,820 @@
+{
+  "generator": "image_gen (built-in)",
+  "maps": {
+    "karakura": {
+      "sha256": "8a5e0811457ec150ebf4c96005fa02946f857504421d42986947bcd6fa2a17e8",
+      "previousSha256": "62c7447fc29d1b3a0d3b2e4724bfd2c6f4c9e4c30790773a8d77fcabe36fd9ae"
+    },
+    "soul": {
+      "sha256": "30febb4fadc7f3493a31ba87b02cd40bf1f0cfec828f1a05b6c18fc23585730a",
+      "previousSha256": "9c4e473d083af17ec431d622af9e064d4ce5ded26739817b029ac9b993677b22"
+    },
+    "hueco": {
+      "sha256": "b45f089ca18d059d043c3c1d6ecbfcb2d995027fa1818926b1abde91f406fbf5",
+      "previousSha256": "96c7a2eb3f93ce337ebf962b2416a916a16f1ef2153e39e74eb63b20de6044cd"
+    },
+    "lasnoches": {
+      "sha256": "811f0c97d00d94f5ae177ab820dea682933e809dc2970af0b3292d6d8489e436",
+      "previousSha256": "21ccb5df18d163a90c9a3fd055a9cc6928d00a5124ae273574144a1a5461b557"
+    },
+    "dangai": {
+      "sha256": "db96803fb37b9f848658f3ac83ab58c617b5cbbb3d50a3786cb82b477c8fa6fd",
+      "previousSha256": "06698a9484f51709a478ed3f35013e773534bbfbe06e81c15db49cb9da1ed0dd"
+    },
+    "falsa": {
+      "sha256": "4359828cd135e5a0363270576cdf39b1ffb517737da89bfdaf5ccade5fecef24",
+      "previousSha256": "7ee0d9f38eaa9908e60e31a90e35b63f834d459bfb284ca57c1ccc8cfc0374b3"
+    },
+    "wandenreich": {
+      "sha256": "f84f4a895ed938ff04e9de6dc5ccc7f791df097b47f73b57b8065bc19f77ba14",
+      "previousSha256": "bdf91ebd5144585d4557a9050d4e94b5983ce17ce1bb74a03073014fdafa07d4"
+    }
+  },
+  "sources": [
+    {
+      "image": "city-apartment.png",
+      "prompt": "city-apartment.prompt.txt"
+    },
+    {
+      "image": "city-house.png",
+      "prompt": "city-house.prompt.txt"
+    },
+    {
+      "image": "city-shop.png",
+      "prompt": "city-shop.prompt.txt",
+      "reference": "footprint-guide-2.png"
+    },
+    {
+      "image": "city-tree.png",
+      "prompt": "city-tree.prompt.txt"
+    },
+    {
+      "image": "city-wood-house.png",
+      "prompt": "city-wood-house.prompt.txt",
+      "reference": "footprint-guide-3.png"
+    },
+    {
+      "image": "dangai-ground.png",
+      "prompt": "dangai-ground.prompt.txt"
+    },
+    {
+      "image": "dangai-pillar.png",
+      "prompt": "dangai-pillar.prompt.txt"
+    },
+    {
+      "image": "hueco-ground.png",
+      "prompt": "hueco-ground.prompt.txt"
+    },
+    {
+      "image": "hueco-tree.png",
+      "prompt": "hueco-tree.prompt.txt"
+    },
+    {
+      "image": "karakura-ground.png",
+      "prompt": "karakura-ground.prompt.txt"
+    },
+    {
+      "image": "lasnoches-ground.png",
+      "prompt": "lasnoches-ground.prompt.txt"
+    },
+    {
+      "image": "palace-pillar.png",
+      "prompt": "palace-pillar.prompt.txt"
+    },
+    {
+      "image": "soul-building.png",
+      "prompt": "soul-building.prompt.txt"
+    },
+    {
+      "image": "soul-ground.png",
+      "prompt": "soul-ground.prompt.txt"
+    },
+    {
+      "image": "soul-sakura.png",
+      "prompt": "soul-sakura.prompt.txt"
+    }
+  ],
+  "retainedProps": [
+    {
+      "file": "props/retained-karakura-arbusto.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "karakura",
+      "tiles": [
+        [
+          "arbusto"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-karakura-lixeira.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "karakura",
+      "tiles": [
+        [
+          "lixeira"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-karakura-maquina.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "karakura",
+      "tiles": [
+        [
+          "maquina"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-karakura-banco.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "karakura",
+      "tiles": [
+        [
+          "banco"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-karakura-depot.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "karakura",
+      "tiles": [
+        [
+          "depot"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-karakura-senkaimon.png",
+      "width": 32,
+      "height": 64,
+      "origin": "retained",
+      "map": "karakura",
+      "tiles": [
+        [
+          "senkaimon_topo"
+        ],
+        [
+          "senkaimon"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-soul-pinheiro.png",
+      "width": 64,
+      "height": 96,
+      "origin": "retained",
+      "map": "soul",
+      "tiles": [
+        [
+          "pinheiro00",
+          "pinheiro10"
+        ],
+        [
+          "pinheiro01",
+          "pinheiro11"
+        ],
+        [
+          "pinheiro02",
+          "pinheiro12"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-soul-lanterna.png",
+      "width": 32,
+      "height": 64,
+      "origin": "retained",
+      "map": "soul",
+      "tiles": [
+        [
+          "lanterna00"
+        ],
+        [
+          "lanterna01"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-soul-muro.png",
+      "width": 128,
+      "height": 64,
+      "origin": "retained",
+      "map": "soul",
+      "tiles": [
+        [
+          "muro00",
+          "muro10",
+          "muro20",
+          "muro30"
+        ],
+        [
+          "muro01",
+          "muro11",
+          "muro21",
+          "muro31"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-soul-garganta_ss.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "soul",
+      "tiles": [
+        [
+          "garganta_ss"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-hueco-coluna.png",
+      "width": 32,
+      "height": 64,
+      "origin": "retained",
+      "map": "hueco",
+      "tiles": [
+        [
+          "coluna_topo"
+        ],
+        [
+          "coluna"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-hueco-garganta.png",
+      "width": 32,
+      "height": 64,
+      "origin": "retained",
+      "map": "hueco",
+      "tiles": [
+        [
+          "garganta_topo"
+        ],
+        [
+          "garganta"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-hueco-rocha0.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "hueco",
+      "tiles": [
+        [
+          "rocha0"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-hueco-rocha1.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "hueco",
+      "tiles": [
+        [
+          "rocha1"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-hueco-rocha2.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "hueco",
+      "tiles": [
+        [
+          "rocha2"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-hueco-coluna_quebrada.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "hueco",
+      "tiles": [
+        [
+          "coluna_quebrada"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-hueco-cranio.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "hueco",
+      "tiles": [
+        [
+          "cranio"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-hueco-arvore_peq.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "hueco",
+      "tiles": [
+        [
+          "arvore_peq"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-lasnoches-braseiro.png",
+      "width": 32,
+      "height": 64,
+      "origin": "retained",
+      "map": "lasnoches",
+      "tiles": [
+        [
+          "braseiro_topo"
+        ],
+        [
+          "braseiro"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-lasnoches-estatua.png",
+      "width": 32,
+      "height": 64,
+      "origin": "retained",
+      "map": "lasnoches",
+      "tiles": [
+        [
+          "estatua_topo"
+        ],
+        [
+          "estatua"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-lasnoches-bandeira.png",
+      "width": 32,
+      "height": 64,
+      "origin": "retained",
+      "map": "lasnoches",
+      "tiles": [
+        [
+          "bandeira_topo"
+        ],
+        [
+          "bandeira"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-lasnoches-garganta.png",
+      "width": 32,
+      "height": 64,
+      "origin": "retained",
+      "map": "lasnoches",
+      "tiles": [
+        [
+          "garganta_topo"
+        ],
+        [
+          "garganta"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-lasnoches-trono.png",
+      "width": 64,
+      "height": 64,
+      "origin": "retained",
+      "map": "lasnoches",
+      "tiles": [
+        [
+          "trono00",
+          "trono10"
+        ],
+        [
+          "trono01",
+          "trono11"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-lasnoches-janela.png",
+      "width": 64,
+      "height": 32,
+      "origin": "retained",
+      "map": "lasnoches",
+      "tiles": [
+        [
+          "janela00",
+          "janela10"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-lasnoches-parede.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "lasnoches",
+      "tiles": [
+        [
+          "parede"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-lasnoches-entulho.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "lasnoches",
+      "tiles": [
+        [
+          "entulho"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-lasnoches-banco.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "lasnoches",
+      "tiles": [
+        [
+          "banco"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-dangai-chama.png",
+      "width": 32,
+      "height": 64,
+      "origin": "retained",
+      "map": "dangai",
+      "tiles": [
+        [
+          "chama_topo"
+        ],
+        [
+          "chama"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-dangai-bandeira.png",
+      "width": 32,
+      "height": 64,
+      "origin": "retained",
+      "map": "dangai",
+      "tiles": [
+        [
+          "bandeira_topo"
+        ],
+        [
+          "bandeira"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-dangai-portal.png",
+      "width": 64,
+      "height": 64,
+      "origin": "retained",
+      "map": "dangai",
+      "tiles": [
+        [
+          "portal00",
+          "portal10"
+        ],
+        [
+          "portal01",
+          "portal11"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-dangai-parede.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "dangai",
+      "tiles": [
+        [
+          "parede"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-dangai-cristais.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "dangai",
+      "tiles": [
+        [
+          "cristais"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-dangai-arco.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "dangai",
+      "tiles": [
+        [
+          "arco"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-dangai-altar.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "dangai",
+      "tiles": [
+        [
+          "altar"
+        ]
+      ]
+    },
+    {
+      "file": "props/retained-dangai-ossos.png",
+      "width": 32,
+      "height": 32,
+      "origin": "retained",
+      "map": "dangai",
+      "tiles": [
+        [
+          "ossos"
+        ]
+      ]
+    }
+  ],
+  "props": [
+    {
+      "file": "props/city-apartment-6x5.png",
+      "width": 192,
+      "height": 160
+    },
+    {
+      "file": "props/city-house-6x5.png",
+      "width": 192,
+      "height": 160
+    },
+    {
+      "file": "props/city-shop-3x5.png",
+      "width": 96,
+      "height": 160
+    },
+    {
+      "file": "props/city-shop-4x5.png",
+      "width": 128,
+      "height": 160
+    },
+    {
+      "file": "props/city-shop-6x5.png",
+      "width": 192,
+      "height": 160
+    },
+    {
+      "file": "props/city-tree-1x2.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/city-wood-house-4x5.png",
+      "width": 128,
+      "height": 160
+    },
+    {
+      "file": "props/city-wood-house-6x5.png",
+      "width": 192,
+      "height": 160
+    },
+    {
+      "file": "props/dangai-pillar-1x2.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/hueco-tree-1x2.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/palace-pillar-1x2.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/retained-dangai-altar.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-dangai-arco.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-dangai-bandeira.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/retained-dangai-chama.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/retained-dangai-cristais.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-dangai-ossos.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-dangai-parede.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-dangai-portal.png",
+      "width": 64,
+      "height": 64
+    },
+    {
+      "file": "props/retained-hueco-arvore_peq.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-hueco-coluna.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/retained-hueco-coluna_quebrada.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-hueco-cranio.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-hueco-garganta.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/retained-hueco-rocha0.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-hueco-rocha1.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-hueco-rocha2.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-karakura-arbusto.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-karakura-banco.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-karakura-depot.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-karakura-lixeira.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-karakura-maquina.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-karakura-senkaimon.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/retained-lasnoches-banco.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-lasnoches-bandeira.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/retained-lasnoches-braseiro.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/retained-lasnoches-entulho.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-lasnoches-estatua.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/retained-lasnoches-garganta.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/retained-lasnoches-janela.png",
+      "width": 64,
+      "height": 32
+    },
+    {
+      "file": "props/retained-lasnoches-parede.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-lasnoches-trono.png",
+      "width": 64,
+      "height": 64
+    },
+    {
+      "file": "props/retained-soul-garganta_ss.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "props/retained-soul-lanterna.png",
+      "width": 32,
+      "height": 64
+    },
+    {
+      "file": "props/retained-soul-muro.png",
+      "width": 128,
+      "height": 64
+    },
+    {
+      "file": "props/retained-soul-pinheiro.png",
+      "width": 64,
+      "height": 96
+    },
+    {
+      "file": "props/soul-building-8x7.png",
+      "width": 256,
+      "height": 224
+    },
+    {
+      "file": "props/soul-sakura-2x3.png",
+      "width": 64,
+      "height": 96
+    }
+  ]
+}
