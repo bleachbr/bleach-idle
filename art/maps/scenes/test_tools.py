@@ -19,6 +19,23 @@ import build_regions
 
 
 class ArtTools(unittest.TestCase):
+    def test_tree_export_has_no_magenta_holes(self):
+        clean = assemble.remove_exterior_magenta(Image.open(HERE / "karakura-zelkova.png"))
+        clean = clean.crop(clean.getbbox())
+        for width in (72, 80, 96):
+            image = clean.resize((width, round(width*clean.height/clean.width)), Image.Resampling.LANCZOS)
+            pink = sum(1 for r, g, b, a in image.getdata() if r > 200 and b > 200 and g < 60 and a > 96)
+            self.assertEqual(pink, 0, width)
+
+    def test_key_removes_enclosed_background_but_keeps_purple(self):
+        source = Image.new("RGBA", (9, 9), (255, 0, 255, 255))
+        ImageDraw.Draw(source).rectangle((2, 2, 6, 6), fill=(70, 70, 70, 255))
+        source.putpixel((4, 3), (252, 2, 250, 255))
+        source.putpixel((4, 5), (142, 76, 190, 255))
+        clean = assemble.remove_exterior_magenta(source)
+        self.assertEqual(clean.getpixel((4, 3))[3], 0)
+        self.assertEqual(clean.getpixel((4, 5))[3], 255)
+
     def test_real_pillar_preserves_10325_enclosed_purple_pixels(self):
         source = Image.open(HERE.parent / "renewal/dangai-pillar.png").convert("RGBA")
         clean = assemble.remove_exterior_magenta(source)
