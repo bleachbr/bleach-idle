@@ -5226,9 +5226,9 @@
         "id": "dangai-koryu-left-0",
         "kind": "boundary",
         "image": "/maps/scenes/landmarks/koryu.webp",
-        "width": 64,
+        "width": 96,
         "height": 832,
-        "x": 32,
+        "x": 16.0,
         "y": 832,
         "sortY": 832
       },
