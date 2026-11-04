@@ -2,12 +2,12 @@
 
 ## Renovação dos mapas (04/11/2026)
 
-- A primeira revisão por atlas foi superada: Rafael autorizou novo desenho de composição/caminhos. A revisão atual usa cenários contínuos e props completos, com colisão revista no Tiled; fontes em `art/maps/scenes/`. Publicação continua dependendo de autorização conforme AGENTS.md §6.7.
+- A primeira revisão por atlas foi superada: Rafael autorizou novo desenho de composição/caminhos. A revisão atual usa cenários contínuos e props completos, com colisão revista no Tiled; fontes em `art/maps/scenes/`. Rafael autorizou commit, push, merge e produção em 04/11/2026; publicação segue revisão e CI obrigatórios do projeto.
 
 - Arte local em `feat/renovacao-visual-mapas`, com objetos novos e detalhes reutilizados; nenhum novo sistema de animação de objetos. Fontes, prompts e origem dos reaproveitamentos documentados nas pastas de arte.
 - O teste alpha cobre sólidos de objetos, não precisão dos contornos nem água/chão. Navegação e capacidade geométrica dos spawns verificadas; isso não simula ocupação simultânea por multidão de jogadores.
 - Carga antecipada dos 44 arquivos de cena: 7.140.974 bytes comprimidos e estimativa de 85,6 MiB RGBA decodificado, além dos assets existentes. Não foram medidos FPS, uso real de GPU, rede lenta ou dispositivo móvel. Carregamento por região pode ser trabalho posterior se medições justificarem.
-- Não há teste completo de atualização de um PWA com worker antigo instalado; os testes bloqueiam URLs sem versão para verificar o carregamento das URLs novas. Bateria completa de cenários e gitleaks permanecem sem execução nesta revisão.
+- Não há teste completo de atualização de um PWA com worker antigo instalado; os testes bloqueiam URLs sem versão para verificar o carregamento das URLs novas. Bateria completa de cenários será executada pelo CI. Gitleaks executado antes da publicação, sem achados.
 
 Este documento mapeia todas as pendências conhecidas, limitações da arquitetura atual e débitos técnicos acumulados no **Bleach Idle**.
 

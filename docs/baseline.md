@@ -2,6 +2,8 @@
 
 ## Cenários contínuos — 04/11/2026
 
+Pré-publicação autorizada por Rafael: integrada `origin/main` em `9ba1211`, sem conflitos; nota de atualização dos sete cenários em `shared/src/releases.ts`. Tipos, 478 testes em 84 arquivos e build aprovados após a integração (JS 1.802,20 kB / 425,37 kB gzip). Gitleaks 8.30.1 baixado da release oficial com SHA-256 conferido: 259 commits examinados, nenhum segredo encontrado. As medições abaixo precedem a integração; preservadas como histórico do desenvolvimento.
+
 Windows, Node 24.12.0, branch `feat/renovacao-visual-mapas`. A revisão de composição substitui os layouts visuais da primeira renovação. São 44 imagens de cenário únicas, 7.140.974 bytes comprimidos e 89.758.720 bytes (85,6 MiB) estimados para pixels RGBA sem mipmaps/alinhamento/overhead. São carregadas antecipadamente, além dos assets existentes; isto não é medição de VRAM. Os sete PNGs de atlas continuam com 1.903.364 bytes como suporte de colisão/minimapa/fallback. Fontes de arte em `art/` ficam fora do build público.
 
 Executado: `npm run typecheck`; `npm test` (445 testes, 79 arquivos); `npm run test:e2e` (9 testes, incluindo deslocamento real >10 células e mobs na câmera; captura opt-in fica ignorada no modo padrão); `npm run build` (JS 1.799,38 kB / 424,36 kB gzip, aviso de chunk grande já existente); `python art/maps/scenes/check_scene_alpha.py` (sete mapas sem sólidos de objetos totalmente sem cobertura visual); `cd server; npx tsx scripts/test.ts mapcheck lasnoches dangai endgame` (59 verificações OK). A suíte inicialmente revelou fixtures #26 sobre o prédio novo em (10,16): mudadas para a rua (13,16), mantendo comportamento e destino; regressões e suíte passaram depois.
