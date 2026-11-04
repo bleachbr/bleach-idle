@@ -1,5 +1,5 @@
 // Auto Venda do loot, analisador de caçada e aviso de recompensa diária pendente.
-import { expForLevel, nearestWalkable, countItem, dailyMissions, dayKey, BOOST_MAX_MS } from "../../shared/src";
+import { expForLevel, nearestWalkable, countItem, dailyMissions, dayKey, BOOST_MAX_MS, ITEMS, isPureLoot } from "../../shared/src";
 import { HOME } from "../src/maps";
 import { play, patchSave, sleep, ok, done } from "./lib";
 
@@ -9,6 +9,9 @@ const full = Array.from({ length: 20 }, () => ({ id: "bandana", qty: 1 }));
 let ready: boolean | undefined;
 const room = await play("Caca Ana", "ichigo", (id) => patchSave(id, {
   level: 14, exp: expForLevel(14), hp: 9999, rei: 9999, gold: 0, map: "karakura", ...pos, inv: full, autoSell: false,
+  // Este caso verifica loot puro. Poções/equipamentos raros legitimamente vão
+  // para sacola com inventário cheio; ignorá-los na fixture evita depender do sorteio.
+  lootRules: Object.fromEntries(Object.values(ITEMS).filter((item) => !isPureLoot(item)).map((item) => [item.id, "ignore"])),
   // bônus de loot ligado: com a bateria toda rodando junto os abates são lentos, e sem loot o teste falhava por azar
   lootBoostUntil: Date.now() + BOOST_MAX_MS,
   prog: { bestiary: {}, ach: ["k100", "lv15", "st5"], daily: { last: "", streak: 0 }, kills: 0, bossKills: 0 },
