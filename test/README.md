@@ -16,7 +16,7 @@ Inspirado no [Cradle](https://github.com/BAAI-Agents/Cradle): cada agente vê a 
   2. **Retorno** (`--retorno 15`, padrão 0 min ou 15 min quando ativado): ciclos de entrar, jogar (`--ciclo 3` min), sair (alternando saída pelo botão do jogo e fechamento abrupto da aba), esperar fora (`--fora 45` s) e voltar — conferindo persistência, relatório offline e testando as novidades da `main`.
 - **Modos de execução (Local, Worktree ou Remoto)**:
   - **Padrão:** faz `git fetch origin main`, prepara worktree isolado em `runs/main`, calcula o changelog desde `runs/checkpoint.json` e sobe servidores locais (2578/5183) sem modo Dev (`BI_DEV=0`).
-  - **Produção / Remoto (`--prod` ou `--url <url>`):** conecta diretamente a um servidor remoto como `https://bleach.acoplum.com`, sem subir processos locais, coletando erros reais, métricas e feedbacks.
+  - **Produção / Remoto (`--prod` ou `--url <url>`):** conecta diretamente a um servidor remoto como `https://bleach.acoplum.com`, sem subir processos locais, coletando erros reais, métricas e feedbacks. O changelog dado aos agentes vem da revisão que o servidor está rodando (`GET <url>/release`), não da `main`; se a produção estiver atrás, o texto lista quantos commits ainda não estão no ar e manda ignorar a ausência deles. Se o `/release` não responder, cai na `main` com aviso no relatório.
   - **Árvore local (`--local`):** usa o código atual não commitado.
   - **Modo Dev explícito (`--dev`):** apenas para testes específicos que precisem das ferramentas de admin.
 - **Relatórios e vídeos**:
