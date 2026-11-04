@@ -1,5 +1,13 @@
 # Aprendizados Técnicos do Projeto (Bleach Idle)
 
+## Composição contínua e escala jogável (04/11/2026)
+
+- Trocar o atlas preservando cada posição não resolve uma composição fragmentada. Após autorização de Rafael, o chão passou a paisagem contínua e os objetos a sprites completos ordenados pelos pés, mantendo colisão/lógica autoritativas no Tiled. `worldScenes.test.ts` confere equivalência de objetos editor/runtime, pontos preservados, navegação e espaço para mobs no raio de spawn.
+- A proporção se avalia na câmera com os atores reais, não somente na imagem reduzida do mapa. O E2E percorre mais de dez células usando a matriz real e confirma mobs na câmera. Referências vestidas e prévias de composição não devem virar fundo jogável com objetos fundidos.
+- Mudanças autorizadas de layout podem invalidar fixtures com coordenadas fixas: o teste #26 usava (10,16), agora dentro de um prédio. A rua (13,16) mantém a mesma intenção pendente, destino e verificações de cancelamento; a lógica de interação não precisou mudar.
+- Cobertura alpha dos sólidos de objetos é uma regressão útil, mas não prova contornos exatos nem valida água. A união das máscaras deve usar o máximo do alpha, preservando cobertura em sobreposições.
+- O registro abaixo descreve somente a primeira revisão, anterior ao redesenho; seus limites de alteração e métricas não representam o runtime atual.
+
 ## Renovação de arte sem alterar mapas (03/11/2026)
 
 - O atlas pode ser refeito por catálogo de chaves sem regenerar o Tiled. SHA-256 registra versões revisadas. Nesta entrega, cinco mapas ficaram intactos e dois receberam somente quatro flags de solidez cada, após autorização de Rafael para ajustar o cenário à arte. Comparar JSON inteiro e matriz de colisão com baselines prova o limite da mudança.

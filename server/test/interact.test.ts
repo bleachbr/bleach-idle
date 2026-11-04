@@ -34,7 +34,9 @@ describe("intenção de interagir some quando o jogador escolhe outra ação (#2
   it("clicar no depot e depois andar para perto do Kisuke não abre o depot", async () => {
     const { world, room, sp } = await join();
     const m = MAPS.karakura, depot = m.depot!;
-    const start = { x: 10, y: 16 }, dest = { x: 16, y: 13 };
+    // A composição nova ocupa (10,16) com um prédio; a rua em (13,16)
+    // mantém a intenção pendente e o mesmo destino ao alcance dos dois serviços.
+    const start = { x: 13, y: 16 }, dest = { x: 16, y: 13 };
     expect(sp.map).toBe("karakura");
     expect(walkable(m, start.x, start.y) && walkable(m, dest.x, dest.y)).toBe(true);
     expect(chebyshev(start.x, start.y, depot.x, depot.y)).toBeGreaterThan(INTERACT_RANGE);
@@ -70,7 +72,8 @@ describe("intenção de interagir some quando o jogador escolhe outra ação (#2
     const realUpdate = room.updatePlayer.bind(room);
     room.updatePlayer = (p: any, now: number) => { if (p === sp) ticks++; return realUpdate(p, now); };
 
-    sp.x = 10; sp.y = 16; sp.path = [];
+    expect(walkable(MAPS.karakura, 13, 16)).toBe(true);
+    sp.x = 13; sp.y = 16; sp.path = [];
     world.send("interact", { kind: "depot" });
     await vi.waitFor(() => expect(sp.pendingInteract).toBe("depot"), { timeout: 5000, interval: 25 });
     world.send("nextTarget");

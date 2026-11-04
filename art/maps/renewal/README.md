@@ -1,5 +1,7 @@
 # Arte dos mapas — renovação de 03/11/2026
 
+**Histórico da primeira revisão.** A composição por atlas abaixo foi superada pelo redesenho autorizado em 04/11/2026: runtime, fontes atuais e verificações em [`../scenes/README.md`](../scenes/README.md). Esta pasta conserva fontes reutilizadas e atlases de suporte. As afirmações abaixo sobre layouts/flags e métricas descrevem o commit `161fe07`, não os mapas atuais. O catálogo agora registra os hashes dos mapas redesenhados; o teste atual de estrutura está em `client/test/worldScenes.test.ts`.
+
 **Entrega local validada, sem publicação.** Rafael autorizou ajustar o cenário ao contorno da arte nova, desde que pequeno. Foram alteradas somente quatro flags `solido: true → false` por mapa, nos cantos vazios de `casa0_6x5` em Karakura/Falsa: tiles 198, 203, 222 e 227; células (20,18), (25,18), (20,22) e (25,22). O corpo da casa continua sólido. Revisão independente confirmou o delta exato; passaram typecheck, 439 testes Vitest, 8 E2E, regressão Pillow, build e 29 verificações do cenário mapcheck.
 
 15 fontes geradas com a ferramenta nativa `image_gen`, com os prompts ao lado de cada PNG. `*-ground.png` contém somente os materiais do chão, em quatro quadrantes. As outras fontes contêm um único objeto inteiro sobre magenta para remoção determinística do fundo.

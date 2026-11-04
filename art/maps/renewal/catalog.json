@@ -270,7 +270,7 @@
       "casa3_4x5_24": 266,
       "casa3_4x5_34": 267
     },
-    "mapSha256": "2e2099840bd30a64f3ec774fad88359b01b36ef6b71ea512d650e05ecb494999",
+    "mapSha256": "7811e7d83cc46c1993450f9b9775930cc7c5e2a14b0ef17f3e53d6f4b5fa8835",
     "originalMapSha256": "2dbff9832a71a8c2cb5699b0cdf1ef5ff68cd04001b5d615290f3d2fb1932310",
     "approvedCollisionChanges": {
       "tileIds": [
@@ -298,7 +298,8 @@
         ]
       ],
       "reason": "Ajuste pequeno do contorno aprovado por Rafael: cantos transparentes da casa nova ficam andaveis."
-    }
+    },
+    "sceneRevision": "composicao-coerente-lore; redesenho autorizado por Rafael"
   },
   "hueco": {
     "keys": {
@@ -379,7 +380,8 @@
       "cranio": 74,
       "arvore_peq": 75
     },
-    "mapSha256": "d36ecc8e3e5694d1a22d75822b83954ecf47a31368b69abe46790efe47887d38"
+    "mapSha256": "c4d9bbb0628bb1e060aae11cf0510af217f96910c5e743c93cf53ec80413fb21",
+    "sceneRevision": "composicao-coerente-lore; redesenho autorizado por Rafael"
   },
   "lasnoches": {
     "keys": {
@@ -467,7 +469,8 @@
       "garganta": 81,
       "garganta_topo": 82
     },
-    "mapSha256": "ddb9e3c8bf81f19d583e459f934b59e5e5829cb53f5dc3a64da76cc77be669b0"
+    "mapSha256": "0b3697dcfb6ceb713015bb633497a65d5fb732adfd26b9821b847a6033c46597",
+    "sceneRevision": "composicao-coerente-lore; redesenho autorizado por Rafael"
   },
   "dangai": {
     "keys": {
@@ -551,7 +554,8 @@
       "altar": 77,
       "ossos": 78
     },
-    "mapSha256": "1cacf47cfe24857d8346ef0e403358452e76713b072b387a38f37ac20fb8c75f"
+    "mapSha256": "5f72d671cd0611bd6abe08ba78c5c4306735c3bf2e5b52c275ffa7f592a09796",
+    "sceneRevision": "composicao-coerente-lore; redesenho autorizado por Rafael"
   },
   "soul": {
     "keys": {
@@ -699,7 +703,8 @@
       "muro31": 141,
       "garganta_ss": 142
     },
-    "mapSha256": "e3a4c6e36037bed8c8caeb40ad708e43753da2617b34f40f588e94346acbb113"
+    "mapSha256": "8cc072b1b9b9467dc8cf0062afaffc01a740c355d01c4a09d730d06d7445eca2",
+    "sceneRevision": "composicao-coerente-lore; redesenho autorizado por Rafael"
   },
   "falsa": {
     "keys": {
@@ -972,7 +977,7 @@
       "casa3_4x5_24": 266,
       "casa3_4x5_34": 267
     },
-    "mapSha256": "4cf82a23f78ce522f369d769685cb3cab3f54e1f987ae0e99e0006ec0f55fe4b",
+    "mapSha256": "00a3d6ebb8fa6a42a519c23f945df73ad2a43419d84161ef6e1f6cff246a0d5d",
     "originalMapSha256": "bbcd517a1e603241f146bb0d22e6cca4467aac6b2683f4a045b76811a62341d0",
     "approvedCollisionChanges": {
       "tileIds": [
@@ -1000,7 +1005,8 @@
         ]
       ],
       "reason": "Ajuste pequeno do contorno aprovado por Rafael: cantos transparentes da casa nova ficam andaveis."
-    }
+    },
+    "sceneRevision": "composicao-coerente-lore; redesenho autorizado por Rafael"
   },
   "wandenreich": {
     "keys": {
@@ -1148,6 +1154,7 @@
       "muro31": 141,
       "garganta_ss": 142
     },
-    "mapSha256": "38016b117ab2a5a47784a2d229b83e2db150b6cd02f962ab2614e43ee13dd747"
+    "mapSha256": "1538d57d045554206cb7efe80d6965301ae521177d88ad3398ad783339b14475",
+    "sceneRevision": "composicao-coerente-lore; redesenho autorizado por Rafael"
   }
 }

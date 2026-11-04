@@ -1,6 +1,7 @@
 // Cena principal: desenha o mapa, espelha o estado do servidor e envia intenções.
 // Nada de simulação aqui: posições, dano e XP vêm todos do servidor.
 import Phaser from "phaser";
+import { drawWorldScene, preloadWorldScenes } from "./worldScenes";
 import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
 import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, titleText, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, npcById, type GameMap, type QuestState } from "../../shared/src";
@@ -122,7 +123,7 @@ const py = (y: number) => y * TILE + TILE;
 const MINIMAP_K = 4;
 const MINIMAP_LEGEND = "Losango roxo: portal (com anel dourado, o alvo da missão está em outro mapa). Quadrado dourado: loja; laranja: depot. Cruz: templo. Círculo amarelo: NPC. Verde claro: zona protegida. Tracejado dourado: onde caçar o alvo da missão; ponto dourado: monstro do alvo.";
 /** versão dos .tmj na URL: subir junto com o CACHE de client/public/sw.js quando um mapa mudar (2: NPCs no soul.tmj, M1-03) */
-const MAP_VERSION = 3;
+const MAP_VERSION = 4;
 
 export class GameScene extends Phaser.Scene {
   /** quadros de andar por direção (4 ou 8), pela largura da folha carregada: nunca diverge da imagem */
@@ -261,6 +262,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
+    preloadWorldScenes(this, MAP_VERSION);
     for (const [key, def] of Object.entries(SPRITES))
       if (!def.lazy) this.load.spritesheet(key, `/assets/sprites/${key}.png`, { frameWidth: def.frame, frameHeight: def.frame });
     this.load.image(SHOP_SPRITE, `/assets/sprites/${SHOP_SPRITE}.png`);
@@ -911,11 +913,15 @@ export class GameScene extends Phaser.Scene {
     this.mapId = id;
     const tm = this.make.tilemap({ key: `map_${id}` });
     const tiles = tm.addTilesetImage(tm.tilesets[0].name, `tiles_${id}`)!;
-    for (const layer of tm.layers) {
-      const l = tm.createLayer(layer.name, tiles, 0, 0)!;
-      // "acima" (copas, topos de coluna) fica por cima dos personagens
-      l.setDepth(layer.name === "acima" ? 1e5 : -1);
-      this.mapObjects.push(l);
+    const continuous = drawWorldScene(this, id);
+    if (continuous) this.mapObjects.push(...continuous);
+    else {
+      for (const layer of tm.layers) {
+        const l = tm.createLayer(layer.name, tiles, 0, 0)!;
+        // "acima" (copas, topos de coluna) fica por cima dos personagens
+        l.setDepth(layer.name === "acima" ? 1e5 : -1);
+        this.mapObjects.push(l);
+      }
     }
     this.mapObjects.push(tm as unknown as Phaser.GameObjects.GameObject);
     this.cameras.main.setBounds(0, 0, tm.widthInPixels, tm.heightInPixels);

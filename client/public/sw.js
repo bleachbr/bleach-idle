@@ -1,7 +1,7 @@
 // Service worker do app instalável: arte e mapas do cache, atualizados em segundo plano;
 // páginas e scripts pela rede, com o cache como reserva se estiver sem internet.
 // O jogo em si precisa de conexão com o servidor; o cache só acelera o carregamento.
-const CACHE = "bleach-idle-v3"; // v3: renovação visual dos sete mapas; baixa os atlases novos
+const CACHE = "bleach-idle-v4"; // v4: cenários contínuos e nova composição
 // quando um .tmj mudar, suba também MAP_VERSION em client/src/GameScene.ts: a URL nova não está no cache do worker antigo,
 // que ainda atende a página na primeira carga depois do deploy
 

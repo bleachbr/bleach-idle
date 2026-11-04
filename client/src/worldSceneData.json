@@ -1,0 +1,5741 @@
+{
+  "karakura": {
+    "width": 2048,
+    "height": 1536,
+    "ground": "/maps/scenes/karakura-ground.webp",
+    "props": [
+      {
+        "id": "building-0",
+        "kind": "building",
+        "image": "/maps/scenes/urahara-shop.webp",
+        "x": 576,
+        "y": 320,
+        "width": 256,
+        "height": 123.333,
+        "sortY": 320
+      },
+      {
+        "id": "building-1",
+        "kind": "building",
+        "image": "/maps/scenes/kurosaki-clinic.webp",
+        "x": 768,
+        "y": 608,
+        "width": 224,
+        "height": 191.917,
+        "sortY": 608
+      },
+      {
+        "id": "building-2",
+        "kind": "building",
+        "image": "/maps/scenes/apartment.webp",
+        "x": 256,
+        "y": 608,
+        "width": 224,
+        "height": 248.242,
+        "sortY": 608
+      },
+      {
+        "id": "building-3",
+        "kind": "building",
+        "image": "/maps/scenes/apartment.webp",
+        "x": 288,
+        "y": 224,
+        "width": 176,
+        "height": 195.048,
+        "sortY": 224
+      },
+      {
+        "id": "building-4",
+        "kind": "building",
+        "image": "/maps/scenes/kurosaki-clinic.webp",
+        "x": 224,
+        "y": 896,
+        "width": 176,
+        "height": 150.792,
+        "sortY": 896
+      },
+      {
+        "id": "building-5",
+        "kind": "building",
+        "image": "/maps/scenes/kurosaki-clinic.webp",
+        "x": 800,
+        "y": 256,
+        "width": 176,
+        "height": 150.792,
+        "sortY": 256
+      },
+      {
+        "id": "interactive-6",
+        "kind": "interactive",
+        "image": "/maps/scenes/depot.webp",
+        "x": 464.0,
+        "y": 416,
+        "width": 32,
+        "height": 32.0,
+        "sortY": 416
+      },
+      {
+        "id": "interactive-7",
+        "kind": "interactive",
+        "image": "/maps/scenes/senkaimon.webp",
+        "x": 528.0,
+        "y": 384,
+        "width": 64,
+        "height": 92.218,
+        "sortY": 384
+      },
+      {
+        "id": "streetlight-8",
+        "kind": "streetlight",
+        "image": "/maps/scenes/streetlight.webp",
+        "x": 384,
+        "y": 384,
+        "width": 28,
+        "height": 137.846,
+        "sortY": 384
+      },
+      {
+        "id": "streetlight-9",
+        "kind": "streetlight",
+        "image": "/maps/scenes/streetlight.webp",
+        "x": 672,
+        "y": 384,
+        "width": 28,
+        "height": 137.846,
+        "sortY": 384
+      },
+      {
+        "id": "streetlight-10",
+        "kind": "streetlight",
+        "image": "/maps/scenes/streetlight.webp",
+        "x": 384,
+        "y": 576,
+        "width": 28,
+        "height": 137.846,
+        "sortY": 576
+      },
+      {
+        "id": "streetlight-11",
+        "kind": "streetlight",
+        "image": "/maps/scenes/streetlight.webp",
+        "x": 480,
+        "y": 768,
+        "width": 28,
+        "height": 137.846,
+        "sortY": 768
+      },
+      {
+        "id": "streetlight-12",
+        "kind": "streetlight",
+        "image": "/maps/scenes/streetlight.webp",
+        "x": 896,
+        "y": 736,
+        "width": 28,
+        "height": 137.846,
+        "sortY": 736
+      },
+      {
+        "id": "bench-13",
+        "kind": "bench",
+        "image": "/maps/scenes/banco.webp",
+        "x": 384,
+        "y": 608,
+        "width": 46,
+        "height": 46.0,
+        "sortY": 608
+      },
+      {
+        "id": "bench-14",
+        "kind": "bench",
+        "image": "/maps/scenes/banco.webp",
+        "x": 608,
+        "y": 736,
+        "width": 46,
+        "height": 46.0,
+        "sortY": 736
+      },
+      {
+        "id": "detail-15",
+        "kind": "detail",
+        "image": "/maps/scenes/arbusto.webp",
+        "x": 384,
+        "y": 512,
+        "width": 38,
+        "height": 38.0,
+        "sortY": 512
+      },
+      {
+        "id": "detail-16",
+        "kind": "detail",
+        "image": "/maps/scenes/arbusto.webp",
+        "x": 352,
+        "y": 704,
+        "width": 38,
+        "height": 38.0,
+        "sortY": 704
+      },
+      {
+        "id": "detail-17",
+        "kind": "detail",
+        "image": "/maps/scenes/arbusto.webp",
+        "x": 896,
+        "y": 672,
+        "width": 38,
+        "height": 38.0,
+        "sortY": 672
+      },
+      {
+        "id": "tree-18",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 105.28,
+        "y": 757.12,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 757.12
+      },
+      {
+        "id": "tree-19",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 994.24,
+        "y": 254.4,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 254.4
+      },
+      {
+        "id": "tree-20",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 899.84,
+        "y": 776.96,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 776.96
+      },
+      {
+        "id": "tree-21",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1261.76,
+        "y": 188.48,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 188.48
+      },
+      {
+        "id": "tree-22",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1175.04,
+        "y": 132.48,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 132.48
+      },
+      {
+        "id": "tree-23",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1340.8,
+        "y": 122.56,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 122.56
+      },
+      {
+        "id": "tree-24",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1750.4,
+        "y": 344.64,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 344.64
+      },
+      {
+        "id": "tree-25",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1588.8,
+        "y": 370.24,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 370.24
+      },
+      {
+        "id": "tree-26",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1677.76,
+        "y": 443.52,
+        "width": 88,
+        "height": 90.474,
+        "sortY": 443.52
+      },
+      {
+        "id": "tree-27",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1649.28,
+        "y": 385.6,
+        "width": 80,
+        "height": 82.249,
+        "sortY": 385.6
+      },
+      {
+        "id": "tree-28",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1688.32,
+        "y": 368.32,
+        "width": 80,
+        "height": 82.249,
+        "sortY": 368.32
+      },
+      {
+        "id": "tree-29",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1711.04,
+        "y": 366.72,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 366.72
+      },
+      {
+        "id": "tree-30",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1902.08,
+        "y": 948.48,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 948.48
+      },
+      {
+        "id": "tree-31",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1925.44,
+        "y": 869.12,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 869.12
+      },
+      {
+        "id": "tree-32",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1935.04,
+        "y": 915.84,
+        "width": 80,
+        "height": 82.249,
+        "sortY": 915.84
+      },
+      {
+        "id": "tree-33",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 187.2,
+        "y": 1384.64,
+        "width": 80,
+        "height": 82.249,
+        "sortY": 1384.64
+      },
+      {
+        "id": "tree-34",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1108.48,
+        "y": 1434.24,
+        "width": 80,
+        "height": 82.249,
+        "sortY": 1434.24
+      },
+      {
+        "id": "tree-35",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1934.72,
+        "y": 1419.52,
+        "width": 88,
+        "height": 90.474,
+        "sortY": 1419.52
+      },
+      {
+        "id": "tree-36",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1955.52,
+        "y": 1410.88,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 1410.88
+      }
+    ]
+  },
+  "soul": {
+    "width": 1536,
+    "height": 1280,
+    "ground": "/maps/scenes/soul-ground.webp",
+    "props": [
+      {
+        "id": "soul-quartel-3-2",
+        "kind": "building",
+        "image": "/maps/scenes/soul/quartel.webp",
+        "width": 256,
+        "height": 224,
+        "x": 224.0,
+        "y": 288,
+        "sortY": 288
+      },
+      {
+        "id": "soul-quartel-13-2",
+        "kind": "building",
+        "image": "/maps/scenes/soul/quartel.webp",
+        "width": 256,
+        "height": 224,
+        "x": 544.0,
+        "y": 288,
+        "sortY": 288
+      },
+      {
+        "id": "soul-quartel-27-2",
+        "kind": "building",
+        "image": "/maps/scenes/soul/quartel.webp",
+        "width": 256,
+        "height": 224,
+        "x": 992.0,
+        "y": 288,
+        "sortY": 288
+      },
+      {
+        "id": "soul-quartel-37-2",
+        "kind": "building",
+        "image": "/maps/scenes/soul/quartel.webp",
+        "width": 256,
+        "height": 224,
+        "x": 1312.0,
+        "y": 288,
+        "sortY": 288
+      },
+      {
+        "id": "soul-quartel-3-10",
+        "kind": "building",
+        "image": "/maps/scenes/soul/quartel.webp",
+        "width": 256,
+        "height": 224,
+        "x": 224.0,
+        "y": 544,
+        "sortY": 544
+      },
+      {
+        "id": "soul-garganta_ss-23-11",
+        "kind": "prop",
+        "image": "/maps/scenes/senkaimon.webp",
+        "width": 64,
+        "height": 96,
+        "x": 752.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "soul-quartel-37-10",
+        "kind": "building",
+        "image": "/maps/scenes/soul/quartel.webp",
+        "width": 256,
+        "height": 224,
+        "x": 1312.0,
+        "y": 544,
+        "sortY": 544
+      },
+      {
+        "id": "soul-sakura-15-10",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/sakura.webp",
+        "width": 64,
+        "height": 96,
+        "x": 512.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "soul-lanterna-17-11",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/lanterna.webp",
+        "width": 32,
+        "height": 64,
+        "x": 560.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "soul-lanterna-30-11",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/lanterna.webp",
+        "width": 32,
+        "height": 64,
+        "x": 976.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "soul-sakura-31-10",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/sakura.webp",
+        "width": 64,
+        "height": 96,
+        "x": 1024.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "soul-lanterna-17-16",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/lanterna.webp",
+        "width": 32,
+        "height": 64,
+        "x": 560.0,
+        "y": 576,
+        "sortY": 576
+      },
+      {
+        "id": "soul-lanterna-30-16",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/lanterna.webp",
+        "width": 32,
+        "height": 64,
+        "x": 976.0,
+        "y": 576,
+        "sortY": 576
+      },
+      {
+        "id": "soul-muro-0-18",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/muro.webp",
+        "width": 128,
+        "height": 64,
+        "x": 64.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "soul-muro-4-18",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/muro.webp",
+        "width": 128,
+        "height": 64,
+        "x": 192.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "soul-muro-8-18",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/muro.webp",
+        "width": 128,
+        "height": 64,
+        "x": 320.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "soul-muro-12-18",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/muro.webp",
+        "width": 128,
+        "height": 64,
+        "x": 448.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "soul-muro-16-18",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/muro.webp",
+        "width": 128,
+        "height": 64,
+        "x": 576.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "soul-muro-28-18",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/muro.webp",
+        "width": 128,
+        "height": 64,
+        "x": 960.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "soul-muro-32-18",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/muro.webp",
+        "width": 128,
+        "height": 64,
+        "x": 1088.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "soul-muro-36-18",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/muro.webp",
+        "width": 128,
+        "height": 64,
+        "x": 1216.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "soul-muro-40-18",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/muro.webp",
+        "width": 128,
+        "height": 64,
+        "x": 1344.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "soul-muro-44-18",
+        "kind": "prop",
+        "image": "/maps/scenes/soul/muro.webp",
+        "width": 128,
+        "height": 64,
+        "x": 1472.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "soul-pinheiro-44-21",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 1440.0,
+        "y": 768,
+        "sortY": 768
+      },
+      {
+        "id": "soul-pinheiro-38-22",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 1248.0,
+        "y": 800,
+        "sortY": 800
+      },
+      {
+        "id": "soul-sakura-40-22",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/sakura.webp",
+        "width": 64,
+        "height": 96,
+        "x": 1312.0,
+        "y": 800,
+        "sortY": 800
+      },
+      {
+        "id": "soul-sakura-9-23",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/sakura.webp",
+        "width": 64,
+        "height": 96,
+        "x": 320.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "soul-pinheiro-10-23",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 352.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "soul-pinheiro-11-23",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 384.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "soul-pinheiro-11-24",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 384.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "soul-pinheiro-38-31",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 1248.0,
+        "y": 1088,
+        "sortY": 1088
+      },
+      {
+        "id": "soul-sakura-41-31",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/sakura.webp",
+        "width": 64,
+        "height": 96,
+        "x": 1344.0,
+        "y": 1088,
+        "sortY": 1088
+      },
+      {
+        "id": "soul-sakura-8-32",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/sakura.webp",
+        "width": 64,
+        "height": 96,
+        "x": 288.0,
+        "y": 1120,
+        "sortY": 1120
+      },
+      {
+        "id": "soul-pinheiro-13-32",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 448.0,
+        "y": 1120,
+        "sortY": 1120
+      },
+      {
+        "id": "soul-pinheiro-17-32",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 576.0,
+        "y": 1120,
+        "sortY": 1120
+      },
+      {
+        "id": "soul-pinheiro-34-32",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 1120.0,
+        "y": 1120,
+        "sortY": 1120
+      },
+      {
+        "id": "soul-sakura-41-32",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/sakura.webp",
+        "width": 64,
+        "height": 96,
+        "x": 1344.0,
+        "y": 1120,
+        "sortY": 1120
+      },
+      {
+        "id": "soul-pinheiro-1-34",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 64.0,
+        "y": 1184,
+        "sortY": 1184
+      },
+      {
+        "id": "soul-pinheiro-2-34",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 96.0,
+        "y": 1184,
+        "sortY": 1184
+      },
+      {
+        "id": "soul-sakura-5-34",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/sakura.webp",
+        "width": 64,
+        "height": 96,
+        "x": 192.0,
+        "y": 1184,
+        "sortY": 1184
+      },
+      {
+        "id": "soul-pinheiro-29-34",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 960.0,
+        "y": 1184,
+        "sortY": 1184
+      },
+      {
+        "id": "soul-sakura-32-34",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/sakura.webp",
+        "width": 64,
+        "height": 96,
+        "x": 1056.0,
+        "y": 1184,
+        "sortY": 1184
+      },
+      {
+        "id": "soul-sakura-29-35",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/sakura.webp",
+        "width": 64,
+        "height": 96,
+        "x": 960.0,
+        "y": 1216,
+        "sortY": 1216
+      },
+      {
+        "id": "soul-sakura-32-35",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/sakura.webp",
+        "width": 64,
+        "height": 96,
+        "x": 1056.0,
+        "y": 1216,
+        "sortY": 1216
+      },
+      {
+        "id": "soul-pinheiro-41-35",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/pinheiro.webp",
+        "width": 64,
+        "height": 96,
+        "x": 1344.0,
+        "y": 1216,
+        "sortY": 1216
+      },
+      {
+        "id": "soul-sakura-37-36",
+        "kind": "tree",
+        "image": "/maps/scenes/soul/sakura.webp",
+        "width": 64,
+        "height": 96,
+        "x": 1216.0,
+        "y": 1248,
+        "sortY": 1248
+      },
+      {
+        "id": "rukongai-house-6-26",
+        "kind": "building",
+        "image": "/maps/scenes/soul/rukongai-house.webp",
+        "x": 192,
+        "y": 832,
+        "width": 128,
+        "height": 100.5,
+        "sortY": 832
+      },
+      {
+        "id": "rukongai-house-15-27",
+        "kind": "building",
+        "image": "/maps/scenes/soul/rukongai-house.webp",
+        "x": 480,
+        "y": 864,
+        "width": 128,
+        "height": 100.5,
+        "sortY": 864
+      },
+      {
+        "id": "rukongai-house-33-28",
+        "kind": "building",
+        "image": "/maps/scenes/soul/rukongai-house.webp",
+        "x": 1056,
+        "y": 896,
+        "width": 128,
+        "height": 100.5,
+        "sortY": 896
+      },
+      {
+        "id": "rukongai-house-43-31",
+        "kind": "building",
+        "image": "/maps/scenes/soul/rukongai-house.webp",
+        "x": 1376,
+        "y": 992,
+        "width": 128,
+        "height": 100.5,
+        "sortY": 992
+      },
+      {
+        "id": "rukongai-house-30-37",
+        "kind": "building",
+        "image": "/maps/scenes/soul/rukongai-house.webp",
+        "x": 960,
+        "y": 1184,
+        "width": 128,
+        "height": 100.5,
+        "sortY": 1184
+      }
+    ]
+  },
+  "hueco": {
+    "width": 1536,
+    "height": 1280,
+    "ground": "/maps/scenes/hueco-ground.webp",
+    "props": [
+      {
+        "id": "hueco-rocha2-17-2",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha2.webp",
+        "width": 32,
+        "height": 32,
+        "x": 560.0,
+        "y": 96,
+        "sortY": 96
+      },
+      {
+        "id": "hueco-arvore-25-2",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 816.0,
+        "y": 128,
+        "sortY": 128
+      },
+      {
+        "id": "hueco-arvore-26-2",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 848.0,
+        "y": 128,
+        "sortY": 128
+      },
+      {
+        "id": "hueco-arvore_peq-29-3",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore_peq.webp",
+        "width": 32,
+        "height": 32,
+        "x": 944.0,
+        "y": 128,
+        "sortY": 128
+      },
+      {
+        "id": "hueco-arvore-40-2",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1296.0,
+        "y": 128,
+        "sortY": 128
+      },
+      {
+        "id": "hueco-garganta-6-3",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/garganta.webp",
+        "width": 32,
+        "height": 64,
+        "x": 208.0,
+        "y": 160,
+        "sortY": 160
+      },
+      {
+        "id": "hueco-arvore-41-4",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1328.0,
+        "y": 192,
+        "sortY": 192
+      },
+      {
+        "id": "hueco-rocha0-12-7",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha0.webp",
+        "width": 32,
+        "height": 32,
+        "x": 400.0,
+        "y": 256,
+        "sortY": 256
+      },
+      {
+        "id": "hueco-arvore-38-6",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1232.0,
+        "y": 256,
+        "sortY": 256
+      },
+      {
+        "id": "hueco-rocha0-26-9",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha0.webp",
+        "width": 32,
+        "height": 32,
+        "x": 848.0,
+        "y": 320,
+        "sortY": 320
+      },
+      {
+        "id": "hueco-rocha0-33-9",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha0.webp",
+        "width": 32,
+        "height": 32,
+        "x": 1072.0,
+        "y": 320,
+        "sortY": 320
+      },
+      {
+        "id": "hueco-arvore-35-8",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1136.0,
+        "y": 320,
+        "sortY": 320
+      },
+      {
+        "id": "hueco-arvore-11-9",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 368.0,
+        "y": 352,
+        "sortY": 352
+      },
+      {
+        "id": "hueco-arvore-34-9",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1104.0,
+        "y": 352,
+        "sortY": 352
+      },
+      {
+        "id": "hueco-arvore-3-10",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 112.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "hueco-arvore-11-10",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 368.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "hueco-arvore-13-10",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 432.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "hueco-arvore-16-10",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 528.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "hueco-arvore_peq-27-11",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore_peq.webp",
+        "width": 32,
+        "height": 32,
+        "x": 880.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "hueco-arvore-40-10",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1296.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "hueco-arvore-45-10",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1456.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "hueco-arvore-11-11",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 368.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "hueco-arvore_peq-12-12",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore_peq.webp",
+        "width": 32,
+        "height": 32,
+        "x": 400.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "hueco-arvore-18-11",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 592.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "hueco-rocha0-27-12",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha0.webp",
+        "width": 32,
+        "height": 32,
+        "x": 880.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "hueco-arvore-45-11",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1456.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "hueco-arvore-6-12",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 208.0,
+        "y": 448,
+        "sortY": 448
+      },
+      {
+        "id": "hueco-rocha1-14-13",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha1.webp",
+        "width": 32,
+        "height": 32,
+        "x": 464.0,
+        "y": 448,
+        "sortY": 448
+      },
+      {
+        "id": "hueco-arvore-18-12",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 592.0,
+        "y": 448,
+        "sortY": 448
+      },
+      {
+        "id": "hueco-rocha2-27-13",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha2.webp",
+        "width": 32,
+        "height": 32,
+        "x": 880.0,
+        "y": 448,
+        "sortY": 448
+      },
+      {
+        "id": "hueco-arvore-24-13",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 784.0,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "hueco-arvore-5-14",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 176.0,
+        "y": 512,
+        "sortY": 512
+      },
+      {
+        "id": "hueco-arvore_peq-11-15",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore_peq.webp",
+        "width": 32,
+        "height": 32,
+        "x": 368.0,
+        "y": 512,
+        "sortY": 512
+      },
+      {
+        "id": "hueco-rocha2-20-15",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha2.webp",
+        "width": 32,
+        "height": 32,
+        "x": 656.0,
+        "y": 512,
+        "sortY": 512
+      },
+      {
+        "id": "hueco-arvore-18-15",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 592.0,
+        "y": 544,
+        "sortY": 544
+      },
+      {
+        "id": "hueco-arvore-18-16",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 592.0,
+        "y": 576,
+        "sortY": 576
+      },
+      {
+        "id": "hueco-arvore-35-16",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1136.0,
+        "y": 576,
+        "sortY": 576
+      },
+      {
+        "id": "hueco-rocha1-26-18",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha1.webp",
+        "width": 32,
+        "height": 32,
+        "x": 848.0,
+        "y": 608,
+        "sortY": 608
+      },
+      {
+        "id": "hueco-rocha2-9-20",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha2.webp",
+        "width": 32,
+        "height": 32,
+        "x": 304.0,
+        "y": 672,
+        "sortY": 672
+      },
+      {
+        "id": "hueco-arvore-5-20",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 176.0,
+        "y": 704,
+        "sortY": 704
+      },
+      {
+        "id": "hueco-arvore-29-20",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 944.0,
+        "y": 704,
+        "sortY": 704
+      },
+      {
+        "id": "hueco-arvore-37-20",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1200.0,
+        "y": 704,
+        "sortY": 704
+      },
+      {
+        "id": "hueco-arvore-7-21",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 240.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "hueco-arvore-13-21",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 432.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "hueco-arvore-32-22",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1040.0,
+        "y": 768,
+        "sortY": 768
+      },
+      {
+        "id": "hueco-rocha2-45-23",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha2.webp",
+        "width": 32,
+        "height": 32,
+        "x": 1456.0,
+        "y": 768,
+        "sortY": 768
+      },
+      {
+        "id": "hueco-arvore-14-23",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 464.0,
+        "y": 800,
+        "sortY": 800
+      },
+      {
+        "id": "hueco-arvore-27-23",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 880.0,
+        "y": 800,
+        "sortY": 800
+      },
+      {
+        "id": "hueco-arvore-41-23",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1328.0,
+        "y": 800,
+        "sortY": 800
+      },
+      {
+        "id": "hueco-rocha0-2-25",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha0.webp",
+        "width": 32,
+        "height": 32,
+        "x": 80.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "hueco-arvore-10-24",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 336.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "hueco-rocha0-14-25",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha0.webp",
+        "width": 32,
+        "height": 32,
+        "x": 464.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "hueco-rocha2-39-25",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha2.webp",
+        "width": 32,
+        "height": 32,
+        "x": 1264.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "hueco-arvore-42-24",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1360.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "hueco-rocha1-8-26",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha1.webp",
+        "width": 32,
+        "height": 32,
+        "x": 272.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "hueco-arvore-18-25",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 592.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "hueco-rocha2-20-26",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha2.webp",
+        "width": 32,
+        "height": 32,
+        "x": 656.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "hueco-arvore-37-26",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1200.0,
+        "y": 896,
+        "sortY": 896
+      },
+      {
+        "id": "hueco-rocha0-42-27",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha0.webp",
+        "width": 32,
+        "height": 32,
+        "x": 1360.0,
+        "y": 896,
+        "sortY": 896
+      },
+      {
+        "id": "hueco-rocha1-10-28",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha1.webp",
+        "width": 32,
+        "height": 32,
+        "x": 336.0,
+        "y": 928,
+        "sortY": 928
+      },
+      {
+        "id": "hueco-arvore-22-27",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 720.0,
+        "y": 928,
+        "sortY": 928
+      },
+      {
+        "id": "hueco-arvore-31-28",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1008.0,
+        "y": 960,
+        "sortY": 960
+      },
+      {
+        "id": "hueco-rocha0-37-29",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha0.webp",
+        "width": 32,
+        "height": 32,
+        "x": 1200.0,
+        "y": 960,
+        "sortY": 960
+      },
+      {
+        "id": "hueco-rocha1-38-29",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha1.webp",
+        "width": 32,
+        "height": 32,
+        "x": 1232.0,
+        "y": 960,
+        "sortY": 960
+      },
+      {
+        "id": "hueco-rocha2-31-30",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha2.webp",
+        "width": 32,
+        "height": 32,
+        "x": 1008.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "hueco-arvore-37-29",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1200.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "hueco-rocha0-2-31",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha0.webp",
+        "width": 32,
+        "height": 32,
+        "x": 80.0,
+        "y": 1024,
+        "sortY": 1024
+      },
+      {
+        "id": "hueco-rocha2-5-31",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha2.webp",
+        "width": 32,
+        "height": 32,
+        "x": 176.0,
+        "y": 1024,
+        "sortY": 1024
+      },
+      {
+        "id": "hueco-arvore-9-30",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 304.0,
+        "y": 1024,
+        "sortY": 1024
+      },
+      {
+        "id": "hueco-arvore-19-30",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 624.0,
+        "y": 1024,
+        "sortY": 1024
+      },
+      {
+        "id": "hueco-arvore-7-31",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 240.0,
+        "y": 1056,
+        "sortY": 1056
+      },
+      {
+        "id": "hueco-arvore-21-31",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 688.0,
+        "y": 1056,
+        "sortY": 1056
+      },
+      {
+        "id": "hueco-rocha0-34-32",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha0.webp",
+        "width": 32,
+        "height": 32,
+        "x": 1104.0,
+        "y": 1056,
+        "sortY": 1056
+      },
+      {
+        "id": "hueco-rocha2-2-33",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha2.webp",
+        "width": 32,
+        "height": 32,
+        "x": 80.0,
+        "y": 1088,
+        "sortY": 1088
+      },
+      {
+        "id": "hueco-arvore-10-32",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 336.0,
+        "y": 1088,
+        "sortY": 1088
+      },
+      {
+        "id": "hueco-rocha1-17-33",
+        "kind": "prop",
+        "image": "/maps/scenes/hueco/rocha1.webp",
+        "width": 32,
+        "height": 32,
+        "x": 560.0,
+        "y": 1088,
+        "sortY": 1088
+      },
+      {
+        "id": "hueco-arvore-24-32",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 784.0,
+        "y": 1088,
+        "sortY": 1088
+      },
+      {
+        "id": "hueco-arvore-22-33",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 720.0,
+        "y": 1120,
+        "sortY": 1120
+      },
+      {
+        "id": "hueco-arvore-36-34",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1168.0,
+        "y": 1152,
+        "sortY": 1152
+      },
+      {
+        "id": "hueco-arvore-41-34",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1328.0,
+        "y": 1152,
+        "sortY": 1152
+      },
+      {
+        "id": "hueco-arvore-42-34",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 1360.0,
+        "y": 1152,
+        "sortY": 1152
+      },
+      {
+        "id": "hueco-arvore-9-35",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 304.0,
+        "y": 1184,
+        "sortY": 1184
+      },
+      {
+        "id": "hueco-arvore-14-36",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 464.0,
+        "y": 1216,
+        "sortY": 1216
+      },
+      {
+        "id": "hueco-arvore-20-36",
+        "kind": "tree",
+        "image": "/maps/scenes/hueco/arvore.webp",
+        "width": 64,
+        "height": 112,
+        "x": 656.0,
+        "y": 1216,
+        "sortY": 1216
+      }
+    ]
+  },
+  "lasnoches": {
+    "width": 1536,
+    "height": 1280,
+    "ground": "/maps/scenes/lasnoches-ground.webp",
+    "props": [
+      {
+        "id": "lasnoches-parede-0-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-1-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 48.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-2-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 80.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-3-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 112.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-4-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 144.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-5-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 176.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-6-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 208.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-7-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 240.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-8-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 272.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-9-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 304.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-10-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 336.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-11-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-12-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 400.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-13-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 432.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-14-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 464.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-15-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 496.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-16-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 528.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-17-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 560.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-18-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 592.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-19-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 624.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-20-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-21-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 688.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-22-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 720.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-23-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 752.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-24-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 784.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-25-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 816.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-26-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 848.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-27-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-28-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 912.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-29-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 944.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-30-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 976.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-31-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1008.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-32-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1040.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-33-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1072.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-34-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1104.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-35-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1136.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-36-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-37-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1200.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-38-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1232.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-39-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1264.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-40-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1296.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-41-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1328.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-42-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1360.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-43-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1392.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-44-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1424.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-45-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1456.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-46-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1488.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-47-0",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 32,
+        "sortY": 32
+      },
+      {
+        "id": "lasnoches-parede-0-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-11-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-12-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 400.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-13-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 432.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-16-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 528.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-17-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 560.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-20-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-21-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 688.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-22-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 720.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-23-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 752.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-24-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 784.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-25-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 816.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-26-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 848.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-27-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-30-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 976.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-31-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1008.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-34-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1104.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-35-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1136.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-36-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-47-1",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 64,
+        "sortY": 64
+      },
+      {
+        "id": "lasnoches-parede-0-2",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 96,
+        "sortY": 96
+      },
+      {
+        "id": "lasnoches-parede-11-2",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 96,
+        "sortY": 96
+      },
+      {
+        "id": "lasnoches-parede-36-2",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 96,
+        "sortY": 96
+      },
+      {
+        "id": "lasnoches-parede-47-2",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 96,
+        "sortY": 96
+      },
+      {
+        "id": "lasnoches-parede-0-3",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 128,
+        "sortY": 128
+      },
+      {
+        "id": "lasnoches-parede-11-3",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 128,
+        "sortY": 128
+      },
+      {
+        "id": "lasnoches-parede-36-3",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 128,
+        "sortY": 128
+      },
+      {
+        "id": "lasnoches-parede-47-3",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 128,
+        "sortY": 128
+      },
+      {
+        "id": "lasnoches-parede-0-4",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 160,
+        "sortY": 160
+      },
+      {
+        "id": "lasnoches-parede-11-4",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 160,
+        "sortY": 160
+      },
+      {
+        "id": "lasnoches-parede-36-4",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 160,
+        "sortY": 160
+      },
+      {
+        "id": "lasnoches-parede-47-4",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 160,
+        "sortY": 160
+      },
+      {
+        "id": "lasnoches-parede-0-5",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 192,
+        "sortY": 192
+      },
+      {
+        "id": "lasnoches-parede-11-5",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 192,
+        "sortY": 192
+      },
+      {
+        "id": "lasnoches-parede-36-5",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 192,
+        "sortY": 192
+      },
+      {
+        "id": "lasnoches-parede-47-5",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 192,
+        "sortY": 192
+      },
+      {
+        "id": "lasnoches-parede-0-6",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 224,
+        "sortY": 224
+      },
+      {
+        "id": "lasnoches-parede-11-6",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 224,
+        "sortY": 224
+      },
+      {
+        "id": "lasnoches-parede-36-6",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 224,
+        "sortY": 224
+      },
+      {
+        "id": "lasnoches-parede-47-6",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 224,
+        "sortY": 224
+      },
+      {
+        "id": "lasnoches-parede-0-7",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 256,
+        "sortY": 256
+      },
+      {
+        "id": "lasnoches-parede-11-7",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 256,
+        "sortY": 256
+      },
+      {
+        "id": "lasnoches-parede-36-7",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 256,
+        "sortY": 256
+      },
+      {
+        "id": "lasnoches-parede-47-7",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 256,
+        "sortY": 256
+      },
+      {
+        "id": "lasnoches-parede-0-8",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 288,
+        "sortY": 288
+      },
+      {
+        "id": "lasnoches-parede-11-8",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 288,
+        "sortY": 288
+      },
+      {
+        "id": "lasnoches-parede-36-8",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 288,
+        "sortY": 288
+      },
+      {
+        "id": "lasnoches-parede-47-8",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 288,
+        "sortY": 288
+      },
+      {
+        "id": "lasnoches-parede-0-9",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 320,
+        "sortY": 320
+      },
+      {
+        "id": "lasnoches-parede-11-9",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 320,
+        "sortY": 320
+      },
+      {
+        "id": "lasnoches-parede-36-9",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 320,
+        "sortY": 320
+      },
+      {
+        "id": "lasnoches-parede-47-9",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 320,
+        "sortY": 320
+      },
+      {
+        "id": "lasnoches-parede-0-10",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 352,
+        "sortY": 352
+      },
+      {
+        "id": "lasnoches-parede-11-10",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 352,
+        "sortY": 352
+      },
+      {
+        "id": "lasnoches-parede-36-10",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 352,
+        "sortY": 352
+      },
+      {
+        "id": "lasnoches-parede-47-10",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 352,
+        "sortY": 352
+      },
+      {
+        "id": "lasnoches-parede-0-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-1-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 48.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-2-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 80.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-3-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 112.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-4-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 144.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-5-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 176.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-6-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 208.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-7-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 240.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-8-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 272.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-9-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 304.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-10-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 336.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-11-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-12-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 400.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-13-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 432.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-14-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 464.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-15-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 496.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-16-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 528.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-17-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 560.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-18-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 592.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-19-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 624.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-20-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-27-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-28-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 912.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-29-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 944.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-30-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 976.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-31-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1008.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-32-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1040.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-33-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1072.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-34-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1104.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-35-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1136.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-36-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-37-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1200.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-38-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1232.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-39-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1264.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-40-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1296.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-41-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1328.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-42-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1360.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-43-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1392.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-44-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1424.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-45-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1456.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-46-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1488.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-47-11",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "lasnoches-parede-0-12",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "lasnoches-parede-20-12",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "lasnoches-parede-27-12",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "lasnoches-parede-47-12",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 416,
+        "sortY": 416
+      },
+      {
+        "id": "lasnoches-parede-0-13",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 448,
+        "sortY": 448
+      },
+      {
+        "id": "lasnoches-parede-20-13",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 448,
+        "sortY": 448
+      },
+      {
+        "id": "lasnoches-pilar-21-12",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 688.0,
+        "y": 448,
+        "sortY": 448
+      },
+      {
+        "id": "lasnoches-pilar-26-12",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 848.0,
+        "y": 448,
+        "sortY": 448
+      },
+      {
+        "id": "lasnoches-parede-27-13",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 448,
+        "sortY": 448
+      },
+      {
+        "id": "lasnoches-parede-47-13",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 448,
+        "sortY": 448
+      },
+      {
+        "id": "lasnoches-parede-0-14",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "lasnoches-pilar-4-13",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 144.0,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "lasnoches-pilar-9-13",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 304.0,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "lasnoches-pilar-14-13",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 464.0,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "lasnoches-parede-20-14",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "lasnoches-parede-27-14",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "lasnoches-pilar-31-13",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1008.0,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "lasnoches-entulho-33-14",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/entulho.webp",
+        "width": 32,
+        "height": 32,
+        "x": 1072.0,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "lasnoches-pilar-36-13",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1168.0,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "lasnoches-pilar-41-13",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1328.0,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "lasnoches-parede-47-14",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "lasnoches-parede-0-15",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 512,
+        "sortY": 512
+      },
+      {
+        "id": "lasnoches-parede-20-15",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 512,
+        "sortY": 512
+      },
+      {
+        "id": "lasnoches-parede-27-15",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 512,
+        "sortY": 512
+      },
+      {
+        "id": "lasnoches-parede-47-15",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 512,
+        "sortY": 512
+      },
+      {
+        "id": "lasnoches-parede-0-16",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 544,
+        "sortY": 544
+      },
+      {
+        "id": "lasnoches-parede-20-16",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 544,
+        "sortY": 544
+      },
+      {
+        "id": "lasnoches-pilar-21-15",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 688.0,
+        "y": 544,
+        "sortY": 544
+      },
+      {
+        "id": "lasnoches-pilar-26-15",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 848.0,
+        "y": 544,
+        "sortY": 544
+      },
+      {
+        "id": "lasnoches-parede-27-16",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 544,
+        "sortY": 544
+      },
+      {
+        "id": "lasnoches-parede-47-16",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 544,
+        "sortY": 544
+      },
+      {
+        "id": "lasnoches-parede-0-17",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 576,
+        "sortY": 576
+      },
+      {
+        "id": "lasnoches-parede-47-17",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 576,
+        "sortY": 576
+      },
+      {
+        "id": "lasnoches-parede-0-18",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 608,
+        "sortY": 608
+      },
+      {
+        "id": "lasnoches-pilar-4-17",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 144.0,
+        "y": 608,
+        "sortY": 608
+      },
+      {
+        "id": "lasnoches-pilar-9-17",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 304.0,
+        "y": 608,
+        "sortY": 608
+      },
+      {
+        "id": "lasnoches-pilar-14-17",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 464.0,
+        "y": 608,
+        "sortY": 608
+      },
+      {
+        "id": "lasnoches-pilar-31-17",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1008.0,
+        "y": 608,
+        "sortY": 608
+      },
+      {
+        "id": "lasnoches-pilar-36-17",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1168.0,
+        "y": 608,
+        "sortY": 608
+      },
+      {
+        "id": "lasnoches-pilar-41-17",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1328.0,
+        "y": 608,
+        "sortY": 608
+      },
+      {
+        "id": "lasnoches-parede-47-18",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 608,
+        "sortY": 608
+      },
+      {
+        "id": "lasnoches-parede-0-19",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "lasnoches-parede-20-19",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "lasnoches-pilar-21-18",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 688.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "lasnoches-pilar-26-18",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 848.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "lasnoches-parede-27-19",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "lasnoches-parede-47-19",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 640,
+        "sortY": 640
+      },
+      {
+        "id": "lasnoches-parede-0-20",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 672,
+        "sortY": 672
+      },
+      {
+        "id": "lasnoches-parede-20-20",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 672,
+        "sortY": 672
+      },
+      {
+        "id": "lasnoches-parede-27-20",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 672,
+        "sortY": 672
+      },
+      {
+        "id": "lasnoches-entulho-39-20",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/entulho.webp",
+        "width": 32,
+        "height": 32,
+        "x": 1264.0,
+        "y": 672,
+        "sortY": 672
+      },
+      {
+        "id": "lasnoches-parede-47-20",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 672,
+        "sortY": 672
+      },
+      {
+        "id": "lasnoches-parede-0-21",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 704,
+        "sortY": 704
+      },
+      {
+        "id": "lasnoches-parede-20-21",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 704,
+        "sortY": 704
+      },
+      {
+        "id": "lasnoches-parede-27-21",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 704,
+        "sortY": 704
+      },
+      {
+        "id": "lasnoches-parede-47-21",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 704,
+        "sortY": 704
+      },
+      {
+        "id": "lasnoches-parede-0-22",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "lasnoches-pilar-4-21",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 144.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "lasnoches-pilar-9-21",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 304.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "lasnoches-pilar-14-21",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 464.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "lasnoches-parede-20-22",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "lasnoches-pilar-21-21",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 688.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "lasnoches-pilar-26-21",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 848.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "lasnoches-parede-27-22",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "lasnoches-pilar-31-21",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1008.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "lasnoches-pilar-36-21",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1168.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "lasnoches-pilar-41-21",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1328.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "lasnoches-parede-47-22",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 736,
+        "sortY": 736
+      },
+      {
+        "id": "lasnoches-parede-0-23",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 768,
+        "sortY": 768
+      },
+      {
+        "id": "lasnoches-parede-20-23",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 768,
+        "sortY": 768
+      },
+      {
+        "id": "lasnoches-parede-27-23",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 768,
+        "sortY": 768
+      },
+      {
+        "id": "lasnoches-parede-47-23",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 768,
+        "sortY": 768
+      },
+      {
+        "id": "lasnoches-parede-0-24",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 800,
+        "sortY": 800
+      },
+      {
+        "id": "lasnoches-entulho-8-24",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/entulho.webp",
+        "width": 32,
+        "height": 32,
+        "x": 272.0,
+        "y": 800,
+        "sortY": 800
+      },
+      {
+        "id": "lasnoches-parede-20-24",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 800,
+        "sortY": 800
+      },
+      {
+        "id": "lasnoches-parede-27-24",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 800,
+        "sortY": 800
+      },
+      {
+        "id": "lasnoches-parede-47-24",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 800,
+        "sortY": 800
+      },
+      {
+        "id": "lasnoches-parede-0-25",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "lasnoches-parede-20-25",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "lasnoches-pilar-21-24",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 688.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "lasnoches-pilar-26-24",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 848.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "lasnoches-parede-27-25",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "lasnoches-parede-47-25",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "lasnoches-parede-0-26",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "lasnoches-pilar-4-25",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 144.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "lasnoches-pilar-9-25",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 304.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "lasnoches-pilar-14-25",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 464.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "lasnoches-parede-20-26",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "lasnoches-parede-27-26",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "lasnoches-pilar-31-25",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1008.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "lasnoches-pilar-36-25",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1168.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "lasnoches-pilar-41-25",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1328.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "lasnoches-parede-47-26",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 864,
+        "sortY": 864
+      },
+      {
+        "id": "lasnoches-parede-0-27",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 896,
+        "sortY": 896
+      },
+      {
+        "id": "lasnoches-parede-47-27",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 896,
+        "sortY": 896
+      },
+      {
+        "id": "lasnoches-parede-0-28",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 928,
+        "sortY": 928
+      },
+      {
+        "id": "lasnoches-pilar-21-27",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 688.0,
+        "y": 928,
+        "sortY": 928
+      },
+      {
+        "id": "lasnoches-pilar-26-27",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 848.0,
+        "y": 928,
+        "sortY": 928
+      },
+      {
+        "id": "lasnoches-parede-47-28",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 928,
+        "sortY": 928
+      },
+      {
+        "id": "lasnoches-parede-0-29",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 960,
+        "sortY": 960
+      },
+      {
+        "id": "lasnoches-parede-20-29",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 960,
+        "sortY": 960
+      },
+      {
+        "id": "lasnoches-parede-27-29",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 960,
+        "sortY": 960
+      },
+      {
+        "id": "lasnoches-parede-47-29",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 960,
+        "sortY": 960
+      },
+      {
+        "id": "lasnoches-parede-0-30",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "lasnoches-pilar-4-29",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 144.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "lasnoches-pilar-9-29",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 304.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "lasnoches-pilar-14-29",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 464.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "lasnoches-entulho-15-30",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/entulho.webp",
+        "width": 32,
+        "height": 32,
+        "x": 496.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "lasnoches-parede-20-30",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "lasnoches-parede-27-30",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "lasnoches-pilar-31-29",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1008.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "lasnoches-pilar-36-29",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1168.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "lasnoches-pilar-41-29",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/pilar.webp",
+        "width": 48,
+        "height": 160,
+        "x": 1328.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "lasnoches-parede-47-30",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 992,
+        "sortY": 992
+      },
+      {
+        "id": "lasnoches-parede-0-31",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 1024,
+        "sortY": 1024
+      },
+      {
+        "id": "lasnoches-parede-18-31",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 592.0,
+        "y": 1024,
+        "sortY": 1024
+      },
+      {
+        "id": "lasnoches-parede-19-31",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 624.0,
+        "y": 1024,
+        "sortY": 1024
+      },
+      {
+        "id": "lasnoches-parede-20-31",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 1024,
+        "sortY": 1024
+      },
+      {
+        "id": "lasnoches-parede-27-31",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 1024,
+        "sortY": 1024
+      },
+      {
+        "id": "lasnoches-parede-28-31",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 912.0,
+        "y": 1024,
+        "sortY": 1024
+      },
+      {
+        "id": "lasnoches-parede-29-31",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 944.0,
+        "y": 1024,
+        "sortY": 1024
+      },
+      {
+        "id": "lasnoches-parede-47-31",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 1024,
+        "sortY": 1024
+      },
+      {
+        "id": "lasnoches-parede-0-32",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 1056,
+        "sortY": 1056
+      },
+      {
+        "id": "lasnoches-parede-18-32",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 592.0,
+        "y": 1056,
+        "sortY": 1056
+      },
+      {
+        "id": "lasnoches-parede-29-32",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 944.0,
+        "y": 1056,
+        "sortY": 1056
+      },
+      {
+        "id": "lasnoches-parede-47-32",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 1056,
+        "sortY": 1056
+      },
+      {
+        "id": "lasnoches-parede-0-33",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 1088,
+        "sortY": 1088
+      },
+      {
+        "id": "lasnoches-parede-18-33",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 592.0,
+        "y": 1088,
+        "sortY": 1088
+      },
+      {
+        "id": "lasnoches-garganta-23-32",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/garganta.webp",
+        "width": 32,
+        "height": 64,
+        "x": 752.0,
+        "y": 1088,
+        "sortY": 1088
+      },
+      {
+        "id": "lasnoches-parede-29-33",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 944.0,
+        "y": 1088,
+        "sortY": 1088
+      },
+      {
+        "id": "lasnoches-parede-47-33",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 1088,
+        "sortY": 1088
+      },
+      {
+        "id": "lasnoches-parede-0-34",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 1120,
+        "sortY": 1120
+      },
+      {
+        "id": "lasnoches-parede-18-34",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 592.0,
+        "y": 1120,
+        "sortY": 1120
+      },
+      {
+        "id": "lasnoches-parede-29-34",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 944.0,
+        "y": 1120,
+        "sortY": 1120
+      },
+      {
+        "id": "lasnoches-parede-47-34",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 1120,
+        "sortY": 1120
+      },
+      {
+        "id": "lasnoches-parede-0-35",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 1152,
+        "sortY": 1152
+      },
+      {
+        "id": "lasnoches-entulho-5-35",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/entulho.webp",
+        "width": 32,
+        "height": 32,
+        "x": 176.0,
+        "y": 1152,
+        "sortY": 1152
+      },
+      {
+        "id": "lasnoches-parede-18-35",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 592.0,
+        "y": 1152,
+        "sortY": 1152
+      },
+      {
+        "id": "lasnoches-parede-29-35",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 944.0,
+        "y": 1152,
+        "sortY": 1152
+      },
+      {
+        "id": "lasnoches-parede-47-35",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 1152,
+        "sortY": 1152
+      },
+      {
+        "id": "lasnoches-parede-0-36",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 1184,
+        "sortY": 1184
+      },
+      {
+        "id": "lasnoches-parede-18-36",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 592.0,
+        "y": 1184,
+        "sortY": 1184
+      },
+      {
+        "id": "lasnoches-parede-29-36",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 944.0,
+        "y": 1184,
+        "sortY": 1184
+      },
+      {
+        "id": "lasnoches-entulho-42-36",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/entulho.webp",
+        "width": 32,
+        "height": 32,
+        "x": 1360.0,
+        "y": 1184,
+        "sortY": 1184
+      },
+      {
+        "id": "lasnoches-parede-47-36",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 1184,
+        "sortY": 1184
+      },
+      {
+        "id": "lasnoches-parede-0-37",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 1216,
+        "sortY": 1216
+      },
+      {
+        "id": "lasnoches-parede-18-37",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 592.0,
+        "y": 1216,
+        "sortY": 1216
+      },
+      {
+        "id": "lasnoches-parede-29-37",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 944.0,
+        "y": 1216,
+        "sortY": 1216
+      },
+      {
+        "id": "lasnoches-parede-47-37",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 1216,
+        "sortY": 1216
+      },
+      {
+        "id": "lasnoches-parede-0-38",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 1248,
+        "sortY": 1248
+      },
+      {
+        "id": "lasnoches-parede-18-38",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 592.0,
+        "y": 1248,
+        "sortY": 1248
+      },
+      {
+        "id": "lasnoches-parede-29-38",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 944.0,
+        "y": 1248,
+        "sortY": 1248
+      },
+      {
+        "id": "lasnoches-parede-47-38",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 1248,
+        "sortY": 1248
+      },
+      {
+        "id": "lasnoches-parede-0-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 16.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-1-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 48.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-2-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 80.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-3-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 112.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-4-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 144.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-5-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 176.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-6-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 208.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-7-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 240.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-8-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 272.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-9-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 304.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-10-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 336.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-11-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 368.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-12-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 400.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-13-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 432.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-14-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 464.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-15-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 496.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-16-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 528.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-17-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 560.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-18-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 592.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-19-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 624.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-20-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 656.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-21-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 688.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-22-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 720.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-23-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 752.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-24-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 784.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-25-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 816.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-26-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 848.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-27-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 880.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-28-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 912.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-29-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 944.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-30-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 976.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-31-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1008.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-32-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1040.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-33-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1072.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-34-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1104.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-35-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1136.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-36-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1168.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-37-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1200.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-38-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1232.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-39-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1264.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-40-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1296.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-41-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1328.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-42-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1360.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-43-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1392.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-44-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1424.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-45-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1456.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-46-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1488.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-parede-47-39",
+        "kind": "prop",
+        "image": "/maps/scenes/lasnoches/parede.webp",
+        "width": 32,
+        "height": 96,
+        "x": 1520.0,
+        "y": 1280,
+        "sortY": 1280
+      },
+      {
+        "id": "lasnoches-monumental-front",
+        "kind": "building",
+        "image": "/maps/scenes/landmarks/lasnoches-gate.webp",
+        "width": 704,
+        "height": 402.1875,
+        "x": 768,
+        "y": 176.0,
+        "sortY": 176.0
+      }
+    ]
+  },
+  "dangai": {
+    "width": 1152,
+    "height": 832,
+    "ground": "/maps/scenes/dangai-ground.webp",
+    "props": [
+      {
+        "id": "dangai-koryu-left-0",
+        "kind": "boundary",
+        "image": "/maps/scenes/landmarks/koryu.webp",
+        "width": 64,
+        "height": 832,
+        "x": 32,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "dangai-koryu-right-1",
+        "kind": "boundary",
+        "image": "/maps/scenes/landmarks/koryu-right.webp",
+        "width": 96,
+        "height": 832,
+        "x": 1104.0,
+        "y": 832,
+        "sortY": 832
+      },
+      {
+        "id": "dangai-portal-2",
+        "kind": "interactive",
+        "image": "/maps/scenes/senkaimon.webp",
+        "width": 64,
+        "height": 96,
+        "x": 144.0,
+        "y": 352,
+        "sortY": 352
+      }
+    ]
+  },
+  "wandenreich": {
+    "width": 1536,
+    "height": 1280,
+    "ground": "/maps/scenes/wandenreich-ground.webp",
+    "props": [
+      {
+        "id": "wandenreich-silbern-0",
+        "kind": "building",
+        "image": "/maps/scenes/landmarks/silbern.webp",
+        "width": 512,
+        "height": 388.5,
+        "x": 768,
+        "y": 304.0,
+        "sortY": 304.0
+      },
+      {
+        "id": "wandenreich-quincy-frontage-1",
+        "kind": "building",
+        "image": "/maps/scenes/landmarks/silbern.webp",
+        "width": 224,
+        "height": 169.96875,
+        "x": 192,
+        "y": 480,
+        "sortY": 480
+      },
+      {
+        "id": "wandenreich-quincy-frontage-2",
+        "kind": "building",
+        "image": "/maps/scenes/landmarks/silbern.webp",
+        "width": 224,
+        "height": 169.96875,
+        "x": 1312,
+        "y": 576,
+        "sortY": 576
+      },
+      {
+        "id": "wandenreich-quincy-frontage-3",
+        "kind": "building",
+        "image": "/maps/scenes/landmarks/silbern.webp",
+        "width": 224,
+        "height": 169.96875,
+        "x": 192,
+        "y": 960,
+        "sortY": 960
+      },
+      {
+        "id": "wandenreich-quincy-frontage-4",
+        "kind": "building",
+        "image": "/maps/scenes/landmarks/silbern.webp",
+        "width": 224,
+        "height": 169.96875,
+        "x": 1312,
+        "y": 1088,
+        "sortY": 1088
+      },
+      {
+        "id": "wandenreich-senkaimon-5",
+        "kind": "interactive",
+        "image": "/maps/scenes/senkaimon.webp",
+        "width": 64,
+        "height": 96,
+        "x": 752.0,
+        "y": 384,
+        "sortY": 384
+      }
+    ]
+  },
+  "falsa": {
+    "width": 2048,
+    "height": 1536,
+    "ground": "/maps/scenes/falsa/karakura-ground.webp",
+    "props": [
+      {
+        "id": "falsa-building-0",
+        "kind": "building",
+        "image": "/maps/scenes/falsa/urahara-shop.webp",
+        "x": 576,
+        "y": 320,
+        "width": 256,
+        "height": 123.333,
+        "sortY": 320
+      },
+      {
+        "id": "falsa-building-1",
+        "kind": "building",
+        "image": "/maps/scenes/falsa/kurosaki-clinic.webp",
+        "x": 768,
+        "y": 608,
+        "width": 224,
+        "height": 191.917,
+        "sortY": 608
+      },
+      {
+        "id": "falsa-building-2",
+        "kind": "building",
+        "image": "/maps/scenes/falsa/apartment.webp",
+        "x": 256,
+        "y": 608,
+        "width": 224,
+        "height": 248.242,
+        "sortY": 608
+      },
+      {
+        "id": "falsa-building-3",
+        "kind": "building",
+        "image": "/maps/scenes/falsa/apartment.webp",
+        "x": 288,
+        "y": 224,
+        "width": 176,
+        "height": 195.048,
+        "sortY": 224
+      },
+      {
+        "id": "falsa-building-4",
+        "kind": "building",
+        "image": "/maps/scenes/falsa/kurosaki-clinic.webp",
+        "x": 224,
+        "y": 896,
+        "width": 176,
+        "height": 150.792,
+        "sortY": 896
+      },
+      {
+        "id": "falsa-building-5",
+        "kind": "building",
+        "image": "/maps/scenes/falsa/kurosaki-clinic.webp",
+        "x": 800,
+        "y": 256,
+        "width": 176,
+        "height": 150.792,
+        "sortY": 256
+      },
+      {
+        "id": "falsa-streetlight-8",
+        "kind": "streetlight",
+        "image": "/maps/scenes/falsa/streetlight.webp",
+        "x": 384,
+        "y": 384,
+        "width": 28,
+        "height": 137.846,
+        "sortY": 384
+      },
+      {
+        "id": "falsa-streetlight-9",
+        "kind": "streetlight",
+        "image": "/maps/scenes/falsa/streetlight.webp",
+        "x": 672,
+        "y": 384,
+        "width": 28,
+        "height": 137.846,
+        "sortY": 384
+      },
+      {
+        "id": "falsa-streetlight-10",
+        "kind": "streetlight",
+        "image": "/maps/scenes/falsa/streetlight.webp",
+        "x": 384,
+        "y": 576,
+        "width": 28,
+        "height": 137.846,
+        "sortY": 576
+      },
+      {
+        "id": "falsa-streetlight-11",
+        "kind": "streetlight",
+        "image": "/maps/scenes/falsa/streetlight.webp",
+        "x": 480,
+        "y": 768,
+        "width": 28,
+        "height": 137.846,
+        "sortY": 768
+      },
+      {
+        "id": "falsa-streetlight-12",
+        "kind": "streetlight",
+        "image": "/maps/scenes/falsa/streetlight.webp",
+        "x": 896,
+        "y": 736,
+        "width": 28,
+        "height": 137.846,
+        "sortY": 736
+      },
+      {
+        "id": "falsa-bench-13",
+        "kind": "bench",
+        "image": "/maps/scenes/falsa/banco.webp",
+        "x": 384,
+        "y": 608,
+        "width": 46,
+        "height": 46.0,
+        "sortY": 608
+      },
+      {
+        "id": "falsa-bench-14",
+        "kind": "bench",
+        "image": "/maps/scenes/falsa/banco.webp",
+        "x": 608,
+        "y": 736,
+        "width": 46,
+        "height": 46.0,
+        "sortY": 736
+      },
+      {
+        "id": "falsa-detail-15",
+        "kind": "detail",
+        "image": "/maps/scenes/falsa/arbusto.webp",
+        "x": 384,
+        "y": 512,
+        "width": 38,
+        "height": 38.0,
+        "sortY": 512
+      },
+      {
+        "id": "falsa-detail-16",
+        "kind": "detail",
+        "image": "/maps/scenes/falsa/arbusto.webp",
+        "x": 352,
+        "y": 704,
+        "width": 38,
+        "height": 38.0,
+        "sortY": 704
+      },
+      {
+        "id": "falsa-detail-17",
+        "kind": "detail",
+        "image": "/maps/scenes/falsa/arbusto.webp",
+        "x": 896,
+        "y": 672,
+        "width": 38,
+        "height": 38.0,
+        "sortY": 672
+      },
+      {
+        "id": "falsa-tree-18",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 105.28,
+        "y": 757.12,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 757.12
+      },
+      {
+        "id": "falsa-tree-19",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 994.24,
+        "y": 254.4,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 254.4
+      },
+      {
+        "id": "falsa-tree-20",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 899.84,
+        "y": 776.96,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 776.96
+      },
+      {
+        "id": "falsa-tree-21",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1261.76,
+        "y": 188.48,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 188.48
+      },
+      {
+        "id": "falsa-tree-22",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1175.04,
+        "y": 132.48,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 132.48
+      },
+      {
+        "id": "falsa-tree-23",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1340.8,
+        "y": 122.56,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 122.56
+      },
+      {
+        "id": "falsa-tree-24",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1750.4,
+        "y": 344.64,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 344.64
+      },
+      {
+        "id": "falsa-tree-25",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1588.8,
+        "y": 370.24,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 370.24
+      },
+      {
+        "id": "falsa-tree-26",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1677.76,
+        "y": 443.52,
+        "width": 88,
+        "height": 90.474,
+        "sortY": 443.52
+      },
+      {
+        "id": "falsa-tree-27",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1649.28,
+        "y": 385.6,
+        "width": 80,
+        "height": 82.249,
+        "sortY": 385.6
+      },
+      {
+        "id": "falsa-tree-28",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1688.32,
+        "y": 368.32,
+        "width": 80,
+        "height": 82.249,
+        "sortY": 368.32
+      },
+      {
+        "id": "falsa-tree-29",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1711.04,
+        "y": 366.72,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 366.72
+      },
+      {
+        "id": "falsa-tree-30",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1902.08,
+        "y": 948.48,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 948.48
+      },
+      {
+        "id": "falsa-tree-31",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1925.44,
+        "y": 869.12,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 869.12
+      },
+      {
+        "id": "falsa-tree-32",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1935.04,
+        "y": 915.84,
+        "width": 80,
+        "height": 82.249,
+        "sortY": 915.84
+      },
+      {
+        "id": "falsa-tree-33",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 187.2,
+        "y": 1384.64,
+        "width": 80,
+        "height": 82.249,
+        "sortY": 1384.64
+      },
+      {
+        "id": "falsa-tree-34",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1108.48,
+        "y": 1434.24,
+        "width": 80,
+        "height": 82.249,
+        "sortY": 1434.24
+      },
+      {
+        "id": "falsa-tree-35",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1934.72,
+        "y": 1419.52,
+        "width": 88,
+        "height": 90.474,
+        "sortY": 1419.52
+      },
+      {
+        "id": "falsa-tree-36",
+        "kind": "tree",
+        "image": "/maps/scenes/falsa/zelkova.webp",
+        "x": 1955.52,
+        "y": 1410.88,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 1410.88
+      },
+      {
+        "id": "falsa-garganta",
+        "kind": "interactive",
+        "image": "/maps/scenes/hueco/garganta.webp",
+        "width": 32,
+        "height": 64,
+        "x": 528.0,
+        "y": 384,
+        "sortY": 384
+      },
+      {
+        "id": "tenkai-3-6",
+        "kind": "landmark",
+        "image": "/maps/scenes/landmarks/tenkai-ketchu.webp",
+        "width": 80,
+        "height": 288,
+        "x": 96,
+        "y": 192,
+        "sortY": 192
+      },
+      {
+        "id": "tenkai-61-6",
+        "kind": "landmark",
+        "image": "/maps/scenes/landmarks/tenkai-ketchu.webp",
+        "width": 80,
+        "height": 288,
+        "x": 1952,
+        "y": 192,
+        "sortY": 192
+      },
+      {
+        "id": "tenkai-3-45",
+        "kind": "landmark",
+        "image": "/maps/scenes/landmarks/tenkai-ketchu.webp",
+        "width": 80,
+        "height": 288,
+        "x": 96,
+        "y": 1440,
+        "sortY": 1440
+      },
+      {
+        "id": "tenkai-61-45",
+        "kind": "landmark",
+        "image": "/maps/scenes/landmarks/tenkai-ketchu.webp",
+        "width": 80,
+        "height": 288,
+        "x": 1952,
+        "y": 1440,
+        "sortY": 1440
+      }
+    ]
+  }
+}

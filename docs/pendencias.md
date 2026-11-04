@@ -1,11 +1,13 @@
 # Pendências e Débitos Técnicos Registrados
 
-## Renovação dos mapas (03/11/2026)
+## Renovação dos mapas (04/11/2026)
 
-- **Resolvido:** Rafael autorizou o ajuste pequeno do cenário à arte nova. Somente os quatro cantos de `casa0_6x5` em Karakura e Falsa tornaram-se andáveis; corpo da casa, camadas e objetos de lógica preservados. Regressões Vitest/Pillow e revisão independente confirmaram a mudança restrita, sem novas paredes invisíveis. Publicação continua dependendo de autorização conforme AGENTS.md §6.7.
+- A primeira revisão por atlas foi superada: Rafael autorizou novo desenho de composição/caminhos. A revisão atual usa cenários contínuos e props completos, com colisão revista no Tiled; fontes em `art/maps/scenes/`. Publicação continua dependendo de autorização conforme AGENTS.md §6.7.
 
-- Arte entregue localmente em `feat/renovacao-visual-mapas`, com objetos principais novos e detalhes secundários reutilizados identificados no manifesto. Layouts e animações ambientais existentes preservados; não inclui redesenho das ruas nem novas animações de objetos.
-- O teste de navegador confirma URLs versionadas e respostas dos sete PNGs; um teste específico de atualização de PWA com um service worker antigo instalado permanece fora desta entrega. A inspeção visual cobre as sete composições; só Karakura foi capturada dentro do jogo em navegador.
+- Arte local em `feat/renovacao-visual-mapas`, com objetos novos e detalhes reutilizados; nenhum novo sistema de animação de objetos. Fontes, prompts e origem dos reaproveitamentos documentados nas pastas de arte.
+- O teste alpha cobre sólidos de objetos, não precisão dos contornos nem água/chão. Navegação e capacidade geométrica dos spawns verificadas; isso não simula ocupação simultânea por multidão de jogadores.
+- Carga antecipada dos 44 arquivos de cena: 7.140.974 bytes comprimidos e estimativa de 85,6 MiB RGBA decodificado, além dos assets existentes. Não foram medidos FPS, uso real de GPU, rede lenta ou dispositivo móvel. Carregamento por região pode ser trabalho posterior se medições justificarem.
+- Não há teste completo de atualização de um PWA com worker antigo instalado; os testes bloqueiam URLs sem versão para verificar o carregamento das URLs novas. Bateria completa de cenários e gitleaks permanecem sem execução nesta revisão.
 
 Este documento mapeia todas as pendências conhecidas, limitações da arquitetura atual e débitos técnicos acumulados no **Bleach Idle**.
 
