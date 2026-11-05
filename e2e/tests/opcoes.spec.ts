@@ -52,6 +52,14 @@ test("Enter no botão Voltar ao padrão aciona o botão e não foca o chat", asy
   await expect(page.locator("#chatin")).not.toBeFocused();
 });
 
+test("Enter no botão ⚙ abre a janela de opções e não foca o chat", async ({ page }) => {
+  await newPlayer(page);
+  await page.locator("#options-btn").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#options")).toBeVisible();
+  await expect(page.locator("#chatin")).not.toBeFocused();
+});
+
 test("Espaço na caixa de marcar não manda interagir ao jogo", async ({ page }) => {
   const sentHas = watchSent(page);
   await newPlayer(page); // nasce na praça, perto do Kisuke e da loja: Espaço fora de um campo mandaria "interact"

@@ -93,6 +93,8 @@ export function initOptions(game: Phaser.Game, closeWindows: (keep?: string) => 
 
   hdBtn.onclick = () => setFlag("hd", !prefs.hd);
   muteBtn.onclick = () => setFlag("mute", !prefs.mute);
+  // o Enter no ⚙ aciona o botão; sem isto o ouvinte de window do chat o cancela e foca o chat (como no painel abaixo)
+  $("#options-btn").addEventListener("keydown", (e) => { if (e.code === "Enter") e.stopPropagation(); });
   $("#options-btn").onclick = () => {
     if (panel.hidden) { closeWindows("#options"); panel.hidden = false; }
     else panel.hidden = true;
