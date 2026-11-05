@@ -12,7 +12,7 @@ import { loreReadingHtml, hex } from "./loreReader";
 import { bindEvents } from "./events";
 import { serverNow, syncClock } from "./clock";
 import { initTouch, registerPWA } from "./touch";
-import { sfx } from "./sfx";
+import { initOptions } from "./options";
 import { ChatBook, CHAT_MAX, CHAT_TABS, parseTab, type ChatLineData, type ChatTab } from "./chatTabs";
 import { initReleases } from "./releases";
 import { rankingEmptyText } from "./rankingEmpty";
@@ -200,7 +200,7 @@ function start(room: Room<any>, myId: string) {
     location.reload();
   };
 
-  const WINDOWS = ["#ranking", "#book", "#pass", "#dev", "#shop"];
+  const WINDOWS = ["#ranking", "#book", "#pass", "#dev", "#shop", "#options"];
   let inventory: ReturnType<typeof initInventory>;
   let sheet: ReturnType<typeof initCharacterSheet>;
   const closeWindows = (keep?: string) => {
@@ -263,11 +263,8 @@ function start(room: Room<any>, myId: string) {
   // janela do jogo no lugar do window.confirm (issue #35); o servidor continua validando o renascimento
   const rebirth = initRebirthDialog(room, () => room.state.players.get(myId));
   $("#rebirth-btn").onclick = () => rebirth.open();
-  const mute = $("#mute-btn");
-  const showMute = () => { mute.dataset.ico = sfx.isMuted() ? "mute" : "sound"; mute.title = sfx.isMuted() ? "Som desligado (clique para ligar)" : "Som ligado (clique para desligar)"; };
-  showMute();
-  mute.onclick = () => { sfx.setMuted(!sfx.isMuted()); showMute(); };
-  bindHd(game);
+  // HD e som: atalhos no cabeçalho e janela de opções, com as mesmas preferências (R-14)
+  initOptions(game, closeWindows);
   room.onMessage("log", (m: { text: string }) => chatLine(m.text, "log", "log"));
   room.onMessage("offline", (m: { minutes: number; exp: number; gold: number; level: number; deaths?: DeathReport[]; zanGain?: number; reiGain?: number; zanjutsu?: number; reiryoku?: number; kills?: number; items?: string[] }) => {
     const sign = (n: number) => (n >= 0 ? "+" : "") + n;
@@ -291,6 +288,9 @@ function start(room: Room<any>, myId: string) {
     if (e.code === "Enter" && document.activeElement !== chatin) { e.preventDefault(); chatin.focus(); }
   });
   chatin.addEventListener("keydown", (e) => {
+    // Enter e Esc do chat param aqui: o blur abaixo faria os ouvintes de window acharem que o chat não
+    // está focado, e o mesmo Esc fecharia as janelas e o mesmo Enter focaria o chat de novo (R-14, RF-08)
+    if (e.code === "Enter" || e.code === "Escape") e.stopPropagation();
     if (e.code === "Enter") {
       if (chatin.value.trim()) {
         // a aba aberta decide o canal: Party vira /p, Guilda /g, Privado /pm para a última conversa
@@ -384,32 +384,6 @@ function bindParty(room: Room<any>, myId: string) {
 }
 
 // ---------- livro: bestiário, conquistas e recompensa diária ----------
-
-// ---------- visual: pixel art ou desenho original (HD) ----------
-
-function bindHd(game: Phaser.Game) {
-  const btn = $<HTMLButtonElement>("#hd-btn");
-  let on = false;
-  try { on = localStorage.getItem("bi_hd") === "1"; } catch {}
-  const show = (loading = false) => {
-    btn.classList.toggle("on", on);
-    btn.textContent = loading ? "…" : "HD";
-    btn.title = on ? "Visual HD: desenho original (clique para pixel art)" : "Visual pixel art (clique para o desenho original em HD)";
-  };
-  const apply = () => {
-    const scene = game.scene.getScene("game") as GameScene | null;
-    if (!scene?.sys.isActive()) return void window.setTimeout(apply, 300); // a cena ainda está carregando
-    show(on);
-    scene.setHd(on, () => show());
-  };
-  btn.onclick = () => {
-    on = !on;
-    try { localStorage.setItem("bi_hd", on ? "1" : "0"); } catch {}
-    apply();
-  };
-  show();
-  if (on) apply();
-}
 
 // ---------- passe de temporada ----------
 

@@ -32,6 +32,7 @@
 ### 2.2. `bindKeys` e foco
 - `bindKeys` troca `dirOf` e a sequência de `if` por `actionOf`. O envio é o mesmo de hoje, então o servidor não muda.
 - `typing(e)` passa a cobrir campos de texto (`input` exceto `range`, `checkbox`, `radio` e `button`), `select`, `textarea`, `[contenteditable]` e o modo de captura da janela de teclas.
+  - O `range` fica só com as teclas que o movem (setas, Home, End, PageUp e PageDown); WASD, dígitos, T, R e Tab seguem para o jogo. Sem isso, o `preventDefault` das setas no `bindKeys` tiraria do teclado o controle do deslizante (achado da revisão do PR 1).
 - Os handlers de Esc e de Enter do `#chatin` chamam `stopPropagation` depois de tirar o foco, para o mesmo evento não fechar as janelas nem focar o chat de novo.
 
 ### 2.3. Legenda gerada

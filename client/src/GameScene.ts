@@ -10,6 +10,7 @@ import { serverNow } from "./clock";
 import { fixedMarks, questTargetKinds, targetAreas, type FixedMark } from "./minimapMarks";
 import { createMinimapPing, isPingActive, pingPulseRadius, type MinimapPing } from "./minimapPing";
 import { parseStatusFlags, desiredTint, dotHitStyle, STATUS_LOOK } from "./statusFx";
+import { keyBelongsToField } from "./keyFocus";
 import type { StatusKind } from "../../shared/src/combatStatus";
 
 const VIEW_W = 15;
@@ -1006,10 +1007,14 @@ export class GameScene extends Phaser.Scene {
 
   private bindKeys() {
     const dirOf: Record<string, number> = { KeyS: 0, ArrowDown: 0, KeyA: 1, ArrowLeft: 1, KeyD: 2, ArrowRight: 2, KeyW: 3, ArrowUp: 3 };
-    const typing = (e: KeyboardEvent) => e.target instanceof HTMLInputElement;
+    const typing = (e: KeyboardEvent) => keyBelongsToField(e.target, e.code);
+    // teclas de direção que o jogo aceitou: o keyup só desfaz a direção de quem a iniciou (uma seta ignorada por
+    // um range focado não pode cancelar a direção que o W ainda mantém)
+    const pressed = new Set<string>();
     const down = (e: KeyboardEvent) => {
       if (typing(e)) return;
       if (e.code in dirOf) {
+        pressed.add(e.code);
         e.preventDefault();
         const d = dirOf[e.code];
         if (!this.held.includes(d)) this.held.push(d);
@@ -1030,7 +1035,7 @@ export class GameScene extends Phaser.Scene {
         e.preventDefault();
         document.querySelector<HTMLButtonElement>("#book-btn")?.click();
       }
-      else if (e.code === "KeyE" || (e.code === "Space" && !(e.target instanceof HTMLButtonElement))) {
+      else if (e.code === "KeyE" || e.code === "Space") {
         // interage com o que estiver ao alcance (loja antes do depot); o servidor confere a distância
         const me = this.room.state.players.get(this.myId);
         const kind = me && this.maps[this.mapId] ? interactNear(this.maps[this.mapId], me.x, me.y) : null;
@@ -1039,9 +1044,11 @@ export class GameScene extends Phaser.Scene {
       else if (/^Digit[1-9]$/.test(e.code)) this.room.send("skill", { slot: Number(e.code.slice(5)) });
     };
     const up = (e: KeyboardEvent) => {
-      if (e.code in dirOf) this.held = this.held.filter((d) => d !== dirOf[e.code]);
+      if (!pressed.delete(e.code)) return;
+      const d = dirOf[e.code];
+      if (![...pressed].some((c) => dirOf[c] === d)) this.held = this.held.filter((h) => h !== d);
     };
-    const blur = () => (this.held = []);
+    const blur = () => { pressed.clear(); this.held = []; };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("blur", blur);

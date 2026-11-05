@@ -69,7 +69,10 @@ h1 { font-weight: 700; letter-spacing: .02em; }
 .who .icon-btn, .who button.link.icon-btn { float: none; margin: 0; text-decoration: none; width: 28px; height: 28px; display: inline-grid; place-items: center; border-radius: 4px; }
 /* 1ª linha: nome e nível; 2ª linha: os quatro ícones */
 .who #plevel { font-size: 12px; color: #c9c4da; font-family: var(--title); }
-.who-icons { display: flex; flex-wrap: wrap; gap: 2px; width: 100%; }
+/* com o ⚙ de opções (R-14) são 9 ícones: 24 px cada cabem numa linha no desktop; em tela estreita, os que sobram descem em vez de sair da barra */
+.who-icons { display: flex; flex-wrap: wrap; gap: 3px; width: 100%; }
+.who-icons .icon-btn { flex: 0 0 24px; }
+.who-icons button.link.icon-btn + button.link.icon-btn { margin-right: 0; }
 .who .icon-btn::before { margin: 0; }
 .who .icon-btn:hover { background: #ffffff14; }
 #book-btn.ping { position: relative; }
@@ -238,9 +241,9 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 .tech.locked small::before { content: "🔒 "; }
 
 /* Loja de Cristais */
-#shop, #pass, #dev { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: min(560px, calc(100% - 24px)); max-height: calc(100% - 120px); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 30px #0008; z-index: 15; padding: 10px 12px; }
-#shop header, #pass header, #dev header { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #ffffff1a; padding: 0 2px 8px; }
-#shop header > button, #pass header > button, #dev header > button { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; }
+#shop, #pass, #dev, #options { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: min(560px, calc(100% - 24px)); max-height: calc(100% - 120px); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 30px #0008; z-index: 15; padding: 10px 12px; }
+#shop header, #pass header, #dev header, #options header { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #ffffff1a; padding: 0 2px 8px; }
+#shop header > button, #pass header > button, #dev header > button, #options header > button { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; }
 #shop .crystals, #pass .crystals, #dev .crystals { color: #9ae8ff; font-weight: 700; }
 #shop .tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 0 4px; }
 #shop .tabs button { padding: 3px 8px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; font-size: 12px; }
@@ -302,6 +305,13 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 #dev-body .dev-god.on { color: #7dff9a; border-color: #7dff9a; }
 #dev-body { overflow-y: auto; padding: 6px 2px 0; }
 
+/* janela de opções (R-14) */
+#options { width: min(420px, calc(100% - 24px)); }
+#options-body { overflow-y: auto; padding: 6px 2px 0; }
+#options-body fieldset { border: 1px solid var(--line); border-radius: 4px; margin: 0 0 10px; padding: 6px 10px 8px; }
+#options-body legend { font-family: var(--title); padding: 0 4px; }
+#options-body .opt-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+#options-body .opt-row + .hint { margin: 2px 0 6px 24px; }
 /* ---------- inventário (issue #25): espaços com cara de botão e destaque ao abrir pelo atalho ---------- */
 #gear .slot:not(:disabled):hover, #gear .slot:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 0 8px #ff8a2a66; outline: none; }
 #inv-title kbd { text-transform: none; letter-spacing: 0; font-size: 10px; }

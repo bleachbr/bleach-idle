@@ -38,7 +38,7 @@ O Auto Helper (cura, reiatsu, local de caça) é do personagem e fica no servido
 - Os ícones de HD e som do cabeçalho passam a ler e gravar pelas preferências.
 
 ### 2.4. Janela `#options`
-- Mesmo padrão das outras janelas (`#ranking`, `#book`): cabeçalho com ✕ (`aria-label="Fechar"`), corpo com abas Visual, Som, Teclas, Toque. Entra na lista `WINDOWS` de `main.ts` para fechar com as outras.
+- Mesmo padrão das outras janelas (`#ranking`, `#book`): cabeçalho com ✕ (`aria-label="Fechar"`), corpo com abas Visual, Som, Teclas, Toque. Entra na lista `WINDOWS` de `main.ts` para fechar com as outras. No PR 1, com só Visual e Som, cada grupo é um `fieldset` na mesma página; as abas entram quando a janela ganhar as seções de Teclas e Toque.
 - Botão ⚙ no cabeçalho `.who`, com `aria-label="Opções"`.
 - O corpo é montado com `textContent` e elementos criados por código. Nenhum texto vindo do armazenamento entra por `innerHTML`.
 

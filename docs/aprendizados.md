@@ -396,6 +396,7 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 
 - O `keydown` de um `<input>` roda antes de o evento subir até `window`. Se o handler do campo chama `blur()`, quando o ouvinte de `window` confere `document.activeElement` o campo já não está focado, e ele trata a tecla como se viesse do jogo (o Esc do chat também fecha as janelas; o Enter que envia volta a focar o chat). Para saber de onde a tecla veio, confira `e.target`, ou chame `stopPropagation` no handler do campo.
 - `e.target instanceof HTMLInputElement` como regra de "está digitando" erra para os dois lados: deixa passar `<select>` e bloqueia `input type="range"`.
+- **Confirmado e consertado no PR 1 da R-14:** os quatro vazamentos (Esc do chat fechando a janela, Enter voltando a focar o chat, R com o `<select>` focado, R barrado com o `range` focado) foram reproduzidos no navegador contra o build da `main`. O `#chatin` agora chama `stopPropagation` no Esc e no Enter, e a regra virou a função pura `keyBelongsToField(target, code)` (`client/src/keyFocus.ts`), que olha a tag e o `type` em vez da classe. O `range` fica só com as teclas que o movem (setas, Home, End, PageUp, PageDown): sem isso, o `preventDefault` das setas no `GameScene` tiraria do teclado o controle do deslizante.
 
 ## 27. Mensagem do servidor sem handler no cliente (issue #22)
 
