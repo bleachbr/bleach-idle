@@ -5,15 +5,18 @@ import type Phaser from "phaser";
 import type { GameScene } from "./GameScene";
 import { sfx } from "./sfx";
 import { browserStore } from "./loreRead";
-import { DEFAULT_PREFS, loadPrefs, savePrefs, type Prefs } from "./prefs";
+import { DEFAULT_PREFS, MOTIONS, loadPrefs, savePrefs, type Motion, type Prefs } from "./prefs";
+import { reducedMotion } from "./motion";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 
 type Flag = "hd" | "mute";
 /** `invert`: a caixa marcada quer dizer o contrário do campo (som ligado = mute falso). */
 type Toggle = { key: Flag; label: string; hint: string; invert?: boolean };
-const SECTIONS: { title: string; toggles: Toggle[] }[] = [
-  { title: "Visual", toggles: [{ key: "hd", label: "Visual HD (desenho original)", hint: "Desligado, o jogo usa pixel art. Na primeira vez que liga, o jogo baixa os desenhos em HD." }] },
+/** Movimento é uma lista de três valores, não uma caixa: tem controle próprio na seção Visual. */
+const MOTION_LABELS: Record<Motion, string> = { auto: "Seguir o sistema", reduced: "Reduzido", full: "Completo" };
+const SECTIONS: { title: string; motion?: boolean; toggles: Toggle[] }[] = [
+  { title: "Visual", motion: true, toggles: [{ key: "hd", label: "Visual HD (desenho original)", hint: "Desligado, o jogo usa pixel art. Na primeira vez que liga, o jogo baixa os desenhos em HD." }] },
   { title: "Som", toggles: [{ key: "mute", label: "Efeitos sonoros", hint: "O navegador só toca som depois do primeiro clique ou tecla.", invert: true }] },
 ];
 
@@ -24,6 +27,8 @@ export function initOptions(game: Phaser.Game, closeWindows: (keep?: string) => 
   const hdBtn = $<HTMLButtonElement>("#hd-btn");
   const muteBtn = $<HTMLButtonElement>("#mute-btn");
   const boxes = new Map<Toggle, HTMLInputElement>();
+  let motionSelect: HTMLSelectElement | null = null;
+  const systemMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   let hdLoading = false;
 
   // ---------- visual: pixel art ou desenho original (HD) ----------
@@ -42,7 +47,12 @@ export function initOptions(game: Phaser.Game, closeWindows: (keep?: string) => 
     muteBtn.dataset.ico = prefs.mute ? "mute" : "sound";
     muteBtn.title = prefs.mute ? "Som desligado (clique para ligar)" : "Som ligado (clique para desligar)";
     for (const [t, box] of boxes) box.checked = t.invert ? !prefs[t.key] : prefs[t.key];
+    if (motionSelect) motionSelect.value = prefs.motion;
   };
+
+  /** Menos movimento (R-14, RF-06): a classe no body vale para o CSS e para a GameScene, que a lê a cada efeito. */
+  const applyMotion = () => document.body.classList.toggle("reduced-motion", reducedMotion(prefs.motion, systemMotion.matches));
+  systemMotion.addEventListener("change", applyMotion); // "auto" acompanha o sistema na hora
 
   /** Toda mudança passa por aqui: grava, aplica o que mudou e atualiza cabeçalho e janela. */
   const set = (patch: Partial<Prefs>) => {
@@ -51,6 +61,7 @@ export function initOptions(game: Phaser.Game, closeWindows: (keep?: string) => 
     savePrefs(store, prefs);
     if (prefs.mute !== before.mute) sfx.setMuted(prefs.mute);
     if (prefs.hd !== before.hd) applyHd();
+    if (prefs.motion !== before.motion) applyMotion();
     sync();
   };
   const setFlag = (key: Flag, value: boolean) => {
@@ -82,11 +93,31 @@ export function initOptions(game: Phaser.Game, closeWindows: (keep?: string) => 
       box.append(row, hint);
       boxes.set(t, check);
     }
+    if (sec.motion) {
+      const row = document.createElement("label");
+      row.className = "opt-select";
+      const text = document.createElement("span");
+      text.textContent = "Movimento";
+      const select = document.createElement("select");
+      for (const m of MOTIONS) select.append(new Option(MOTION_LABELS[m], m));
+      select.onchange = () => set({ motion: MOTIONS.find((m) => m === select.value) ?? "auto" });
+      row.append(text, select);
+      const hint = document.createElement("p");
+      hint.className = "hint";
+      hint.id = "opt-hint-motion";
+      hint.textContent = "Reduzido desliga o tremor da tela e os clarões, e para as animações longas. Seguir o sistema usa a opção de reduzir movimento do seu aparelho.";
+      select.setAttribute("aria-describedby", hint.id);
+      box.append(row, hint);
+      motionSelect = select;
+    }
     const reset = document.createElement("button");
     reset.type = "button";
     reset.className = "link";
     reset.textContent = "Voltar ao padrão";
-    reset.onclick = () => { for (const t of sec.toggles) setFlag(t.key, DEFAULT_PREFS[t.key]); };
+    reset.onclick = () => {
+      for (const t of sec.toggles) setFlag(t.key, DEFAULT_PREFS[t.key]);
+      if (sec.motion) set({ motion: DEFAULT_PREFS.motion });
+    };
     box.append(reset);
     body.append(box);
   }
@@ -106,6 +137,7 @@ export function initOptions(game: Phaser.Game, closeWindows: (keep?: string) => 
   // a primeira carga traz bi_hd e bi_mute para bi.prefs (ADR-001 §2.2); daqui em diante bi.prefs manda
   savePrefs(store, prefs);
   sfx.setMuted(prefs.mute);
+  applyMotion();
   sync();
   if (prefs.hd) applyHd();
 }

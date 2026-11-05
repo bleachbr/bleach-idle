@@ -592,3 +592,11 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Lição:** teste de hitbox não prova que o jogador chega ao objetivo. Conserto de onboarding precisa de um teste de navegador que percorre o fluxo como um jogador novo, e issue de playtest só fecha com PR e teste ligados. Ao sondar o jogo por screenshot, olhe a tela inteira antes de decidir a causa.
 - **Fora da Karakura:** o `interact` da loja saía em silêncio quando o mapa não tem loja (o botão parecia quebrado). Agora avisa no chat, no mesmo estilo do `/loja` (teste em `server/test/interact.test.ts`; o aviso vale só para a loja, o depot segue calado).
 - **Teste de navegador no CI:** o clique no sprite falhou no CI e passou em casa porque chegava antes de `GameScene.create()` registrar o `pointerdown`. "Entrou no mundo" vem do servidor e não garante a cena pronta; espere `#game-loading.ready` antes de clicar no canvas.
+
+## `git worktree remove --force` apaga o repositório principal se o `node_modules` do worktree for uma junction
+
+- **Sintoma:** depois de remover um worktree, o `node_modules` do repositório principal ficou vazio e 507 arquivos rastreados de `client/`, `server/`, `shared/` e `e2e/` sumiram do diretório de trabalho (o Git os mostrava como `D`).
+- **Causa:** o worktree usava uma junction do Windows (`mklink /J node_modules`) apontando para o `node_modules` do principal, para não reinstalar. O `--force` apaga recursivamente e atravessa a junction; dentro do `node_modules` ficam os links dos workspaces (`node_modules/client` e outros), que apontam para as pastas reais, e o conteúdo delas foi junto.
+- **Solução:** `git checkout -- .` restaurou os rastreados e `npm install` refez as dependências. Arquivos ignorados pelo Git dentro dessas pastas (como `client/dist`) não voltam: refazem-se com o build.
+- **Regra:** cada worktree roda o próprio `npm install` (8 s). Nunca ligue `node_modules` por junction ou link simbólico; se existir um, tire o link com `cmd /c rmdir node_modules` (só remove o link) antes de remover o worktree.
+
