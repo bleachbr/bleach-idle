@@ -1,5 +1,11 @@
 # Aprendizados Técnicos do Projeto (Bleach Idle)
 
+## Efeitos de combate de outro mapa (05/11/2026)
+
+- O mundo é uma sala só, e `this.broadcast("fx", ...)` chega a todos os mapas. Esconder a view não basta: `float()`, `playFx()`, `flash` e `shake` saem direto na cena, fora do container, e as coordenadas dos mapas se sobrepõem. Reproduzido no navegador com o jogador em Karakura e um bot na Soul Society: "MUGETSU!" e "474!" apareciam na tela, e a câmera tremia em qualquer posição. O filtro fica na entrada de `onFx` (`client/src/fxMap.ts`), não em cada caso.
+- `t: "event"` sem `id` significa aviso global. Evento causado por uma entidade (grito de fase de chefe) precisa levar o `id` dela, senão treme a tela de todos os mapas.
+- `vite build --mode development` aponta para `ws://localhost:2567` por padrão, a porta do servidor em que se joga. Reprodução com build de dev precisa definir `VITE_SERVER` para a porta isolada e conferir o valor no bundle antes de abrir o navegador.
+
 ## Composição contínua e escala jogável (04/11/2026)
 
 - Minimap e hitboxes precisam acompanhar a apresentação: o minimapa agora reduz chão/props novos, sem interpretar a camada oculta de colisão como arte, e os portais usam os limites do sprite para o clique. Teleporte atualiza profundidade junto da posição. Se qualquer textura de cenário falha, a entrada fica pausada com nova tentativa explícita; não se oferece o atlas antigo com colisões do layout novo. No E2E de falha, o service worker é bloqueado somente nesse caso, pois respostas do worker contornavam a interceptação `page.route` e ocultavam a falha simulada.

@@ -10,6 +10,7 @@ import { serverNow } from "./clock";
 import { fixedMarks, questTargetKinds, targetAreas, type FixedMark } from "./minimapMarks";
 import { createMinimapPing, isPingActive, pingPulseRadius, type MinimapPing } from "./minimapPing";
 import { parseStatusFlags, desiredTint, dotHitStyle, STATUS_LOOK } from "./statusFx";
+import { fxInCurrentMap } from "./fxMap";
 import { keyBelongsToField } from "./keyFocus";
 import type { StatusKind } from "../../shared/src/combatStatus";
 
@@ -623,6 +624,8 @@ export class GameScene extends Phaser.Scene {
 
   private onFx(fx: { t: string; id?: string; v?: number; from?: string; to?: string; color?: number; color2?: number; skin?: boolean; name?: string; text?: string; skill?: boolean; i?: number; cd?: number; area?: number;
     dot?: boolean; kind?: string; ms?: number }) {
+    const { players, monsters } = this.room.state;
+    if (!fxInCurrentMap(fx, this.myId, this.mapId, (id) => (players.get(id) ?? monsters.get(id))?.map)) return;
     const v = fx.id ? this.views.get(fx.id) : undefined;
     // som só do que envolve você: o próprio personagem ou o seu alvo
     const mine = fx.id === this.myId;
