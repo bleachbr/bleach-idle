@@ -13,6 +13,16 @@ export interface ReleaseInfo {
 
 export const RELEASES: ReleaseEntry[] = [
   {
+    id: "2026-11-04-cenarios-bleach",
+    date: "2026-11-04",
+    title: "Novos cenários nos sete mapas",
+    changes: [
+      "Explore os sete mapas com pisos contínuos, construções e vegetação renovadas, inspirados nos lugares de Bleach.",
+      "Karakura ganha ruas de um bairro japonês; Karakura Falsa conserva a mesma geografia com os quatro pilares da batalha.",
+      "Soul Society, Hueco Mundo, Las Noches, Dangai e Wandenreich recebem cenários próprios, mantendo os pontos de viagem, NPCs e áreas de monstros.",
+    ],
+  },
+  {
     id: "2026-11-01-novidades",
     date: "2026-11-01",
     title: "Novidades do Bleach Idle",

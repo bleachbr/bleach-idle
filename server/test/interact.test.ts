@@ -34,7 +34,9 @@ describe("intenção de interagir some quando o jogador escolhe outra ação (#2
   it("clicar no depot e depois andar para perto do Kisuke não abre o depot", async () => {
     const { world, room, sp } = await join();
     const m = MAPS.karakura, depot = m.depot!;
-    const start = { x: 10, y: 16 }, dest = { x: 16, y: 13 };
+    // A composição nova ocupa (10,16) com um prédio; a rua em (13,16)
+    // mantém a intenção pendente e o mesmo destino ao alcance dos dois serviços.
+    const start = { x: 13, y: 16 }, dest = { x: 16, y: 13 };
     expect(sp.map).toBe("karakura");
     expect(walkable(m, start.x, start.y) && walkable(m, dest.x, dest.y)).toBe(true);
     expect(chebyshev(start.x, start.y, depot.x, depot.y)).toBeGreaterThan(INTERACT_RANGE);
@@ -70,7 +72,8 @@ describe("intenção de interagir some quando o jogador escolhe outra ação (#2
     const realUpdate = room.updatePlayer.bind(room);
     room.updatePlayer = (p: any, now: number) => { if (p === sp) ticks++; return realUpdate(p, now); };
 
-    sp.x = 10; sp.y = 16; sp.path = [];
+    expect(walkable(MAPS.karakura, 13, 16)).toBe(true);
+    sp.x = 13; sp.y = 16; sp.path = [];
     world.send("interact", { kind: "depot" });
     await vi.waitFor(() => expect(sp.pendingInteract).toBe("depot"), { timeout: 5000, interval: 25 });
     world.send("nextTarget");
@@ -80,6 +83,34 @@ describe("intenção de interagir some quando o jogador escolhe outra ação (#2
     await vi.waitFor(() => expect(ticks).toBeGreaterThanOrEqual(at + 2), { timeout: 5000, interval: 25 });
     expect(opened).toEqual([]);
     expect(sp.pendingInteract).toBe("");
+    await world.leave();
+  });
+
+  // botão "Ir ao Kisuke" do tutorial (#343): fora da Karakura não há loja e o servidor ficava calado
+  it("interact da loja num mapa sem loja avisa no chat, como o /loja", async () => {
+    const { world, sp } = await join();
+    expect(MAPS.soul.shop).toBeUndefined();
+    sp.map = "soul";
+    const aviso = once<{ text: string }>(world, "log");
+    world.send("interact", { kind: "shop" });
+    expect((await aviso).text).toContain("Não há loja neste mapa");
+    expect(sp.pendingInteract).toBe("");
+    await world.leave();
+  });
+
+  it("interact do depot num mapa sem depot continua calado (só a loja ganhou aviso)", async () => {
+    const { world, room, sp } = await join();
+    expect(MAPS.soul.depot).toBeUndefined();
+    sp.map = "soul";
+    const logs: string[] = [];
+    world.onMessage("log", (m: { text: string }) => logs.push(m.text));
+    world.send("interact", { kind: "depot" });
+    // espera por tick do próprio servidor, não por tempo fixo: se o handler fosse falar, já teria falado
+    let ticks = 0;
+    const realUpdate = room.updatePlayer.bind(room);
+    room.updatePlayer = (p: any, now: number) => { if (p === sp) ticks++; return realUpdate(p, now); };
+    await vi.waitFor(() => expect(ticks).toBeGreaterThanOrEqual(2), { timeout: 5000, interval: 25 });
+    expect(logs.filter((t) => /loja|depot|baú/i.test(t))).toEqual([]);
     await world.leave();
   });
 });

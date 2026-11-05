@@ -34,9 +34,9 @@ export function parseTab(raw: unknown): ChatTab {
 
 const empty = <T>(v: () => T) => Object.fromEntries(TAB_IDS.map((t) => [t, v()])) as Record<ChatTab, T>;
 
-/** Destinatário de "/pm Nome, texto" como o servidor lê (até a vírgula; sem vírgula, a 1ª palavra). */
+/** Destinatário de "/pm Nome, texto" (ou aliases /w, /s, /msg, /tell, /whisper, /sussurro) como o servidor lê (até a vírgula; sem vírgula, a 1ª palavra). */
 export function pmTarget(text: string): string {
-  const m = /^\/pm\s+(.*)$/i.exec(text.trim());
+  const m = /^\/(?:pm|w|whisper|s|sussurro|msg|tell)\s+(.*)$/i.exec(text.trim());
   if (!m) return "";
   const rest = m[1];
   const i = rest.indexOf(",");
@@ -110,7 +110,7 @@ export class ChatBook {
     if (this.active === "party") return { text: `/p ${t}` };
     if (this.active === "guilda") return { text: `/g ${t}` };
     if (this.active === "privado") {
-      if (!this.pmWith) return { error: "Ninguém na conversa ainda. Escreva /pm Nome, mensagem." };
+      if (!this.pmWith) return { error: "Ninguém na conversa ainda. Envie /w Nome, mensagem." };
       return { text: `/pm ${this.pmWith}, ${t}` };
     }
     return { text: t };

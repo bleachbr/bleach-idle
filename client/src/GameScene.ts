@@ -1,12 +1,14 @@
 // Cena principal: desenha o mapa, espelha o estado do servidor e envia intenções.
 // Nada de simulação aqui: posições, dano e XP vêm todos do servidor.
 import Phaser from "phaser";
+import { drawWorldScene, drawWorldSceneMinimap, missingWorldSceneTextures, preloadWorldScenes, showWorldSceneLoadFailure } from "./worldScenes";
 import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
 import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, titleText, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, npcById, type GameMap, type QuestState } from "../../shared/src";
 import { pickClick, interactHint, interactNear } from "./interactHit";
 import { serverNow } from "./clock";
 import { fixedMarks, questTargetKinds, targetAreas, type FixedMark } from "./minimapMarks";
+import { createMinimapPing, isPingActive, pingPulseRadius, type MinimapPing } from "./minimapPing";
 import { parseStatusFlags, desiredTint, dotHitStyle, STATUS_LOOK } from "./statusFx";
 import { keyBelongsToField } from "./keyFocus";
 import type { StatusKind } from "../../shared/src/combatStatus";
@@ -122,7 +124,7 @@ const py = (y: number) => y * TILE + TILE;
 const MINIMAP_K = 4;
 const MINIMAP_LEGEND = "Losango roxo: portal (com anel dourado, o alvo da missão está em outro mapa). Quadrado dourado: loja; laranja: depot. Cruz: templo. Círculo amarelo: NPC. Verde claro: zona protegida. Tracejado dourado: onde caçar o alvo da missão; ponto dourado: monstro do alvo.";
 /** versão dos .tmj na URL: subir junto com o CACHE de client/public/sw.js quando um mapa mudar (2: NPCs no soul.tmj, M1-03) */
-const MAP_VERSION = 2;
+const MAP_VERSION = 4;
 
 export class GameScene extends Phaser.Scene {
   /** quadros de andar por direção (4 ou 8), pela largura da folha carregada: nunca diverge da imagem */
@@ -261,6 +263,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
+    preloadWorldScenes(this, MAP_VERSION);
     for (const [key, def] of Object.entries(SPRITES))
       if (!def.lazy) this.load.spritesheet(key, `/assets/sprites/${key}.png`, { frameWidth: def.frame, frameHeight: def.frame });
     this.load.image(SHOP_SPRITE, `/assets/sprites/${SHOP_SPRITE}.png`);
@@ -270,11 +273,17 @@ export class GameScene extends Phaser.Scene {
     // o service worker antigo ainda controla a página na primeira carga depois do deploy e serviria o .tmj velho do cache
     for (const id of MAP_IDS) {
       this.load.tilemapTiledJSON(`map_${id}`, `/maps/${id}.tmj?v=${MAP_VERSION}`);
-      this.load.image(`tiles_${id}`, `/maps/${id}_tiles.png`);
+      // Versiona também o atlas: o worker antigo ainda pode servir a arte anterior na primeira carga.
+      this.load.image(`tiles_${id}`, `/maps/${id}_tiles.png?v=${MAP_VERSION}`);
     }
   }
 
   create() {
+    if (missingWorldSceneTextures(this).length) {
+      showWorldSceneLoadFailure();
+      this.scene.pause();
+      return;
+    }
     for (const id of MAP_IDS) this.maps[id] = parseMap(id, this.cache.tilemap.get(`map_${id}`).data);
     this.cameras.main.setRoundPixels(true);
     this.showMap(this.room.state.players.get(this.myId)?.map ?? HOME_MAP);
@@ -422,6 +431,7 @@ export class GameScene extends Phaser.Scene {
     v.lastMoveAt = this.time.now;
     if (far) {
       v.c.setPosition(px(x), py(y));
+      v.c.setDepth(py(y));
       if (v.id === this.myId) {
         // teleporte: a câmera pula junto, sem atravessar o mapa deslizando
         const cam = this.cameras.main;
@@ -910,11 +920,15 @@ export class GameScene extends Phaser.Scene {
     this.mapId = id;
     const tm = this.make.tilemap({ key: `map_${id}` });
     const tiles = tm.addTilesetImage(tm.tilesets[0].name, `tiles_${id}`)!;
-    for (const layer of tm.layers) {
-      const l = tm.createLayer(layer.name, tiles, 0, 0)!;
-      // "acima" (copas, topos de coluna) fica por cima dos personagens
-      l.setDepth(layer.name === "acima" ? 1e5 : -1);
-      this.mapObjects.push(l);
+    const continuous = drawWorldScene(this, id);
+    if (continuous) this.mapObjects.push(...continuous);
+    else {
+      for (const layer of tm.layers) {
+        const l = tm.createLayer(layer.name, tiles, 0, 0)!;
+        // "acima" (copas, topos de coluna) fica por cima dos personagens
+        l.setDepth(layer.name === "acima" ? 1e5 : -1);
+        this.mapObjects.push(l);
+      }
     }
     this.mapObjects.push(tm as unknown as Phaser.GameObjects.GameObject);
     this.cameras.main.setBounds(0, 0, tm.widthInPixels, tm.heightInPixels);
@@ -958,6 +972,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onClick(ptr: Phaser.Input.Pointer) {
+    if (document.activeElement instanceof HTMLElement && document.activeElement !== document.body) {
+      document.activeElement.blur();
+    }
     const tx = Math.floor(ptr.worldX / TILE), ty = Math.floor(ptr.worldY / TILE);
     const m = this.maps[this.mapId];
     for (const [id, b] of this.bags) {
@@ -1009,6 +1026,15 @@ export class GameScene extends Phaser.Scene {
       else if (e.code === "Escape") this.room.send("target", { id: "" });
       else if (e.code === "KeyT") this.room.send("transform");
       else if (e.code === "KeyR") this.room.send("recall");
+      else if (e.code === "KeyH") {
+        e.preventDefault();
+        const me = this.room.state.players.get(this.myId);
+        if (me) this.room.send("auto", { autoHunt: !me.autoHunt });
+      }
+      else if (e.code === "KeyL") {
+        e.preventDefault();
+        document.querySelector<HTMLButtonElement>("#book-btn")?.click();
+      }
       else if (e.code === "KeyE" || e.code === "Space") {
         // interage com o que estiver ao alcance (loja antes do depot); o servidor confere a distância
         const me = this.room.state.players.get(this.myId);
@@ -1049,44 +1075,48 @@ export class GameScene extends Phaser.Scene {
   private nextMinimapAt = 0;
   /** marcadores do mapa atual que não mudam (zona protegida, portal, loja, NPCs) */
   private minimapFixed: FixedMark[] = [];
+  /** feedback de destino ao clicar no minimapa (#68, #70, #194, #195) */
+  private minimapPing: MinimapPing | null = null;
   /** missões do Kisuke, para marcar onde caçar o alvo (a mesma mensagem que o painel de missões recebe) */
   private quests: QuestState = { active: {}, done: [] };
 
-  /** Fundo do minimapa: 1 pixel por tile, na cor média do tile mais alto (sem a camada "acima"). */
+  /** Fundo do minimapa: composição contínua reduzida; mapas legados usam a cor média dos tiles visíveis, sem "acima". */
   private buildMinimap(id: string) {
     const c = this.minimap;
     if (!c) return;
     const data = this.cache.tilemap.get(`map_${id}`).data;
-    const img = this.textures.get(`tiles_${id}`).getSourceImage() as HTMLImageElement;
-    const src = document.createElement("canvas");
-    src.width = img.width;
-    src.height = img.height;
-    const sctx = src.getContext("2d", { willReadFrequently: true })!;
-    sctx.drawImage(img, 0, 0);
-    const cols = img.width / TILE;
-    const avg = new Map<number, [number, number, number]>();
-    const colorOf = (gid: number) => {
-      if (!avg.has(gid)) {
-        const t = gid - 1;
-        const px = sctx.getImageData((t % cols) * TILE, Math.floor(t / cols) * TILE, TILE, TILE).data;
-        let r = 0, g = 0, b = 0, n = 0;
-        for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 128) { r += px[i]; g += px[i + 1]; b += px[i + 2]; n++; }
-        avg.set(gid, n ? [r / n, g / n, b / n] : [0, 0, 0]);
-      }
-      return avg.get(gid)!;
-    };
-    const out = new ImageData(data.width, data.height);
-    const layers = (data.layers as any[]).filter((l) => l.type === "tilelayer" && l.name !== "acima");
-    for (let i = 0; i < data.width * data.height; i++) {
-      let gid = 0;
-      for (const l of layers) if (l.data[i]) gid = l.data[i] & 0x1fffffff;
-      const [r, g, b] = gid ? colorOf(gid) : [0, 0, 0];
-      out.data.set([r, g, b, 255], i * 4);
-    }
     const base = document.createElement("canvas");
     base.width = data.width;
     base.height = data.height;
-    base.getContext("2d")!.putImageData(out, 0, 0);
+    if (!drawWorldSceneMinimap(this, id, base)) {
+      const img = this.textures.get(`tiles_${id}`).getSourceImage() as HTMLImageElement;
+      const src = document.createElement("canvas");
+      src.width = img.width;
+      src.height = img.height;
+      const sctx = src.getContext("2d", { willReadFrequently: true })!;
+      sctx.drawImage(img, 0, 0);
+      const cols = img.width / TILE;
+      const avg = new Map<number, [number, number, number]>();
+      const colorOf = (gid: number) => {
+        if (!avg.has(gid)) {
+          const t = gid - 1;
+          const px = sctx.getImageData((t % cols) * TILE, Math.floor(t / cols) * TILE, TILE, TILE).data;
+          let r = 0, g = 0, b = 0, n = 0;
+          for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 128) { r += px[i]; g += px[i + 1]; b += px[i + 2]; n++; }
+          avg.set(gid, n ? [r / n, g / n, b / n] : [0, 0, 0]);
+        }
+        return avg.get(gid)!;
+      };
+      const out = new ImageData(data.width, data.height);
+      const layers = (data.layers as any[]).filter((l) => l.type === "tilelayer" && l.visible !== false && l.name !== "acima");
+      for (let i = 0; i < data.width * data.height; i++) {
+        let gid = 0;
+        for (const l of layers) if (l.data[i]) gid = l.data[i] & 0x1fffffff;
+        const [r, g, b] = gid ? colorOf(gid) : [0, 0, 0];
+        out.data.set([r, g, b, 255], i * 4);
+      }
+      base.getContext("2d")!.putImageData(out, 0, 0);
+    }
     this.minimapBase = base;
     // o canvas fica MINIMAP_K vezes maior que o mapa, para os marcadores terem forma (o CSS mantém a largura na tela)
     c.width = data.width * MINIMAP_K;
@@ -1097,6 +1127,7 @@ export class GameScene extends Phaser.Scene {
       const rect = c.getBoundingClientRect();
       const x = Math.floor(((e.clientX - rect.left) / rect.width) * data.width);
       const y = Math.floor(((e.clientY - rect.top) / rect.height) * data.height);
+      this.minimapPing = createMinimapPing(x, y, performance.now());
       this.room.send("move", { x, y });
     };
   }
@@ -1143,6 +1174,34 @@ export class GameScene extends Phaser.Scene {
     for (const p of this.room.state.players.values()) {
       if (p.map !== this.mapId || p.id === this.myId) continue;
       dot(p.x, p.y, me.partyId && p.partyId === me.partyId ? "#7dff8a" : "#6cc0ff", 2);
+    }
+    // marcador animado e rota de destino ao clicar no minimapa (#68, #70, #194, #195)
+    const now = performance.now();
+    if (this.minimapPing && isPingActive(this.minimapPing, me.x, me.y, now)) {
+      const px = cx(this.minimapPing.x);
+      const py = cx(this.minimapPing.y);
+      const mx = cx(me.x);
+      const my = cx(me.y);
+      ctx.beginPath();
+      ctx.setLineDash([4, 3]);
+      ctx.strokeStyle = "rgba(92, 225, 230, 0.75)";
+      ctx.lineWidth = 1.5;
+      ctx.moveTo(mx, my);
+      ctx.lineTo(px, py);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const r = pingPulseRadius(this.minimapPing, now, K * 0.9);
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.strokeStyle = "#5ce1e6";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(px, py, K * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+    } else {
+      this.minimapPing = null;
     }
     dot(me.x, me.y, "#000000", 4);
     dot(me.x, me.y, "#ffffff", 3);

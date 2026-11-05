@@ -21,6 +21,10 @@ import { initCharacterSheet } from "./characterSheetDialog";
 import { initInventoryShortcut } from "./inventoryShortcut";
 import { huntResetButton, huntResetDoneLabel, isHuntEmpty } from "./huntReset";
 import { dailyTabHtml, claimPendingLabel, claimLabel, claimTimeoutMs, rewardText } from "./bookDaily";
+import { achievementsTabLabel, achievementsHeaderHtml, achievementsBodyHtml, updateBookAchievementsTab } from "./bookAchievements";
+import { renderTutorialStep, dispatchTutorialAction } from "./tutorialView";
+import { bindMail, getMailInbox, getUnreadMailCount, resetMailInbox } from "./mail";
+import { toggleSeasonPass } from "./seasonButton";
 
 initReleases();
 
@@ -188,16 +192,20 @@ function start(room: Room<any>, myId: string) {
   // patrulha no chat (log/sys). Os dados estruturados ficam para a interface futura, mas precisam
   // de handler: sem ele o colyseus.js avisa no console a cada mensagem (issue #22)
   for (const type of ["arenaData", "arenaMatchFound", "arenaResult", "patrolData"]) room.onMessage(type, () => {});
+  bindMail(room);
   $("#exit-btn").onclick = async () => {
     if (!confirm("Trocar de personagem? Com Auto Hunt ligado, ele segue caçando offline.")) return;
+    resetMailInbox();
     await room.leave(); // com Auto Hunt ligado, o personagem segue caçando offline
     location.reload();
   };
 
   const WINDOWS = ["#ranking", "#book", "#pass", "#dev", "#shop", "#options"];
   let inventory: ReturnType<typeof initInventory>;
+  let sheet: ReturnType<typeof initCharacterSheet>;
   const closeWindows = (keep?: string) => {
     if (keep !== "#modal") inventory?.close();
+    if (keep !== "#sheet-dialog") sheet?.close();
     for (const w of WINDOWS) if (w !== keep) $(w).hidden = true;
   };
   inventory = initInventory(room, (open) => {
@@ -206,7 +214,7 @@ function start(room: Room<any>, myId: string) {
   },
     () => room.state.players.get(myId)?.level ?? 1,
     () => { const p = room.state.players.get(myId); return p ? { x: p.x, y: p.y } : undefined; });
-  const sheet = initCharacterSheet(room, () => room.state.players.get(myId), serverNow);
+  sheet = initCharacterSheet(room, () => room.state.players.get(myId), serverNow, closeWindows);
   const onMe = (p: any) => {
     renderStats(p);
     inventory.onMove(p.x, p.y);
@@ -223,7 +231,7 @@ function start(room: Room<any>, myId: string) {
     const sent: unknown[] = [];
     const send = room.send.bind(room);
     room.send = ((type: any, msg?: any) => { sent.push([type, msg]); if (sent.length > 50) sent.shift(); send(type, msg); }) as typeof room.send;
-    Object.assign(window, { __bi: { room, game, sent } });
+    Object.assign(window, { __bi: { room, game, sent, getMailInbox, getUnreadMailCount } });
   }
 
   // canais: local (sem ch), pm, party, guild, sys (avisos do servidor) e lore (narração dos eventos)
@@ -232,14 +240,23 @@ function start(room: Room<any>, myId: string) {
     chatLine(m.from ? `${prefix}${m.from}: ${m.text}` : `${prefix}${m.text}`, m.ch && m.ch !== "sys" ? m.ch : m.from ? "" : "sys", "chat", m.ch, m.ch === "pm" ? m.from : "");
   });
   bindGuild(room, closeWindows);
-  bindBook(room, closeWindows);
+  bindBook(room, myId, closeWindows);
   bindShop(room, myId, closeWindows);
   bindSeason(room, closeWindows);
   bindEvents(room);
   bindDev(room, myId, closeWindows);
   bindDangai(room, myId);
+  const chatin = $<HTMLInputElement>("#chatin");
   window.addEventListener("keydown", (e) => {
-    if (e.code === "Escape" && document.activeElement !== chatin) closeWindows();
+    if (e.code === "Escape") {
+      if (e.target === chatin || document.activeElement === chatin) {
+        e.preventDefault();
+        chatin.value = "";
+        chatin.blur();
+      } else {
+        closeWindows();
+      }
+    }
   });
   $("#travel-btn").onclick = () => inventory.openTravel();
   initInventoryShortcut();
@@ -266,7 +283,6 @@ function start(room: Room<any>, myId: string) {
   bindLootFilter(room);
   bindParty(room, myId);
   syncClock(room);
-  const chatin = $<HTMLInputElement>("#chatin");
   openChatTab(chat.active);
   window.addEventListener("keydown", (e) => {
     if (e.code === "Enter" && document.activeElement !== chatin) { e.preventDefault(); chatin.focus(); }
@@ -290,7 +306,11 @@ function start(room: Room<any>, myId: string) {
       }
       chatin.value = "";
       chatin.blur();
-    } else if (e.code === "Escape") chatin.blur();
+    } else if (e.code === "Escape") {
+      e.preventDefault();
+      chatin.value = "";
+      chatin.blur();
+    }
   });
 }
 
@@ -421,7 +441,7 @@ function bindSeason(room: Room<any>, closeWindows: (keep?: string) => void) {
     }
   };
   room.onMessage("season", (m: Season) => { st = m; if (m.open) { closeWindows("#pass"); panel.hidden = false; } render(); });
-  $("#season-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("seasonOpen"); };
+  $("#season-btn").onclick = () => toggleSeasonPass(panel, (action) => room.send(action));
   $("#pass-close").onclick = () => (panel.hidden = true);
   // fim de semana de XP em dobro: aviso fixo no painel
   const line = $("#event-line");
@@ -525,7 +545,7 @@ function bindShop(room: Room<any>, myId: string, closeWindows: (keep?: string) =
   $("#shop-close").onclick = () => (panel.hidden = true);
 }
 
-function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
+function bindBook(room: Room<any>, myId: string, closeWindows: (keep?: string) => void) {
   const panel = $("#book");
   let data: any = null;
   let tab = "bestiario";
@@ -535,6 +555,7 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
   const bar = (have: number, need: number) => `<div class="bar"><i style="width:${Math.min(100, (have / need) * 100)}%"></i></div>`;
   const render = () => {
     panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === tab)));
+    updateBookAchievementsTab(panel, data?.ach);
     if (!data) return;
     const body = $("#book-body");
     if (tab === "bestiario") {
@@ -551,11 +572,11 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
           </div>`;
         }).join("");
     } else if (tab === "conquistas") {
-      const n = data.ach.filter((a: any) => a.done).length;
-      body.innerHTML = `<p class="hint">${n}/${data.ach.length} conquistas. A recompensa chega sozinha.</p>` + data.ach
+      const listHtml = data.ach
         .sort((a: any, b: any) => Number(a.done) - Number(b.done) || b.have / b.need - a.have / a.need)
         .map((a: any) => `<div class="ach${a.done ? " done" : ""}"><b>${escHtml(a.name)}</b> <span class="hint">${escHtml(a.desc)}</span>
           <div class="hint">${a.done ? "Feita" : `${a.have}/${a.need}`} · ${reward(a.reward)}</div>${a.done ? "" : bar(a.have, a.need)}</div>`).join("");
+      body.innerHTML = achievementsBodyHtml(data.ach, listHtml);
     } else if (tab === "cacada") {
       const h = data.hunt;
       if (!isHuntEmpty(h)) huntJustReset = false;
@@ -579,7 +600,7 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
         room.send("huntReset");
       };
     } else {
-      const d = data.daily;
+      const d = { ...data.daily, nowMs: serverNow() };
       const ms = data.missions;
       const missions = `<h3>Missões de hoje</h3><p class="hint">Cada uma paga ${ms.gold} kan e ${ms.exp} XP sozinha ao completar; as três juntas dão uma Caixa do Kisuke${ms.bonus ? " (já ganha)" : ""}.</p>` +
         ms.list.map((m: any) => `<div class="ach${m.done ? " done" : ""}"><b>${escHtml(m.text)}</b><div class="hint">${m.done ? "Feita" : `${m.have}/${m.need}`}</div>${m.done ? "" : bar(m.have, m.need)}</div>`).join("");
@@ -598,15 +619,49 @@ function bindBook(room: Room<any>, closeWindows: (keep?: string) => void) {
       };
     }
   };
+  const openBookTab = (targetTab: string) => {
+    tab = targetTab;
+    if (panel.hidden) {
+      if (data) {
+        closeWindows("#book");
+        panel.hidden = false;
+        render();
+      } else {
+        room.send("book");
+      }
+    } else {
+      render();
+    }
+  };
   room.onMessage("book", (d: any) => { data = d; if (panel.hidden) { closeWindows("#book"); panel.hidden = false; } render(); });
   room.onMessage("dailyReady", (m: { ready: boolean }) => $("#book-btn").classList.toggle("ping", m.ready));
-  room.onMessage("tutorial", (steps: { text: string; done: boolean }[] | null) => {
+  room.onMessage("tutorial", (steps: { id?: string; text: string; done: boolean }[] | null) => {
     $("#tutorial").hidden = !steps;
-    if (steps) $("#tutorial-list").innerHTML = steps.map((s) => `<div class="tut${s.done ? " done" : ""}">${s.done ? "✔" : "○"} ${escHtml(s.text)}</div>`).join("");
+    if (steps) {
+      const list = $("#tutorial-list");
+      list.innerHTML = steps.map(renderTutorialStep).join("");
+      list.querySelectorAll<HTMLButtonElement>(".tut-act").forEach((b) => {
+        b.onclick = () => {
+          dispatchTutorialAction(b.dataset.act ?? "", {
+            auto: () => {
+              const me = room.state.players.get(myId);
+              room.send("auto", { autoHunt: !me?.autoHunt });
+            },
+            book: () => openBookTab("diario"),
+            // o servidor anda até o Kisuke e abre a loja (o mesmo caminho do clique no NPC); não é a janela de Viagem
+            shop: () => room.send("interact", { kind: "shop" }),
+            bankai: () => room.send("transform"),
+          });
+        };
+      });
+    }
   });
   $("#book-btn").onclick = () => { if (!panel.hidden) panel.hidden = true; else room.send("book"); };
-  // a aba Caçada muda sozinha: atualiza enquanto estiver aberta
-  const timer = window.setInterval(() => { if (!panel.hidden && tab === "cacada") room.send("book"); }, 5000);
+  // a aba Caçada muda sozinha: atualiza enquanto estiver aberta; o Diário com recompensa resgatada atualiza a contagem
+  const timer = window.setInterval(() => {
+    if (!panel.hidden && tab === "cacada") room.send("book");
+    else if (!panel.hidden && tab === "diario" && data?.daily?.claimed) render();
+  }, 5000);
   room.onLeave(() => window.clearInterval(timer));
   $("#book-close").onclick = () => (panel.hidden = true);
   panel.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab!; render(); }));
@@ -893,9 +948,15 @@ function renderChatTabs() {
     b.classList.toggle("new", n > 0);
   }
   // o campo diz para onde vai o texto (no Privado, com quem é a conversa, que muda quando chega pm de outra pessoa)
-  const placeholder = chat.active === "privado" ? (chat.pmWith ? `Enter para responder a ${chat.pmWith}` : "Escreva /pm Nome, mensagem")
-    : chat.active === "party" || chat.active === "guilda" ? `Enter para falar em ${CHAT_TABS.find((x) => x.id === chat.active)!.label}`
-    : "Enter para conversar";
+  const placeholder = chat.active === "privado"
+    ? (chat.pmWith ? `Enter para responder a ${chat.pmWith}` : "Sussurrar: /w Nome, mensagem...")
+    : chat.active === "party"
+    ? "Chat de grupo: /p mensagem..."
+    : chat.active === "guilda"
+    ? "Chat de guilda: /g mensagem..."
+    : chat.active === "combate"
+    ? "Canal de combate (mensagens vão para o Geral)"
+    : "Enter para conversar...";
   $<HTMLInputElement>("#chatin").placeholder = `${placeholder} · /ajuda para comandos`;
 }
 

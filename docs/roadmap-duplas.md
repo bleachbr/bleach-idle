@@ -10,6 +10,8 @@ Item riscado já foi implementado (status no `roadmap.md`). Ele continua na fila
 
 ## As duas filas
 
+Entrega adicional de Rafael (04/11/2026): renovação visual dos sete mapas. Após a primeira versão, autorizou redesenhar composição e caminhos, com lore de Bleach e proporções jogáveis; pontos importantes preservados e navegação validada. Fontes/ferramentas publicadas no PR #339. O PR #338 entrou na branch de preparação; a integração jogável na main continua no PR #351, respeitando o limite de arquivos do revisor remoto. Status e spec no [roadmap](roadmap.md#sem-marco). Não altera nem reserva os itens de gameplay das filas.
+
 As filas são **estanques**: ninguém puxa item da fila do outro. Mas os **temas são mistos em cada uma** — os dois tocam `server/`, `client/`, `shared/` e mapas. O critério de repartição não é camada, é pacote de funcionalidade:
 
 - **Item inteiro para uma pessoa.** Cada entrega cruza as camadas que precisar (handler no `WorldRoom`, fórmula em `shared`, HUD no `client`, mapa `.tmj`) na mesma branch, do começo ao fim. Exceções explícitas estão marcadas nas tabelas.

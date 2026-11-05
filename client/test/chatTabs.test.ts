@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ChatBook, CHAT_MAX, REPLY_WINDOW_MS, parseTab, tabOf } from "../src/chatTabs";
+import { ChatBook, CHAT_MAX, REPLY_WINDOW_MS, parseTab, tabOf, pmTarget } from "../src/chatTabs";
 
 // M3-02 (ADR-002 do Social avançado): abas de chat só no cliente
 describe("canal de cada mensagem", () => {
@@ -73,6 +73,12 @@ describe("envio pela aba", () => {
     expect(b.outgoing("/ignorar Zé")).toEqual({ text: "/ignorar Zé" });
     b.setActive("guilda");
     expect(b.outgoing("boa noite")).toEqual({ text: "/g boa noite" });
+    expect(b.outgoing("/temporada")).toEqual({ text: "/temporada" });
+    expect(b.outgoing("/passe")).toEqual({ text: "/passe" });
+    expect(b.outgoing("/loja")).toEqual({ text: "/loja" });
+    expect(b.outgoing("/bau")).toEqual({ text: "/bau" });
+    expect(b.outgoing("/depot")).toEqual({ text: "/depot" });
+    expect(b.outgoing("/atributos")).toEqual({ text: "/atributos" });
     b.setActive("geral");
     expect(b.outgoing("oi")).toEqual({ text: "oi" });
   });
@@ -118,5 +124,17 @@ describe("respostas fora da aba", () => {
     b.setActive("geral");
     b.sent(1000, "oi");
     expect(b.add("chat", "party", { text: "Rukia: oi", cls: "party" }, 1100)).toEqual(["party"]);
+  });
+});
+
+describe("pmTarget e aliases de sussurro", () => {
+  it("extrai destinatário com /pm, /w, /s, /msg, /tell, /whisper e /sussurro", () => {
+    expect(pmTarget("/pm Renji, e aí")).toBe("Renji");
+    expect(pmTarget("/w Rukia, socorro")).toBe("Rukia");
+    expect(pmTarget("/s Byakuya olá")).toBe("Byakuya");
+    expect(pmTarget("/msg Chad, venha cá")).toBe("Chad");
+    expect(pmTarget("/tell Uryu teste")).toBe("Uryu");
+    expect(pmTarget("/whisper Orihime, tudo bem?")).toBe("Orihime");
+    expect(pmTarget("/sussurro Kenpachi luta")).toBe("Kenpachi");
   });
 });

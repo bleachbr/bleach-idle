@@ -1,6 +1,57 @@
 # Aprendizados Técnicos do Projeto (Bleach Idle)
 
+## Composição contínua e escala jogável (04/11/2026)
+
+- Minimap e hitboxes precisam acompanhar a apresentação: o minimapa agora reduz chão/props novos, sem interpretar a camada oculta de colisão como arte, e os portais usam os limites do sprite para o clique. Teleporte atualiza profundidade junto da posição. Se qualquer textura de cenário falha, a entrada fica pausada com nova tentativa explícita; não se oferece o atlas antigo com colisões do layout novo. No E2E de falha, o service worker é bloqueado somente nesse caso, pois respostas do worker contornavam a interceptação `page.route` e ocultavam a falha simulada.
+
+- Download de textura não prova que o renderer criou o cenário. A regressão direta verifica chão e props dos sete mapas, com escala e profundidade; uma falha simulada no chão reproduziu a falta de fallback antes da guarda `textures.exists`. A viagem de navegador pelos sete destinos também passa a rodar em um passo separado do CI, com Dev limitado ao servidor temporário dessa execução.
+
+- A revisão remota encontrou `assert place(...)`/`assert put(...)`: com `python -O` essas chamadas desapareciam junto da validação. Chamadas e guardas das ferramentas agora usam condições/exceções explícitas; nove regressões Python cobrem também execução otimizada e falhas antes de qualquer gravação pública.
+- Remover toda a faixa de magenta apagava roxo legítimo; preservar toda região interna deixava fundo rosa entre folhas. A limpeza agora remove componentes conectados à borda ou a uma semente quase magenta, preservando as regiões roxas internas sem chave. Os 10.325 pixels roxos do pilar são preservados; Zelkova foi validada nas três escalas do teste e no WebP exportado. Prévia e alpha dos sólidos foram conferidos depois de reconstruir os assets.
+- Ao adicionar uma casa ao Rukongai, reservar apenas os pontos lógicos não bastava: o footprint também deve respeitar sólidos de objetos existentes. A colocação conflitante de (30,37) foi rejeitada, mantendo as árvores; Soul ficou com 50 props. Fachadas monumentais que continuam fora do mundo precisam de recorte explícito na prévia, sem reduzir arbitrariamente sua escala para caber no mapa.
+
+- Pré-publicação: o E2E media o minimapa antes de `#game-loading.ready`; o trace mostrava o canvas ainda com título inicial e proporção padrão. Esperar o mapa montado e medir o retângulo em cada clique elimina a corrida. A caminhada passou em três execuções consecutivas depois da correção, sem mudar movimento/colisão do jogo.
+- A fixture da forja também dependia do layout: `nearestWalkable` do destino antigo devolvia (20,12), distância 2 do Kisuke, ainda dentro do alcance. O cenário agora busca uma rua conectada fora do alcance e confirma a chegada antes da recusa; não foi necessário alterar a forja do jogo.
+- O cenário de Auto Venda não pode exigir ausência de toda sacola quando enfrenta um Hollow Sombrio: ele pode soltar poção, que corretamente não é vendida como loot puro. O CI da etapa somente de arte revelou essa falha antiga; sorteio fixo confirmou fragmento/garra vendidos e poção destinada à sacola. A fixture agora ignora drops não puros, mantendo a Auto Venda sob teste e sem alterar o comportamento do jogo.
+
+- Trocar o atlas preservando cada posição não resolve uma composição fragmentada. Após autorização de Rafael, o chão passou a paisagem contínua e os objetos a sprites completos ordenados pelos pés, mantendo colisão/lógica autoritativas no Tiled. `worldScenes.test.ts` confere equivalência de objetos editor/runtime, pontos preservados, navegação e espaço para mobs no raio de spawn.
+- A proporção se avalia na câmera com os atores reais, não somente na imagem reduzida do mapa. O E2E percorre mais de dez células usando a matriz real e confirma mobs na câmera. Referências vestidas e prévias de composição não devem virar fundo jogável com objetos fundidos.
+- Mudanças autorizadas de layout podem invalidar fixtures com coordenadas fixas: o teste #26 usava (10,16), agora dentro de um prédio. A rua (13,16) mantém a mesma intenção pendente, destino e verificações de cancelamento; a lógica de interação não precisou mudar.
+- Cobertura alpha dos sólidos de objetos é uma regressão útil, mas não prova contornos exatos nem valida água. A união das máscaras deve usar o máximo do alpha, preservando cobertura em sobreposições.
+- O registro abaixo descreve somente a primeira revisão, anterior ao redesenho; seus limites de alteração e métricas não representam o runtime atual.
+
+## Renovação de arte sem alterar mapas (03/11/2026)
+
+- O atlas pode ser refeito por catálogo de chaves sem regenerar o Tiled. SHA-256 registra versões revisadas. Nesta entrega, cinco mapas ficaram intactos e dois receberam somente quatro flags de solidez cada, após autorização de Rafael para ajustar o cenário à arte. Comparar JSON inteiro e matriz de colisão com baselines prova o limite da mudança.
+- Gerar o objeto inteiro e depois fatiar conserva as emendas entre células do atlas. Chão, objetos e partes acima do personagem continuam separados nas camadas existentes; detalhes menores reutilizados também podem ser exportados como objetos inteiros.
+- Preservar somente a proporção da fonte não basta: uma fachada estreita numa caixa larga pode tornar células sólidas completamente transparentes. Fontes largas e normalização pelo footprint resolveram lojas/casas de madeira. Para os quatro cantos vazios de outra casa por mapa, Rafael autorizou retirar apenas a solidez desses cantos. O teste Pillow cruza alpha antigo/novo com os sólidos usados; valida ausência de novas paredes invisíveis, sem esconder as preexistentes.
+- Versionar também a URL do PNG evita depender da atualização em segundo plano do worker anterior. O E2E verifica as URLs e o carregamento, mas não simula um PWA com worker antigo instalado.
+- No Windows, testes de deploy que chamam `bash` precisam de `C:\Program Files\Git\bin` no `PATH`; a falta do executável produz `status: null`, não uma falha do script.
+
 Este documento reúne lições práticas, decisões arquiteturais e armadilhas superadas ao longo da construção do **Bleach Idle**. O objetivo é preservar o conhecimento acumulado e evitar que futuras sessões ou agentes repitam erros já solucionados.
+
+---
+
+## Botão de acesso direto ao Passe de Temporada (★) e acessibilidade no HUD (Fix HUD Temporada)
+
+No playtest automatizado, a persona `grinder` recebia avisos frequentes no chat após abates e marcos de progressão: *"Passe de temporada: nível X! Pegue seus prêmios no botão ★."*. Contudo, os jogadores e agentes tinham dificuldade para encontrar ou acionar o botão na interface.
+- **Causa raiz:** O botão `#season-btn` na barra `.who-icons` utilizava exclusivamente um sprite CSS de fundo (`data-ico="star"`), sem texto interno (`innerText === ""`), sem atributo `aria-label` e com um tooltip genérico (`title="Passe de temporada (grátis)"`) que não continha o caractere estrela anunciado pelo servidor. Para leitores de acessibilidade, rotinas de playtest e jogadores guiados pelo chat, o elemento não correspondia ao esperado "botão ★".
+- **Solução implementada:**
+  1. Inclusão do glifo visível `★` diretamente como conteúdo do botão no DOM, estilizado com classe `.star-btn` em dourado (`var(--gold)`), com `font-size: 16px` e efeito hover que não sobrepõe a moldura ou elementos adjacentes;
+  2. Supressão do pseudo-elemento `::before` de background do `data-ico="star"` via CSS para evitar duplicação ou overflow no layout compacto de 26x26 px da barra de ícones;
+  3. Adição de `aria-label="Passe de Temporada (★)"`, `title="Passe de Temporada (★, grátis)"` e `aria-controls="pass"`, alinhando os nomes acessíveis no DOM;
+  4. Extração e encapsulamento da lógica de alternância da janela em módulo dedicado (`client/src/seasonButton.ts`), testado determinística e isoladamente com Vitest e Playwright E2E.
+
+---
+
+## Aliases de utilidade no chat e autoridade de proximidade (F-26 / Issue #188)
+
+Jogadores e personas de teste frequentemente tentam interagir com atalhos intuitivos de chat ao receber avisos do sistema (como notificações de nível do Passe de Temporada ou inventário cheio 20/20 instruindo a visitar o Kisuke ou o baú).
+
+- **Autoridade do servidor e proximidade em comandos de chat:** Ao criar comandos que interagem com o mundo físico (`/loja` e `/bau` ou `/depot`), a verificação de proximidade (`near(p, kind)` com raio Chebyshev de `INTERACT_RANGE = 2`) deve ser rigorosamente preservada no servidor autoritativo. Jogadores distantes recebem aviso contextual orientando a aproximação na praça, impedindo acessos remotos indevidos a estoques e lojas a partir de mapas de caça.
+- **Ciclo de mensagens do Colyseus e prevenção de erro 4002:** O envio de novos eventos do servidor para o cliente (como `"sheet"` para abrir a ficha do personagem via `/atributos`) exige registro explícito de handlers no cliente e inclusão na lista `KNOWN_ROOM_MESSAGES` em suítes de teste para evitar que o Colyseus desconecte o cliente com código 4002 por mensagem desconhecida.
+- **Coordenação de janelas nativas `<dialog>` com painéis DOM:** A ficha do personagem utiliza `<dialog id="sheet-dialog">` nativo. Integrar o controle desse modal ao `closeWindows` centralizado garante que a abertura de abas concorrentes (como passe ou ranking) feche a ficha e vice-versa, sem conflito de camadas visuais ou foco preso.
+- **Transparência em abas de chat secundárias:** Comandos utilitários iniciados com barra (`/`) devem sair sem injeção de prefixos de canal (`/p`, `/g`, `/pm`) mesmo se o jogador estiver digitando com as abas Party, Guilda ou Privado ativas.
 
 ---
 
@@ -416,3 +467,128 @@ Não existe escolha por "rota navegável": o caminho é calculado depois de esco
 - **Causa:** nas capturas citadas na issue (`grinder/screenshots/passo-017.png`, `grinder/screenshots/passo-209.png`, `explorador/screenshots/passo-038.png`, e também `explorador/screenshots/passo-110.png`), a área visível do painel do Livro termina por volta de y=540, cortando os cartões dos dias, e o botão não aparece. Os relatórios mostram todos os cliques em (786,620): abaixo das três missões, dentro do `#book-body` com `overflow-y: auto`. O agente clica na coordenada do centro do elemento, e ali está o chat. Uma pessoa precisaria rolar o painel para achar o botão.
 - **Solução:** a recompensa de entrada vem antes das missões (`client/src/bookDaily.ts`), o botão desabilita e mostra "Pegando…" no clique, e a recusa do servidor ("já pegou hoje") também devolve o `book`, para o botão não ficar parado.
 - **Regra:** antes de corrigir achado de IA sobre clique, olhe a captura e confira se o alvo está visível dentro do painel; ação principal de uma aba fica no topo, não depois de conteúdo de tamanho variável.
+
+---
+
+## 14. Foco no Input de Chat e Hotkeys Presas em Jogos Canvas (Lote 2 do Playtest)
+
+- **Sintoma:** Bots e jogadores ficavam presos com o foco retido no `<input id="chatin">`. Quando tentavam andar com WASD ou usar técnicas (1-9), os comandos viravam texto no input (ex: "w", "a", "s", "AH", "AHF/a"). Ao clicar no mapa ou no canvas, o navegador mantinha o foco no input porque o canvas WebGL não rouba o activeElement do DOM. Pressionar `Escape` também mantinha os caracteres incompletos no valor do input.
+- **Solução (`client/src/main.ts`, `client/src/GameScene.ts`):**
+  1. No `GameScene.onClick`, `document.activeElement.blur()` desfaz o foco ativo caso o usuário clique no mundo para andar, interagir ou atacar.
+  2. Pressionar `Escape` no `chatin` ou no listener global com `document.activeElement === chatin` limpa o buffer (`chatin.value = ""`) e desfoca o campo (`chatin.blur()`), restaurando os atalhos de teclado.
+  3. No servidor (`server/src/WorldRoom.ts`), suporte direto via chat para automação e aliases mais tentados (`/autohunt`, `/hunt`, `/helper`, `/auto`, `/party`, `/livro`, `/patrulha iniciar`, `/cronicas`).
+- **Regra:** Em jogos 2D híbridos (DOM + Canvas), cliques no canvas precisam liberar o foco de inputs para devolver o fluxo aos atalhos globais de teclado, e `Escape` no chat deve limpar qualquer rascunho acidental.
+
+---
+
+## 15. Usabilidade do Inventário, Acessibilidade de Slots e Feedback Visual de Equipamento (Lote 3 do Playtest)
+
+- **Sintoma:** Em testes com personas e leitores de acessibilidade, mais de 100 achados apontavam slots como meros botões sem nome (`BUTTON` ou apenas a quantidade numérica como texto `13`), recusa de equipar sem indicação visual do motivo (ex.: Manto de Sternritter exigindo nível 105 sendo clicado por personagem nível 1 sem nenhum feedback imediato), ausência de contagem de slots ocupados (`20/20 slots`) e expectativa de duplo clique para equipar.
+- **Causa raiz:**
+  1. Ícones eram apenas `span` vazios com `background-position`. O único nó de texto dentro do `<button>` era a quantidade numérica `<b class="qty">13</b>`, deixando a árvore de acessibilidade cega.
+  2. O único local com informações do item era o atributo nativo HTML `title`, que depende de hover prolongado do mouse (inexistente em touch ou foco de teclado e invisível no clique rápido).
+  3. Slots vazios de equipamento tinham `disabled`, ignorando cliques e impedindo qualquer feedback caso o jogador tentasse clicar no slot de destino após inspecionar um item.
+- **Solução (`client/src/inventory.ts`, `client/src/inventoryView.ts`, `client/src/style.css`):**
+  1. Extraímos `inventoryView.ts` com funções puras e testes determinísticos em `client/test/inventoryView.test.ts`.
+  2. `formatSlotAria` injeta `aria-label` completo em todos os slots (nome, quantidade, slot e atributos).
+  3. Adicionado indicador de ocupação no cabeçalho do inventário (`#inv-count`, ex.: `14/20 slots`) com classe `.full` em destaque quando atinge 20/20.
+  4. Adicionado painel dedicado de detalhes (`#item-detail`), que atualiza ao passar o mouse, focar via teclado ou clicar no slot, destacando nível exigido, atributos e ação sugerida (`Clique para equipar` / `Clique para usar`).
+  5. Itens bloqueados por nível recebem classe `.req-level` (borda avermelhada, opacidade e ícone 🔒) e aviso explícito no painel (`⚠️ Exige nível 105 (seu nível atual é X)`).
+  6. Suporte nativo a duplo clique (`ondblclick`) espelhando o clique simples para equipar.
+- **Regra:** Em interfaces de inventário com ícones gráficos em sprite/CSS, todo slot precisa de `aria-label` acessível, feedback visual explícito para itens não equipáveis por nível e área de texto dedicada para atributos que não dependa do atraso do `title` do navegador.
+
+---
+
+## 20. Clareza de Ações no Inventário, Trava em 20/20 e Identificação de Empilháveis (Itens 4 e 5, F-21)
+
+- **Sintoma:** No playtest com personas e agentes automatizados, três pontos de fricção foram identificados no inventário:
+  1. Tooltips e ações enganosas: os textos no `#item-detail` e dicas indicavam "Clique para usar" ou "Clique para equipar", mas o usuário espera selecionar o item para ler atributos antes de consumir, demandando duplo clique ou acionamento explícito no painel.
+  2. Trava em inventário cheio (20/20): ao inspecionar e tentar abrir pacotes/caixas de recompensas (ex.: Caixa do Kisuke) com o inventário lotado, o cliente permitia cliques repetidos em vão que eram rejeitados pelo servidor com spam de log ("Inventário sem espaço para o prêmio.").
+  3. Acessibilidade em pilhas: elementos de itens empilháveis expunham apenas o número na árvore de acessibilidade (ex.: `<button>100</button>`), impedindo que leitores de tela ou agentes de teste identificassem o item imediatamente.
+- **Causa raiz:**
+  1. O texto de ação no `#item-detail` usava "Clique para...", conflitando com o comportamento de clique simples de seleção/inspeção do slot.
+  2. Não havia verificação visual nem bloqueio do botão "Usar" no cliente com base no estado de ocupação (`isFull`) para consumíveis com `box: true`.
+  3. `formatSlotAria` gerava `(${s.qty})` sem unidade descritiva ou omitia a indicação de quantidade em certos estados.
+- **Solução (`client/src/inventoryView.ts`, `client/src/inventory.ts`, `client/src/style.css`, `client/index.html`):**
+  1. Textos refinados para "⚡ Duplo clique para equipar" e "🧪 Duplo clique para usar", alinhados com a dica do inventário (`#inv-hint`).
+  2. Botão dedicado `.detail-action` no `#item-detail` que executa a ação correspondente do item inspecionado e fica visualmente desabilitado com o aviso informativo `⛔ Inventário cheio (20/20) para abrir` quando `d.box && isInventoryFull`, prevenindo cliques repetidos em vão tanto no botão quanto via `handleInventorySlotClick`.
+  3. `formatSlotAria` atualizado para formatar `${nome} (${quantidade} un)` para itens empilháveis (`d.stack || s.qty > 1`), tornando a árvore de elementos imediatamente legível para tecnologias assistivas e agentes.
+
+---
+
+## 16. Tutorial com Call-to-Action interativo e atalhos de HUD (F-22)
+
+- **Sintoma:** No playtest automatizado (#73, #75, #89, #99, #108, #110, #118, #120, #121, #122, #181, #182, #188, #190, #284, #306), jogadores e agentes ficavam parados tentando cumprir os passos "Ligue o Auto Hunt" e "Abra o Livro" do tutorial de primeiros passos. O `#tutorial-list` apresentava apenas texto estático sem indicativo de como proceder.
+- **Causa:** Tutoriais de onboarding em jogos idle precisam transformar intenção informativa em ação imediata. Sem botões de ação contextuais ou atalhos mapeados, o usuário busca comandos no chat ou não encontra os menus correspondentes.
+- **Solução:** `client/src/tutorialView.ts` desacopla a formatação e renderização dos passos, gerando botões contextuais com classe `.tut-act` diretamente no item pendente (`[Ligar Auto Hunt (H)]`, `[Abrir Livro (L)]`, `[Viajar]`, `[Liberar]`). O servidor passou a enviar `{ id, text, done }` estruturado na mensagem `tutorial`. Também foram adicionadas as teclas de atalho <kbd>H</kbd> para toggle de caça automática e <kbd>L</kbd> para alternar o Livro, ambas documentadas no modal de ajuda de atalhos (`index.html`).
+
+---
+
+## 17. Hitbox de NPCs e aviso flutuante de interação (F-23, #126, #127)
+
+- **Sintoma:** No playtest automatizado (#126, #127), a persona grinder relatou repetidamente dificuldade para interagir com o Kisuke na praça ("cliques no sprite não abrem consistentemente a loja, missões e forja").
+- **Causa:** O Kisuke possui 48 px de altura, mais o rótulo de nome ("Kisuke") a 50 px da base e o aviso flutuante de interação ("Kisuke: E / Espaço / clique") a até 80 px da base. Porém, `SHOP_H` estava restrito a `48 + 14 = 62 px` e exigia obrigatoriamente coordenadas dentro dessa caixa vertical estrita. Cliques no próprio tile do Kisuke (na sombra/pés) ou acima no balão flutuante de instrução falhavam o teste de colisão da loja e caíam no fallback de movimento (`move`), tentando andar até um tile bloqueado.
+- **Solução:** `interactAt` em `client/src/interactHit.ts` ampliou a caixa para 56 px de largura e 84 px de altura vertical, além de garantir que qualquer clique no próprio tile da loja `(tx === m.shop.x && ty === m.shop.y)` acione a interação imediatamente.
+
+---
+
+## 18. Aliases de Chat Social, Placeholders Contextuais e Throttle de Avisos Repetitivos (F-24)
+
+- **Sintoma:** No playtest automatizado (#151, #155-#159, #162, #177, #225, #244, #245, #247, #263, #265, #266, #268, #269, #270, #300, #314), jogadores e bots de teste relataram desconforto com comandos comuns de MMORPG não reconhecidos (`/w`, `/s`, `/msg`, `/tell` para mensagens privadas, `/rank` para ranking e `/guilda listar`), falta de orientação visual nos placeholders ao mudar de aba no chat (aba Privado, Party, Guilda e Combate) e spam de mensagens repetitivas ("Inventário cheio.", "HP cheio: Poção fica para quando precisar", etc.) poluindo rapidamente o histórico do chat.
+- **Causa:**
+  1. O servidor tratava estritamente apenas `/pm` para whisper e `/ranking`, rejeitando os sinônimos habituais de jogadores de MMORPGs.
+  2. A regex de rastreamento de destinatário privado do cliente (`pmTarget`) só capturava `/pm`, ignorando os demais aliases para sincronizar a conversa bidirecional.
+  3. Tentativas de desequipar ou usar poções em loops rápidos disparavam notificações individuais sem taxa de amortecimento (throttle).
+- **Solução (`server/src/WorldRoom.ts`, `client/src/chatTabs.ts`, `client/src/main.ts`):**
+  1. Adicionado amortecedor de logs por jogador (`logThrottled`), limitando mensagens repetidas idênticas em janelas de 1,5s a 3s para recusas de consumíveis, desequipamentos e sacolas no chão com inventário cheio.
+  2. Implementados aliases universais no servidor para sussurro (`/w`, `/whisper`, `/s`, `/sussurro`, `/msg`, `/tell`), ranking (`/rank`) e guilda (`/guilda listar`).
+  3. Atualizada regex do cliente `pmTarget` para cobrir todos os aliases de sussurro e associar automaticamente ao destinatário atual.
+  4. Adicionados placeholders contextuais orientando o usuário em cada aba do chat (`Sussurrar: /w Nome, mensagem...`, `Chat de grupo: /p mensagem...`, `Chat de guilda: /g mensagem...`, `Canal de combate (somente leitura)`).
+
+---
+
+## 19. Feedback de Navegação no Minimapa, Categorização de Ajuda e Layout do Depot (F-25)
+
+- **Sintoma:** No playtest automatizado (#68, #70, #119, #184, #194, #195), múltiplos achados apontavam ausência de feedback de rota ou clique ao interagir com o minimapa para navegar, poluição por rolagem excessiva ao digitar `/ajuda` no chat e sobreposição do modal do Depot (`#depot`) cobrindo o minimapa e elementos do canto da tela.
+- **Causa:**
+  1. O minimapa enviava o comando de movimento pela rede sem nenhum retorno visual no próprio canvas para indicar que o clique foi registrado ou para onde o personagem estava caminhando.
+  2. O comando `/ajuda` emitia 13 linhas avulsas consecutivas sem segmentação por tema, estourando a altura do histórico de chat.
+  3. O `#modal` estava fixado com `top: 12px; right: 12px` sobrepondo diretamente o `#minimap` (`top: 8px; right: 8px`).
+- **Solução (`client/src/minimapPing.ts`, `client/src/GameScene.ts`, `server/src/WorldRoom.ts`, `client/src/style.css`):**
+  1. Criado `minimapPing.ts` e renderização de rota tracejada luminosa com anel de pulso concêntrico no minimapa no momento do clique, desativando automaticamente assim que o personagem alcança o tile.
+  2. Reestruturado o comando `/ajuda` no servidor com categorias claras (`/ajuda auto`, `/ajuda social`, `/ajuda sistema`), mantendo o formato compacto sem spam.
+  3. Centralizado `#modal` (`left: 50%; transform: translateX(-50%)`) com `z-index: 25`, evitando sobreposição do minimapa em desktop e mobile.
+
+---
+
+## 20. Registro e sanitização de handlers de mensagens Colyseus no cliente (`mail` e ausência de warnings)
+
+- **Sintoma:** Ao executar o comando `/correio` (ou receber notificações de correio do servidor), a biblioteca colyseus.js emitia `[warning] colyseus.js: onMessage() not registered for type 'mail'` no console do navegador.
+- **Causa:** O servidor `WorldRoom.ts` dispara `this.sendTo(p, "mail", { inbox })` ao listar a caixa de correio via `/correio` ou mensagem `mailList`. O cliente registrava diversos outros tipos de mensagem em `start()`, mas não possuía handler para o evento `"mail"`.
+- **Solução (`shared/src/mail.ts`, `client/src/mail.ts`, `client/src/main.ts`):**
+  1. Extraímos os tipos compartilhados `MailItem` e `MailMsg` em `shared/src/mail.ts`, garantindo que cliente e servidor compartilhem o mesmo contrato de dados.
+  2. Criamos o módulo `client/src/mail.ts` com sanitização Zero-Trust para cada campo de cada carta recebida (`id` inteiro positivo, strings, `gold` não-negativo, sanitização de slots de anexos) e controle de estado local (`getMailInbox`, `getUnreadMailCount`).
+  3. Registramos `bindMail(room)` no ciclo de vida de conexão em `client/src/main.ts:start()`, garantindo que a sala do Colyseus nunca receba `"mail"` sem handler, e resetamos o cache com `resetMailInbox()` na troca de personagem.
+  4. Adicionamos teste unitário determinístico em `client/test/mail.test.ts` e teste E2E no Playwright em `e2e/tests/jogador.spec.ts` validando que `/correio` no chat traz a listagem sem emitir nenhum aviso do colyseus.js no console do navegador.
+
+---
+
+## 21. Livro de Progresso: Contagem Regressiva de Reset Diário e Contador de Conquistas (F-26)
+
+- **Sintoma:** No playtest automatizado e feedback das personas, a aba Diário exibia "Já pegou hoje" sem informar quando a próxima recompensa diária estaria disponível, gerando incerteza sobre o momento do reset. Já na aba Conquistas, o jogador precisava alternar para a aba e rolar a lista inteira para ter noção de quantas conquistas já havia completado e quantas ainda faltavam.
+- **Causa:**
+  1. O botão `.claim` do Diário continha um tooltip genérico ("Volte após a meia-noite de Brasília") sem contagem regressiva temporal nem informação clara sobre o tempo restante.
+  2. Na aba Conquistas, o botão da aba possuía apenas o rótulo fixo "Conquistas", sem visibilidade externa de progresso, e a contagem vivia apenas dentro de um parágrafo auxiliar `<p class="hint">` no corpo do painel.
+- **Solução (`shared/src/progress.ts`, `client/src/bookDaily.ts`, `client/src/bookAchievements.ts`, `client/src/main.ts`, `client/src/style.css`):**
+  1. Criação de `nextDailyReset` e `dailyResetRemainingMs` em `shared/src/progress.ts`, calculando a meia-noite de Brasília (UTC-3) com isolamento temporal e funções determinísticas sem dependência do fuso do ambiente.
+  2. Implementação de `formatDailyResetRemaining` e exibição do tempo restante tanto no tooltip do botão (`Recompensa diária já resgatada hoje. Próximo resgate em Xh Ym (meia-noite de Brasília).`) quanto no texto complementar logo abaixo (`.daily-reset-hint`), mantendo a atualização periódica no cliente sem requisições adicionais de rede.
+  3. Módulo `bookAchievements.ts` fornecendo `achievementsTabLabel` para exibir dinamicamente `Conquistas (X/Y)` no botão da aba no cabeçalho do Livro (visível em qualquer aba sem precisar alternar) e `achievementsHeaderHtml` para destacar o título `<h3>Conquistas (X/Y)</h3>` no topo do corpo da aba.
+
+## Botão de ajuda do tutorial levava ao lugar errado: o conserto da hitbox não era o problema
+
+- **Sintoma:** o passo "Visite o Kisuke na praça" voltava a travar a cada rodada do Jogador-IA, mesmo depois de as issues #26, #126 e #127 serem fechadas por consertos de hitbox (PRs #59 e #330). Das 260 issues `[Playtest]` fechadas, só 6 tinham PR ligado; as outras foram fechadas sem correção rastreável.
+- **Causa:** o clique direto no sprite do Kisuke sempre funcionou depois do #330. O defeito estava no botão "Ir ao Kisuke" do painel Primeiros Passos: `data-act="travel"` executava `$("#travel-btn")?.click()` e abria a janela de **Viagem**, não a loja. O teste unitário `tutorialView.test.ts` exigia justamente `data-act="travel"` e travava o erro. Os agentes também clicavam no prédio de cenário (toldo vermelho e branco), que não é interativo; o NPC é o sprite do homem de chapéu verde.
+- **Solução:** a ação passou a se chamar `shop` e envia `interact { kind: "shop" }`; o servidor já andava até o Kisuke e abria a loja (mesmo caminho do clique no NPC). Regressão em `e2e/tests/kisuke.spec.ts`: clique no sprite e clique no botão do tutorial, cada um com conta nova e sem atalhos de Dev.
+- **Lição:** teste de hitbox não prova que o jogador chega ao objetivo. Conserto de onboarding precisa de um teste de navegador que percorre o fluxo como um jogador novo, e issue de playtest só fecha com PR e teste ligados. Ao sondar o jogo por screenshot, olhe a tela inteira antes de decidir a causa.
+- **Fora da Karakura:** o `interact` da loja saía em silêncio quando o mapa não tem loja (o botão parecia quebrado). Agora avisa no chat, no mesmo estilo do `/loja` (teste em `server/test/interact.test.ts`; o aviso vale só para a loja, o depot segue calado).
+- **Teste de navegador no CI:** o clique no sprite falhou no CI e passou em casa porque chegava antes de `GameScene.create()` registrar o `pointerdown`. "Entrou no mundo" vem do servidor e não garante a cena pronta; espere `#game-loading.ready` antes de clicar no canvas.

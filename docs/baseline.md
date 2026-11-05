@@ -1,5 +1,31 @@
 # Linha de base de qualidade e desempenho
 
+## Cenários contínuos — 04/11/2026
+
+Após corrigir os apontamentos da revisão: reconstruídos atlases, props e cenas; nove regressões Python passaram em modo normal e `-O`, além de tipos, 478 Vitest, build, cobertura dos sólidos dos sete mapas, regressão Pillow e dez E2E (44,7 s; uma captura opt-in ignorada). Soul tem 50 props, sem a casa sobreposta às árvores. As 44 imagens de cena somam agora 7.134.386 bytes; os sete atlases, 1.901.522 bytes. Estimativa RGBA das cenas permanece 89.758.720 bytes. Valores abaixo preservam o histórico de medições anteriores.
+
+Pré-publicação autorizada por Rafael: integrada `origin/main` em `9ba1211`, sem conflitos; nota de atualização dos sete cenários em `shared/src/releases.ts`. Tipos, 478 testes em 84 arquivos e build aprovados após a integração (JS 1.802,20 kB / 425,37 kB gzip). Gitleaks 8.30.1 baixado da release oficial com SHA-256 conferido: 259 commits examinados, nenhum segredo encontrado. As medições abaixo precedem a integração; preservadas como histórico do desenvolvimento.
+
+O E2E após integração revelou medição prematura do minimapa: trace capturou o título inicial antes de carregar o mapa. Teste corrigido para esperar montagem e medir em cada clique; `npm exec -w e2e -- playwright test zz-evento.spec.ts --grep 'Karakura contínua' --repeat-each 3`: três aprovações consecutivas (44,5 s).
+
+Reexecução do navegador depois dessa correção: dez testes aprovados, uma captura opt-in ignorada (38,5 s). Bateria completa local: 357 verificações OK e uma falha na fixture da forja; seu destino antigo caía em prédio e `nearestWalkable` devolvia (20,12), ainda no alcance 2 da loja. Corrigida a fixture para rua conectada e distante; `cd server; npx tsx scripts/test.ts forge`: 17 verificações OK, nenhuma falha. O CI remoto deve repetir a bateria completa sobre o commit publicado.
+
+Publicação dividida por limite de revisão: fontes/ferramentas no PR #339, integração no PR #338. O CI do #338 sobre `dce4046` passou integralmente em Node 22/24, navegador e segredos (run 41821983258). O CI do #339, sem mudanças de runtime, revelou em Node 22 a fixture antiga da caça exigindo ausência de sacola mesmo com poção rara. Simulação com sorteio fixo confirmou a exceção legítima de Auto Venda; fixture corrigida no PR de integração para ignorar drops não puros. `cd server; npx tsx scripts/test.ts hunt`: 12 verificações OK, zero falhas.
+
+Windows, Node 24.12.0, branch `feat/renovacao-visual-mapas`. A revisão de composição substitui os layouts visuais da primeira renovação. São 44 imagens de cenário únicas, 7.140.974 bytes comprimidos e 89.758.720 bytes (85,6 MiB) estimados para pixels RGBA sem mipmaps/alinhamento/overhead. São carregadas antecipadamente, além dos assets existentes; isto não é medição de VRAM. Os sete PNGs de atlas continuam com 1.903.364 bytes como suporte de colisão/minimapa/fallback. Fontes de arte em `art/` ficam fora do build público.
+
+Executado: `npm run typecheck`; `npm test` (445 testes, 79 arquivos); `npm run test:e2e` (9 testes, incluindo deslocamento real >10 células e mobs na câmera; captura opt-in fica ignorada no modo padrão); `npm run build` (JS 1.799,38 kB / 424,36 kB gzip, aviso de chunk grande já existente); `python art/maps/scenes/check_scene_alpha.py` (sete mapas sem sólidos de objetos totalmente sem cobertura visual); `cd server; npx tsx scripts/test.ts mapcheck lasnoches dangai endgame` (59 verificações OK). A suíte inicialmente revelou fixtures #26 sobre o prédio novo em (10,16): mudadas para a rua (13,16), mantendo comportamento e destino; regressões e suíte passaram depois.
+
+Captura adicional: `$env:BI_MAP_PREVIEW='1'; npm exec -w e2e -- playwright test mapas.spec.ts --grep viaja` (1 teste aprovado, sete destinos capturados). Dev é ativado somente no servidor temporário dessa opção para obter nível/imortalidade via UI; o fluxo padrão mantém Dev desligado. Confirma o título do minimapa e sua pintura antes de capturar, pois o aviso privado de viagem pode chegar antes do patch de estado. Capturas em `art/maps/scenes/runtime/`, painel em `runtime-contact-sheet.jpg`. O teste de URLs também cobre os sete chãos WebP versionados e bloqueia caminhos antigos sem versão.
+
+Revisão independente confirmou escala na captura real, referências/IDs do Tiled, lógica preservada (apenas correção do nome corrompido do portal no Dangai contra o commit anterior), cobertura alpha e capacidade geométrica dos spawns. Não medidos FPS, tempo de rede, GPU real ou aparelho móvel; não executados bateria completa de cenários, gitleaks nem atualização com worker antigo instalado. Alpha não verifica água/chão nem precisão dos contornos. As métricas abaixo registram a primeira revisão histórica.
+
+## Renovação dos mapas — 03/11/2026
+
+Windows, Node 24.12.0, worktree `feat/renovacao-visual-mapas`, base `2432a43`. Soma dos sete `client/public/maps/*_tiles.png`: 531.533 bytes antes (fontes em `art/maps/renewal/retained/`) e 1.903.364 depois. O número de atlases e suas dimensões não mudaram; fontes geradas em alta resolução ficam em `art/`, fora do build público. Não foi medido FPS nem tempo de carregamento em rede.
+
+Validação: `npm run typecheck`; `npm test` (439 testes em 78 arquivos, Git Bash no PATH); `npm run test:e2e` (8 testes, 20 s); `npm run build` (5,62 s, JS 1.720,64 kB / 416,48 kB gzip, aviso de chunk grande já existente); `python art/maps/renewal/test_assemble.py` (1 regressão visual); `cd server; npx tsx scripts/test.ts mapcheck` (29 verificações, servidor isolado). A bateria completa dos demais cenários e gitleaks não foram executados. Revisão independente confirmou exatamente quatro flags de colisão alteradas por mapa em Karakura/Falsa; os outros cinco mapas permanecem intactos.
+
 Medida em 31/10/2026 (sábado), sobre a `main` no commit `84e0180` mais as mudanças deste PR (que não alteram código de produção), num Apple M4 de 10 núcleos com macOS e Node 22.23.2. Serve para saber se uma mudança piorou algo: reexecute o comando na sua máquina, com ela ociosa, antes de comparar números.
 
 ## Qualidade

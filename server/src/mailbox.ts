@@ -1,13 +1,13 @@
 // Correio interno: cartas por personagem com anexos opcionais (kan e itens), guardadas no SQLite.
 // Entrega recompensas, itens de anúncios expirados do mercado e avisos do sistema, mesmo offline.
 import { DatabaseSync } from "node:sqlite";
-import type { Slot } from "../../shared/src";
+import type { MailItem, Slot } from "../../shared/src";
 
 export const MAIL_TTL_MS = 30 * 24 * 3600_000;
 export const MAX_INBOX = 50; // por personagem: as mais antigas saem quando passa disso
 
 export interface Attachment { gold?: number; items?: Slot[] }
-export interface Mail { id: number; to: string; from: string; subject: string; body: string; gold: number; items: Slot[]; createdAt: number; read: boolean }
+export type Mail = MailItem;
 
 const db = new DatabaseSync(process.env.DB_FILE ?? "bleach-idle.sqlite");
 db.exec(`

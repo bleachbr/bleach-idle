@@ -13,7 +13,8 @@ permissions:
 jobs:
   gitleaks:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    # Inclui o fetch do histórico completo com as fontes de arte; não reduz o escopo da varredura.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -79,6 +80,11 @@ jobs:
 
       - name: Run browser tests
         run: npm run test:e2e
+
+      - name: Run map travel with Dev
+        env:
+          BI_MAP_PREVIEW: "1"
+        run: npm exec -w e2e -- playwright test -g "viaja pelos sete cenários"
 
       - name: Upload Playwright traces
         if: failure()

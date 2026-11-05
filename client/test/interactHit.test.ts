@@ -36,8 +36,21 @@ describe("clique na loja, no depot e no portal (#26)", () => {
     expect(interactAt(m, ...center(6, 5))).toBe("depot"); // meio do baú continua sendo depot
   });
 
+  it("cliques no nome ou aviso flutuante acima do Kisuke e no tile da loja abrem a loja (#126, #127)", () => {
+    const cx = 18 * TILE + TILE / 2, foot = 13 * TILE;
+    expect(interactAt(karakura, cx, foot - 70)).toBe("shop"); // aviso flutuante / rótulo acima da cabeça
+    expect(interactAt(karakura, cx - 26, foot - 20)).toBe("shop"); // clique na largura confortável do NPC
+  });
+
   it("mapa sem loja nem depot não abre nada", () => {
     expect(interactAt({}, ...center(18, 12))).toBeNull();
+  });
+
+  it("abre viagem nas bordas e no topo do Senkaimon ampliado", () => {
+    expect(interactAt(karakura, 498, 360)).toBe("travel");
+    expect(interactAt(karakura, 558, 360)).toBe("travel");
+    expect(interactAt(karakura, 528, 294)).toBe("travel");
+    expect(interactAt(karakura, 495, 360)).toBeNull();
   });
 });
 
