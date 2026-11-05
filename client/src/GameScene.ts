@@ -610,13 +610,18 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- efeitos ----------
 
+  /** Menos movimento (R-14): a classe `reduced-motion` do body (options.ts) é a fonte; vale já no próximo efeito. */
+  private reducedMotion() { return document.body.classList.contains("reduced-motion"); }
+  private shake(ms: number, force: number) { if (!this.reducedMotion()) this.cameras.main.shake(ms, force); }
+  private flash(ms: number) { if (!this.reducedMotion()) this.cameras.main.flash(ms, 255, 255, 255); }
+
   /** Texto flutuante (dano, cura, nível): surge grande, assenta, sobe e some. `big`: golpe forte. */
   private float(v: View | undefined, text: string, color: string, size = 12, big = false) {
     if (!v) return;
     const t = this.add.text(v.c.x + Phaser.Math.Between(-6, 6), v.c.y - v.spr.displayHeight, text, {
       fontFamily: PIXEL_FONT, fontSize: `${big ? size + 6 : size + 1}px`, fontStyle: "bold", color, stroke: "#000", strokeThickness: big ? 5 : 4, resolution: 2,
-    }).setOrigin(0.5).setDepth(1e6 + 1).setScale(big ? 1.8 : 1.35);
-    this.tweens.add({ targets: t, scale: 1, duration: big ? 160 : 110, ease: "Back.easeOut" });
+    }).setOrigin(0.5).setDepth(1e6 + 1).setScale(this.reducedMotion() ? 1 : big ? 1.8 : 1.35);
+    if (!this.reducedMotion()) this.tweens.add({ targets: t, scale: 1, duration: big ? 160 : 110, ease: "Back.easeOut" });
     this.tweens.add({ targets: t, y: t.y - (big ? 30 : 22), duration: 900, ease: "Cubic.easeOut" });
     this.tweens.add({ targets: t, alpha: 0, delay: 500, duration: 400, onComplete: () => t.destroy() });
   }
@@ -651,7 +656,7 @@ export class GameScene extends Phaser.Scene {
         break;
       case "event":
         this.float(this.views.get(this.myId), fx.text!, "#ff6a4a", 16);
-        this.cameras.main.shake(300, 0.003);
+        this.shake(300, 0.003);
         sfx.event();
         break;
       case "dmg":
@@ -665,7 +670,7 @@ export class GameScene extends Phaser.Scene {
           const target = v ? (v.isMonster ? this.room.state.monsters.get(v.id) : this.room.state.players.get(v.id)) : undefined;
           const big = !!fx.v && !!target && fx.v >= target.maxHp * 0.25;
           this.float(v, fx.v ? (big ? `${fx.v}!` : String(fx.v)) : "errou", big ? "#ffd84a" : v?.isMonster ? "#ffffff" : "#ff5a4a", 12, big);
-          if (big && (fx.from === this.myId || mine)) this.cameras.main.shake(120, 0.003);
+          if (big && (fx.from === this.myId || mine)) this.shake(120, 0.003);
         }
         if (v && fx.v) { v.spr.setTintFill(0xffffff); this.time.delayedCall(70, () => this.restoreTint(v)); }
         {
@@ -724,9 +729,9 @@ export class GameScene extends Phaser.Scene {
           this.float(v, fx.v ? up : "Forma normal", big ? "#ff3a6a" : fx.v ? "#ff6a3a" : "#cfd8ff", fx.v ? 12 + (fx.v ?? 0) * 2 : 14);
           const rel = v && fx.v ? this.playFx(RELEASE[cid ?? ""] ?? "rel_ichigo", v.c.x, v.c.y - 26, { scale: 1 + (fx.v ?? 0) * 0.25 }) : undefined; // o anel da explosão cai nos pés
           if (rel && CHAR_TINT[cid ?? ""]) rel.setTint(CHAR_TINT[cid ?? ""]);
-          if (v && big) this.cameras.main.flash(250, 255, 255, 255);
+          if (v && big) this.flash(250);
         }
-        if (v && fx.v) this.cameras.main.shake(150 + (fx.v ?? 0) * 70, 0.003 + (fx.v ?? 0) * 0.0015);
+        if (v && fx.v) this.shake(150 + (fx.v ?? 0) * 70, 0.003 + (fx.v ?? 0) * 0.0015);
         if (mine && fx.v) sfx.bankai();
         break;
       case "skill": {
@@ -743,7 +748,7 @@ export class GameScene extends Phaser.Scene {
             .setBlendMode(Phaser.BlendModes.ADD).setScale(0.1);
           this.tweens.add({ targets: ring, scale: 1, alpha: 0, duration: 380 + fx.area * 80, ease: "Quad.easeOut", onComplete: () => ring.destroy() });
         }
-        if (tier >= 3) { this.cameras.main.flash(180, 255, 255, 255); this.cameras.main.shake(300, 0.007); }
+        if (tier >= 3) { this.flash(180); this.shake(300, 0.007); }
         const p = this.room.state.players.get(fx.from!);
         const sk = SKILL_FX[p?.charId ?? ""];
         const ang = Phaser.Math.Angle.Between(a.c.x, a.c.y, b.c.x, b.c.y);

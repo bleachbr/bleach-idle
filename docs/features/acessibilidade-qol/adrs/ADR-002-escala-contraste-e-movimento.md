@@ -36,6 +36,7 @@
 - `float()` pula o tween de escala (o texto já nasce na escala 1) e mantém a subida e o esmaecer.
 - `body.reduced-motion` desliga a animação `rebirth-glow` e as transições de CSS longas (`#side` no celular abre sem deslizar).
 - `"auto"` lê `matchMedia("(prefers-reduced-motion: reduce)")`.
+- **Como ficou (PR 2):** a fonte da decisão é a classe `reduced-motion` no `body`, ligada por `options.ts` com a função pura `reducedMotion(motion, sistema)` (`client/src/motion.ts`). A `GameScene` lê a classe a cada efeito, então não há ligação entre a janela e a cena, e "Seguir o sistema" reage na hora a uma mudança no aparelho. O controle é uma lista (`select`) com Seguir o sistema, Reduzido e Completo, na seção Visual, e o "Voltar ao padrão" da seção também o restaura.
 
 ## 3. Alternativas
 

@@ -1,7 +1,7 @@
 // Preferências do jogador neste navegador (R-14, ADR-001): uma chave só, bi.prefs, em JSON.
 // O valor guardado é entrada não confiável (outra extensão ou o próprio jogador podem editá-lo):
 // parsePrefs percorre a lista fixa de campos e copia só o que passa na validação.
-// Os campos de escala, contraste, movimento, teclas e toque entram nos PRs seguintes da R-14.
+// Os campos de escala, contraste, teclas e toque entram nos PRs seguintes da R-14.
 import type { KV } from "./loreRead";
 
 export const PREFS_KEY = "bi.prefs";
@@ -9,16 +9,22 @@ export const PREFS_KEY = "bi.prefs";
 export const LEGACY_HD = "bi_hd";
 export const LEGACY_MUTE = "bi_mute";
 
+/** Movimento: "auto" segue o sistema (prefers-reduced-motion), "reduced" corta tremor e clarão, "full" mantém tudo. */
+export type Motion = "auto" | "reduced" | "full";
+export const MOTIONS: readonly Motion[] = ["auto", "reduced", "full"];
+
 export type Prefs = {
   /** visual HD (desenho original) em vez de pixel art */
   hd: boolean;
   mute: boolean;
+  motion: Motion;
 };
 
-export const DEFAULT_PREFS: Readonly<Prefs> = Object.freeze({ hd: false, mute: false });
+export const DEFAULT_PREFS: Readonly<Prefs> = Object.freeze({ hd: false, mute: false, motion: "auto" });
 
 const isBool = (v: unknown): v is boolean => typeof v === "boolean";
-const FIELDS: { readonly [K in keyof Prefs]: (v: unknown) => v is Prefs[K] } = { hd: isBool, mute: isBool };
+const isMotion = (v: unknown): v is Motion => typeof v === "string" && (MOTIONS as readonly string[]).includes(v);
+const FIELDS: { readonly [K in keyof Prefs]: (v: unknown) => v is Prefs[K] } = { hd: isBool, mute: isBool, motion: isMotion };
 
 /** Objeto novo com cada campo válido de `raw`; campo inválido ou ausente volta ao padrão. */
 export function parsePrefs(raw: unknown): Prefs {

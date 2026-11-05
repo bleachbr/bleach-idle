@@ -298,6 +298,10 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 .hd-btn { font: 700 10px/1 var(--title); letter-spacing: 0.5px; color: var(--muted); }
 .hd-btn.on { color: #ffd34a; text-shadow: 0 0 6px #ffb04a; }
 
+/* menos movimento (R-14, RF-06): o brilho do Renascer, o destaque do inventário e a gaveta do celular ficam parados */
+body.reduced-motion #rebirth-btn, body.reduced-motion #gear.flash { animation: none; }
+body.reduced-motion #side { transition: none; }
+
 /* modo Dev */
 .dev-btn { font: 700 9px/1 var(--font-pixel, monospace); color: #7dff9a; }
 #dev-body .dev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; margin-top: 8px; }
@@ -312,6 +316,9 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 #options-body legend { font-family: var(--title); padding: 0 4px; }
 #options-body .opt-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 #options-body .opt-row + .hint { margin: 2px 0 6px 24px; }
+#options-body .opt-select { display: flex; align-items: center; gap: 8px; }
+#options-body .opt-select select { margin-left: auto; }
+#options-body .opt-select + .hint { margin: 2px 0 6px; }
 /* ---------- inventário (issue #25): espaços com cara de botão e destaque ao abrir pelo atalho ---------- */
 #gear .slot:not(:disabled):hover, #gear .slot:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 0 8px #ff8a2a66; outline: none; }
 #inv-title kbd { text-transform: none; letter-spacing: 0; font-size: 10px; }

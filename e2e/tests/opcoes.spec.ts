@@ -38,7 +38,7 @@ test("⚙ abre a janela, o som acompanha o ícone e a escolha fica gravada", asy
 
   await page.click("#options-body fieldset:nth-of-type(2) button"); // Voltar ao padrão
   await expect(page.locator("#mute-btn")).toHaveAttribute("data-ico", "sound");
-  await expect.poll(() => page.evaluate(() => localStorage.getItem("bi.prefs"))).toBe('{"hd":false,"mute":false}');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("bi.prefs"))).toBe('{"hd":false,"mute":false,"motion":"auto"}');
 });
 
 test("Enter no botão Voltar ao padrão aciona o botão e não foca o chat", async ({ page }) => {
@@ -89,7 +89,7 @@ test("sem bi.prefs, as chaves antigas viram as preferências novas", async ({ pa
   await expect(page.locator("#lobby")).toBeVisible(); // "Lembrar" vem marcado: a sessão continua
   await page.locator("#char-list .char-row").getByRole("button", { name: "Jogar" }).click();
   await expect(page.locator("#app")).toBeVisible();
-  await expect.poll(() => page.evaluate(() => localStorage.getItem("bi.prefs"))).toBe('{"hd":true,"mute":true}');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("bi.prefs"))).toBe('{"hd":true,"mute":true,"motion":"auto"}');
   await expect(page.locator("#mute-btn")).toHaveAttribute("data-ico", "mute");
   await expect(page.locator("#hd-btn")).toHaveClass(/\bon\b/);
 });
@@ -152,4 +152,56 @@ test("os ícones do cabeçalho ficam dentro da barra, do desktop ao celular de 3
     expect(m.maxRight, `${width}px`).toBeLessThanOrEqual(m.limit + 0.5);
     expect(m.scrollLeft, `${width}px`).toBe(0);
   }
+});
+
+// ---------- menos movimento (R-14 PR 2, RF-06) ----------
+const motionSelect = (page: Page) => page.locator("#options-body select");
+const bodyReduced = (page: Page) => page.evaluate(() => document.body.classList.contains("reduced-motion"));
+const rebirthAnimation = (page: Page) => page.evaluate(() => getComputedStyle(document.querySelector("#rebirth-btn")!).animationName);
+
+test("Movimento: o padrão segue o sistema, na hora e ao entrar", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await newPlayer(page);
+  await page.click("#options-btn");
+  await expect(motionSelect(page)).toHaveValue("auto");
+  expect(await bodyReduced(page)).toBe(false);
+  expect(await rebirthAnimation(page)).toBe("rebirth-glow");
+
+  await page.emulateMedia({ reducedMotion: "reduce" }); // o jogador liga "reduzir movimento" no sistema com o jogo aberto
+  await expect.poll(() => bodyReduced(page)).toBe(true);
+  expect(await rebirthAnimation(page)).toBe("none");
+});
+
+test("Movimento: Reduzido e Completo valem por cima do sistema e ficam gravados", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await newPlayer(page);
+  await page.click("#options-btn");
+
+  await motionSelect(page).selectOption("reduced");
+  await expect.poll(() => bodyReduced(page)).toBe(true);
+  expect(await rebirthAnimation(page)).toBe("none");
+  expect(JSON.parse(await page.evaluate(() => localStorage.getItem("bi.prefs") ?? "{}")).motion).toBe("reduced");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await motionSelect(page).selectOption("full"); // Completo ignora o sistema
+  await expect.poll(() => bodyReduced(page)).toBe(false);
+  expect(await rebirthAnimation(page)).toBe("rebirth-glow");
+
+  await page.reload();
+  await expect(page.locator("#lobby")).toBeVisible();
+  await page.locator("#char-list .char-row").getByRole("button", { name: "Jogar" }).click();
+  await expect(page.locator("#app")).toBeVisible();
+  expect(await bodyReduced(page)).toBe(false); // continua Completo depois de recarregar
+});
+
+test("Movimento: Voltar ao padrão da seção Visual volta para Seguir o sistema", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await newPlayer(page);
+  await page.click("#options-btn");
+  await motionSelect(page).selectOption("reduced");
+  await expect.poll(() => bodyReduced(page)).toBe(true);
+  await page.locator("#options-body fieldset:nth-of-type(1) button").click();
+  await expect(motionSelect(page)).toHaveValue("auto");
+  await expect.poll(() => bodyReduced(page)).toBe(false);
+  expect(await page.locator("#options-body select").getAttribute("aria-describedby")).toBe("opt-hint-motion");
 });
