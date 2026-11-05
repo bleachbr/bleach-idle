@@ -563,7 +563,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     m.power = m.basePower * tr.atkMult;
     m.defMult = tr.defMult;
     m.stepMs = Math.max(120, Math.round(def.stepMs * tr.stepMult));
-    this.broadcast("fx", { t: "event", text: tr.shout });
+    this.broadcast("fx", { t: "event", id: m.id, text: tr.shout }); // o id deixa o cliente de outro mapa ignorar o grito e o tremor
     for (const p of this.state.players.values()) {
       if (!sameMap(p, m) || (m.owner && m.owner !== p.id)) continue;
       this.log(p, tr.shout);
