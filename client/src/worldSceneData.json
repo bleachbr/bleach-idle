@@ -288,6 +288,16 @@
         "id": "tree-28",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
+        "x": 986.24,
+        "y": 862.08,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 862.08
+      },
+      {
+        "id": "tree-29",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
         "x": 919.04,
         "y": 783.68,
         "width": 72,
@@ -295,17 +305,17 @@
         "sortY": 783.68
       },
       {
-        "id": "tree-29",
+        "id": "tree-30",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 1175.04,
-        "y": 132.48,
+        "x": 887.04,
+        "y": 836.48,
         "width": 96,
         "height": 98.699,
-        "sortY": 132.48
+        "sortY": 836.48
       },
       {
-        "id": "tree-30",
+        "id": "tree-31",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
         "x": 1340.8,
@@ -315,37 +325,17 @@
         "sortY": 122.56
       },
       {
-        "id": "tree-31",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1265.6,
-        "y": 104.32,
-        "width": 80,
-        "height": 82.249,
-        "sortY": 104.32
-      },
-      {
         "id": "tree-32",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 1188.8,
-        "y": 183.04,
+        "x": 1746.24,
+        "y": 392.64,
         "width": 72,
         "height": 74.024,
-        "sortY": 183.04
+        "sortY": 392.64
       },
       {
         "id": "tree-33",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1295.36,
-        "y": 150.4,
-        "width": 72,
-        "height": 74.024,
-        "sortY": 150.4
-      },
-      {
-        "id": "tree-34",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
         "x": 1736.0,
@@ -355,7 +345,7 @@
         "sortY": 374.08
       },
       {
-        "id": "tree-35",
+        "id": "tree-34",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
         "x": 1688.32,
@@ -365,7 +355,7 @@
         "sortY": 368.32
       },
       {
-        "id": "tree-36",
+        "id": "tree-35",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
         "x": 1711.04,
@@ -375,7 +365,7 @@
         "sortY": 366.72
       },
       {
-        "id": "tree-37",
+        "id": "tree-36",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
         "x": 1726.4,
@@ -385,144 +375,64 @@
         "sortY": 398.08
       },
       {
+        "id": "tree-37",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1304.64,
+        "y": 831.04,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 831.04
+      },
+      {
         "id": "tree-38",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 1572.8,
-        "y": 409.92,
-        "width": 72,
-        "height": 74.024,
-        "sortY": 409.92
+        "x": 1326.08,
+        "y": 852.48,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 852.48
       },
       {
         "id": "tree-39",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 1924.8,
-        "y": 940.16,
-        "width": 80,
-        "height": 82.249,
-        "sortY": 940.16
+        "x": 1925.44,
+        "y": 869.12,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 869.12
       },
       {
         "id": "tree-40",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 1907.2,
-        "y": 882.88,
+        "x": 1912.0,
+        "y": 931.2,
         "width": 80,
         "height": 82.249,
-        "sortY": 882.88
+        "sortY": 931.2
       },
       {
         "id": "tree-41",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 155.52,
-        "y": 1461.12,
-        "width": 72,
-        "height": 74.024,
-        "sortY": 1461.12
+        "x": 1850.56,
+        "y": 975.68,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 975.68
       },
       {
         "id": "tree-42",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 199.36,
-        "y": 1433.6,
+        "x": 1895.36,
+        "y": 895.04,
         "width": 72,
         "height": 74.024,
-        "sortY": 1433.6
-      },
-      {
-        "id": "tree-43",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 146.56,
-        "y": 1381.44,
-        "width": 80,
-        "height": 82.249,
-        "sortY": 1381.44
-      },
-      {
-        "id": "tree-44",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1104.0,
-        "y": 1353.28,
-        "width": 72,
-        "height": 74.024,
-        "sortY": 1353.28
-      },
-      {
-        "id": "tree-45",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1112.64,
-        "y": 1436.8,
-        "width": 80,
-        "height": 82.249,
-        "sortY": 1436.8
-      },
-      {
-        "id": "tree-46",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1187.52,
-        "y": 1442.88,
-        "width": 72,
-        "height": 74.024,
-        "sortY": 1442.88
-      },
-      {
-        "id": "tree-47",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1148.8,
-        "y": 1414.72,
-        "width": 96,
-        "height": 98.699,
-        "sortY": 1414.72
-      },
-      {
-        "id": "tree-48",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1109.76,
-        "y": 1404.16,
-        "width": 72,
-        "height": 74.024,
-        "sortY": 1404.16
-      },
-      {
-        "id": "tree-49",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1119.36,
-        "y": 1449.28,
-        "width": 96,
-        "height": 98.699,
-        "sortY": 1449.28
-      },
-      {
-        "id": "tree-50",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1968.0,
-        "y": 1372.48,
-        "width": 80,
-        "height": 82.249,
-        "sortY": 1372.48
-      },
-      {
-        "id": "tree-51",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1938.56,
-        "y": 1321.92,
-        "width": 80,
-        "height": 82.249,
-        "sortY": 1321.92
+        "sortY": 895.04
       }
     ]
   },

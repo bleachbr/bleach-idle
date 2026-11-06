@@ -48,7 +48,8 @@ def main():
     for y in range(h):
         for x in range(w):
             r, g, b = ground.getpixel((x*T+16, y*T+16))
-            water = .63*h < y < .83*h and g > r+22 and b > r+20
+            is_bridge = (14 <= x <= 17) or (36 <= x <= 40)
+            water = (32 <= y <= 38) and (not is_bridge) and (g > r+22 or b > r+20)
             material = "agua" if water else "calcada" if x < 32 and y < 30 else "grama"
             chao[y*w+x] = keys[f"{material}{x%4}{y%4}"]+1
             if water:
