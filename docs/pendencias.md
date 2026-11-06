@@ -1,5 +1,11 @@
 # Pendências e Débitos Técnicos Registrados
 
+## Aba oculta (05/11/2026)
+
+- Com a aba oculta ainda cresce devagar a lista de tweens (cerca de 24 por minuto na medição): a respiração parada de quem andou só sai da lista no primeiro quadro seguinte. Na volta ela caiu ao normal em 1 s; não acumula objeto na tela.
+- A regressão automática cobre a decisão (`client/test/fxBackground.test.ts`), não a cena: o build de produção do E2E não expõe a cena. A contagem de objetos foi medida com um teste temporário em build de desenvolvimento.
+- A ausência longa foi simulada antes da correção com 20.000 `fx` de dano: o jogo caiu para cerca de 4 quadros por segundo e se recuperou em até 21 s. O travamento persistente e a causa do aviso "Conexão perdida" não foram reproduzidos; a queda da conexão precisa de observação em produção.
+
 ## Renovação dos mapas (04/11/2026)
 
 - A primeira revisão por atlas foi superada: Rafael autorizou novo desenho de composição/caminhos. A revisão atual usa cenários contínuos e props completos, com colisão revista no Tiled; fontes em `art/maps/scenes/`. Rafael autorizou commit, push, merge e produção em 04/11/2026; publicação segue revisão e CI obrigatórios do projeto.
