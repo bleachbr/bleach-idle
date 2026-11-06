@@ -47,9 +47,10 @@ export function characterSheet(p: SheetPlayer, gear: SheetGear | null, now: numb
   const form = ch.forms[p.form] ?? ch.forms[0];
   const rb = rebirthBonus(p.rebirths);
   const a = expForLevel(p.level), b = expForLevel(p.level + 1);
-  const locked = isRecruit(p.charId) && p.level >= 30 && p.exp <= expForLevel(30);
-  const rank = getMilitaryRank(p);
-  const z = p.prog?.zanpakuto ?? p.zanpakuto;
+  const prog = p.prog ?? (gear as any)?.prog;
+  const locked = isRecruit(p.charId) && !prog?.promotedRank && p.level >= 30 && p.exp <= expForLevel(30);
+  const rank = getMilitaryRank({ ...p, prog });
+  const z = prog?.zanpakuto ?? p.zanpakuto;
   const bankaiAwakened = Boolean(p.prog?.bankaiAwakened ?? p.bankaiAwakened);
   const bankaiName = p.bankaiName ?? z?.bankaiName ?? "—";
   const bankaiStatus = bankaiAwakened ? "Despertada" : "Adormecida";

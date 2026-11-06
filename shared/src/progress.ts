@@ -163,6 +163,8 @@ export interface Progress {
   bankaiAwakened?: boolean;
   /** permissão de viagem dimensional para o Palácio Real e reinos superiores (JH-06) */
   dimensionalTravel?: boolean;
+  /** baús de tesouro exploratórios já abertos pelo jogador */
+  openedChests?: string[];
 }
 
 export type PlayerProg = Progress;

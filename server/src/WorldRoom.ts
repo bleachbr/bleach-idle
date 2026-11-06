@@ -25,6 +25,7 @@ import {
   PATROL_SECTORS, PATROL_DURATIONS, calculatePatrolRewards, canClaimPatrol, patrolRemainingMs, type PatrolState,
   OFFLINE_MAX_MS, buildOfflineReport, GUILD_COST, GUILD_MIN_LEVEL,
   skillBlock, skillBlockText, deathPenalty, inPvpCombat, activeChronicle,
+  chestById, openChestReward,
 } from "../../shared/src";
 import * as arenaMgr from "./arenaManager";
 import { findPath, type Pt } from "./path";
@@ -324,6 +325,9 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.handle("debugInvasionEnd", () => this.endInvasion(false));
       this.handle("debugWorldBoss", () => this.spawnWorldBoss());
       this.handle("debugSeasonPts", (c, m: { n?: number }) => { const p = this.me(c); if (p) this.seasonAdd(p, Number(m?.n) || 0, "teste"); });
+      this.handle("debugGainExp", (c, m: { exp?: number }) => { const p = this.me(c); if (p) this.gainExp(p, Number(m?.exp) || 1000, "Debug"); });
+      this.handle("debugSetLevel", (c, m: { level?: number }) => { const p = this.me(c); if (p) this.devLevel(p, Number(m?.level) || 1); });
+      this.handle("debugGold", (c, m: { gold?: number }) => { const p = this.me(c); if (p) { p.gold += Number(m?.gold) || 10000; this.sendInv(p); } });
     }
   }
 
@@ -1363,6 +1367,25 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.path = findPath(p.x, p.y, (x, y) => chebyshev(x, y, at.x, at.y) <= INTERACT_RANGE, (x, y) => !walkable(mapOf(p), x, y));
       p.pendingInteract = p.path.length ? m.kind : "";
     });
+    this.handle("chestOpen", (c, m: { id: string }) => {
+      const p = this.me(c);
+      if (!p || typeof m?.id !== "string") return;
+      const chest = chestById(m.id);
+      if (!chest || chest.map !== mapOf(p).id) return;
+      if (chebyshev(p.x, p.y, chest.x, chest.y) > INTERACT_RANGE) {
+        return this.log(p, "Aproxime-se do baú para abri-lo.");
+      }
+      p.prog = p.prog ?? newProgress();
+      p.prog.openedChests = p.prog.openedChests ?? [];
+      const res = openChestReward(chest, { gold: p.gold, inv: p.inv, openedChests: p.prog.openedChests });
+      if (!res.success) {
+        return this.log(p, res.message);
+      }
+      p.gold += res.goldAwarded;
+      this.sendInv(p);
+      this.log(p, res.message);
+      this.sendTo(p, "chestOpened", res);
+    });
     this.handle("depot", (c, m: { op: "put" | "take"; index: number }) => {
       const p = this.me(c);
       if (!p) return;
@@ -1535,6 +1558,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     const msg = {
       gold: p.gold, inv: p.inv, depot: p.depot, equip: p.equip, forge: p.forge, sets: setBonuses(p.equip).active, expBoostUntil: p.expBoostUntil, lootBoostUntil: p.lootBoostUntil,
       atk: Math.round(playerAtk(ch.atk, p.level) + b.atk), def: Math.round(playerDef(ch.def, p.level) + b.def),
+      prog: p.prog,
     };
     for (const c of this.clients) if (this.sessions.get(c.sessionId) === p.id) c.send("inv", msg);
   }
@@ -1804,6 +1828,11 @@ export class WorldRoom extends GameRoom<WorldState> {
             ? HELP_CATEGORIES.sistema
             : HELP;
         return lines.forEach((l) => this.sendTo(p, "chat", { from: "", text: l, ch: "sys" }));
+      }
+      case "promover":
+      case "promote": {
+        this.promoteToOfficer(p);
+        return;
       }
       case "autohunt":
       case "hunt": {
@@ -2986,6 +3015,8 @@ export class WorldRoom extends GameRoom<WorldState> {
           break;
         case "boss": this.spawnWorldBoss(); break;
         case "invasion": this.startInvasion(); break;
+        case "promote": this.promoteToOfficer(p); break;
+        case "exp": this.gainExp(p, Number(m.n) || 1000, "dev"); break;
         default: return;
       }
       c.send("devMode", { god: p.devGod });
@@ -2995,14 +3026,25 @@ export class WorldRoom extends GameRoom<WorldState> {
   /** Leva o personagem direto a um nível (formas e técnicas seguem o nível; marcos de nível não são pagos). */
   private devLevel(p: Player, target: number) {
     const lv = Math.max(1, Math.min(300, Math.round(target)));
-    p.level = lv;
-    p.exp = expForLevel(lv);
-    if (p.form > maxForm(p.charId, lv)) this.setForm(p, 0);
+    const isLockedRecruit = isRecruit(p.charId) && !p.prog?.promotedRank;
+    if (isLockedRecruit && lv >= 30) {
+      p.level = 30;
+      p.exp = expForLevel(30);
+      if (!p.prog?.seireiteiSummoned) {
+        if (p.prog) p.prog.seireiteiSummoned = true;
+        this.log(p, "Convocação do Seireitei: Apresente-se no Senkaimon!");
+        this.sendTo(p, "fx", { t: "event", text: "Convocação do Seireitei: Apresente-se no Senkaimon!" });
+      }
+    } else {
+      p.level = lv;
+      p.exp = expForLevel(lv);
+    }
+    if (p.form > maxForm(p.charId, p.level)) this.setForm(p, 0);
     this.recompute(p);
     p.hp = p.maxHp;
     p.rei = p.maxRei;
-    this.broadcast("fx", { t: "level", id: p.id, v: lv });
-    this.log(p, `Dev: nível ${lv}.`);
+    this.broadcast("fx", { t: "level", id: p.id, v: p.level });
+    this.log(p, `Dev: nível ${p.level}.`);
   }
 
   // ---------- renascimento ----------

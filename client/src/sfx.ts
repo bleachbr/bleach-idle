@@ -14,8 +14,10 @@ function unlock() {
   }
   if (ctx.state === "suspended") void ctx.resume();
 }
-window.addEventListener("pointerdown", unlock);
-window.addEventListener("keydown", unlock);
+if (typeof window !== "undefined") {
+  window.addEventListener("pointerdown", unlock);
+  window.addEventListener("keydown", unlock);
+}
 
 function play(notes: Note[], master = 0.12) {
   if (muted || !ctx || ctx.state !== "running") return;

@@ -57,7 +57,18 @@ export function initTouch(room: Room<any>, setDir: (dir: number | null) => void)
   });
 }
 
-/** App instalável: registra o service worker só no build de produção. */
+/** App instalável: registra o service worker só no build de produção; no dev, limpa caches legados para sempre carregar o asset fresco. */
 export function registerPWA() {
-  if (import.meta.env.PROD && "serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+  if (import.meta.env.PROD && "serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  } else if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      for (const reg of regs) reg.unregister();
+    }).catch(() => {});
+    if ("caches" in window) {
+      caches.keys().then((keys) => {
+        for (const key of keys) caches.delete(key);
+      }).catch(() => {});
+    }
+  }
 }

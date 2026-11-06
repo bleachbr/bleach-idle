@@ -11,6 +11,8 @@
 //     spawn (ponto; propriedades monstro, raio, quantidade)
 //     npc (ponto; propriedade id = id do catálogo em shared/src/npcs.ts; M1-03)
 import { npcById } from "./npcs";
+import { KARAKURA_SIGNPOSTS, type SignpostDef } from "./signposts";
+import { KARAKURA_CHESTS, type ChestDef } from "./chests";
 
 export const MAP_IDS = ["karakura", "hueco", "soul", "lasnoches", "dangai", "falsa", "wandenreich"] as const;
 export const HOME_MAP = "karakura";
@@ -37,6 +39,10 @@ export interface GameMap {
   arena?: Pt & { radius: number };
   /** NPCs do mapa: só a posição; nome, sprite e diálogo vêm do catálogo (npcById) */
   npcs: (Pt & { id: string })[];
+  /** Placas de sinalização interativas do mapa (Signposts estilo Pokémon ORAS) */
+  signposts?: SignpostDef[];
+  /** Baús de tesouro exploráveis em pontos secretos */
+  chests?: ChestDef[];
 }
 
 const FLIP_MASK = 0x1fffffff; // bits altos do gid guardam espelhamento no Tiled
@@ -81,6 +87,35 @@ export function parseMap(id: string, json: any, opts: { strictNpcs?: boolean } =
           radius: Number(prop(o, "raio") ?? 3), count: Number(prop(o, "quantidade") ?? 3),
         });
       else if (kind === "npc") npcObjs.push({ id: String(prop(o, "id") ?? o.name), ...pt });
+      else if (kind === "placa" || kind === "signpost") {
+        map.signposts = map.signposts ?? [];
+        map.signposts.push({
+          id: String(prop(o, "id") ?? o.name),
+          map: id,
+          x: pt.x,
+          y: pt.y,
+          title: String(prop(o, "titulo") ?? o.name),
+          text: String(prop(o, "texto") ?? ""),
+          category: (prop(o, "categoria") as any) ?? "direction",
+          sectorId: (prop(o, "setor") as any) ?? "setor_1",
+        });
+      } else if (kind === "bau" || kind === "chest") {
+        map.chests = map.chests ?? [];
+        map.chests.push({
+          id: String(prop(o, "id") ?? o.name),
+          map: id,
+          x: pt.x,
+          y: pt.y,
+          name: String(prop(o, "nome") ?? o.name),
+          hint: String(prop(o, "dica") ?? ""),
+          secretSpot: (prop(o, "spot") as any) ?? "zelkova",
+          sectorId: (prop(o, "setor") as any) ?? "setor_1",
+          rewards: {
+            gold: Number(prop(o, "gold") ?? 100),
+            items: [],
+          },
+        });
+      }
     }
   }
   for (const n of npcObjs) {
@@ -98,6 +133,10 @@ export function parseMap(id: string, json: any, opts: { strictNpcs?: boolean } =
   for (const n of map.npcs) if (npcById(n.id)?.solid) solid[n.y * w + n.x] = 1;
   if (id === "soul" && map.arrivals.soul && !map.arrivals.reiokyu) {
     map.arrivals.reiokyu = { ...map.arrivals.soul };
+  }
+  if (id === "karakura") {
+    map.signposts = map.signposts?.length ? map.signposts : KARAKURA_SIGNPOSTS;
+    map.chests = map.chests?.length ? map.chests : KARAKURA_CHESTS;
   }
   return map;
 }

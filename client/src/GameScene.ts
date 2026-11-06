@@ -5,16 +5,21 @@ import { drawWorldScene, drawWorldSceneMinimap, missingWorldSceneTextures, prelo
 import { sfx } from "./sfx";
 import type { Room } from "colyseus.js";
 import { TILE, TICK_MS, SPRITES, BOSSES, POWER_TIERS, powerTier, COSMETIC, titleText, CHARS, MONSTERS, MAP_IDS, HOME_MAP, SHOP_SPRITE, parseMap, spriteKey, npcById, type GameMap, type QuestState } from "../../shared/src";
-import { pickClick, interactHint, interactNear } from "./interactHit";
+import { pickClick, interactHint, interactNear, signpostNearPlayer, chestNearPlayer } from "./interactHit";
+import { interactWithSignpost, interactWithChest } from "./exploration";
 import { serverNow } from "./clock";
 import { fixedMarks, questTargetKinds, targetAreas, type FixedMark } from "./minimapMarks";
 import { createMinimapPing, isPingActive, pingPulseRadius, type MinimapPing } from "./minimapPing";
 import { parseStatusFlags, desiredTint, dotHitStyle, STATUS_LOOK } from "./statusFx";
 import { keyBelongsToField } from "./keyFocus";
 import type { StatusKind } from "../../shared/src/combatStatus";
+import { LocationTracker, getSectorAt, type SectorZone } from "./locationBanner";
 
-const VIEW_W = 15;
-const VIEW_H = 11;
+export const VIEW_W = 20;
+export const VIEW_H = 13;
+export const MIN_ZOOM = 0.5;
+export const MAX_ZOOM = 1.8;
+export const DEFAULT_ZOOM = 1.0;
 /** Modo HD: folhas sem pixelar (art/hd.py), HD_K vezes maiores, e a tela renderizada HD_K vezes maior */
 const HD_K = 3;
 const HD = "hd:";
@@ -124,7 +129,7 @@ const py = (y: number) => y * TILE + TILE;
 const MINIMAP_K = 4;
 const MINIMAP_LEGEND = "Losango roxo: portal (com anel dourado, o alvo da missão está em outro mapa). Quadrado dourado: loja; laranja: depot. Cruz: templo. Círculo amarelo: NPC. Verde claro: zona protegida. Tracejado dourado: onde caçar o alvo da missão; ponto dourado: monstro do alvo.";
 /** versão dos .tmj na URL: subir junto com o CACHE de client/public/sw.js quando um mapa mudar (2: NPCs no soul.tmj, M1-03) */
-const MAP_VERSION = 4;
+const MAP_VERSION = 5;
 
 export class GameScene extends Phaser.Scene {
   /** quadros de andar por direção (4 ou 8), pela largura da folha carregada: nunca diverge da imagem */
@@ -203,7 +208,7 @@ export class GameScene extends Phaser.Scene {
     const k = on ? HD_K : 1;
     // a tela renderiza k vezes maior com zoom k: o mapa fica igual e os sprites HD aparecem com o detalhe original
     this.scale.setGameSize(VIEW_W * TILE * k, VIEW_H * TILE * k);
-    this.cameras.main.setZoom(k);
+    this.cameras.main.setZoom(k * this.userZoom);
     // a câmera pula direto para o personagem em vez de deslizar até ele
     const me = this.views.get(this.myId);
     if (me) this.cameras.main.centerOn(me.c.x, me.c.y);
@@ -250,6 +255,18 @@ export class GameScene extends Phaser.Scene {
   private mapObjects: Phaser.GameObjects.GameObject[] = [];
   /** NPCs do mapa atual: a folha (para trocar no modo HD) e o sprite desenhado */
   private npcSprites: { spr: Phaser.GameObjects.Sprite; sprite: string }[] = [];
+  /** Zoom dinâmico da câmera (ajustável de MIN_ZOOM a MAX_ZOOM) */
+  private userZoom: number = DEFAULT_ZOOM;
+  /** Emissores de partículas de água viva no Rio Onagawa */
+  private riverEmitters: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
+  /** Rastreador de descobertas de setor (Location Banner HUD) */
+  private locationTracker = new LocationTracker();
+  private locationBannerContainer?: Phaser.GameObjects.Container;
+  private locationBannerBg?: Phaser.GameObjects.Graphics;
+  private locationBannerTitle?: Phaser.GameObjects.Text;
+  private locationBannerSubtitle?: Phaser.GameObjects.Text;
+  private locationBannerTween?: Phaser.Tweens.Tween;
+  private currentSectorInfo: SectorZone | null = null;
 
   constructor() {
     super("game");
@@ -286,6 +303,7 @@ export class GameScene extends Phaser.Scene {
     }
     for (const id of MAP_IDS) this.maps[id] = parseMap(id, this.cache.tilemap.get(`map_${id}`).data);
     this.cameras.main.setRoundPixels(true);
+    this.cameras.main.setZoom((this.hd ? HD_K : 1) * this.userZoom);
     this.showMap(this.room.state.players.get(this.myId)?.map ?? HOME_MAP);
 
     for (const [name, f] of Object.entries(FX)) {
@@ -321,6 +339,11 @@ export class GameScene extends Phaser.Scene {
     this.room.onMessage("quests", (q: QuestState) => (this.quests = q));
     this.room.send("quests");
     this.input.on("pointerdown", (ptr: Phaser.Input.Pointer) => this.onClick(ptr));
+    this.input.on("wheel", (_ptr: Phaser.Input.Pointer, _over: unknown[], _dx: number, deltaY: number) => {
+      const step = deltaY > 0 ? -0.1 : 0.1;
+      this.setCameraZoom(this.userZoom + step, 150);
+    });
+    this.buildLocationBannerHud();
     this.bindKeys();
     this.scale.refresh();
     const loader = document.getElementById("game-loading");
@@ -838,6 +861,196 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setFollowOffset(open ? -110 : 0, 0);
   }
 
+  /** Retorna o fator de zoom atual da câmera */
+  getZoom(): number {
+    return this.userZoom;
+  }
+
+  /** Ajusta o zoom da câmera com limitação dinâmica (MIN_ZOOM a MAX_ZOOM) */
+  setCameraZoom(factor: number, durationMs = 0): number {
+    this.userZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.round(factor * 100) / 100));
+    const targetZoom = Math.round((this.hd ? HD_K : 1) * this.userZoom * 100) / 100;
+    if (this.cameras?.main) {
+      if (durationMs > 0 && this.tweens) {
+        this.tweens.add({
+          targets: this.cameras.main,
+          zoom: targetZoom,
+          duration: durationMs,
+          ease: "Cubic.easeOut",
+        });
+      } else {
+        this.cameras.main.setZoom(targetZoom);
+      }
+    }
+    return this.userZoom;
+  }
+
+  /** Amplia a aproximação da câmera */
+  zoomIn(step = 0.1): number {
+    return this.setCameraZoom(this.userZoom + step, 200);
+  }
+
+  /** Reduz o zoom para enxergar mais do cenário */
+  zoomOut(step = 0.1): number {
+    return this.setCameraZoom(this.userZoom - step, 200);
+  }
+
+  /** Restaura o zoom padrão (1.0x) */
+  resetZoom(): number {
+    return this.setCameraZoom(DEFAULT_ZOOM, 250);
+  }
+
+  /** Efeito de água viva no Rio Onagawa: fluxo suave e brilhos de superfície cristalina */
+  private startRiverWaterFx() {
+    this.stopRiverWaterFx();
+    if (this.mapId !== "karakura") return;
+
+    // Leito do Rio Onagawa: faixa y de 31 a 37 tiles (~1024 a 1184 px), cruzando toda a extensão (0 a 2048 px)
+    // 1. Partículas fluindo suavemente ao longo do leito do rio (correnteza oeste -> leste)
+    const flow = this.add.particles(0, 0, "water_flow", {
+      x: { min: 0, max: 2048 },
+      y: { min: 1060, max: 1175 },
+      lifespan: { min: 2800, max: 4500 },
+      frequency: 180,
+      quantity: 2,
+      speedX: { min: 22, max: 48 },
+      speedY: { min: -2, max: 2 },
+      scale: { start: 0.7, end: 1.1 },
+      alpha: { start: 0, end: 0.65, ease: "Sine.easeInOut" },
+      tint: [0x80d8ff, 0xa0e8ff, 0xffffff, 0x50c0f0],
+      blendMode: Phaser.BlendModes.ADD,
+    }).setDepth(-5);
+
+    // 2. Brilhos de superfície (reishi / sunlight shimmers) cintilando sobre as águas cristalinas
+    const shimmer = this.add.particles(0, 0, "water_sparkle", {
+      x: { min: 0, max: 2048 },
+      y: { min: 1056, max: 1180 },
+      lifespan: { min: 1200, max: 2200 },
+      frequency: 120,
+      quantity: 1,
+      speedX: { min: 5, max: 15 },
+      speedY: { min: -1, max: 1 },
+      scale: { start: 0.4, end: 1.0 },
+      alpha: { start: 0, end: 0.85, ease: "Sine.easeInOut" },
+      tint: [0xffffff, 0xe0f7ff, 0xfff3a0, 0x8fe3ff],
+      blendMode: Phaser.BlendModes.ADD,
+    }).setDepth(-4);
+
+    flow.fastForward(3000);
+    shimmer.fastForward(1500);
+
+    this.riverEmitters.push(flow, shimmer);
+  }
+
+  private stopRiverWaterFx() {
+    for (const em of this.riverEmitters) em.destroy();
+    this.riverEmitters = [];
+  }
+
+  isRiverFxActive(): boolean {
+    return this.riverEmitters.length > 0;
+  }
+
+  getRiverEmitters(): Phaser.GameObjects.Particles.ParticleEmitter[] {
+    return [...this.riverEmitters];
+  }
+
+  private buildLocationBannerHud() {
+    this.locationBannerContainer = this.add.container(0, -80).setScrollFactor(0).setDepth(3e5).setAlpha(0);
+    this.locationBannerBg = this.add.graphics();
+    this.locationBannerTitle = this.add.text(0, -9, "", {
+      fontFamily: PIXEL_FONT,
+      fontSize: "13px",
+      color: "#ffe08a",
+      stroke: "#000000",
+      strokeThickness: 3,
+      align: "center",
+      resolution: 2,
+    }).setOrigin(0.5, 0.5);
+
+    this.locationBannerSubtitle = this.add.text(0, 9, "", {
+      fontFamily: PIXEL_FONT,
+      fontSize: "10px",
+      color: "#a0e8ff",
+      stroke: "#000000",
+      strokeThickness: 2,
+      align: "center",
+      resolution: 2,
+    }).setOrigin(0.5, 0.5);
+
+    this.locationBannerContainer.add([this.locationBannerBg, this.locationBannerTitle, this.locationBannerSubtitle]);
+  }
+
+  showLocationBanner(title: string, subtitle?: string) {
+    if (!this.locationBannerContainer || !this.locationBannerBg || !this.locationBannerTitle || !this.locationBannerSubtitle) return;
+
+    this.locationBannerTitle.setText(title);
+    this.locationBannerSubtitle.setText(subtitle ?? "");
+    this.locationBannerSubtitle.setVisible(!!subtitle);
+
+    const titleW = this.locationBannerTitle.width;
+    const subW = subtitle ? this.locationBannerSubtitle.width : 0;
+    const contentW = Math.max(titleW, subW);
+    const boxW = Math.max(260, contentW + 48);
+    const boxH = subtitle ? 44 : 32;
+
+    const bg = this.locationBannerBg;
+    bg.clear();
+    bg.fillStyle(0x0a0c16, 0.82);
+    bg.fillRoundedRect(-boxW / 2, -boxH / 2, boxW, boxH, 6);
+    bg.lineStyle(1.5, 0x5ce1e6, 0.85);
+    bg.strokeRoundedRect(-boxW / 2, -boxH / 2, boxW, boxH, 6);
+    bg.lineStyle(1, 0xffd34a, 0.6);
+    bg.beginPath();
+    bg.moveTo(-boxW / 2 + 16, boxH / 2 - 2);
+    bg.lineTo(boxW / 2 - 16, boxH / 2 - 2);
+    bg.strokePath();
+
+    const cam = this.cameras.main;
+    const centerX = cam ? cam.width / 2 : (VIEW_W * TILE * (this.hd ? HD_K : 1)) / 2;
+    this.locationBannerContainer.setPosition(centerX, -80);
+    this.locationBannerContainer.setAlpha(0);
+
+    if (this.locationBannerTween) this.locationBannerTween.stop();
+
+    const targetY = 32;
+    this.locationBannerTween = this.tweens.add({
+      targets: this.locationBannerContainer,
+      y: targetY,
+      alpha: 1,
+      duration: 380,
+      ease: "Cubic.easeOut",
+      onComplete: () => {
+        this.time.delayedCall(3200, () => {
+          if (!this.locationBannerContainer) return;
+          this.locationBannerTween = this.tweens.add({
+            targets: this.locationBannerContainer,
+            y: -80,
+            alpha: 0,
+            duration: 450,
+            ease: "Cubic.easeIn",
+          });
+        });
+      },
+    });
+  }
+
+  getCurrentSector(): SectorZone | null {
+    return this.currentSectorInfo;
+  }
+
+  getLocationBannerText(): { title: string; subtitle: string } | null {
+    if (!this.locationBannerTitle) return null;
+    return {
+      title: this.locationBannerTitle.text,
+      subtitle: this.locationBannerSubtitle?.text ?? "",
+    };
+  }
+
+  isLocationBannerVisible(): boolean {
+    return !!this.locationBannerContainer && this.locationBannerContainer.alpha > 0.05 && this.locationBannerContainer.y > 0;
+  }
+
   /** Desenha o mapa do Tiled (troca ao viajar entre mapas). */
   /** Texturas pequenas das partículas (um ponto de luz e uma pétala), desenhadas uma vez. */
   private makeParticleTextures() {
@@ -852,6 +1065,17 @@ export class GameScene extends Phaser.Scene {
       g.clear();
       g.fillStyle(0xd8cfc0, 0.9).fillCircle(3, 3, 3);
       g.generateTexture("amb_dust", 6, 6);
+      g.destroy();
+    }
+    if (!this.textures.exists("water_sparkle")) {
+      const g = this.make.graphics({}, false);
+      g.fillStyle(0xffffff, 0.95).fillCircle(3, 3, 2);
+      g.fillStyle(0x70d6ff, 0.6).fillCircle(3, 3, 3.5);
+      g.generateTexture("water_sparkle", 7, 7);
+      g.clear();
+      g.fillStyle(0xffffff, 0.8).fillRect(0, 1, 8, 2);
+      g.fillStyle(0x90e0ef, 0.45).fillRect(0, 0, 8, 4);
+      g.generateTexture("water_flow", 8, 4);
       g.destroy();
     }
   }
@@ -938,6 +1162,8 @@ export class GameScene extends Phaser.Scene {
     this.buildMinimap(id);
     this.makeParticleTextures();
     this.startAmbient(id);
+    this.stopRiverWaterFx();
+    if (id === "karakura") this.startRiverWaterFx();
     const shop = this.maps[id].shop;
     if (shop) {
       const x = px(shop.x), y = py(shop.y);
@@ -994,7 +1220,16 @@ export class GameScene extends Phaser.Scene {
       const ev = ptr.event as MouseEvent;
       return this.onPlayerClick(pick.player, ev.clientX, ev.clientY);
     }
-    if (pick) return this.room.send("interact", { kind: pick.interact });
+    if (pick && "interact" in pick) {
+      if (pick.interact === "signpost" && pick.sign) {
+        return interactWithSignpost(pick.sign);
+      }
+      if (pick.interact === "chest" && pick.chest) {
+        const me = this.room.state.players.get(this.myId);
+        if (me) return interactWithChest(pick.chest, me);
+      }
+      return this.room.send("interact", { kind: pick.interact });
+    }
     // monstro clicado (o sprite é maior que o tile, então testa os limites do desenho)
     for (const v of this.views.values()) {
       if (v.isMonster && v.c.visible && v.spr.getBounds().contains(ptr.worldX, ptr.worldY)) {
@@ -1036,12 +1271,33 @@ export class GameScene extends Phaser.Scene {
         document.querySelector<HTMLButtonElement>("#book-btn")?.click();
       }
       else if (e.code === "KeyE" || e.code === "Space") {
-        // interage com o que estiver ao alcance (loja antes do depot); o servidor confere a distância
+        // interage com o que estiver ao alcance (loja, depot, portal, placa ou baú)
         const me = this.room.state.players.get(this.myId);
-        const kind = me && this.maps[this.mapId] ? interactNear(this.maps[this.mapId], me.x, me.y) : null;
+        const map = this.maps[this.mapId];
+        const kind = me && map ? interactNear(map, me.x, me.y) : null;
+        if (kind === "signpost" && map) {
+          const s = signpostNearPlayer(map, me.x, me.y);
+          if (s) { e.preventDefault(); interactWithSignpost(s); return; }
+        }
+        if (kind === "chest" && map) {
+          const c = chestNearPlayer(map, me.x, me.y);
+          if (c && me) { e.preventDefault(); interactWithChest(c, me); return; }
+        }
         if (kind) { e.preventDefault(); this.room.send("interact", { kind }); }
       }
       else if (/^Digit[1-9]$/.test(e.code)) this.room.send("skill", { slot: Number(e.code.slice(5)) });
+      else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.code === "Equal" || e.code === "NumpadAdd")) {
+        e.preventDefault();
+        this.zoomIn();
+      }
+      else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.code === "Minus" || e.code === "NumpadSubtract")) {
+        e.preventDefault();
+        this.zoomOut();
+      }
+      else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.code === "Digit0" || e.code === "Numpad0")) {
+        e.preventDefault();
+        this.resetZoom();
+      }
     };
     const up = (e: KeyboardEvent) => {
       if (!pressed.delete(e.code)) return;
@@ -1229,6 +1485,16 @@ export class GameScene extends Phaser.Scene {
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(x - 1, y - r, 2, r * 2);
       ctx.fillRect(x - r, y - 1, r * 2, 2);
+    } else if (kind === "signpost") {
+      // placa de sinalização (losango ciano claro)
+      ctx.moveTo(x, y - r * 0.7); ctx.lineTo(x + r * 0.7, y); ctx.lineTo(x, y + r * 0.7); ctx.lineTo(x - r * 0.7, y); ctx.closePath();
+      ctx.fillStyle = "#5ce1e6";
+      ctx.fill(); ctx.stroke();
+    } else if (kind === "chest") {
+      // baú de tesouro (pequeno baú dourado)
+      ctx.rect(x - r * 0.75, y - r * 0.75, r * 1.5, r * 1.5);
+      ctx.fillStyle = "#ffd84a";
+      ctx.fill(); ctx.stroke();
     } else {
       // quadrado: loja dourada, depot laranja
       ctx.rect(x - r, y - r, r * 2, r * 2);
@@ -1297,6 +1563,14 @@ export class GameScene extends Phaser.Scene {
       if (v.label.style.color !== color) v.label.setColor(color);
     }
     this.updateInteractLabel(me);
+    // Descoberta de setor (Location Banner HUD)
+    if (me) {
+      const loc = this.locationTracker.update(me.map, me.x, me.y, time);
+      if (loc?.changed) {
+        this.currentSectorInfo = loc.sector;
+        this.showLocationBanner(loc.sector.name, loc.sector.subtitle);
+      }
+    }
     this.targetBox.clear();
     const t = me?.targetId ? this.views.get(me.targetId) : undefined;
     if (t) this.targetBox.lineStyle(2, 0xff3030, 1).strokeRect(t.c.x - TILE / 2, t.c.y - TILE, TILE, TILE);

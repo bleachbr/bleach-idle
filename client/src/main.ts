@@ -228,7 +228,7 @@ function start(room: Room<any>, myId: string) {
   // Arena 1v1 e patrulhas ainda não têm painel: o servidor já narra fila, pareamento, resultado e
   // patrulha no chat (log/sys). Os dados estruturados ficam para a interface futura, mas precisam
   // de handler: sem ele o colyseus.js avisa no console a cada mensagem (issue #22)
-  for (const type of ["arenaData", "arenaMatchFound", "arenaResult", "patrolData"]) room.onMessage(type, () => {});
+  for (const type of ["arenaData", "arenaMatchFound", "arenaResult", "patrolData", "chestOpened"]) room.onMessage(type, () => {});
   bindMail(room);
   $("#exit-btn").onclick = async () => {
     if (!confirm("Trocar de personagem? Com Auto Hunt ligado, ele segue caçando offline.")) return;
@@ -263,13 +263,22 @@ function start(room: Room<any>, myId: string) {
   // girar o celular, abrir o teclado ou o menu muda o tamanho: reajusta o canvas na hora
   new ResizeObserver(() => game.scale.refresh()).observe($("#game"));
   requestAnimationFrame(() => game.scale.refresh());
-  // depuração no navegador (só em dev): window.__bi.room.state, window.__bi.sent
-  if (import.meta.env.DEV) {
-    const sent: unknown[] = [];
-    const send = room.send.bind(room);
-    room.send = ((type: any, msg?: any) => { sent.push([type, msg]); if (sent.length > 50) sent.shift(); send(type, msg); }) as typeof room.send;
-    Object.assign(window, { __bi: { room, game, sent, getMailInbox, getUnreadMailCount } });
-  }
+  // depuração no navegador e testes: window.__bi.room.state, window.__bi.sent
+  const sent: unknown[] = [];
+  const send = room.send.bind(room);
+  room.send = ((type: any, msg?: any) => { sent.push([type, msg]); if (sent.length > 50) sent.shift(); send(type, msg); }) as typeof room.send;
+  Object.assign(window, { __bi: { room, game, sent, getMailInbox, getUnreadMailCount } });
+
+  room.onMessage("inv", (m: any) => {
+    if (m?.prog) {
+      const me = room.state.players.get(myId);
+      if (me) {
+        (me as any).prog = m.prog;
+        renderStats(me);
+        sheet?.update();
+      }
+    }
+  });
 
   // canais: local (sem ch), pm, party, guild, sys (avisos do servidor) e lore (narração dos eventos)
   room.onMessage("chat", (m: { from: string; text: string; ch?: string }) => {
@@ -810,7 +819,7 @@ function renderStats(p: any) {
   setBar(".bar.hp", p.hp, p.maxHp, `HP ${p.hp}/${p.maxHp}`);
   setBar(".bar.rei", p.rei, p.maxRei, `Reiatsu ${Math.floor(p.rei)}/${p.maxRei}`);
   const a = expForLevel(p.level), b = expForLevel(p.level + 1);
-  const locked = isRecruit(p.charId) && p.level >= 30 && p.exp <= expForLevel(30);
+  const locked = isRecruit(p.charId) && !p.prog?.promotedRank && p.level >= 30 && p.exp <= expForLevel(30);
   setBar(".bar.exp", locked ? 1 : p.exp - a, locked ? 1 : b - a, locked ? "[BLOQUEADO: CONVOCAÇÃO DO SEIREITEI]" : `XP ${Math.round(((p.exp - a) / (b - a)) * 100)}%`);
   // estágio atual e a linha da evolução inteira no balão (nível de cada estágio, liberado ou não)
   const pf = $("#pform");

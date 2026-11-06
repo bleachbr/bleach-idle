@@ -4,7 +4,7 @@ import { MONSTERS, huntKinds, npcById, own, type GameMap, type QuestState, type 
 
 export type FixedMark =
   | { kind: "pz"; rect: Rect }
-  | { kind: "gate" | "shop" | "depot" | "temple" | "npc"; x: number; y: number; label: string };
+  | { kind: "gate" | "shop" | "depot" | "temple" | "npc" | "signpost" | "chest"; x: number; y: number; label: string };
 
 /** Área de spawn de um monstro que alguma missão ativa pede (x, y e raio em tiles). */
 export interface TargetArea { x: number; y: number; radius: number; kind: string }
@@ -17,6 +17,8 @@ export function fixedMarks(m: GameMap): FixedMark[] {
   if (m.shop) out.push({ kind: "shop", x: m.shop.x, y: m.shop.y, label: m.shop.name });
   if (m.gate) out.push({ kind: "gate", x: m.gate.x, y: m.gate.y, label: m.gate.name });
   for (const n of m.npcs) out.push({ kind: "npc", x: n.x, y: n.y, label: npcById(n.id)?.name ?? n.id });
+  for (const s of m.signposts ?? []) out.push({ kind: "signpost", x: s.x, y: s.y, label: s.title });
+  for (const c of m.chests ?? []) out.push({ kind: "chest", x: c.x, y: c.y, label: c.name });
   return out;
 }
 
