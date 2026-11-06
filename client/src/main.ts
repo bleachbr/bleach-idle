@@ -66,9 +66,10 @@ const show = (id: "login" | "lobby" | "app") => {
   }
 };
 
-let charId = "ichigo";
+let charId = "recruta_m";
 const chars = $("#chars");
-for (const ch of Object.values(CHARS)) {
+const recruitChars = [CHARS.recruta_m, CHARS.recruta_f].filter(Boolean);
+for (const ch of recruitChars) {
   const b = document.createElement("button");
   b.type = "button";
   b.className = "char";
