@@ -48,7 +48,8 @@ def main():
     for y in range(h):
         for x in range(w):
             r, g, b = ground.getpixel((x*T+16, y*T+16))
-            water = .63*h < y < .83*h and g > r+22 and b > r+20
+            is_bridge = (14 <= x <= 17) or (36 <= x <= 40)
+            water = (32 <= y <= 38) and (not is_bridge) and (g > r+22 or b > r+20)
             material = "agua" if water else "calcada" if x < 32 and y < 30 else "grama"
             chao[y*w+x] = keys[f"{material}{x%4}{y%4}"]+1
             if water:
@@ -73,6 +74,11 @@ def main():
         "streetlight": HERE / "karakura-streetlight.png",
         "apartment": HERE.parent / "renewal/city-apartment.png",
         "senkaimon": HERE / "senkaimon.png",
+        "house-suburban": HERE / "house-suburban.png",
+        "denchu": HERE / "denchu.png",
+        "vending-machines": HERE / "vending-machines.png",
+        "warehouse": HERE / "warehouse.png",
+        "fence-gate": HERE / "fence-gate.png",
     }
     images = {}
     asset_dims = {}
@@ -100,7 +106,7 @@ def main():
         if block:
             if kind == "tree":
                 cells = [(int(tx), int(ty)-1)]
-            elif kind in ("streetlight", "bench", "detail"):
+            elif kind in ("streetlight", "bench", "detail", "denchu", "vending", "fence"):
                 cells = [(int(tx), int(ty)-1)]
             else:
                 alpha = image.getchannel("A").resize((max(1, round(width)), max(1, round(height))))
@@ -124,14 +130,15 @@ def main():
             colisao[cell[1]*w+cell[0]] = keys["arvore0"]+1
         return True
 
-    # Fachadas delimitam o espaço, não formam um tabuleiro de peças isoladas.
+    # Fachadas autênticas e sem clonagem indevida de edifícios únicos
     for name, x, y, width in [
         ("urahara-shop", 18, 10, 256),
         ("kurosaki-clinic", 24, 19, 224),
         ("apartment", 8, 19, 224),
         ("apartment", 9, 7, 176),
-        ("kurosaki-clinic", 7, 28, 176),
-        ("kurosaki-clinic", 25, 8, 176),
+        ("house-suburban", 7, 28, 176),
+        ("house-suburban", 25, 8, 176),
+        ("warehouse", 48, 23, 200),
     ]:
         if not place(name, x, y, width, "building"):
             raise RuntimeError(f"Construção conflita: {name} ({x},{y})")
@@ -142,7 +149,11 @@ def main():
             if not place(name, obj["x"]/T, math.floor(obj["y"]/T)+1, 64 if name == "senkaimon" else 32, "interactive", block=False):
                 raise RuntimeError(f"Objeto interativo não posicionado: {name}")
     for x, y in [(12, 12), (21, 12), (12, 18), (21, 18), (15, 24), (28, 23)]:
-        place("streetlight", x, y, 28, "streetlight")
+        place("denchu", x, y, 32, "denchu")
+    for x, y in [(14, 20), (22, 20)]:
+        place("vending-machines", x, y, 48, "vending")
+    for x, y in [(10, 28)]:
+        place("fence-gate", x, y, 72, "fence")
     for x, y in [(12, 19), (21, 19), (19, 23)]:
         place("banco", x, y, 46, "bench")
     for x, y in [(12, 16), (21, 16), (11, 22), (28, 21)]:

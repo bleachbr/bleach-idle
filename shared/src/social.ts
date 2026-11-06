@@ -45,7 +45,7 @@ export const RECALL_COOLDOWN_MS = 60_000;
 
 /** Destinos dos portais (Senkaimon em Karakura, Garganta em Hueco Mundo). O ponto de
  * chegada é o objeto "chegada" com o mesmo nome (id) no mapa indicado. */
-export interface TravelDest { id: string; name: string; map: string; minLevel: number; cost: number }
+export interface TravelDest { id: string; name: string; map: string; minLevel: number; cost: number; requiresCaptain?: boolean }
 export const TRAVEL: TravelDest[] = [
   { id: "karakura", name: "Karakura (praça)", map: "karakura", minLevel: 1, cost: 0 },
   { id: "leste", name: "Floresta Leste", map: "karakura", minLevel: 8, cost: 30 },
@@ -57,4 +57,5 @@ export const TRAVEL: TravelDest[] = [
   { id: "dangai", name: "Dangai (desafio sem fim)", map: "dangai", minLevel: 20, cost: 0 },
   { id: "falsa", name: "Karakura Falsa (exército de Aizen)", map: "falsa", minLevel: 60, cost: 600 },
   { id: "wandenreich", name: "Wandenreich (Seireitei tomada)", map: "wandenreich", minLevel: 95, cost: 1000 },
+  { id: "reiokyu", name: "Palácio Real (Reiōkyū)", map: "soul", minLevel: 100, cost: 1500, requiresCaptain: true },
 ];

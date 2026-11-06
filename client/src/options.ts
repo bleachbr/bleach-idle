@@ -9,11 +9,17 @@ import { DEFAULT_PREFS, loadPrefs, savePrefs, type Prefs } from "./prefs";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 
-type Flag = "hd" | "mute";
+type Flag = "hd" | "mute" | "threeLobby";
 /** `invert`: a caixa marcada quer dizer o contrário do campo (som ligado = mute falso). */
 type Toggle = { key: Flag; label: string; hint: string; invert?: boolean };
 const SECTIONS: { title: string; toggles: Toggle[] }[] = [
-  { title: "Visual", toggles: [{ key: "hd", label: "Visual HD (desenho original)", hint: "Desligado, o jogo usa pixel art. Na primeira vez que liga, o jogo baixa os desenhos em HD." }] },
+  {
+    title: "Visual",
+    toggles: [
+      { key: "hd", label: "Visual HD (desenho original)", hint: "Desligado, o jogo usa pixel art. Na primeira vez que liga, o jogo baixa os desenhos em HD." },
+      { key: "threeLobby", label: "Lobby 3D (Portal Senkaimon)", hint: "Cenário 3D interativo com Three.js na tela de seleção de personagem." },
+    ],
+  },
   { title: "Som", toggles: [{ key: "mute", label: "Efeitos sonoros", hint: "O navegador só toca som depois do primeiro clique ou tecla.", invert: true }] },
 ];
 
@@ -51,6 +57,7 @@ export function initOptions(game: Phaser.Game, closeWindows: (keep?: string) => 
     savePrefs(store, prefs);
     if (prefs.mute !== before.mute) sfx.setMuted(prefs.mute);
     if (prefs.hd !== before.hd) applyHd();
+    window.dispatchEvent(new CustomEvent("bi:prefChange", { detail: prefs }));
     sync();
   };
   const setFlag = (key: Flag, value: boolean) => {

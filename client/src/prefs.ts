@@ -13,12 +13,14 @@ export type Prefs = {
   /** visual HD (desenho original) em vez de pixel art */
   hd: boolean;
   mute: boolean;
+  /** cenário 3D interativo com Three.js no lobby/seleção de personagem */
+  threeLobby: boolean;
 };
 
-export const DEFAULT_PREFS: Readonly<Prefs> = Object.freeze({ hd: false, mute: false });
+export const DEFAULT_PREFS: Readonly<Prefs> = Object.freeze({ hd: false, mute: false, threeLobby: true });
 
 const isBool = (v: unknown): v is boolean => typeof v === "boolean";
-const FIELDS: { readonly [K in keyof Prefs]: (v: unknown) => v is Prefs[K] } = { hd: isBool, mute: isBool };
+const FIELDS: { readonly [K in keyof Prefs]: (v: unknown) => v is Prefs[K] } = { hd: isBool, mute: isBool, threeLobby: isBool };
 
 /** Objeto novo com cada campo válido de `raw`; campo inválido ou ausente volta ao padrão. */
 export function parsePrefs(raw: unknown): Prefs {

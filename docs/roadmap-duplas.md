@@ -61,6 +61,18 @@ Itens herdados do roadmap (IDs originais, status lá). Coluna "Spec" = exige PRD
 | 21 | M4-* | Dungeons: salas instanciadas (M4-01), puzzles/ondas/chefes com fases (M4-02), defesa do Senkaimon (M4-03) | G | F-12 | **sim** | M4-02 reutiliza W-04 se já existir |
 | 22 | M5-04 | Partição do mundo por mapa | G | F-08, F-09 | **sim** | Só quando `baseline.md` mostrar necessidade |
 
+Backlog Épico: Jornada do Herói & Mundo Expandido 2.5D (Waldir, 05/11/2026):
+
+| Ordem | ID | Entrega | Tam. | Depende de | Spec | Obs. |
+| :-- | :-- | :--- | :-- | :--- | :-- | :--- |
+| 22.1 | ~~JH-01~~ | ~~**Criação de Recruta Shinigami (M/F)**: seleção de sexo, sprite Shihakusho inicial e Asauchi~~ | M | — | aceita | **Feito** (`shared/src/data.ts`, `items.ts`) |
+| 22.2 | ~~JH-02~~ | ~~**Trava Canônica de XP no Nível 30**: cap rígido em Karakura até exame militar no Seireitei~~ | P | JH-01 | aceita | **Feito** (`server/src/WorldRoom.ts`, chat e HUD) |
+| 22.3 | ~~JH-03~~ | ~~**Gerador Procedural de Zanpakutō/Shikai**: nomes canônicos, frases de liberação e afinidade~~ | M | JH-02 | aceita | **Feito** (`shared/src/zanpakuto.ts`, `WorldRoom.ts`) |
+| 22.4 | ~~JH-04~~ | ~~**Esteira IA de Mapas 2.5D (Pokémon ORAS)**: blueprint via LLM + autotiler de rios + baús e Y-sorting~~ | G | — | aceita | **Feito** (`art/maps/generators/`) |
+| 22.5 | ~~JH-05~~ | ~~**Validador de Mapas Jogador-IA**: homologação autônoma de rotas e baús via Gemini Vision~~ | M | JH-04 | aceita | **Feito** (`art/maps/generators/validator.py`) |
+| 22.6 | ~~JH-06~~ | ~~**Tenshintai, Bankai e Teste de Capitão (Lv 100)**: exame perante os Capitães e acesso ao Palácio Real~~ | G | JH-03 | aceita | **Feito** (`shared/src/zanpakuto.ts`, `WorldRoom.ts`) |
+| 22.7 | ~~JH-07~~ | ~~**Integração Three.js (Lobby 3D & Cinemática de Bankai)**: overlay 3D imersivo para seleção e Bankai~~ | M | — | aceita | **Feito** (`client/src/threeLobby.ts`) |
+
 Backlog novo (IDs W-##) — motor, operação e conteúdo de mundo misturados:
 
 | Ordem | ID | Entrega | Tam. | Depende de | Spec |

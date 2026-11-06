@@ -50,7 +50,12 @@ export function initCharacterSheet(
     shown = "";
     render();
   };
-  room.onMessage("inv", (m: SheetGear) => { gear = m; render(); });
+  room.onMessage("inv", (m: SheetGear & { prog?: any }) => {
+    gear = m;
+    const p = me();
+    if (m?.prog && p) (p as any).prog = m.prog;
+    render();
+  });
   room.onMessage("sheet", open);
   document.querySelector<HTMLButtonElement>("#sheet-btn")!.onclick = open;
   document.querySelector<HTMLButtonElement>("#sheet-close")!.onclick = () => dialog.close();

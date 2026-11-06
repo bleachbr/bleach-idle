@@ -13,7 +13,8 @@ describe("trajes da Loja de Cristais", () => {
   });
 
   it("vale para a forma base de todos os personagens", () => {
-    expect([...COS_LOOK_BASES].sort()).toEqual(Object.values(CHARS).map((c) => c.forms[0].sprite).sort());
+    const heroes = Object.values(CHARS).filter((c) => !c.id.startsWith("recruta_"));
+    expect([...COS_LOOK_BASES].sort()).toEqual(heroes.map((c) => c.forms[0].sprite).sort());
   });
 
   it("uniforme e máscara em todos; haori de capitão só em quem ainda não é capitão", () => {

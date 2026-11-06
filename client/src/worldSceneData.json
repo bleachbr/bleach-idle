@@ -47,25 +47,35 @@
       {
         "id": "building-4",
         "kind": "building",
-        "image": "/maps/scenes/kurosaki-clinic.webp",
+        "image": "/maps/scenes/house-suburban.webp",
         "x": 224,
         "y": 896,
         "width": 176,
-        "height": 150.792,
+        "height": 171.417,
         "sortY": 896
       },
       {
         "id": "building-5",
         "kind": "building",
-        "image": "/maps/scenes/kurosaki-clinic.webp",
+        "image": "/maps/scenes/house-suburban.webp",
         "x": 800,
         "y": 256,
         "width": 176,
-        "height": 150.792,
+        "height": 171.417,
         "sortY": 256
       },
       {
-        "id": "interactive-6",
+        "id": "building-6",
+        "kind": "building",
+        "image": "/maps/scenes/warehouse.webp",
+        "x": 1536,
+        "y": 736,
+        "width": 200,
+        "height": 154.948,
+        "sortY": 736
+      },
+      {
+        "id": "interactive-7",
         "kind": "interactive",
         "image": "/maps/scenes/depot.webp",
         "x": 464.0,
@@ -75,7 +85,7 @@
         "sortY": 416
       },
       {
-        "id": "interactive-7",
+        "id": "interactive-8",
         "kind": "interactive",
         "image": "/maps/scenes/senkaimon.webp",
         "x": 528.0,
@@ -85,57 +95,87 @@
         "sortY": 384
       },
       {
-        "id": "streetlight-8",
-        "kind": "streetlight",
-        "image": "/maps/scenes/streetlight.webp",
+        "id": "denchu-9",
+        "kind": "denchu",
+        "image": "/maps/scenes/denchu.webp",
         "x": 384,
         "y": 384,
-        "width": 28,
-        "height": 137.846,
+        "width": 32,
+        "height": 67.89,
         "sortY": 384
       },
       {
-        "id": "streetlight-9",
-        "kind": "streetlight",
-        "image": "/maps/scenes/streetlight.webp",
+        "id": "denchu-10",
+        "kind": "denchu",
+        "image": "/maps/scenes/denchu.webp",
         "x": 672,
         "y": 384,
-        "width": 28,
-        "height": 137.846,
+        "width": 32,
+        "height": 67.89,
         "sortY": 384
       },
       {
-        "id": "streetlight-10",
-        "kind": "streetlight",
-        "image": "/maps/scenes/streetlight.webp",
+        "id": "denchu-11",
+        "kind": "denchu",
+        "image": "/maps/scenes/denchu.webp",
         "x": 384,
         "y": 576,
-        "width": 28,
-        "height": 137.846,
+        "width": 32,
+        "height": 67.89,
         "sortY": 576
       },
       {
-        "id": "streetlight-11",
-        "kind": "streetlight",
-        "image": "/maps/scenes/streetlight.webp",
+        "id": "denchu-12",
+        "kind": "denchu",
+        "image": "/maps/scenes/denchu.webp",
         "x": 480,
         "y": 768,
-        "width": 28,
-        "height": 137.846,
+        "width": 32,
+        "height": 67.89,
         "sortY": 768
       },
       {
-        "id": "streetlight-12",
-        "kind": "streetlight",
-        "image": "/maps/scenes/streetlight.webp",
+        "id": "denchu-13",
+        "kind": "denchu",
+        "image": "/maps/scenes/denchu.webp",
         "x": 896,
         "y": 736,
-        "width": 28,
-        "height": 137.846,
+        "width": 32,
+        "height": 67.89,
         "sortY": 736
       },
       {
-        "id": "bench-13",
+        "id": "vending-14",
+        "kind": "vending",
+        "image": "/maps/scenes/vending-machines.webp",
+        "x": 448,
+        "y": 640,
+        "width": 48,
+        "height": 48.188,
+        "sortY": 640
+      },
+      {
+        "id": "vending-15",
+        "kind": "vending",
+        "image": "/maps/scenes/vending-machines.webp",
+        "x": 704,
+        "y": 640,
+        "width": 48,
+        "height": 48.188,
+        "sortY": 640
+      },
+      {
+        "id": "fence-16",
+        "kind": "fence",
+        "image": "/maps/scenes/fence-gate.webp",
+        "x": 320,
+        "y": 896,
+        "width": 72,
+        "height": 61.5,
+        "sortY": 896
+      },
+      {
+        "id": "bench-17",
         "kind": "bench",
         "image": "/maps/scenes/banco.webp",
         "x": 384,
@@ -145,7 +185,7 @@
         "sortY": 608
       },
       {
-        "id": "bench-14",
+        "id": "bench-18",
         "kind": "bench",
         "image": "/maps/scenes/banco.webp",
         "x": 608,
@@ -155,7 +195,7 @@
         "sortY": 736
       },
       {
-        "id": "detail-15",
+        "id": "detail-19",
         "kind": "detail",
         "image": "/maps/scenes/arbusto.webp",
         "x": 384,
@@ -165,7 +205,7 @@
         "sortY": 512
       },
       {
-        "id": "detail-16",
+        "id": "detail-20",
         "kind": "detail",
         "image": "/maps/scenes/arbusto.webp",
         "x": 352,
@@ -175,7 +215,7 @@
         "sortY": 704
       },
       {
-        "id": "detail-17",
+        "id": "detail-21",
         "kind": "detail",
         "image": "/maps/scenes/arbusto.webp",
         "x": 896,
@@ -185,7 +225,7 @@
         "sortY": 672
       },
       {
-        "id": "tree-18",
+        "id": "tree-22",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
         "x": 105.28,
@@ -195,47 +235,87 @@
         "sortY": 757.12
       },
       {
-        "id": "tree-19",
+        "id": "tree-23",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 994.24,
-        "y": 254.4,
-        "width": 96,
-        "height": 98.699,
-        "sortY": 254.4
+        "x": 1013.12,
+        "y": 231.04,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 231.04
       },
       {
-        "id": "tree-20",
+        "id": "tree-24",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 899.84,
+        "x": 981.76,
+        "y": 784.32,
+        "width": 80,
+        "height": 82.249,
+        "sortY": 784.32
+      },
+      {
+        "id": "tree-25",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 888.32,
+        "y": 872.0,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 872.0
+      },
+      {
+        "id": "tree-26",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1031.04,
         "y": 776.96,
         "width": 72,
         "height": 74.024,
         "sortY": 776.96
       },
       {
-        "id": "tree-21",
+        "id": "tree-27",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 1261.76,
-        "y": 188.48,
-        "width": 72,
-        "height": 74.024,
-        "sortY": 188.48
+        "x": 940.16,
+        "y": 823.68,
+        "width": 88,
+        "height": 90.474,
+        "sortY": 823.68
       },
       {
-        "id": "tree-22",
+        "id": "tree-28",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 1175.04,
-        "y": 132.48,
+        "x": 986.24,
+        "y": 862.08,
         "width": 96,
         "height": 98.699,
-        "sortY": 132.48
+        "sortY": 862.08
       },
       {
-        "id": "tree-23",
+        "id": "tree-29",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 919.04,
+        "y": 783.68,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 783.68
+      },
+      {
+        "id": "tree-30",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 887.04,
+        "y": 836.48,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 836.48
+      },
+      {
+        "id": "tree-31",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
         "x": 1340.8,
@@ -245,47 +325,27 @@
         "sortY": 122.56
       },
       {
-        "id": "tree-24",
+        "id": "tree-32",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 1750.4,
-        "y": 344.64,
-        "width": 96,
-        "height": 98.699,
-        "sortY": 344.64
+        "x": 1746.24,
+        "y": 392.64,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 392.64
       },
       {
-        "id": "tree-25",
+        "id": "tree-33",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 1588.8,
-        "y": 370.24,
-        "width": 96,
-        "height": 98.699,
-        "sortY": 370.24
-      },
-      {
-        "id": "tree-26",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1677.76,
-        "y": 443.52,
-        "width": 88,
-        "height": 90.474,
-        "sortY": 443.52
-      },
-      {
-        "id": "tree-27",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1649.28,
-        "y": 385.6,
+        "x": 1736.0,
+        "y": 374.08,
         "width": 80,
         "height": 82.249,
-        "sortY": 385.6
+        "sortY": 374.08
       },
       {
-        "id": "tree-28",
+        "id": "tree-34",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
         "x": 1688.32,
@@ -295,7 +355,7 @@
         "sortY": 368.32
       },
       {
-        "id": "tree-29",
+        "id": "tree-35",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
         "x": 1711.04,
@@ -305,17 +365,37 @@
         "sortY": 366.72
       },
       {
-        "id": "tree-30",
+        "id": "tree-36",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 1902.08,
-        "y": 948.48,
-        "width": 96,
-        "height": 98.699,
-        "sortY": 948.48
+        "x": 1726.4,
+        "y": 398.08,
+        "width": 72,
+        "height": 74.024,
+        "sortY": 398.08
       },
       {
-        "id": "tree-31",
+        "id": "tree-37",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1304.64,
+        "y": 831.04,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 831.04
+      },
+      {
+        "id": "tree-38",
+        "kind": "tree",
+        "image": "/maps/scenes/zelkova.webp",
+        "x": 1326.08,
+        "y": 852.48,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 852.48
+      },
+      {
+        "id": "tree-39",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
         "x": 1925.44,
@@ -325,54 +405,34 @@
         "sortY": 869.12
       },
       {
-        "id": "tree-32",
+        "id": "tree-40",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 1935.04,
-        "y": 915.84,
+        "x": 1912.0,
+        "y": 931.2,
         "width": 80,
         "height": 82.249,
-        "sortY": 915.84
+        "sortY": 931.2
       },
       {
-        "id": "tree-33",
+        "id": "tree-41",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 187.2,
-        "y": 1384.64,
-        "width": 80,
-        "height": 82.249,
-        "sortY": 1384.64
+        "x": 1850.56,
+        "y": 975.68,
+        "width": 96,
+        "height": 98.699,
+        "sortY": 975.68
       },
       {
-        "id": "tree-34",
+        "id": "tree-42",
         "kind": "tree",
         "image": "/maps/scenes/zelkova.webp",
-        "x": 1108.48,
-        "y": 1434.24,
-        "width": 80,
-        "height": 82.249,
-        "sortY": 1434.24
-      },
-      {
-        "id": "tree-35",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1934.72,
-        "y": 1419.52,
-        "width": 88,
-        "height": 90.474,
-        "sortY": 1419.52
-      },
-      {
-        "id": "tree-36",
-        "kind": "tree",
-        "image": "/maps/scenes/zelkova.webp",
-        "x": 1955.52,
-        "y": 1410.88,
+        "x": 1895.36,
+        "y": 895.04,
         "width": 72,
         "height": 74.024,
-        "sortY": 1410.88
+        "sortY": 895.04
       }
     ]
   },

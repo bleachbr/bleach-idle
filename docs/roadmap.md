@@ -160,6 +160,18 @@ Descrição, ordem e dependências em [`roadmap-duplas.md`](roadmap-duplas.md). 
 
 ## Sem marco
 
+- **Jornada do Herói: Da Academia ao Capitão & O Mundo Expandido 2.5D (Waldir, 05/11/2026):** Transformação do loop do jogador em uma jornada canônica personalizada. Recruta (M/F) -> Patrulha em Karakura -> Trava de XP no Lv 30 -> Convocação ao Seireitei -> Despertar da Shikai e Patentes -> Hueco Mundo (Lv 31-100) -> Teste de Bankai procedural perante os Capitães -> Palácio Real (Reiōkyū). Paralelamente, esteira de IA de geração de mapas contínuos 2.5D (estilo Pokémon ORAS) com autotiling, baús e validação autônoma pelo Jogador-IA (`test/`). [PRD](features/jornada-do-heroi/PRD-jornada-do-heroi.md) e [ADR](features/jornada-do-heroi/ADR-ia-gerador-mapas.md).
+
+| ID | Entrega | Tam. | Depende de | Status |
+| :-- | :--- | :-- | :--- | :--- |
+| JH-01 | **Criação de Personagem Recruta & Seleção de Sexo:** Criação com recruta Shinigami M/F, Shihakusho básico e Asauchi inicial | M | | **Feito** (`feat/jh-01-recruta-m-f`) |
+| JH-02 | **Trava Canônica de XP no Nível 30 & Convocação do Senkaimon:** Limite rígido de ganho de XP em Karakura no Lv 30 até viajar ao Seireitei para graduação militar | P | JH-01 | **Feito** (`feat/jh-02-trava-xp-lv30`) |
+| JH-03 | **Gerador Procedural de Zanpakutō & Shikai (Lv 30):** Algoritmo de nomes místico-canônicos, frases de liberação (*Kaishi*), afinidade elemental e técnica temática | M | JH-02 | **Feito** (`feat/jh-03-zanpakuto-procedural`) |
+| JH-04 | **Esteira IA de Mapas 2.5D (Pokémon ORAS Style):** Gerador híbrido (LLM Blueprint + Bitmask Autotiler + Y-sorted props + Baús de tesouro) para expandir Karakura e Rukongai | G | | **Feito** (`feat/jh-04-esteira-mapas-25d`) |
+| JH-05 | **Validador Jogador-IA para Mapas Gerados:** Integração do agente explorador com Gemini Vision para homologar rotas, baús e spawns | M | JH-04 | **Feito** (`art/maps/generators/validator.py`) |
+| JH-06 | **Desafio do Tenshintai, Despertar da Bankai e Teste de Capitão (Lv 100):** Subjugar o espírito da espada, forma Bankai procedural, exame de Capitão e acesso ao Palácio Real | G | JH-03 | **Feito** (`shared/src/zanpakuto.ts`, `WorldRoom.ts`) |
+| JH-07 | **Integração Three.js (Lobby 3D & Cinemática de Bankai):** Renderizador Three.js com avatar 3D orbital 360°, partículas de Reiatsu, borboletas Jigokuchō e transição pelo Senkaimon | M | | **Feito** (`feat/jh-07-threejs-lobby`) |
+
 - **Renovação visual dos sete mapas (Rafael, 04/11/2026):** composição e caminhos redesenhados por autorização posterior à primeira versão. [Spec](features/renovacao-mapas/PRD-renovacao-mapas.md). Chão contínuo, props completos separados e escala de 32 px/célula; recortes coerentes com o lore, preservando pontos lógicos e validando navegação/capacidade dos spawns. Fontes e montagem atual em `art/maps/scenes/`; `renewal/` conserva fontes e atlases de suporte. Revisão independente sem bloqueios; resultados e limites das verificações em [baseline](baseline.md). Entrega em duas etapas revisáveis: [#339 — fontes/ferramentas](https://github.com/bleachbr/bleach-idle/pull/339) e [#351 — integração jogável na main](https://github.com/bleachbr/bleach-idle/pull/351), continuação do #338 mesclado na branch de preparação. Push, merge e produção autorizados por Rafael; cada merge mantém os gates de revisão e CI do projeto.
 
 Visual de equipamentos além do haori e da máscara, e interiores de edifícios ([`pendencias.md`](pendencias.md) §2 e §5). Entram num marco quando alguém propuser a spec.

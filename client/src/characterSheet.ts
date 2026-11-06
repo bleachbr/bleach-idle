@@ -3,9 +3,9 @@
 // servidor usa (recompute, hit, monsterExp e giveLoot no WorldRoom.ts). O total de ataque e defesa
 // é o que o servidor mandou; a ficha só explica de onde ele vem.
 import {
-  CHARS, BESTIARY_DMG, BESTIARY_LOOT, BOOST_EXP, BOOST_LOOT, POWER_TIERS, WEEKEND_EXP, attackDmgMult, expForLevel,
+  CHARS, isRecruit, BESTIARY_DMG, BESTIARY_LOOT, BOOST_EXP, BOOST_LOOT, POWER_TIERS, WEEKEND_EXP, attackDmgMult, expForLevel,
   fmtPower, gearBonus, maxHp, maxRei, playerAtk, playerDef, powerTier, rebirthBonus, rebirthLevel, reiMult, setBonuses,
-  xpWeekend, zanMult, type EquipSlot,
+  xpWeekend, zanMult, getMilitaryRank, type EquipSlot, type ZanpakutoSpirit,
 } from "../../shared/src";
 
 /** Campos do Player sincronizado que a ficha lê. */
@@ -13,6 +13,18 @@ export interface SheetPlayer {
   charId: string; level: number; exp: number; form: number; rebirths: number; power: number; stepMs: number;
   hp: number; maxHp: number; rei: number; maxRei: number;
   zanjutsu: number; zanPct: number; reiryoku: number; reiPct: number;
+  prog?: {
+    promotedRank?: boolean;
+    captainRank?: boolean;
+    bankaiAwakened?: boolean;
+    zanpakuto?: ZanpakutoSpirit;
+  };
+  captainRank?: boolean;
+  promotedRank?: boolean;
+  bankaiAwakened?: boolean;
+  bankaiName?: string;
+  militaryRank?: string;
+  zanpakuto?: ZanpakutoSpirit;
 }
 
 /** Parte da mensagem "inv" (WorldRoom.sendInv) que a ficha lê. */
@@ -35,13 +47,26 @@ export function characterSheet(p: SheetPlayer, gear: SheetGear | null, now: numb
   const form = ch.forms[p.form] ?? ch.forms[0];
   const rb = rebirthBonus(p.rebirths);
   const a = expForLevel(p.level), b = expForLevel(p.level + 1);
+  const prog = p.prog ?? (gear as any)?.prog;
+  const locked = isRecruit(p.charId) && !prog?.promotedRank && p.level >= 30 && p.exp <= expForLevel(30);
+  const rank = getMilitaryRank({ ...p, prog });
+  const z = prog?.zanpakuto ?? p.zanpakuto;
+  const bankaiAwakened = Boolean(p.prog?.bankaiAwakened ?? p.bankaiAwakened);
+  const bankaiName = p.bankaiName ?? z?.bankaiName ?? "—";
+  const bankaiStatus = bankaiAwakened ? "Despertada" : "Adormecida";
+
   const sections: SheetSection[] = [{
     title: "Personagem",
     rows: [
       { label: "Personagem", value: ch.name },
-      { label: "Nível", value: String(p.level), hint: `XP ${Math.max(0, Math.round(((p.exp - a) / (b - a)) * 100))}% para o ${p.level + 1}` },
+      { label: "Título Militar", value: rank },
+      { label: "Nível", value: String(p.level), hint: locked ? "[BLOQUEADO: CONVOCAÇÃO DO SEIREITEI]" : `XP ${Math.max(0, Math.round(((p.exp - a) / (b - a)) * 100))}% para o ${p.level + 1}` },
       { label: "Estágio", value: `${form.label} (${p.form + 1}/${ch.forms.length})` },
       { label: "Poder", value: `${fmtPower(p.power)} · ${POWER_TIERS[powerTier(p.power)].title}` },
+      { label: "Nome da Bankai", value: bankaiName },
+      { label: "Bankai", value: bankaiName },
+      { label: "Status de Despertar", value: bankaiStatus },
+      { label: "Status da Bankai", value: bankaiStatus },
     ],
   }];
 
