@@ -10,6 +10,7 @@ import { serverNow } from "./clock";
 import { fixedMarks, questTargetKinds, targetAreas, type FixedMark } from "./minimapMarks";
 import { createMinimapPing, isPingActive, pingPulseRadius, type MinimapPing } from "./minimapPing";
 import { parseStatusFlags, desiredTint, dotHitStyle, STATUS_LOOK } from "./statusFx";
+import { FrameGate, fxSound } from "./fxBackground";
 import { keyBelongsToField } from "./keyFocus";
 import type { StatusKind } from "../../shared/src/combatStatus";
 
@@ -250,6 +251,8 @@ export class GameScene extends Phaser.Scene {
   private mapObjects: Phaser.GameObjects.GameObject[] = [];
   /** NPCs do mapa atual: a folha (para trocar no modo HD) e o sprite desenhado */
   private npcSprites: { spr: Phaser.GameObjects.Sprite; sprite: string }[] = [];
+  /** aba oculta ou sem quadros: efeito visual novo não teria como animar e sumir */
+  private frames = new FrameGate(() => performance.now(), () => document.hidden);
 
   constructor() {
     super("game");
@@ -373,7 +376,7 @@ export class GameScene extends Phaser.Scene {
     c.setDepth(c.y);
     this.setIdle(v, true);
     // quem surge com o jogo já rodando (renascer, entrar no mundo) aparece com fumaça e esmaecer
-    if (this.time.now > 2500 && e.map === this.mapId) {
+    if (this.time.now > 2500 && e.map === this.mapId && !this.frames.stalled()) {
       c.setAlpha(0);
       this.tweens.add({ targets: c, alpha: 1, duration: 450, ease: "Quad.easeOut" });
       this.playFx("death", c.x, c.y - spr.displayHeight / 3, { scale: 0.6 })?.setAlpha(0.6);
@@ -591,7 +594,11 @@ export class GameScene extends Phaser.Scene {
     const v = this.views.get(id);
     if (!v) return;
     this.views.delete(id);
-    if (!fade) return v.c.destroy();
+    // sem quadros o esmaecer não andaria: o monstro ficaria na tela como um clone até a aba voltar
+    if (!fade || this.frames.stalled()) {
+      v.idle?.remove(); // sem quadros, o gerenciador de tweens não limparia a respiração de quem já saiu
+      return v.c.destroy();
+    }
     this.tweens.add({ targets: v.c, alpha: 0, duration: 400, onComplete: () => v.c.destroy() });
   }
 
@@ -623,13 +630,15 @@ export class GameScene extends Phaser.Scene {
 
   private onFx(fx: { t: string; id?: string; v?: number; from?: string; to?: string; color?: number; color2?: number; skin?: boolean; name?: string; text?: string; skill?: boolean; i?: number; cd?: number; area?: number;
     dot?: boolean; kind?: string; ms?: number }) {
+    const sound = fxSound(fx, this.myId, this.room.state.players.get(this.myId)?.targetId);
+    if (sound) sfx[sound]();
+    if (fx.t === "skill" && fx.from === this.myId) window.dispatchEvent(new CustomEvent("tech-used", { detail: { i: fx.i ?? 0, cd: fx.cd ?? 0 } }));
+    // som e recarga seguem com a aba oculta; o visual só acumularia até a volta
+    if (this.frames.stalled()) return;
     const v = fx.id ? this.views.get(fx.id) : undefined;
-    // som só do que envolve você: o próprio personagem ou o seu alvo
     const mine = fx.id === this.myId;
-    const myTarget = fx.id !== undefined && fx.id === this.room.state.players.get(this.myId)?.targetId;
     switch (fx.t) {
       case "die":
-        if (myTarget) sfx.die();
         if (v?.isMonster) {
           // fumaça do tamanho do monstro, mas contida (vários morrendo juntos cobriam a tela)
           const puff = this.playFx("death", v.c.x, v.c.y - v.spr.displayHeight / 3, { scale: Math.min(1.1, 0.5 + v.spr.displayHeight / 120) });
@@ -637,7 +646,6 @@ export class GameScene extends Phaser.Scene {
         }
         break;
       case "book":
-        sfx.chime();
         this.float(this.views.get(this.myId), fx.text!, "#ffcf5a", 12);
         break;
       case "status":
@@ -652,7 +660,6 @@ export class GameScene extends Phaser.Scene {
       case "event":
         this.float(this.views.get(this.myId), fx.text!, "#ff6a4a", 16);
         this.cameras.main.shake(300, 0.003);
-        sfx.event();
         break;
       case "dmg":
         {
@@ -689,8 +696,6 @@ export class GameScene extends Phaser.Scene {
           }
           if (v && fx.v) this.playFx("hit", v.c.x + Phaser.Math.Between(-6, 6), v.c.y - v.spr.displayHeight / 2 + Phaser.Math.Between(-6, 6), { scale: 0.6 });
         }
-        if (mine && fx.v) sfx.hurt();
-        else if (myTarget && fx.v) sfx.hit();
         break;
       case "tp":
         // no sprite, e não no container: o moveView do teleporte mata os tweens do container
@@ -698,22 +703,18 @@ export class GameScene extends Phaser.Scene {
         break;
       case "loot":
         this.float(v, "loot!", "#ffd84a", 10);
-        if (mine) sfx.loot();
         break;
       case "heal":
         this.float(v, `+${fx.v}`, "#6dff7a");
         if (v) this.playFx("heal", v.c.x, v.c.y - 20, { scale: 0.8 });
-        if (mine) sfx.heal();
         break;
       case "deny":
         // poção recusada (#41): o motivo sobe do personagem; o servidor só manda para quem tentou
         this.float(v, fx.text ?? "", "#ffb04a", 11);
-        if (mine) sfx.deny();
         break;
       case "level":
         this.float(v, `NÍVEL ${fx.v}!`, "#ffd84a", 14);
         if (v) this.playFx("level", v.c.x, v.c.y - 28, { scale: 1.3 });
-        if (mine) sfx.level();
         break;
       case "form":
         {
@@ -727,7 +728,6 @@ export class GameScene extends Phaser.Scene {
           if (v && big) this.cameras.main.flash(250, 255, 255, 255);
         }
         if (v && fx.v) this.cameras.main.shake(150 + (fx.v ?? 0) * 70, 0.003 + (fx.v ?? 0) * 0.0015);
-        if (mine && fx.v) sfx.bankai();
         break;
       case "skill": {
         const a = this.views.get(fx.from!);
@@ -735,7 +735,6 @@ export class GameScene extends Phaser.Scene {
         if (!a || !b) break;
         const tier = fx.i ?? 0;
         this.float(a, fx.name!, tier >= 3 ? "#ffd34a" : "#bfe9ff", 11 + tier * 2);
-        if (fx.from === this.myId) { sfx.skill(); window.dispatchEvent(new CustomEvent("tech-used", { detail: { i: tier, cd: fx.cd ?? 0 } })); }
         if (fx.area) {
           // anel de choque do tamanho da área, na cor da técnica
           const r = (fx.area * 2 + 1) * TILE;
@@ -908,7 +907,7 @@ export class GameScene extends Phaser.Scene {
 
   /** Poeira nos pés a cada passo (só quem está na tela). */
   private dust(v: View) {
-    if (!this.cameras.main.worldView.contains(v.c.x, v.c.y)) return;
+    if (this.frames.stalled() || !this.cameras.main.worldView.contains(v.c.x, v.c.y)) return;
     const d = this.add.image(v.c.x + Phaser.Math.Between(-4, 4), v.c.y - 2, "amb_dust").setDepth(v.c.y - 1).setAlpha(0.55);
     this.tweens.add({ targets: d, alpha: 0, scale: 2.2, y: d.y - 4, duration: 380, onComplete: () => d.destroy() });
   }
@@ -1252,6 +1251,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number) {
+    this.frames.frame();
     this.glide(delta);
     this.flyPets(time);
     this.updateTarget();

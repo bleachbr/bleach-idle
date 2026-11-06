@@ -1,5 +1,12 @@
 # Aprendizados Técnicos do Projeto (Bleach Idle)
 
+## Aba oculta: rede sem quadros acumula efeitos (05/11/2026)
+
+- **Sintoma:** ao voltar para uma aba deixada aberta em produção, a tela vinha coberta de números de dano, cortes e monstros repetidos.
+- **Causa:** com a aba oculta o `requestAnimationFrame` para, mas o WebSocket segue entregando `fx` e mudanças de estado. Tudo que só some em `onComplete` de tween (texto flutuante, efeitos, poeira, monstro esmaecendo em `removeView`) ficava vivo. Medido com caçada automática e `document.hidden` simulado: de 232 para 1.083 objetos na cena em 60 s, com 33 monstros fantasma.
+- **Solução:** `FrameGate` (`client/src/fxBackground.ts`) diz quando não há quadros (aba oculta ou mais de 250 ms sem `update`). Nesse estado `onFx` só toca o som e avisa a recarga, a poeira e a entrada animada não nascem, e `removeView` destrói na hora. Depois da mudança, a mesma medição ficou estável em cerca de 220 objetos e sem fantasmas.
+- **Lição:** estado que depende de quadro para ser limpo não pode nascer de um evento de rede sem conferir se há quadros. A limpeza por tween pressupõe um laço que o navegador pode parar por horas.
+
 ## Composição contínua e escala jogável (04/11/2026)
 
 - Minimap e hitboxes precisam acompanhar a apresentação: o minimapa agora reduz chão/props novos, sem interpretar a camada oculta de colisão como arte, e os portais usam os limites do sprite para o clique. Teleporte atualiza profundidade junto da posição. Se qualquer textura de cenário falha, a entrada fica pausada com nova tentativa explícita; não se oferece o atlas antigo com colisões do layout novo. No E2E de falha, o service worker é bloqueado somente nesse caso, pois respostas do worker contornavam a interceptação `page.route` e ocultavam a falha simulada.
