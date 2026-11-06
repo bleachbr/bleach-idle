@@ -46,6 +46,7 @@ const items: ItemDef[] = [
   { id: "haori", name: "Haori de Capitão", icon: 8, sell: 1500, stack: false, slot: "armor", def: 10, hp: 60, minLevel: 15 },
   { id: "hakama", name: "Hakama Reforçado", icon: 9, buy: 200, sell: 50, stack: false, slot: "legs", def: 3 },
   { id: "waraji", name: "Waraji de Couro", icon: 10, buy: 80, sell: 20, stack: false, slot: "boots", def: 1 },
+  { id: "asauchi", name: "Asauchi", icon: 11, buy: 100, sell: 25, stack: false, slot: "weapon", atk: 2, desc: "Espada básica sem nome entregue a todo recruta Shinigami." },
   { id: "zanpakuto", name: "Zanpakutō Afiada", icon: 11, buy: 400, sell: 100, stack: false, slot: "weapon", atk: 4 },
   { id: "lamina_garra", name: "Lâmina de Garra", icon: 12, sell: 900, stack: false, slot: "weapon", atk: 9, minLevel: 14 },
   { id: "anel_rei", name: "Anel de Reiatsu", icon: 13, buy: 500, sell: 125, stack: false, slot: "ring", rei: 30 },
@@ -82,6 +83,8 @@ const items: ItemDef[] = [
   { id: "anel_quincy", name: "Anel Quincy", icon: 45, sell: 6000, stack: false, slot: "ring", hp: 120, rei: 60, minLevel: 100 },
   { id: "pocao_suprema", name: "Poção Suprema de Cura", icon: 46, buy: 400, sell: 70, stack: true, heal: 1, desc: "Recupera todo o HP." },
   { id: "pocao_rei_suprema", name: "Poção Suprema de Reiatsu", icon: 47, buy: 450, sell: 80, stack: true, restoreRei: 1, desc: "Recupera todo o reiatsu." },
+  // JH-06: Artefato ancestral Tenshintai fornecido por Kisuke Urahara
+  { id: "tenshintai", name: "Tenshintai", icon: 14, buy: 2000, sell: 500, stack: false, desc: "Artefato ancestral fornecido por Urahara que materializa a projeção de combate do espírito da Zanpakutō." },
 ];
 export const ITEMS: Record<string, ItemDef> = Object.fromEntries(items.map((i) => [i.id, i]));
 export const GOLD_ICON = 15;
@@ -100,7 +103,7 @@ export const STACK_MAX = 100;
 export const INTERACT_RANGE = 2;
 
 export const SHOP: string[] = [
-  "onigiri", "pocao_vida", "pocao_grande", "pocao_suprema", "pocao_rei", "pocao_rei_grande", "pocao_rei_suprema", "pergaminho_xp", "incenso", "amuleto_alma", "zanpakuto", "anel_rei", "bandana", "shihakusho", "hakama", "waraji",
+  "onigiri", "pocao_vida", "pocao_grande", "pocao_suprema", "pocao_rei", "pocao_rei_grande", "pocao_rei_suprema", "pergaminho_xp", "incenso", "amuleto_alma", "zanpakuto", "tenshintai", "anel_rei", "bandana", "shihakusho", "hakama", "waraji",
 ];
 
 export interface Slot { id: string; qty: number }

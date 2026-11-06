@@ -1,0 +1,53 @@
+"""Pacote de Geradores de Mapas e Esteira 2.5D do Bleach Idle (Tarefa JH-04)."""
+
+from ai_blueprint import (
+    Bridge,
+    Chest,
+    ElevationCliff,
+    Landmark,
+    MapBlueprint,
+    PropDef,
+    RiverPath,
+    SpawnPoint,
+    build_gemini_prompt,
+    create_canonical_karakura_expanded,
+    create_canonical_rukongai_district_1,
+    generate_blueprint_from_gemini,
+    get_or_generate_blueprint,
+)
+from autotiler import (
+    CompiledMap,
+    MapAutotiler,
+    SceneProp,
+    TileType,
+    classify_water_tile,
+    compute_8bit_bitmask,
+    compute_cardinal_bitmask,
+    export_to_scene_data,
+    export_to_tiled_json,
+)
+
+__all__ = [
+    "Bridge",
+    "Chest",
+    "ElevationCliff",
+    "Landmark",
+    "MapBlueprint",
+    "PropDef",
+    "RiverPath",
+    "SpawnPoint",
+    "build_gemini_prompt",
+    "create_canonical_karakura_expanded",
+    "create_canonical_rukongai_district_1",
+    "generate_blueprint_from_gemini",
+    "get_or_generate_blueprint",
+    "CompiledMap",
+    "MapAutotiler",
+    "SceneProp",
+    "TileType",
+    "classify_water_tile",
+    "compute_8bit_bitmask",
+    "compute_cardinal_bitmask",
+    "export_to_scene_data",
+    "export_to_tiled_json",
+]

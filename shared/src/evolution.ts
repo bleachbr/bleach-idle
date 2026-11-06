@@ -1,31 +1,49 @@
 // Evolução do personagem: técnicas por nível, forma final, Poder e títulos.
-import { CHARS, type SkillDef } from "./data";
+import { CHARS, isRecruit, type SkillDef } from "./data";
 import { playerAtk, playerDef, maxHp, maxRei } from "./formulas";
 import { zanMult, reiMult } from "./training";
 import { rebirthBonus } from "./progress";
 import { gearBonus, setBonuses, type EquipSlot } from "./items";
+import { zanpakutoToSkillDef, zanpakutoToBankaiSkillDef, type ZanpakutoSpirit } from "./zanpakuto";
 
 /** Teclas das técnicas (1, 4, 5 e 6: 2 e 3 continuam sendo as poções). */
 export const TECH_SLOTS = [1, 4, 5, 6];
 
-/** Técnicas do personagem na ordem das teclas: a 1 vem do começo, as outras com o nível. */
-export function techniques(charId: string): SkillDef[] {
+/** Ténicas do personagem na ordem das teclas: a 1 vem do começo, as outras com o nível. */
+export function techniques(charId: string, zanpakuto?: ZanpakutoSpirit, bankaiAwakened?: boolean | { bankaiAwakened?: boolean }): SkillDef[] {
   const ch = CHARS[charId];
-  return [{ ...ch.skill, minLevel: 1 }, ...ch.techs];
+  if (!ch) return [];
+  const isAwakened = typeof bankaiAwakened === "object" && bankaiAwakened !== null ? !!bankaiAwakened.bankaiAwakened : !!bankaiAwakened;
+  const list = [{ ...ch.skill, minLevel: 1 }, ...ch.techs.map((t) => ({ ...t }))];
+  if (zanpakuto && (isRecruit(charId) || list.length > 1)) {
+    // Tecla 4 é o índice 1 de TECH_SLOTS ([1, 4, 5, 6])
+    list[1] = zanpakutoToSkillDef(zanpakuto);
+  }
+  if (zanpakuto && isAwakened && (isRecruit(charId) || list.length > 3)) {
+    // Tecla 6 é o índice 3 de TECH_SLOTS ([1, 4, 5, 6])
+    list[3] = zanpakutoToBankaiSkillDef(zanpakuto);
+  }
+  return list;
 }
 
 /** Técnica i como ela sai na forma atual (a técnica 1 evolui a cada forma). */
-export function techniqueFor(charId: string, i: number, form: number): SkillDef | undefined {
-  const t = techniques(charId)[i];
+export function techniqueFor(charId: string, i: number, form: number, zanpakuto?: ZanpakutoSpirit, bankaiAwakened?: boolean | { bankaiAwakened?: boolean }): SkillDef | undefined {
+  const t = techniques(charId, zanpakuto, bankaiAwakened)[i];
   if (!t) return undefined;
-  const evo = i === 0 ? CHARS[charId].forms[form]?.skill : undefined;
+  const evo = i === 0 ? CHARS[charId]?.forms[form]?.skill : undefined;
   return evo ? { ...t, ...evo } : t;
 }
 
 /** Forma mais alta que o nível permite (0, 1 ou 2). */
-export function maxForm(charId: string, level: number): number {
-  const f = CHARS[charId].forms;
-  for (let i = f.length - 1; i > 0; i--) if (level >= f[i].minLevel) return i;
+export function maxForm(charId: string, level: number, bankaiAwakened?: boolean | { bankaiAwakened?: boolean }): number {
+  const isAwakened = typeof bankaiAwakened === "object" && bankaiAwakened !== null ? !!bankaiAwakened.bankaiAwakened : !!bankaiAwakened;
+  const f = CHARS[charId]?.forms ?? [];
+  for (let i = f.length - 1; i > 0; i--) {
+    if (level >= f[i].minLevel) {
+      if (isRecruit(charId) && f[i].id === "bankai" && !isAwakened) continue;
+      return i;
+    }
+  }
   return 0;
 }
 

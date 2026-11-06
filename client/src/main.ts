@@ -3,7 +3,7 @@ import Phaser from "phaser";
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import { Client, type Room } from "colyseus.js";
-import { CHARS, ITEMS, isPureLoot, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
+import { CHARS, isRecruit, ITEMS, isPureLoot, TRAVEL, expForLevel, PVP_MIN_LEVEL, rebirthLevel, portraitCss, techniques, techniqueFor, TECH_SLOTS, POWER_TIERS, powerTier, fmtPower, COSMETICS, COSMETIC, COS_KINDS, titleText, type CosKind, spriteKey, outfitFits, seasonReward, SEASON_PTS, xpWeekend } from "../../shared/src";
 import { GameScene, gameConfig } from "./GameScene";
 import { initInventory, iconHtml } from "./inventory";
 import { passTierCards } from "./passTiers";
@@ -25,6 +25,7 @@ import { achievementsTabLabel, achievementsHeaderHtml, achievementsBodyHtml, upd
 import { renderTutorialStep, dispatchTutorialAction } from "./tutorialView";
 import { bindMail, getMailInbox, getUnreadMailCount, resetMailInbox } from "./mail";
 import { toggleSeasonPass } from "./seasonButton";
+import { initThreeLobby, type ThreeLobby } from "./threeLobby";
 
 initReleases();
 
@@ -42,8 +43,27 @@ const store = {
   get: () => { try { return localStorage.getItem("bi.token"); } catch { return null; } },
   set: (t: string | null) => { try { t ? localStorage.setItem("bi.token", t) : localStorage.removeItem("bi.token"); } catch {} },
 };
+
+const threeLobby: ThreeLobby = initThreeLobby({
+  container: $("#lobby"),
+  initialGender: "m",
+  store: browserStore(),
+});
+
+window.addEventListener("bi:prefChange", (e: any) => {
+  if (e.detail?.threeLobby !== undefined) {
+    threeLobby.setEnabled(e.detail.threeLobby);
+  }
+});
+
 const show = (id: "login" | "lobby" | "app") => {
   for (const s of ["login", "lobby", "app"]) $(`#${s}`).hidden = s !== id;
+  if (id === "lobby") {
+    threeLobby.resume();
+    document.querySelector(".three-lobby-flash")?.classList.remove("active");
+  } else {
+    threeLobby.pause();
+  }
 };
 
 let charId = "ichigo";
@@ -57,6 +77,8 @@ for (const ch of Object.values(CHARS)) {
   b.onclick = () => {
     charId = ch.id;
     chars.querySelectorAll(".char").forEach((el) => el.setAttribute("aria-pressed", String(el === b)));
+    if (ch.id === "recruta_f") threeLobby.setGender("f");
+    else if (ch.id === "recruta_m") threeLobby.setGender("m");
   };
   chars.append(b);
 }
@@ -98,6 +120,11 @@ function renderChars(list: { id: string; name: string; charId: string; level: nu
   box.replaceChildren(...list.map((c) => {
     const row = document.createElement("div");
     row.className = "char-row";
+    row.onclick = (e) => {
+      if ((e.target as HTMLElement).tagName === "BUTTON") return;
+      if (c.charId === "recruta_f") threeLobby.setGender("f");
+      else if (c.charId === "recruta_m") threeLobby.setGender("m");
+    };
     const sprite = CHARS[c.charId]?.forms[0].sprite ?? "ichigo_shikai";
     row.innerHTML = `<div class="portrait" style="background-image:url(/assets/sprites/${sprite}.png);${portraitCss(sprite)}"></div>
       <div class="info"><b></b><small>${CHARS[c.charId]?.name ?? c.charId} · nível ${c.level}</small>${c.hunting ? `<span class="badge">caçando offline</span>` : ""}</div>`;
@@ -106,7 +133,16 @@ function renderChars(list: { id: string; name: string; charId: string; level: nu
     play.type = "button";
     play.className = "primary";
     play.textContent = "Jogar";
-    play.onclick = () => { playing = c.id; play.disabled = true; lobby?.send("play", { id: c.id }); };
+    play.onclick = async () => {
+      playing = c.id;
+      play.disabled = true;
+      if (c.charId === "recruta_f") threeLobby.setGender("f");
+      else if (c.charId === "recruta_m") threeLobby.setGender("m");
+      if (threeLobby.isActive()) {
+        await threeLobby.triggerEntryTransition();
+      }
+      lobby?.send("play", { id: c.id });
+    };
     const del = document.createElement("button");
     del.type = "button";
     del.className = "link";
@@ -773,7 +809,8 @@ function renderStats(p: any) {
   setBar(".bar.hp", p.hp, p.maxHp, `HP ${p.hp}/${p.maxHp}`);
   setBar(".bar.rei", p.rei, p.maxRei, `Reiatsu ${Math.floor(p.rei)}/${p.maxRei}`);
   const a = expForLevel(p.level), b = expForLevel(p.level + 1);
-  setBar(".bar.exp", p.exp - a, b - a, `XP ${Math.round(((p.exp - a) / (b - a)) * 100)}%`);
+  const locked = isRecruit(p.charId) && p.level >= 30 && p.exp <= expForLevel(30);
+  setBar(".bar.exp", locked ? 1 : p.exp - a, locked ? 1 : b - a, locked ? "[BLOQUEADO: CONVOCAÇÃO DO SEIREITEI]" : `XP ${Math.round(((p.exp - a) / (b - a)) * 100)}%`);
   // estágio atual e a linha da evolução inteira no balão (nível de cada estágio, liberado ou não)
   const pf = $("#pform");
   pf.textContent = `${ch.forms[p.form].label} · ${p.form + 1}/${ch.forms.length}`;

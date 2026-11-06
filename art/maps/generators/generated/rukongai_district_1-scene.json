@@ -1,0 +1,365 @@
+{
+  "width": 2048,
+  "height": 1536,
+  "ground": "/maps/scenes/rukongai_district_1-ground.webp",
+  "props": [
+    {
+      "id": "chest-junrinan-bamboo-shrine",
+      "kind": "chest",
+      "image": "/maps/scenes/chest.webp",
+      "x": 1584.0,
+      "y": 160.0,
+      "width": 32.0,
+      "height": 32.0,
+      "sortY": 160.0,
+      "interactKind": "chest",
+      "metadata": {
+        "loot_tier": "spiritual",
+        "secret_level": 3,
+        "description": "Baú Espiritual antigo escondido atrás do Santuário de Junrinan",
+        "accessible_from": [
+          [
+            49,
+            3
+          ],
+          [
+            50,
+            4
+          ],
+          [
+            49,
+            5
+          ],
+          [
+            48,
+            4
+          ]
+        ]
+      }
+    },
+    {
+      "id": "sakura-8",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 1200.0,
+      "y": 176.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 176.0
+    },
+    {
+      "id": "sakura-9",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 1840.0,
+      "y": 176.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 176.0
+    },
+    {
+      "id": "sakura-0",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 176.0,
+      "y": 240.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 240.0
+    },
+    {
+      "id": "sakura-2",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 432.0,
+      "y": 240.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 240.0
+    },
+    {
+      "id": "chest-junrinan-sakura-clearing",
+      "kind": "chest",
+      "image": "/maps/scenes/chest.webp",
+      "x": 304.0,
+      "y": 256.0,
+      "width": 32.0,
+      "height": 32.0,
+      "sortY": 256.0,
+      "interactKind": "chest",
+      "metadata": {
+        "loot_tier": "bronze",
+        "secret_level": 1,
+        "description": "Pequeno baú de oferendas sob as pétalas da cerejeira centenária",
+        "accessible_from": [
+          [
+            9,
+            6
+          ],
+          [
+            10,
+            7
+          ],
+          [
+            9,
+            8
+          ],
+          [
+            8,
+            7
+          ]
+        ]
+      }
+    },
+    {
+      "id": "sakura-1",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 304.0,
+      "y": 304.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 304.0
+    },
+    {
+      "id": "junrinan-dojo-shrine",
+      "kind": "building",
+      "image": "/maps/scenes/soul/quartel.webp",
+      "x": 1424.0,
+      "y": 320.0,
+      "width": 288.0,
+      "height": 192.0,
+      "sortY": 320.0
+    },
+    {
+      "id": "rukongai-house-1",
+      "kind": "building",
+      "image": "/maps/scenes/soul/rukongai-house.webp",
+      "x": 1040.0,
+      "y": 432.0,
+      "width": 160.0,
+      "height": 144.0,
+      "sortY": 432.0
+    },
+    {
+      "id": "lantern-4",
+      "kind": "lantern",
+      "image": "/maps/scenes/soul/lanterna.webp",
+      "x": 1328.0,
+      "y": 448.0,
+      "width": 32.0,
+      "height": 64.0,
+      "sortY": 448.0
+    },
+    {
+      "id": "lantern-5",
+      "kind": "lantern",
+      "image": "/maps/scenes/soul/lanterna.webp",
+      "x": 1520.0,
+      "y": 448.0,
+      "width": 32.0,
+      "height": 64.0,
+      "sortY": 448.0
+    },
+    {
+      "id": "sakura-3",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 240.0,
+      "y": 496.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 496.0
+    },
+    {
+      "id": "sakura-10",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 1904.0,
+      "y": 496.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 496.0
+    },
+    {
+      "id": "sakura-4",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 368.0,
+      "y": 624.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 624.0
+    },
+    {
+      "id": "lantern-0",
+      "kind": "lantern",
+      "image": "/maps/scenes/soul/lanterna.webp",
+      "x": 560.0,
+      "y": 704.0,
+      "width": 32.0,
+      "height": 64.0,
+      "sortY": 704.0
+    },
+    {
+      "id": "lantern-2",
+      "kind": "lantern",
+      "image": "/maps/scenes/soul/lanterna.webp",
+      "x": 848.0,
+      "y": 704.0,
+      "width": 32.0,
+      "height": 64.0,
+      "sortY": 704.0
+    },
+    {
+      "id": "lantern-6",
+      "kind": "lantern",
+      "image": "/maps/scenes/soul/lanterna.webp",
+      "x": 1200.0,
+      "y": 736.0,
+      "width": 32.0,
+      "height": 64.0,
+      "sortY": 736.0
+    },
+    {
+      "id": "lantern-7",
+      "kind": "lantern",
+      "image": "/maps/scenes/soul/lanterna.webp",
+      "x": 1392.0,
+      "y": 736.0,
+      "width": 32.0,
+      "height": 64.0,
+      "sortY": 736.0
+    },
+    {
+      "id": "lantern-1",
+      "kind": "lantern",
+      "image": "/maps/scenes/soul/lanterna.webp",
+      "x": 560.0,
+      "y": 896.0,
+      "width": 32.0,
+      "height": 64.0,
+      "sortY": 896.0
+    },
+    {
+      "id": "lantern-3",
+      "kind": "lantern",
+      "image": "/maps/scenes/soul/lanterna.webp",
+      "x": 848.0,
+      "y": 896.0,
+      "width": 32.0,
+      "height": 64.0,
+      "sortY": 896.0
+    },
+    {
+      "id": "rukongai-house-2",
+      "kind": "building",
+      "image": "/maps/scenes/soul/rukongai-house.webp",
+      "x": 1040.0,
+      "y": 1040.0,
+      "width": 160.0,
+      "height": 144.0,
+      "sortY": 1040.0
+    },
+    {
+      "id": "rukongai-teahouse",
+      "kind": "building",
+      "image": "/maps/scenes/soul/rukongai-house.webp",
+      "x": 1520.0,
+      "y": 1040.0,
+      "width": 160.0,
+      "height": 144.0,
+      "sortY": 1040.0
+    },
+    {
+      "id": "sakura-5",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 176.0,
+      "y": 1072.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 1072.0
+    },
+    {
+      "id": "sakura-11",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 1648.0,
+      "y": 1136.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 1136.0
+    },
+    {
+      "id": "chest-junrinan-stream-bank",
+      "kind": "chest",
+      "image": "/maps/scenes/chest.webp",
+      "x": 560.0,
+      "y": 1184.0,
+      "width": 32.0,
+      "height": 32.0,
+      "sortY": 1184.0,
+      "interactKind": "chest",
+      "metadata": {
+        "loot_tier": "silver",
+        "secret_level": 2,
+        "description": "Baú de madeira submerso parcialmente entre as pedras do riacho",
+        "accessible_from": [
+          [
+            17,
+            35
+          ],
+          [
+            17,
+            37
+          ],
+          [
+            16,
+            36
+          ]
+        ]
+      }
+    },
+    {
+      "id": "sakura-6",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 304.0,
+      "y": 1264.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 1264.0
+    },
+    {
+      "id": "sakura-12",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 1904.0,
+      "y": 1264.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 1264.0
+    },
+    {
+      "id": "sakura-7",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 432.0,
+      "y": 1456.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 1456.0
+    },
+    {
+      "id": "sakura-13",
+      "kind": "tree",
+      "image": "/maps/scenes/soul/sakura.webp",
+      "x": 1712.0,
+      "y": 1456.0,
+      "width": 96.0,
+      "height": 112.0,
+      "sortY": 1456.0
+    }
+  ]
+}

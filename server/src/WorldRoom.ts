@@ -9,7 +9,7 @@ import {
   walkable, nearestWalkable, resumeAt, inPZ, type GameMap,
   PARTY_MAX, PARTY_SHARE_RANGE, PARTY_SHARE_BONUS, PARTY_LEVEL_RATIO, PARTY_INVITE_MS,
   INVASION, PVP_MIN_LEVEL, PVP_DAMAGE, PVP_LOCK_MS, SKULL_PER_KILL_MS, SKULL_MAX_MS, RECALL_COMBAT_MS, RECALL_COOLDOWN_MS, TRAVEL,
-  CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir,
+  CHARS, MONSTERS, TICK_MS, DIR_VEC, type Dir, isRecruit,
   expForLevel, maxHp, maxRei, rollDamage, playerAtk, playerDef, chebyshev,
   ITEMS, SHOP, START_KIT, INV_SIZE, DEPOT_SIZE, INTERACT_RANGE, EQUIP_SLOTS, type EquipSlot, type Slot,
   lookOf, outfitFits, QUEST_BY_ID, huntKinds, MAX_ACTIVE_QUESTS,
@@ -18,6 +18,7 @@ import {
   SEASON, SEASON_PTS, seasonId, seasonName, seasonEnds, seasonReward, seasonTier, newSeason, xpWeekend, WEEKEND_EXP, WORLD_BOSS, type SeasonReward,
   EVENT_BANNER, EVENT_END_MS, eventLore, type EventBanner, type EventKind, type EventPhase,
   own, isOwnKey, COSMETIC, titleText, FREE_CRYSTALS, type CosEquip, TECH_SLOTS, techniques, techniqueFor, maxForm, powerOf, powerTier, POWER_TIERS, fmtPower, ACHIEVEMENTS, DAILY, levelMilestone, DANGAI, dangaiFloor, dangaiReward, dangaiStart, REBIRTH, REBIRTH_MAX, rebirthLevel, rebirthBonus, START_LEVEL, TUTORIAL, TUTORIAL_MAX_LEVEL, type TutorialId, dailyMissions, dailyReward, dailyText, type DailyKind, rollBox, BOOST_MS, BOOST_MAX_MS, BOOST_EXP, BOOST_LOOT, FORGE_MAX, FORGE_CHANCE, FORGE_SAFE, forgeCost, SLOT_LABEL, dayKey, prevDay, stagesSum, LOOT, type Stats, removeItem, spaceFor, countItem, gearBonus,
+  generateZanpakuto, formatZanpakutoRelease, formatBankaiRelease, canAwakenBankai, canTakeCaptainExam, getMilitaryRank, type ZanpakutoSpirit,
   applyStatus, tickStatuses, canEntityMove, canEntityAct, effectiveStepMs, formatStatusFlags, clearStatuses, type SkillStatusDef,
   evaluateBossPhase,
   newArenaProgress, getArenaTier, validateStepInterval, ARENA_MIN_LEVEL, ARENA_COUNTDOWN_SEC, ARENA_MATCH_TIMEOUT_SEC, ARENA_WIN_GOLD, ARENA_WIN_SEASON_PTS, type ArenaProgress, type DuelOutcome,
@@ -214,7 +215,7 @@ export class WorldRoom extends GameRoom<WorldState> {
         for (let i = TECH_SLOTS.length - 1; i >= 0; i--) if ((why = this.trySkill(p, t, now, false, i)) === null) return;
         this.log(p, `Nenhuma técnica pronta. ${why}`);
       } else if (ti >= 0) {
-        const tech = techniqueFor(p.charId, ti, p.form);
+        const tech = techniqueFor(p.charId, ti, p.form, p.prog?.zanpakuto, p.prog?.bankaiAwakened);
         if (!tech) return;
         if (p.level < (tech.minLevel ?? 1)) return this.log(p, `${tech.name} se aprende no nível ${tech.minLevel}.`);
         const t = this.targetOf(p) ?? this.nearestMonster(p, tech.range);
@@ -240,16 +241,49 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.registerRebirthMessages();
     this.registerDangaiMessages();
     this.registerPatrolMessages();
+    this.handle("promoteToOfficer", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      this.promoteToOfficer(p);
+    });
+    this.handle("promote", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      this.promoteToOfficer(p);
+    });
+    this.handle("tenshintai", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      this.startTenshintai(p);
+    });
+    this.handle("awakenBankai", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      this.awakenBankai(p);
+    });
+    this.handle("captainExam", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      this.promoteToCaptain(p);
+    });
+    this.handle("promoteToCaptain", (c) => {
+      const p = this.me(c);
+      if (!p) return;
+      this.promoteToCaptain(p);
+    });
     // relógio: o cliente pergunta a hora do servidor para contar o bloqueio de PvP certo
     this.handle("time", (c) => c.send("time", { now: Date.now() }));
     this.handle("transform", (c) => {
       const p = this.me(c);
       if (!p) return;
       const forms = CHARS[p.charId].forms;
-      const top = maxForm(p.charId, p.level);
+      const top = maxForm(p.charId, p.level, p.prog?.bankaiAwakened);
       // T liberado vai direto ao estágio mais alto da evolução; T de novo volta ao normal
       if (p.form > 0) return this.setForm(p, 0);
-      if (top === 0) return this.log(p, `${forms[1].label} exige nível ${forms[1].minLevel}.`);
+      if (isRecruit(p.charId) && !p.prog?.bankaiAwakened) {
+        return this.log(p, "Você precisa despertar sua Bankai através do Desafio do Tenshintai.");
+      }
+      if (top === 0) return this.log(p, `${forms[1]?.label ?? "Bankai"} exige nível ${forms[1]?.minLevel ?? 100}.`);
       if (p.rei < p.maxRei * 0.3) return this.log(p, `Reiatsu insuficiente para ${forms[top].label}.`);
       this.setForm(p, top);
     });
@@ -798,7 +832,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   /** `null` quando a técnica saiu; senão, o motivo para o chat (#27, travas em shared/src/skillGate.ts).
    * No Auto Hunt (até 4 chamadas por tick por jogador) ninguém lê o motivo: devolve `SKILL_BLOCKED` sem montar texto. */
   private trySkill(p: Player, t: Player | Monster, now: number, auto: boolean, i = 0): string | null {
-    const sk = techniqueFor(p.charId, i, p.form);
+    const sk = techniqueFor(p.charId, i, p.form, p.prog?.zanpakuto, p.prog?.bankaiAwakened);
     if (!sk) return auto ? SKILL_BLOCKED : "Técnica indisponível.";
     // Auto Hunt guarda reiatsu para a liberação (AUTO_REI_RESERVE); PZ e distância só se calculam se as travas baratas passarem
     const block = skillBlock({
@@ -859,6 +893,8 @@ export class WorldRoom extends GameRoom<WorldState> {
       this.log(p, `Caixa do Kisuke: ${prize.qty}x ${ITEMS[prize.id].name}!`);
       this.sendInv(p);
       return true;
+    } else if (id === "tenshintai") {
+      return this.startTenshintai(p);
     } else return false;
     removeItem(p.inv, id, 1);
     this.sendInv(p);
@@ -913,6 +949,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.broadcast("fx", { t: "die", id: m.id });
     this.state.monsters.delete(m.id);
     this.monsterAt.delete(tileKey(m.map, m.x, m.y));
+    if ((m as any).tenshintai || m.kind === "espirito_zanpakuto") return this.tenshintaiKilled(m, killer);
     if (m.world) return this.worldBossKilled(m, killer);
     if (m.invader) return this.invaderKilled(m, killer);
     if (m.owner) return this.dangaiKilled(m, killer);
@@ -1009,6 +1046,18 @@ export class WorldRoom extends GameRoom<WorldState> {
   }
 
   private gainExp(p: Player, v: number, from: string) {
+    const isLockedRecruit = isRecruit(p.charId) && !p.prog?.promotedRank;
+    if (isLockedRecruit && p.level >= 30) {
+      p.level = 30;
+      p.exp = expForLevel(30);
+      if (!p.prog?.seireiteiSummoned) {
+        if (p.prog) p.prog.seireiteiSummoned = true;
+        this.log(p, "Convocação do Seireitei: Apresente-se no Senkaimon!");
+        this.sendTo(p, "fx", { t: "event", text: "Convocação do Seireitei: Apresente-se no Senkaimon!" });
+      }
+      return;
+    }
+
     p.exp += v;
     this.log(p, `${from} derrotado: +${v} XP.`);
     while (p.exp >= expForLevel(p.level + 1)) {
@@ -1018,7 +1067,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       p.rei = p.maxRei;
       this.broadcast("fx", { t: "level", id: p.id, v: p.level });
       this.log(p, `Você subiu para o nível ${p.level}!`);
-      techniques(p.charId).forEach((tech, i) => {
+      techniques(p.charId, p.prog?.zanpakuto, p.prog?.bankaiAwakened).forEach((tech, i) => {
         if (tech.minLevel !== p.level || i === 0) return;
         this.log(p, `Nova técnica: ${tech.name} (tecla ${TECH_SLOTS[i]})!`);
         this.sendTo(p, "fx", { t: "event", text: `Nova técnica: ${tech.name}` });
@@ -1034,6 +1083,19 @@ export class WorldRoom extends GameRoom<WorldState> {
         if (m) this.log(p, `Marco do nível ${p.level}: ${this.grant(p, m)}!`);
       }
       if (p.level >= 60) this.awardMilestone(p, "first_lv60");
+
+      if (isLockedRecruit && p.level >= 30) {
+        p.level = 30;
+        p.exp = expForLevel(30);
+        if (p.prog) p.prog.seireiteiSummoned = true;
+        this.log(p, "Convocação do Seireitei: Apresente-se no Senkaimon!");
+        this.sendTo(p, "fx", { t: "event", text: "Convocação do Seireitei: Apresente-se no Senkaimon!" });
+        break;
+      }
+    }
+    if (isLockedRecruit && p.level >= 30) {
+      p.level = 30;
+      p.exp = expForLevel(30);
     }
   }
 
@@ -1047,14 +1109,152 @@ export class WorldRoom extends GameRoom<WorldState> {
     this.broadcast("fx", { t: "form", id: p.id, v: i });
   }
 
+  /** Promove o recruta militarmente e desperta sua Shikai (JH-03). */
+  public promoteToOfficer(p: Player): ZanpakutoSpirit {
+    if (!p.prog.zanpakuto) {
+      p.prog.zanpakuto = generateZanpakuto(p.id || p.name);
+    }
+    const z = p.prog.zanpakuto;
+    p.prog.promotedRank = true;
+
+    const release = formatZanpakutoRelease(z);
+    this.broadcast("chat", { from: "", ch: "lore", text: `${p.name} despertou sua Shikai: "${release}"!` });
+    this.broadcast("fx", { t: "event", text: release });
+    this.log(p, `Você despertou sua Shikai: "${release}"! Sua nova técnica está disponível na tecla 4.`);
+    this.sendInv(p);
+
+    return z;
+  }
+
+  /** Desafio do Tenshintai (JH-06): no nível 100, um oficial promovido usa o Tenshintai para materializar seu espírito. */
+  public startTenshintai(p: Player): boolean {
+    const check = canAwakenBankai(p);
+    if (!check.ok) {
+      this.log(p, check.reason!);
+      return false;
+    }
+    if (!p.prog.zanpakuto) {
+      p.prog.zanpakuto = generateZanpakuto(p.id || p.name);
+    }
+    const z = p.prog.zanpakuto;
+
+    if (countItem(p.inv, "tenshintai") > 0) {
+      removeItem(p.inv, "tenshintai", 1);
+      this.sendInv(p);
+    }
+
+    const m = new Monster();
+    m.id = `tenshintai_${p.id}`;
+    m.kind = "espirito_zanpakuto";
+    m.map = p.map;
+    m.x = m.homeX = p.x;
+    m.y = m.homeY = p.y;
+    const def = MONSTERS["espirito_zanpakuto"] ?? MONSTERS["boneco"];
+    m.hp = m.maxHp = def.hp;
+    m.stepMs = def.stepMs;
+    m.owner = p.id;
+    (m as any).tenshintai = true;
+    (m as any).zanpakutoSpirit = z;
+
+    this.state.monsters.set(m.id, m);
+    this.broadcast("fx", { t: "event", text: `Materialização: ${z.shikaiName}` });
+    this.broadcast("chat", { from: "", ch: "lore", text: `O Tenshintai reagiu à Reiatsu de ${p.name}! A projeção de combate do espírito ${z.shikaiName} foi materializada!` });
+    this.log(p, `A projeção de ${z.shikaiName} foi materializada pelo Tenshintai! Derrote-a para despertar sua Bankai.`);
+    return true;
+  }
+
+  private tenshintaiKilled(m: Monster, killer: Player) {
+    this.broadcast("fx", { t: "die", id: m.id });
+    this.state.monsters.delete(m.id);
+    this.monsterAt.delete(tileKey(m.map, m.x, m.y));
+
+    this.awakenBankai(killer);
+  }
+
+  /** Desperta a Bankai do personagem após derrotar a projeção espiritual (JH-06). */
+  public awakenBankai(p: Player): ZanpakutoSpirit {
+    if (!p.prog.zanpakuto) {
+      p.prog.zanpakuto = generateZanpakuto(p.id || p.name);
+    }
+    const z = p.prog.zanpakuto;
+    p.prog.bankaiAwakened = true;
+
+    // Ativa aura visual de Reiatsu de Bankai (p.look.aura = 'bankai')
+    const currentOutfit = (p.look as any)?.outfit || (p.prog?.captainRank ? "haori" : "");
+    if (typeof p.look === "object" && p.look !== null) {
+      (p.look as any).aura = "bankai";
+    } else {
+      p.look = currentOutfit || this.lookFor(p) || "";
+      (p.look as any).aura = "bankai";
+    }
+    p.cosAura = "bankai";
+
+    // Transmissão solene de lore no chat para todo o servidor
+    const bankaiLore = `${p.name} liberou sua Bankai: "${z.bankaiName}"!`;
+    this.broadcast("chat", { from: "", ch: "lore", text: bankaiLore });
+    this.broadcast("fx", { t: "event", text: `Bankai: ${z.bankaiName}` });
+    this.log(p, `Você derrotou o Espírito da sua Zanpakutō e despertou a Bankai: "${z.bankaiName}"!`);
+    this.log(p, `Técnica suprema desbloqueada no slot 6 (tecla 6 ou T).`);
+    this.tutorial(p, "bankai");
+    this.awardMilestone(p, "first_bankai");
+    this.sendInv(p);
+    this.recompute(p);
+    return z;
+  }
+
+  /** Exame de Aptidão de Capitão (Taichō Shiken) no Seireitei (JH-06). */
+  public promoteToCaptain(p: Player): boolean {
+    const check = canTakeCaptainExam(p);
+    if (!check.ok) {
+      this.log(p, check.reason!);
+      return false;
+    }
+
+    p.prog.captainRank = true;
+    p.prog.dimensionalTravel = true;
+    (p.prog as any).militaryRank = "capitao";
+
+    // Recebe o uniforme supremo: Haori Branco de Capitão (p.look.outfit = 'haori')
+    if (addItem(p.inv, "haori", 1) === 0 && !p.equip.armor) {
+      p.equip.armor = "haori";
+    }
+    const currentAura = (p.look as any)?.aura || (p.prog?.bankaiAwakened ? "bankai" : "");
+    if (typeof p.look === "object" && p.look !== null) {
+      (p.look as any).outfit = "haori";
+    } else {
+      p.look = "haori";
+      (p.look as any).outfit = "haori";
+      (p.look as any).aura = currentAura;
+    }
+
+    this.broadcast("chat", { from: "", ch: "lore", text: `${p.name} foi aprovado no Exame de Aptidão de Capitão (Taichō Shiken) diante da 1ª Divisão e graduado a Capitão do Gotei 13!` });
+    this.broadcast("fx", { t: "event", text: "Capitão do Gotei 13!" });
+    this.log(p, "Você foi aprovado no Exame de Aptidão de Capitão diante da 1ª Divisão e assumiu o comando como Capitão do Gotei 13!");
+    this.log(p, "Você recebeu o Haori Branco de Capitão e permissão de viagem dimensional para o Palácio Real (Reiōkyū)!");
+    this.sendInv(p);
+    this.recompute(p);
+    return true;
+  }
+
   private recompute(p: Player) {
     const b = gearBonus(p.equip, p.forge);
     p.maxHp = Math.round((maxHp(p.level) + b.hp) * rebirthBonus(p.rebirths).hp);
     p.maxRei = maxRei(p.level) + b.rei;
     p.hp = Math.min(p.hp, p.maxHp);
     p.rei = Math.min(p.rei, p.maxRei);
-    p.stepMs = CHARS[p.charId].forms[p.form].stepMs;
-    p.look = this.lookFor(p);
+    p.stepMs = CHARS[p.charId].forms[p.form]?.stepMs ?? 260;
+    const baseLook = this.lookFor(p);
+    const outfit = p.prog?.captainRank ? "haori" : ((p.look as any)?.outfit || baseLook);
+    const aura = p.prog?.bankaiAwakened ? "bankai" : ((p.look as any)?.aura || "");
+    if (typeof p.look === "object" && p.look !== null) {
+      (p.look as any).outfit = outfit;
+      (p.look as any).aura = aura;
+    } else {
+      p.look = outfit || baseLook;
+      (p.look as any).outfit = outfit;
+      (p.look as any).aura = aura;
+    }
+    if (p.prog?.bankaiAwakened && !p.cosAura) p.cosAura = "bankai";
     this.updatePower(p);
   }
 
@@ -1410,6 +1610,7 @@ export class WorldRoom extends GameRoom<WorldState> {
       if (now - p.lastCombatAt < RECALL_COMBAT_MS) return this.log(p, "Em combate: espere alguns segundos para viajar.");
       const why = this.travelBlocked(p, now);
       if (why) return this.log(p, why);
+      if (d.requiresCaptain && !p.prog?.captainRank) return this.log(p, "Apenas Capitães do Gotei 13 possuem permissão dimensional para o Palácio Real (Reiōkyū).");
       if (p.level < d.minLevel) return this.log(p, `${d.name} exige nível ${d.minLevel}.`);
       if (p.gold < d.cost) return this.log(p, `A viagem custa ${d.cost} kan.`);
       p.gold -= d.cost;
@@ -2840,7 +3041,7 @@ export class WorldRoom extends GameRoom<WorldState> {
     const fighting = now - p.lastCombatAt < 2500;
     // Bankai em combate (com reiatsu de sobra) e de volta ao normal fora dele, para guardar reiatsu
     if (p.autoBankai) {
-      if (fighting && p.form < maxForm(p.charId, p.level) && p.rei > p.maxRei * 0.6) this.setForm(p, p.form + 1);
+      if (fighting && p.form < maxForm(p.charId, p.level, p.prog?.bankaiAwakened) && p.rei > p.maxRei * 0.6) this.setForm(p, p.form + 1);
       else if (p.form > 0 && now - p.lastCombatAt > 8000) this.setForm(p, 0);
     }
     if (now < p.helperAt) return;
@@ -2853,7 +3054,7 @@ export class WorldRoom extends GameRoom<WorldState> {
   private goHunt(p: Player, now: number) {
     const d = TRAVEL.find((t) => t.id === p.huntSpot);
     const at = d && MAPS[d.map]?.arrivals[d.id];
-    if (!d || !at || p.level < d.minLevel) return;
+    if (!d || !at || p.level < d.minLevel || (d.requiresCaptain && !p.prog?.captainRank)) return;
     if (p.map === d.map && chebyshev(p.x, p.y, at.x, at.y) <= HUNT_SPOT_RADIUS) return;
     if (now - p.lastCombatAt < RECALL_COMBAT_MS || this.travelBlocked(p, now) || p.gold < d.cost) return;
     p.gold -= d.cost;

@@ -96,6 +96,9 @@ export function parseMap(id: string, json: any, opts: { strictNpcs?: boolean } =
   // o NPC da loja ocupa o tile dele, e os NPCs sólidos do catálogo também (todos já conferidos dentro do mapa)
   if (map.shop) solid[map.shop.y * w + map.shop.x] = 1;
   for (const n of map.npcs) if (npcById(n.id)?.solid) solid[n.y * w + n.x] = 1;
+  if (id === "soul" && map.arrivals.soul && !map.arrivals.reiokyu) {
+    map.arrivals.reiokyu = { ...map.arrivals.soul };
+  }
   return map;
 }
 

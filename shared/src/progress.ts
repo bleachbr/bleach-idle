@@ -3,6 +3,7 @@
 
 import { MONSTERS } from "./data";
 import { newArenaProgress, type ArenaProgress } from "./arena";
+import type { ZanpakutoSpirit } from "./zanpakuto";
 
 // ---------- bestiário ----------
 
@@ -150,7 +151,21 @@ export interface Progress {
   arena?: ArenaProgress;
   /** patrulha idle ativa (W-13) */
   patrol?: import("./patrols").PatrolState | null;
+  /** promoção militar no Seireitei (destrava progressão além do nível 30 para recrutas - JH-02) */
+  promotedRank?: boolean;
+  /** flag indicando se a convocação do Seireitei já foi disparada ao travar no nível 30 */
+  seireiteiSummoned?: boolean;
+  /** espírito da Zanpakutō despertada na Shikai (JH-03) */
+  zanpakuto?: ZanpakutoSpirit;
+  /** graduação para Capitão do Gotei 13 (JH-06) */
+  captainRank?: boolean;
+  /** Bankai despertada no Desafio do Tenshintai (JH-06) */
+  bankaiAwakened?: boolean;
+  /** permissão de viagem dimensional para o Palácio Real e reinos superiores (JH-06) */
+  dimensionalTravel?: boolean;
 }
+
+export type PlayerProg = Progress;
 
 // ---------- marcos históricos do servidor (W-06) ----------
 

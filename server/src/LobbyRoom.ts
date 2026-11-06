@@ -22,10 +22,12 @@ interface Auth { accountId: number; login: string; token?: string }
 export function newCharacter(name: string, charId: string): db.SaveData {
   const inv: (Slot | null)[] = Array(INV_SIZE).fill(null);
   for (const s of START_KIT.inv) addItem(inv, s.id, s.qty);
+  const ch = own(CHARS, charId);
+  const equip = { ...START_KIT.equip, ...(ch?.initialEquip ?? {}) };
   return {
     name, charId, level: START_LEVEL, exp: expForLevel(START_LEVEL),
     hp: maxHp(START_LEVEL), rei: maxRei(START_LEVEL), map: HOME.id, x: TEMPLE.x, y: TEMPLE.y,
-    gold: START_KIT.gold, inv, depot: Array(DEPOT_SIZE).fill(null), equip: { ...START_KIT.equip },
+    gold: START_KIT.gold, inv, depot: Array(DEPOT_SIZE).fill(null), equip,
   };
 }
 

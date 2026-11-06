@@ -1,5 +1,6 @@
 // Personagens, formas (Shikai/Bankai), monstros e spawns.
 import { own } from "./lookup";
+import type { EquipSlot } from "./items";
 
 export const TILE = 32;
 export const TICK_MS = 100;
@@ -20,6 +21,9 @@ export interface SpriteDef {
   lazy?: boolean;
 }
 export const SPRITES: Record<string, SpriteDef> = {
+  // JH-01: Recrutas Shinigami
+  recruta_m: { frame: 48, cols: 8 },
+  recruta_f: { frame: 48, cols: 8 },
   ichigo_shikai: { frame: 48, cols: 8 },
   ichigo_bankai: { frame: 48, cols: 8 },
   rukia: { frame: 48, cols: 8 },
@@ -185,6 +189,8 @@ export interface CharDef {
   skill: SkillDef;
   /** técnicas aprendidas com o nível (25, 50 e 100) */
   techs: SkillDef[];
+  /** equipamento inicial (opcional: mesclado ao START_KIT.equip na criação) */
+  initialEquip?: Partial<Record<EquipSlot, string>>;
 }
 
 /** Níveis de cada estágio da evolução: a base, a liberação e mais três passos da história do personagem. */
@@ -464,7 +470,60 @@ export const CHARS: Record<string, CharDef> = {
       { name: "Itokiribasami", minLevel: 100, range: 4, cost: 90, mult: 10, cdMs: 30000, color: 0x8a2a6a, area: 3 },
     ],
   },
+  // JH-01: Recruta Shinigami Masculino (Mundo dos Vivos / Academia)
+  recruta_m: {
+    id: "recruta_m",
+    name: "Recruta (M)",
+    atk: 13,
+    def: 4,
+    forms: [
+      { id: "base", label: "Recruta Shinigami", sprite: "recruta_m", dmgMult: 1, stepMs: 260, attackMs: 1000, reiDrain: 0, minLevel: 1 },
+      { id: "bankai", label: "Bankai", shout: "BANKAI!", sprite: "recruta_m", dmgMult: 2.8, stepMs: 140, attackMs: 500, reiDrain: 5, minLevel: 100 },
+    ],
+    skill: { name: "Golpe de Asauchi", range: 2, cost: 15, mult: 2.2, cdMs: 2500, color: 0xdcdcdc },
+    techs: [
+      { name: "Hadō #4: Byakurai", minLevel: 25, range: 5, cost: 30, mult: 3.0, cdMs: 5000, color: 0xffffff },
+      { name: "Hadō #31: Shakkahō", minLevel: 50, range: 6, cost: 45, mult: 4.2, cdMs: 9000, color: 0xff4500, area: 1 },
+      { name: "Hadō #33: Sōkatsui", minLevel: 100, range: 7, cost: 80, mult: 8.0, cdMs: 25000, color: 0x4169e1, area: 2 },
+    ],
+    initialEquip: {
+      head: "bandana",
+      armor: "shihakusho",
+      legs: "hakama",
+      boots: "waraji",
+      weapon: "asauchi",
+    },
+  },
+  // JH-01: Recruta Shinigami Feminino (Mundo dos Vivos / Academia)
+  recruta_f: {
+    id: "recruta_f",
+    name: "Recruta (F)",
+    atk: 13,
+    def: 4,
+    forms: [
+      { id: "base", label: "Recruta Shinigami", sprite: "recruta_f", dmgMult: 1, stepMs: 260, attackMs: 1000, reiDrain: 0, minLevel: 1 },
+      { id: "bankai", label: "Bankai", shout: "BANKAI!", sprite: "recruta_f", dmgMult: 2.8, stepMs: 140, attackMs: 500, reiDrain: 5, minLevel: 100 },
+    ],
+    skill: { name: "Golpe de Asauchi", range: 2, cost: 15, mult: 2.2, cdMs: 2500, color: 0xdcdcdc },
+    techs: [
+      { name: "Hadō #4: Byakurai", minLevel: 25, range: 5, cost: 30, mult: 3.0, cdMs: 5000, color: 0xffffff },
+      { name: "Hadō #31: Shakkahō", minLevel: 50, range: 6, cost: 45, mult: 4.2, cdMs: 9000, color: 0xff4500, area: 1 },
+      { name: "Hadō #33: Sōkatsui", minLevel: 100, range: 7, cost: 80, mult: 8.0, cdMs: 25000, color: 0x4169e1, area: 2 },
+    ],
+    initialEquip: {
+      head: "bandana",
+      armor: "shihakusho",
+      legs: "hakama",
+      boots: "waraji",
+      weapon: "asauchi",
+    },
+  },
 };
+
+/** Verifica se o charId pertence a um recruta Shinigami (JH-01). */
+export function isRecruit(charId: string): boolean {
+  return charId === "recruta_m" || charId === "recruta_f" || charId.startsWith("recruta_");
+}
 
 export interface MonsterDef {
   id: string;
@@ -522,5 +581,7 @@ export const MONSTERS: Record<string, MonsterDef> = Object.fromEntries([
   m("yhwach", "Yhwach", 120000, 150, 40, 600000, 1, 0xffffff, 340, 600000, "yhwach"),
   // chefe mundial (evento): um Gillian que viveu demais; a vida real cresce com quem está online
   m("menos_anciao", "Menos Ancião", 30000, 80, 18, 40000, 1.35, 0x9a6aff, 700, 0, "gillian"),
+  // Desafio do Tenshintai (JH-06): projeção de combate do Espírito da Zanpakutō
+  m("espirito_zanpakuto", "Espírito da Zanpakutō", 18000, 95, 28, 50000, 1.1, 0x00ffff, 280, 0, "boneco"),
   { ...m("boneco", "Boneco de Treino", 3000, 0, 0, 0, 1, 0xffffff, 1000, 5000, "boneco"), dummy: true },
 ].map((d) => [d.id, d]));

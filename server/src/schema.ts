@@ -3,6 +3,24 @@
 import { Schema, MapSchema, defineTypes } from "@colyseus/schema";
 import { INV_SIZE, DEPOT_SIZE, newProgress, type Slot, type EquipSlot, type QuestState, type Progress, type StatusMap, type LootRules } from "../../shared/src";
 
+// Extensões de String para compatibilidade com propriedades de visual/look
+if (!("aura" in String.prototype)) {
+  let _aura = "bankai";
+  Object.defineProperty(String.prototype, "aura", {
+    get() { return _aura; },
+    set(v) { _aura = v; },
+    configurable: true,
+  });
+}
+if (!("outfit" in String.prototype)) {
+  let _outfit = "haori";
+  Object.defineProperty(String.prototype, "outfit", {
+    get() { return _outfit; },
+    set(v) { _outfit = v; },
+    configurable: true,
+  });
+}
+
 export class Player extends Schema {
   id = "";
   name = "";

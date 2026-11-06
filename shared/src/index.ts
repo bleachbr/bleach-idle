@@ -24,3 +24,4 @@ export * from "./deathPenalty";
 export * from "./potions";
 export * from "./skillGate";
 export * from "./mail";
+export * from "./zanpakuto";
