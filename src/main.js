@@ -37,8 +37,8 @@ export const state = {
     menos: 0
   },
   weapons: {
-    asauchi: { name: 'Corte de Asauchi', level: 1, cooldown: 1.0, timer: 0, damage: 30, totalDamage: 0 },
-    getsuga: { name: 'Getsuga Tenshō', level: 1, cooldown: 2.8, timer: 0.8, damage: 75, totalDamage: 0 },
+    asauchi: { name: 'Corte de Asauchi', level: 1, cooldown: 1.0, timer: 0, damage: 35, totalDamage: 0 },
+    getsuga: { name: 'Getsuga Tenshō', level: 1, cooldown: 2.8, timer: 0.8, damage: 180, totalDamage: 0 },
     byakurai: { name: 'Hadō #4 Byakurai', level: 0, cooldown: 2.2, timer: 0, damage: 45, totalDamage: 0 },
     shakkaho: { name: 'Hadō #31 Shakkahō', level: 0, cooldown: 3.5, timer: 0, damage: 70, totalDamage: 0 }
   },
@@ -352,6 +352,7 @@ function initEnemyPool() {
     scene.add(mesh);
 
     enemyMeshes.push({
+      id: i,
       mesh,
       active: false,
       x: 0,
@@ -814,17 +815,109 @@ function updateWeapons(dt) {
   }
 }
 
+// =======================================================================
+// MIRA INTELIGENTE DE AUTO-ATAQUE (ESTILO POKÉBONK / SURVIVOR)
+// =======================================================================
+// O jogador foca em esquivar e se posicionar no mapa.
+// As habilidades avaliam a geometria da arena e disparam nos melhores alvos:
+// - Getsuga Tenshō: Avalia qual feixe direcional perfurará o maior número de Hollows
+// - Asauchi Slash: Corta na direção da ameaça mais próxima no corpo a corpo
+function findSmartTargetDirection(playerX, playerZ, maxRange = 32.0, beamRadius = 2.4) {
+  const candidates = [];
+  for (const en of enemyMeshes) {
+    if (!en.active) continue;
+    const dx = en.x - playerX;
+    const dz = en.z - playerZ;
+    const dist = Math.hypot(dx, dz);
+    if (dist <= maxRange && dist > 0.1) {
+      candidates.push({
+        en,
+        dist,
+        dirX: dx / dist,
+        dirZ: dz / dist,
+        isBoss: en.isBoss
+      });
+    }
+  }
+
+  // Se não houver nenhum Hollow no campo de visão, dispara na direção que o jogador caminha
+  if (candidates.length === 0) {
+    return { dirX: player.dirX, dirZ: player.dirZ, targetCount: 0 };
+  }
+
+  // Prioridade 1: Boss Menos Grande (alvo prioritário absoluto se estiver em campo)
+  const boss = candidates.find(c => c.isBoss);
+  if (boss && boss.dist <= maxRange) {
+    return { dirX: boss.dirX, dirZ: boss.dirZ, targetCount: 1, target: boss.en };
+  }
+
+  // Prioridade 2: Maior aglomeração em linha (densest pierce line)
+  let bestDir = { dirX: candidates[0].dirX, dirZ: candidates[0].dirZ, score: -1, target: candidates[0].en };
+
+  for (const primary of candidates) {
+    let alignedCount = 0;
+    for (const other of candidates) {
+      const ox = other.en.x - playerX;
+      const oz = other.en.z - playerZ;
+      const dot = ox * primary.dirX + oz * primary.dirZ;
+
+      if (dot > 0 && dot <= maxRange) {
+        const perpDist = Math.abs(ox * (-primary.dirZ) + oz * primary.dirX);
+        if (perpDist <= beamRadius) {
+          alignedCount++;
+        }
+      }
+    }
+
+    const score = alignedCount * 150 - primary.dist;
+    if (score > bestDir.score) {
+      bestDir = {
+        dirX: primary.dirX,
+        dirZ: primary.dirZ,
+        score,
+        targetCount: alignedCount,
+        target: primary.en
+      };
+    }
+  }
+
+  return bestDir;
+}
+
 function executeGetsugaTensho(dmg) {
   if (!fxManager) return;
-  // Dispara a onda Getsuga a partir da posição do jogador na direção para onde ele está olhando
-  fxManager.spawnGetsuga(player.x, player.z, player.dirX, player.dirZ, dmg);
+  // Mira inteligente: Encontra a direção com maior densidade de Hollows ou boss
+  const target = findSmartTargetDirection(player.x, player.z, 32.0, 2.4);
+
+  fxManager.spawnGetsuga(player.x, player.z, target.dirX, target.dirZ, dmg, {
+    speed: 19.5,
+    maxDistance: 32.0,
+    hitRadius: 2.4,
+    startScale: 2.2,
+    endScale: 4.2
+  });
 }
 
 function executeAsauchiSlash(dmg) {
   slashAlpha = 0.8;
-  const pAngle = Math.atan2(player.dirZ, player.dirX);
-  // Posiciona o slash ligeiramente à frente do personagem na direção do golpe
-  slashMesh.position.set(player.x + player.dirX * 1.2, 0.45, player.z + player.dirZ * 1.2);
+
+  // Auto-mira melee: corta em direção ao Hollow mais próximo a até 5.5m
+  let targetDirX = player.dirX;
+  let targetDirZ = player.dirZ;
+  let closestDist = 5.5;
+
+  for (const en of enemyMeshes) {
+    if (!en.active) continue;
+    const d = Math.hypot(en.x - player.x, en.z - player.z);
+    if (d < closestDist) {
+      closestDist = d;
+      targetDirX = (en.x - player.x) / d;
+      targetDirZ = (en.z - player.z) / d;
+    }
+  }
+
+  const pAngle = Math.atan2(targetDirZ, targetDirX);
+  slashMesh.position.set(player.x + targetDirX * 1.2, 0.45, player.z + targetDirZ * 1.2);
   slashMesh.rotation.y = -pAngle;
   const slashTex = spriteTextures['fx_slash_combat_0'];
   if (slashTex) {
@@ -832,7 +925,7 @@ function executeAsauchiSlash(dmg) {
     slashMesh.material.needsUpdate = true;
   }
 
-  const range = 4.5;
+  const range = 4.8;
   const arc = Math.PI * 0.8;
 
   for (const en of enemyMeshes) {
@@ -907,7 +1000,10 @@ function damageEnemy(en, dmg, weaponKey) {
   en.mesh.material.color.setHex(0xffffff);
 
   state.damageDealt += dmg;
-  state.weapons[weaponKey].totalDamage += dmg;
+  const key = weaponKey === 'getsuga_tenshou' ? 'getsuga' : weaponKey;
+  if (state.weapons[key]) {
+    state.weapons[key].totalDamage += dmg;
+  }
 
   if (en.hp <= 0) {
     killEnemy(en);
