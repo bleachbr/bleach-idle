@@ -1,6 +1,6 @@
 {
   "files": {
-    "src/main.js": 1423,
+    "src/main.js": 1383,
     "src/spritesheet.js": 505
   },
   "functions": {
@@ -10,7 +10,6 @@
     "src/main.js::findSmartTargetDirection": 53,
     "src/main.js::initEnemyPool": 37,
     "src/main.js::selectBannerOption": 24,
-    "src/main.js::setupInputListeners": 102,
     "src/main.js::updateReishi": 26,
     "src/spritesheet.js::createSpritesheet": 88,
     "src/spritesheet.js::drawHollowBack": 22,

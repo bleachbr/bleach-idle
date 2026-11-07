@@ -364,132 +364,92 @@ function handleLevelUpKeys(k) {
   return false;
 }
 
-function handleEscapeKey(canvas, resumeGame) {
-  if (state.levelUpOpen) {
-    skipLevelUp();
-    return;
-  }
-  if (state.gameOver) return;
-  if (!state.paused) {
-    state.paused = true;
-    if (document.pointerLockElement === canvas) document.exitPointerLock();
-    document.getElementById('pause-modal')?.classList.remove('hidden');
-  } else {
-    resumeGame();
+function pauseGame(canvas) {
+  state.paused = true;
+  if (document.pointerLockElement === canvas) document.exitPointerLock();
+  document.getElementById('pause-modal')?.classList.remove('hidden');
+}
+
+function pauseOnFocusLoss(canvas) {
+  keys.w = keys.a = keys.s = keys.d = false;
+  if (state.active && !state.gameOver && !state.paused) pauseGame(canvas);
+}
+
+function resumeGame(canvas) {
+  if (state.inMenu) return;
+  state.paused = false;
+  document.getElementById('pause-modal')?.classList.add('hidden');
+  if (state.active && !state.levelUpOpen && !state.gameOver && document.pointerLockElement !== canvas) {
+    canvas.requestPointerLock().catch(() => {});
   }
 }
 
-function setupInputListeners(canvas) {
-  // 1. Teclado
+function handleEscapeKey(canvas) {
+  if (state.levelUpOpen) { skipLevelUp(); return; }
+  if (state.gameOver) return;
+  if (!state.paused) { pauseGame(canvas); } else { resumeGame(canvas); }
+}
+
+function setupKeyboardListeners(canvas) {
   window.addEventListener('keydown', (e) => {
     if (state.inMenu) return;
     const k = e.key.toLowerCase();
     handleMovementKeys(k, true);
-    if (e.code === 'Space' || k === ' ') {
-      e.preventDefault();
-      jumpPlayer();
-    }
+    if (e.code === 'Space' || k === ' ') { e.preventDefault(); jumpPlayer(); }
     if (handleLevelUpKeys(k)) return;
     if (k === 'q') cameraState.yaw -= 0.15;
     if (k === 'e') cameraState.yaw += 0.15;
-    if (k === 'escape') handleEscapeKey(canvas, resumeGame);
+    if (k === 'escape') handleEscapeKey(canvas);
   });
-
   window.addEventListener('keyup', (e) => {
-    if (state.inMenu) return;
-    handleMovementKeys(e.key.toLowerCase(), false);
+    if (!state.inMenu) handleMovementKeys(e.key.toLowerCase(), false);
   });
+}
 
-  // 2. Travar Mouse (Pointer Lock API) ao clicar no canvas (estilo PokéBonk)
-  function requestGamePointerLock() {
-    if (!state.inMenu && state.active && !state.levelUpOpen && !state.gameOver) {
-      if (document.pointerLockElement !== canvas) {
-        canvas.requestPointerLock().catch(() => {});
-      }
-    }
-  }
-
-  function resumeGame() {
-    if (state.inMenu) return;
-    state.paused = false;
-    const pauseModal = document.getElementById('pause-modal');
-    if (pauseModal) pauseModal.classList.add('hidden');
-    requestGamePointerLock();
-  }
-
-  canvas.addEventListener('click', () => {
-    if (!state.inMenu && !state.levelUpOpen && !state.gameOver) {
-      resumeGame();
-    }
-  });
-
+function setupPointerLockListeners(canvas) {
+  window.addEventListener('blur', () => pauseOnFocusLoss(canvas));
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pauseOnFocusLoss(canvas); });
+  canvas.addEventListener('click', () => { if (!state.inMenu && !state.levelUpOpen && !state.gameOver) resumeGame(canvas); });
+  document.getElementById('pause-modal')?.addEventListener('click', () => { if (!state.gameOver) resumeGame(canvas); });
+  document.addEventListener('pointerlockerror', () => { if (state.active && !state.levelUpOpen && !state.gameOver) pauseGame(canvas); });
   document.addEventListener('pointerlockchange', () => {
     const isLocked = (document.pointerLockElement === canvas);
-    const pauseModal = document.getElementById('pause-modal');
-
     if (!isLocked) {
-      // Se liberou o cursor e o jogo não está em level up nem em fim de jogo, pausa
-      if (!state.inMenu && state.active && !state.levelUpOpen && !state.gameOver) {
-        state.paused = true;
-        if (pauseModal) pauseModal.classList.remove('hidden');
-      }
-    } else {
-      // Mouse capturado: despausa
-      if (!state.inMenu) {
-        state.paused = false;
-        if (pauseModal) pauseModal.classList.add('hidden');
-      }
+      if (!state.inMenu && state.active && !state.levelUpOpen && !state.gameOver) pauseGame(canvas);
+    } else if (!state.inMenu) {
+      state.paused = false;
+      document.getElementById('pause-modal')?.classList.add('hidden');
     }
   });
-
   const resumeBtn = document.getElementById('btn-resume');
-  if (resumeBtn) {
-    resumeBtn.onclick = (e) => {
-      e.stopPropagation();
-      resumeGame();
-    };
-  }
+  if (resumeBtn) resumeBtn.onclick = (e) => { e.stopPropagation(); resumeGame(canvas); };
+}
 
-  // 3. Rotação Fluida da Câmera com o Mouse
-  // Quando o mouse está preso (Pointer Lock), o usuário apenas move o mouse (sem segurar clique)
+function setupMouseLook(canvas) {
   window.addEventListener('mousemove', (e) => {
     if (document.pointerLockElement === canvas) {
-      const sens = 0.0035;
-      cameraState.yaw -= e.movementX * sens;
-      cameraState.pitch += e.movementY * sens;
-      cameraState.pitch = Math.max(0.15, Math.min(1.15, cameraState.pitch));
+      cameraState.yaw -= e.movementX * 0.0035;
+      cameraState.pitch = Math.max(0.15, Math.min(1.15, cameraState.pitch + e.movementY * 0.0035));
       return;
     }
-
-    // Fallback: Se não estiver em Pointer Lock, permite arrastar segurando o botão
     if (isDraggingMouse) {
-      const dx = e.clientX - lastMouseX;
-      const dy = e.clientY - lastMouseY;
-      lastMouseX = e.clientX;
-      lastMouseY = e.clientY;
-
-      const sens = 0.006;
-      cameraState.yaw -= dx * sens;
-      cameraState.pitch += dy * sens;
-      cameraState.pitch = Math.max(0.15, Math.min(1.15, cameraState.pitch));
+      const dx = e.clientX - lastMouseX, dy = e.clientY - lastMouseY;
+      lastMouseX = e.clientX; lastMouseY = e.clientY;
+      cameraState.yaw -= dx * 0.006;
+      cameraState.pitch = Math.max(0.15, Math.min(1.15, cameraState.pitch + dy * 0.006));
     }
   });
-
-  canvas.addEventListener('mousedown', (e) => {
-    isDraggingMouse = true;
-    lastMouseX = e.clientX;
-    lastMouseY = e.clientY;
-  });
-
-  window.addEventListener('mouseup', () => {
-    isDraggingMouse = false;
-  });
-
-  // Zoom da Câmera com a roda do mouse (Scroll Wheel)
+  canvas.addEventListener('mousedown', (e) => { isDraggingMouse = true; lastMouseX = e.clientX; lastMouseY = e.clientY; });
+  window.addEventListener('mouseup', () => { isDraggingMouse = false; });
   window.addEventListener('wheel', (e) => {
     cameraState.dist = Math.max(7.0, Math.min(24.0, cameraState.dist + Math.sign(e.deltaY) * 1.0));
   }, { passive: true });
+}
 
+function setupInputListeners(canvas) {
+  setupKeyboardListeners(canvas);
+  setupPointerLockListeners(canvas);
+  setupMouseLook(canvas);
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
