@@ -47,7 +47,7 @@ export const state = {
   }
 };
 
-// Dados do Jogador (Recruta Shinigami)
+// Dados do Jogador (Recruta Shinigami / Personagem Selecionado)
 export const player = {
   x: 0,
   y: 0,
@@ -57,7 +57,11 @@ export const player = {
   speed: 6.0,
   dirX: 0,
   dirZ: -1, // Começa olhando para frente (norte), mostrando as costas em terceira pessoa
-  invulnerableTime: 0
+  invulnerableTime: 0,
+  isMoving: false,
+  animTimer: 0,
+  animFrame: 1, // 0: passo esq, 1: neutro/parado, 2: passo dir, 3: neutro
+  walkFps: 8    // Cadência dos passos
 };
 
 // Controles de Entrada
@@ -217,12 +221,34 @@ function buildSprites() {
   if (approvedChar && approvedChar.directions) {
     const loader = new THREE.TextureLoader();
     for (const [dirKey, dirInfo] of Object.entries(approvedChar.directions)) {
+      // Quadro neutro/idle padrão
       const texPath = `/src/assets/characters/${approvedChar.id}/${dirInfo.file}`;
       const tex = loader.load(texPath);
       tex.magFilter = THREE.NearestFilter;
       tex.minFilter = THREE.NearestFilter;
       tex.colorSpace = THREE.SRGBColorSpace;
       spriteTextures[`player_${dirKey}`] = tex;
+
+      // Se for formato walk4x4, carregar os 4 quadros do ciclo de caminhada
+      const frameCount = dirInfo.frames || (approvedChar.format === 'walk4x4' ? 4 : 1);
+      if (frameCount > 1) {
+        for (let f = 0; f < frameCount; f++) {
+          const fPath = `/src/assets/characters/${approvedChar.id}/${dirKey}_${f}.png`;
+          const fTex = loader.load(fPath);
+          fTex.magFilter = THREE.NearestFilter;
+          fTex.minFilter = THREE.NearestFilter;
+          fTex.colorSpace = THREE.SRGBColorSpace;
+          spriteTextures[`player_${dirKey}_${f}`] = fTex;
+        }
+      }
+    }
+
+    // Configurar escala e FPS
+    if (approvedChar.worldScale) {
+      playerMesh && playerMesh.scale.set(approvedChar.worldScale[0], approvedChar.worldScale[1], 1.0);
+    }
+    if (approvedChar.fps) {
+      player.walkFps = approvedChar.fps;
     }
 
     // Atualizar HUD com informações oficiais do personagem
@@ -628,6 +654,21 @@ function updatePlayer(dt) {
       player.x = Math.cos(angle) * (ARENA_RADIUS - 2.0);
       player.z = Math.sin(angle) * (ARENA_RADIUS - 2.0);
     }
+    player.isMoving = true;
+
+    // Ciclo de caminhada (Walk Cycle): avança o quadro das pernas enquanto se move
+    player.animTimer += dt;
+    const frameInterval = 1.0 / (player.walkFps || 8);
+    if (player.animTimer >= frameInterval) {
+      player.animTimer = 0;
+      // 4 quadros: 0 (passo esq) -> 1 (neutro) -> 2 (passo dir) -> 3 (neutro)
+      player.animFrame = (player.animFrame + 1) % 4;
+    }
+  } else {
+    // Parado (Idle): volta ao quadro neutro com pés juntos
+    player.isMoving = false;
+    player.animFrame = 1;
+    player.animTimer = 0;
   }
 
   playerMesh.position.set(player.x, 0, player.z);
@@ -648,10 +689,23 @@ function updateBillboards() {
   // 1. Orientação da malha: As faces dos planos sempre encaram a rotação da câmera (Billboard 2.5D)
   playerMesh.quaternion.copy(camera.quaternion);
 
-  // 2. Textura do Recruta Shinigami (Frente, Costas, Perfil Direito ou Esquerdo)
+  // 2. Textura do Personagem (Ichigo Shikai / Recruta):
+  // Se estiver se movendo, usa o quadro animado correspondente (ex: player_front_0..3)
+  // Se estiver parado, usa o quadro neutro (ex: player_front_1 ou player_front)
   const pDir = getSpriteDirection(player.dirX, player.dirZ);
-  const pTex = spriteTextures[`player_${pDir}`] || spriteTextures.player_back;
-  if (playerMesh.material.map !== pTex) {
+  let pTex = null;
+
+  if (player.isMoving) {
+    // Busca o quadro animado da passada
+    const animKey = `player_${pDir}_${player.animFrame}`;
+    pTex = spriteTextures[animKey] || spriteTextures[`player_${pDir}`] || spriteTextures.player_back;
+  } else {
+    // Busca o quadro de repouso (frame 1 neutro ou sprite padrão)
+    const idleKey = `player_${pDir}_1`;
+    pTex = spriteTextures[idleKey] || spriteTextures[`player_${pDir}`] || spriteTextures.player_back;
+  }
+
+  if (pTex && playerMesh.material.map !== pTex) {
     playerMesh.material.map = pTex;
     playerMesh.material.needsUpdate = true;
   }
