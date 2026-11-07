@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createSpritesheet } from './spritesheet.js';
 import { PLAYABLE_CHARACTERS, FX_REGISTRY } from './characters.js';
+import { FXManager } from './fx/fxManager.js';
 
 // Constantes da Arena e Câmera
 const ARENA_RADIUS = 75.0;
@@ -37,6 +38,7 @@ export const state = {
   },
   weapons: {
     asauchi: { name: 'Corte de Asauchi', level: 1, cooldown: 1.0, timer: 0, damage: 30, totalDamage: 0 },
+    getsuga: { name: 'Getsuga Tenshō', level: 1, cooldown: 2.8, timer: 0.8, damage: 75, totalDamage: 0 },
     byakurai: { name: 'Hadō #4 Byakurai', level: 0, cooldown: 2.2, timer: 0, damage: 45, totalDamage: 0 },
     shakkaho: { name: 'Hadō #31 Shakkahō', level: 0, cooldown: 3.5, timer: 0, damage: 70, totalDamage: 0 }
   },
@@ -72,7 +74,7 @@ let lastMouseY = 0;
 
 // Three.js Globais
 let scene, camera, renderer, clock;
-let playerMesh, playerAuraMesh, slashMesh, reishiGroup;
+let playerMesh, slashMesh, reishiGroup, fxManager;
 let enemyMeshes = [];
 let reishiDrops = [];
 let spriteTextures = {};
@@ -116,6 +118,9 @@ function init() {
   // 7. Malha do Efeito de Corte (Katana Slash)
   createSlashMesh();
 
+  // 7.1 Gerenciador de FX (Auras Periódicas em Bursts e Projéteis como Getsuga Tenshō)
+  fxManager = new FXManager(scene, spriteTextures);
+
   // 8. Grupo de Orbes de Reishi
   reishiGroup = new THREE.Group();
   scene.add(reishiGroup);
@@ -127,7 +132,7 @@ function init() {
   setupInputListeners(canvas);
 
   // Expor para inspeção e testes automatizados
-  window.debugGame = { scene, camera, cameraState, player, state, enemyMeshes };
+  window.debugGame = { scene, camera, cameraState, player, state, enemyMeshes, fxManager };
 
   // 11. Iniciar Loop
   requestAnimationFrame(loop);
@@ -290,20 +295,6 @@ function createPlayerMesh() {
   playerMesh = new THREE.Mesh(pGeo, pMat);
   playerMesh.position.set(0, 0, 0);
   scene.add(playerMesh);
-
-  // Aura de Reiatsu (Billboard Additive ancorado ao jogador)
-  const auraGeo = new THREE.PlaneGeometry(2.6, 2.6);
-  auraGeo.translate(0, 1.05, 0);
-  const auraMat = new THREE.MeshBasicMaterial({
-    map: spriteTextures.fx_aura_shikai_0 || null,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    opacity: 0.65,
-    side: THREE.DoubleSide
-  });
-  playerAuraMesh = new THREE.Mesh(auraGeo, auraMat);
-  scene.add(playerAuraMesh);
 
   // Sombra suave sob os pés
   const shadowGeo = new THREE.CircleGeometry(0.7, 16);
@@ -616,6 +607,14 @@ function loop() {
   // 2. Armas / Ataques Espirituais
   updateWeapons(dt);
 
+  // 2.1 Efeitos Visuais e Projéteis (Aura Periódica e Getsuga Tenshō Avançando no Mapa)
+  if (fxManager) {
+    fxManager.updateAura(dt, player.x, player.z, camera.quaternion);
+    fxManager.updateProjectiles(dt, enemyMeshes, (en, dmg, type) => {
+      damageEnemy(en, dmg, type);
+    }, camera.quaternion);
+  }
+
   // 3. Spawns e IA dos Inimigos
   updateSpawns(dt);
   updateEnemies(dt);
@@ -723,18 +722,6 @@ function updateBillboards() {
   // 1. Orientação da malha: As faces dos planos sempre encaram a rotação da câmera (Billboard 2.5D)
   playerMesh.quaternion.copy(camera.quaternion);
 
-  // Orientação e animação da Aura de Reiatsu (segue o jogador e anima 4 quadros a 8 FPS)
-  if (playerAuraMesh) {
-    playerAuraMesh.position.set(player.x, 0, player.z);
-    playerAuraMesh.quaternion.copy(camera.quaternion);
-    const auraFrame = Math.floor(state.time * 8) % 4;
-    const auraTex = spriteTextures[`fx_aura_shikai_${auraFrame}`];
-    if (auraTex && playerAuraMesh.material.map !== auraTex) {
-      playerAuraMesh.material.map = auraTex;
-      playerAuraMesh.material.needsUpdate = true;
-    }
-  }
-
   // 2. Textura do Personagem (Ichigo Shikai / Recruta):
   // Se estiver se movendo, usa o quadro animado correspondente (ex: player_front_0..3)
   // Se estiver parado, usa o quadro neutro (ex: player_front_1 ou player_front)
@@ -783,6 +770,16 @@ function updateWeapons(dt) {
     executeAsauchiSlash(asauchi.damage * dmgBonus);
   }
 
+  // 1.1 Getsuga Tenshō (Projétil cortante que avança pelo mapa rasgando o solo)
+  const getsuga = state.weapons.getsuga;
+  if (getsuga && getsuga.level > 0) {
+    getsuga.timer -= dt;
+    if (getsuga.timer <= 0) {
+      getsuga.timer = getsuga.cooldown;
+      executeGetsugaTensho(getsuga.damage * dmgBonus);
+    }
+  }
+
   // Animação do Slash (avança os 4 quadros da lâmina com base no tempo de vida)
   if (slashAlpha > 0) {
     slashAlpha -= dt * 4.0;
@@ -815,6 +812,12 @@ function updateWeapons(dt) {
       executeShakkaho(shakkaho.damage * dmgBonus);
     }
   }
+}
+
+function executeGetsugaTensho(dmg) {
+  if (!fxManager) return;
+  // Dispara a onda Getsuga a partir da posição do jogador na direção para onde ele está olhando
+  fxManager.spawnGetsuga(player.x, player.z, player.dirX, player.dirZ, dmg);
 }
 
 function executeAsauchiSlash(dmg) {
