@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 15,
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/docs/session_hint.py\" --event start --format text"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 15,
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/docs/session_hint.py\" --event stop --format claude-stop"
+          }
+        ]
+      }
+    ]
+  }
+}

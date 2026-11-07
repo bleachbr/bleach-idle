@@ -96,6 +96,17 @@ jobs:
             e2e/playwright-report/
           retention-days: 7
 
+  docs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Governança dos docs vivos
+        run: |
+          python3 scripts/docs/test_governanca.py
+          python3 scripts/docs/docs_check.py
+
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [test, gitleaks]

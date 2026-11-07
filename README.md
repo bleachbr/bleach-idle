@@ -13,9 +13,17 @@ O **Bleach: Soul Survivor** une a consagrada fórmula de ação roguelite (*bull
 
 ---
 
-## 🗺️ Roadmap de Entregas
+## Roadmap de entregas
 
-O plano completo de desenvolvimento está detalhado em **[`ENTREGAS_ROADMAP.md`](ENTREGAS_ROADMAP.md)**:
+O plano aberto está em **[`docs/ROADMAP.md`](docs/ROADMAP.md)**. [`ENTREGAS_ROADMAP.md`](ENTREGAS_ROADMAP.md) só aponta para lá. Estado de hoje: [`docs/STATUS.md`](docs/STATUS.md).
+
+## Agentes
+
+O contrato para Claude, Antigravity, Kiro e Grok é [`AGENTS.md`](AGENTS.md). Quem lê cada arquivo está em [`docs/governanca/harness.md`](docs/governanca/harness.md).
+
+## 🗺️ Visão que o roadmap detalha
+
+O plano completo de desenvolvimento está em **[`docs/ROADMAP.md`](docs/ROADMAP.md)**:
 
 * **Versão 1 (MVP - Foco Atual):**
   * O jogador inicia como um **Recruta Shinigami** em uma **Arena Fechada em Karakura Town**.

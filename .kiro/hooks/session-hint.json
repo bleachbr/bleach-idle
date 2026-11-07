@@ -1,0 +1,23 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "docs-session-start",
+      "description": "Injeta branch, contagem do roadmap e data do STATUS no início da sessão",
+      "trigger": "SessionStart",
+      "action": {
+        "type": "command",
+        "command": "python3 scripts/docs/session_hint.py --event start --format text"
+      }
+    },
+    {
+      "name": "docs-session-stop",
+      "description": "Avisa se o código do jogo mudou sem um doc vivo. Não bloqueia.",
+      "trigger": "Stop",
+      "action": {
+        "type": "command",
+        "command": "python3 scripts/docs/session_hint.py --event stop --format text"
+      }
+    }
+  ]
+}

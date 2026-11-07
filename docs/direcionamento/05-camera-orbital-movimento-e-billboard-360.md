@@ -86,7 +86,7 @@ const angle = Math.atan2(rightProj, fwdProj);
 
 ## 5. Atlas de Texturas de Hollows e Jogador
 
-O gerador procedural em [`src/spritesheet.js`](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v4/bleachbr/src/spritesheet.js) renderiza todas as 4 perspectivas para todas as criaturas:
+O gerador procedural em [`src/spritesheet.js`](../../src/spritesheet.js) renderiza todas as 4 perspectivas para todas as criaturas:
 
 1. **Recruta Shinigami (`player`):**
    * `player_back`: Quimono preto traseiro com nó branco do Obi e katana embainhada nas costas.

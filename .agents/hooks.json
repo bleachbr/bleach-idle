@@ -1,0 +1,18 @@
+{
+  "docs-session": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "python3 scripts/docs/session_hint.py --event start --format antigravity",
+        "timeout": 15
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "python3 scripts/docs/session_hint.py --event stop --format antigravity-stop",
+        "timeout": 15
+      }
+    ]
+  }
+}

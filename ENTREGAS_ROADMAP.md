@@ -1,5 +1,7 @@
 # Roadmap e Principais Entregas: Bleach Soul Survivor (Estilo PokéBonk)
 
+A fonte única do plano executável, com caixas, é [docs/ROADMAP.md](docs/ROADMAP.md). Este arquivo é a visão de produto: não tem caixa de tarefa e não recebe item novo. O estado de hoje está em [docs/STATUS.md](docs/STATUS.md).
+
 Este documento define o plano mestre de entregas do projeto, dividindo o escopo entre a **Versão 1 (MVP Focado e Fechado)** e a **Versão 2 (Expansão e Metaprogressão)**.
 
 ---
@@ -8,10 +10,11 @@ Este documento define o plano mestre de entregas do projeto, dividindo o escopo 
 
 O objetivo central da Versão 1 é entregar uma experiência jogável completa, polida e autocontida: **uma partida do início ao fim com vitória ao derrotar o Chefe**.
 
-### 1. Personagem Inicial: O Recruta Shinigami
-* O jogador inicia como um jovem Shinigami recruta da 13ª Divisão de Guarda da Corte.
-* Equipado inicialmente com sua **Asauchi** (katana básica com corte semicircular frontal automático).
-* Movimentação responsiva via **WASD / Setas** no teclado ou **Joystick Virtual** no mobile.
+### 1. Personagem Inicial: O Recruta Shinigami / Ichigo Shikai
+* O jogador inicia como um jovem Shinigami recruta ou Ichigo Kurosaki (Shikai aprovado).
+* Equipado inicialmente com sua **Asauchi** (katana básica com corte semicircular frontal automático) e canalização espiritual.
+* Movimentação responsiva via **WASD / Setas** no teclado relativo ao ângulo da câmera orbital 360°.
+* **Mecânica de Pulo (Tecla Espaço):** Salto vertical com física gravitacional acelerada ($v_y = 8.5\text{ m/s}, g = 24.0\text{ m/s}^2$) e sombra dinâmica atenuada projetada no solo, permitindo esquivar do contato físico de Hollows no chão.
 
 ### 2. Cenário: Arena Fechada de Karakura Town
 * Mapa fechado em formato de arena circular ($170\text{ m}$ de diâmetro), espelhado na arquitetura de terreno do PokéBonk:
@@ -27,16 +30,24 @@ O objetivo central da Versão 1 é entregar uma experiência jogável completa, 
   3. **Acidwire:** Hollow quadrúpede com projéteis ácidos de médio alcance.
   4. **Hollows Elites:** Versões maiores com contorno dourado via shader e mais vida.
 
-### 4. Sistema de Level Up e Habilidades (3 Escolhas)
+### 4. Sistema de Level Up Dinâmico em Tempo Real (Sem Pausa / Sobrescrita)
 * Coleta de partículas de **Reishi** deixadas pelos monstros derrotados.
-* A cada novo nível, pausa do jogo e exibição do modal com **3 cartas aleatórias**:
-  * *Habilidades Ativas:* Corte de Asauchi, Hadō #4 Byakurai (raio elétrico perfurante), Hadō #31 Shakkahō (esfera de fogo explosiva), Bakudō #9 Geki (paralisia em área).
-  * *Passivas:* Treinamento de Shunpo (velocidade), Densidade de Reiatsu (dano), Controle Espiritual (ímã de Reishi), Shihakusho Reforçado (defesa).
+* **Sem Congelamento do Jogo (No Pause):** A evolução não trava a tela nem interrompe a ação. Um banner flutuante compacto surge no HUD com até 3 opções.
+* **Atalhos Rápidos `[1]`, `[2]`, `[3]` ou Clique:** O jogador escolhe instantaneamente no teclado sem precisar tirar a mão dos controles.
+* **Mecânica de Sobrescrita de Poderes:** A nova escolha ativa **sobrescreve o poder anterior** (perde os poderes e itens passados), mantendo a jogabilidade focada e dinâmica.
+* **Opção de Pular (`[0] / [P]`):** O jogador pode pular a escolha para manter sua build atual intacta sem nenhuma alteração.
 
 ### 5. O Confronto com o Chefe: Menos Grande (Gillian)
 * Aos 8 minutos de sobrevivência (ou após derrotar uma meta de Hollows), o céu se abre em uma fenda (*Garganta*) e surge o **Menos Grande**.
 * Escala $3.5\times$ maior que o jogador, contorno carmesim e ataque característico de **Cero Vermelho** com telegrafia no chão.
+* **Instância Individual no Multiplayer:** O Boss é gerado individualmente para cada jogador testar sua maestria e concluir sua partida.
 * **Condição de Vitória:** Derrotar o Menos Grande finaliza imediatamente a rodada, purificando a arena.
+
+### 6. Arquitetura Multiplayer V1 (Mapa Único & Disputa de Reishi)
+* **Entrada no Mesmo Mapa:** Todos os jogadores iniciam na mesma arena de Karakura Town.
+* **Hollows Globais e Compartilhados:** A horda de monstros é comum a todos os jogadores presentes.
+* **Distribuição de Reishi por DPS Winner:** Cada Hollow rastreia o histórico de contribuição de dano de todos os jogadores (`damageContributions`). Ao morrer, a bolinha de Reishi gerada pertence e é atraída **exclusivamente para o jogador que causou mais dano** naquele Hollow.
+* **Chefe Final Instanciado:** Cada jogador enfrenta seu próprio Menos Grande no clímax da partida.
 
 ### 6. Tela de Conclusão / Estatísticas da Partida
 Ao vencer (ou ser derrotado), o jogo exibe um painel completo com:

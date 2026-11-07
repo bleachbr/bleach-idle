@@ -32,3 +32,12 @@ validate-sprites: ## Executa testes de qualidade estática nos sprites gerados (
 
 test-sprites-e2e: ## Executa testes visuais E2E em navegador (Playwright 360 e viewport)
 	python3 scratch/test_sprite_consistency_e2e.py
+
+docs-sync: ## Recalcula o bloco de progresso do STATUS a partir das caixas do ROADMAP
+	python3 scripts/docs/sync_status.py
+
+docs-check: ## Falha se pendência, aprendizado, progresso ou link relativo estiver incoerente
+	python3 scripts/docs/docs_check.py
+
+docs-test: ## Testes do checker de governança
+	python3 scripts/docs/test_governanca.py

@@ -60,13 +60,13 @@ python3 geradores/sprite_processor.py \
 2. **Limpeza de Fundo e Despill**: Remove o fundo magenta `#FF00FF` e atenua bordas roxas.
 3. **Normalização Centralizada**: Centraliza o efeito no quadro de 128x128 sem ancoragem no solo (efeitos flutuam ou envolvem o centro).
 4. **Geração de Manifesto (`manifest.json`)**: Salva metadados de Three.js (`blendMode: additive`, `worldScale: [2.6, 2.6]`, `frameCount: 4`).
-5. **Atualização Automática**: Registra em `FX_REGISTRY` em [src/characters.js](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v4/bleachbr/src/characters.js).
+5. **Atualização Automática**: Registra em `FX_REGISTRY` em [src/characters.js](../../src/characters.js).
 
 ---
 
 ## 4. Modelo de Vinculação (Character-to-FX Binding)
 
-A vinculação entre personagens e seus poderes é declarativa no arquivo [src/characters.js](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v4/bleachbr/src/characters.js):
+A vinculação entre personagens e seus poderes é declarativa no arquivo [src/characters.js](../../src/characters.js):
 
 ```javascript
 export const PLAYABLE_CHARACTERS = {
@@ -110,7 +110,7 @@ export const FX_REGISTRY = {
 
 ---
 
-## 5. Implementação no Three.js ([src/main.js](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v4/bleachbr/src/main.js))
+## 5. Implementação no Three.js ([src/main.js](../../src/main.js))
 
 1. **Aura de Reiatsu**:
    - Mesh: `playerAuraMesh` (`PlaneGeometry(2.6, 2.6)`).

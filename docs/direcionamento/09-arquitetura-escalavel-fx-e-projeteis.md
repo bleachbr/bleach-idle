@@ -57,7 +57,7 @@ src/
 └── characters.js              <-- Vínculo declarativo: cada personagem escolhe seus presets
 ```
 
-### Exemplo de Preset Comportamental ([src/fx/fxConfig.js](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v4/bleachbr/src/fx/fxConfig.js))
+### Exemplo de Preset Comportamental ([src/fx/fxConfig.js](../../src/fx/fxConfig.js))
 ```javascript
 export const FX_BEHAVIORS = {
   // Preset de Aura em Surtos Periódicos
@@ -86,7 +86,7 @@ export const FX_BEHAVIORS = {
 };
 ```
 
-### Vínculo no Personagem ([src/characters.js](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v4/bleachbr/src/characters.js))
+### Vínculo no Personagem ([src/characters.js](../../src/characters.js))
 Se você criar um personagem novo (ex: *Byakuya*, *Renji*, *Rukia*), basta apontar quais presets comportamentais ele utiliza e customizar os parâmetros desejados:
 ```javascript
 "ichigo_shikai": {

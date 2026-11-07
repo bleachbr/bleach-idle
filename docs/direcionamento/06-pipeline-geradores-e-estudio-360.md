@@ -82,8 +82,8 @@ O Estúdio 360° roda diretamente no navegador e reproduz fielmente as condiçõ
 
 Ao clicar em **"✓ APROVAR & INSTALAR NO JOGO"** no estúdio:
 1. A API `/api/staging/approve` (configurada no Vite) copia a pasta de staging para `src/assets/characters/<id>/`.
-2. O arquivo [`src/characters.js`](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v4/bleachbr/src/characters.js) é atualizado automaticamente com o novo manifesto do personagem.
-3. No jogo principal ([`src/main.js`](file:///Users/wjunior/projetos/outros/cursos-online-treinamento/v4/bleachbr/src/main.js)), o personagem aprovado passa a ser carregado como o jogador ativo, com texturas em alta resolução e nome/ícone no HUD!
+2. O arquivo [`src/characters.js`](../../src/characters.js) é atualizado automaticamente com o novo manifesto do personagem.
+3. No jogo principal ([`src/main.js`](../../src/main.js)), o personagem aprovado passa a ser carregado como o jogador ativo, com texturas em alta resolução e nome/ícone no HUD!
 
 ---
 
