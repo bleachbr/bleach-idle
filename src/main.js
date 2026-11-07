@@ -5,7 +5,7 @@ import { FXManager } from './fx/fxManager.js';
 import { createHuecoMundoMap, getTerrainHeight, MAP_CONFIG, clampPlayerToMap, updateMapPropsBillboard } from './maps/hueco_mundo.js';
 import { computePlayerDisplacement, getSpriteDirection, updateWalkCycle, resetWalkCycle } from './movement.js';
 import { initLoginMenu, showLoginMenu, hideLoginMenu, updateMenuCamera } from './menu.js';
-import { initVirtualJoystick, getJoystickVector, showVirtualJoystick, hideVirtualJoystick } from './joystick.js';
+import { initVirtualJoystick, getJoystickVector, showVirtualJoystick, hideVirtualJoystick, isTouchDevice } from './joystick.js';
 import { initTelemetry, logTelemetry, syncMultiplayerSession } from './telemetry.js';
 // Constantes da Arena e Câmera (Hueco Mundo - Bioma Ativo da Entrega 1)
 const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 88.0;
@@ -379,7 +379,7 @@ function resumeGame(canvas) {
   if (state.inMenu) return;
   state.paused = false;
   document.getElementById('pause-modal')?.classList.add('hidden');
-  if (state.active && !state.levelUpOpen && !state.gameOver && document.pointerLockElement !== canvas) {
+  if (!isTouchDevice() && state.active && !state.levelUpOpen && !state.gameOver && document.pointerLockElement !== canvas) {
     canvas.requestPointerLock().catch(() => {});
   }
 }
@@ -411,9 +411,9 @@ function setupPointerLockListeners(canvas) {
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseOnFocusLoss(canvas); });
   canvas.addEventListener('click', () => { if (!state.inMenu && !state.levelUpOpen && !state.gameOver) resumeGame(canvas); });
   document.getElementById('pause-modal')?.addEventListener('click', () => { if (!state.gameOver) resumeGame(canvas); });
-  document.addEventListener('pointerlockerror', () => { if (state.active && !state.levelUpOpen && !state.gameOver) pauseGame(canvas); });
+  document.addEventListener('pointerlockerror', () => { if (!isTouchDevice() && state.active && !state.levelUpOpen && !state.gameOver) pauseGame(canvas); });
   document.addEventListener('pointerlockchange', () => {
-    const isLocked = (document.pointerLockElement === canvas);
+    if (isTouchDevice()) return; const isLocked = (document.pointerLockElement === canvas);
     if (!isLocked) {
       if (!state.inMenu && state.active && !state.levelUpOpen && !state.gameOver) pauseGame(canvas);
     } else if (!state.inMenu) {
@@ -1353,7 +1353,7 @@ function startGame(name) {
   hideLoginMenu();
   showVirtualJoystick();
   const canvas = renderer.domElement;
-  if (canvas && canvas.requestPointerLock) {
+  if (!isTouchDevice() && canvas && canvas.requestPointerLock) {
     canvas.requestPointerLock().catch(() => {});
   }
 }
@@ -1377,7 +1377,7 @@ function restartGame() {
   state.active = true;
   showVirtualJoystick();
   const canvas = renderer.domElement;
-  if (canvas && canvas.requestPointerLock) {
+  if (!isTouchDevice() && canvas && canvas.requestPointerLock) {
     canvas.requestPointerLock().catch(() => {});
   }
 }
