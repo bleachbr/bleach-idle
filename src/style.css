@@ -1,0 +1,366 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #0b0e14;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #fff;
+}
+
+#game-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+#hud-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Barra de XP Superior estilo PokéBonk */
+#xp-bar-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 16px;
+  background: rgba(15, 20, 32, 0.85);
+  border-bottom: 2px solid #23314d;
+}
+
+#xp-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #1fa463, #2f7bf5, #00f0ff);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
+  transition: width 0.15s ease-out;
+}
+
+#level-badge {
+  position: absolute;
+  top: 18px;
+  left: 16px;
+  background: #2f7bf5;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 2px 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* Painel Superior Esquerdo */
+#top-left-panel {
+  position: absolute;
+  top: 48px;
+  left: 16px;
+}
+
+#character-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(18, 22, 36, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+#avatar-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: #1a2236;
+  border: 1px solid #3d4f7c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+#player-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 4px;
+}
+
+#hp-bar-bg {
+  width: 140px;
+  height: 14px;
+  background: #2b1114;
+  border-radius: 7px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #63222a;
+}
+
+#hp-bar-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #e53e3e, #48bb78);
+  transition: width 0.1s linear;
+}
+
+#hp-text {
+  position: absolute;
+  inset: 0;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 1px 2px #000;
+}
+
+/* Painel Superior Central: Timer e Kills */
+#top-center-panel {
+  position: absolute;
+  top: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  background: rgba(18, 22, 36, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 6px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+#timer-box {
+  color: #f7fafc;
+}
+
+#kills-box {
+  color: #fc8181;
+}
+
+/* Barra do Chefe Menos Grande */
+#boss-bar-container {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, 90vw);
+  background: rgba(18, 22, 36, 0.9);
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 2px solid #e53e3e;
+  box-shadow: 0 0 20px rgba(229, 62, 62, 0.6);
+  text-align: center;
+  transition: opacity 0.3s ease;
+}
+
+#boss-title {
+  font-size: 12px;
+  font-weight: 900;
+  color: #feb2b2;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+#boss-hp-bg {
+  width: 100%;
+  height: 16px;
+  background: #2a1114;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #742a2a;
+}
+
+#boss-hp-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #9b2c2c, #f56565);
+}
+
+/* Instruções na base */
+#bottom-instructions {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 20, 32, 0.75);
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-size: 12px;
+  color: #a0aec0;
+}
+
+/* Modais de Interface */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 14, 20, 0.85);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.modal-card {
+  background: #161b26;
+  border: 1px solid #2d3748;
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 680px;
+  width: 90vw;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+  text-align: center;
+}
+
+.modal-card h2 {
+  font-size: 20px;
+  color: #63b3ed;
+  margin-bottom: 6px;
+}
+
+.modal-card .subtitle {
+  font-size: 13px;
+  color: #a0aec0;
+  margin-bottom: 24px;
+}
+
+/* Grade de 3 Cartas de Habilidades */
+#cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.skill-card {
+  background: #1f2737;
+  border: 2px solid #3b475f;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.skill-card:hover {
+  transform: translateY(-4px);
+  border-color: #63b3ed;
+  background: #253046;
+}
+
+.skill-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.skill-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #f7fafc;
+  margin-bottom: 6px;
+}
+
+.skill-desc {
+  font-size: 12px;
+  color: #cbd5e0;
+  line-height: 1.4;
+}
+
+/* Relatório de Fim de Partida */
+.report-card {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.report-card h1 {
+  color: #48bb78;
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: #1f2737;
+  padding: 14px;
+  border-radius: 10px;
+  margin: 18px 0;
+  font-size: 14px;
+  text-align: left;
+}
+
+.stat-label {
+  color: #a0aec0;
+}
+
+.report-section {
+  text-align: left;
+  margin-bottom: 16px;
+}
+
+.report-section h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #90cdf4;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #2d3748;
+  padding-bottom: 4px;
+}
+
+.report-section ul {
+  list-style: none;
+  font-size: 13px;
+  color: #e2e8f0;
+}
+
+.report-section li {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.btn {
+  border: 0;
+  border-radius: 24px;
+  padding: 14px 32px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: opacity 0.2s;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, #3182ce, #63b3ed);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(49, 130, 206, 0.4);
+}
+
+.btn.primary:hover {
+  opacity: 0.9;
+}

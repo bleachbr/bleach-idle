@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Bleach: Soul Survivor · Protótipo 3D Survivor</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Overlay do HUD em tempo real -->
+    <div id="hud-overlay">
+      <!-- Barra Superior de Reishi (XP) -->
+      <div id="xp-bar-container">
+        <div id="xp-bar-fill"></div>
+        <span id="level-badge">Nv. 1</span>
+      </div>
+
+      <!-- Informações do Recruta -->
+      <div id="top-left-panel">
+        <div id="character-card">
+          <div id="avatar-box">🗡️</div>
+          <div id="vitals-box">
+            <div id="player-title">Recruta Shinigami</div>
+            <div id="hp-bar-bg">
+              <div id="hp-bar-fill"></div>
+              <span id="hp-text">100 / 100</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Relógio e Contador de Almas Purificadas -->
+      <div id="top-center-panel">
+        <div id="timer-box">00:00</div>
+        <div id="kills-box">💀 <span id="kills-count">0</span> Hollows</div>
+      </div>
+
+      <!-- Barra de Vida do Chefe Menos Grande (Gillian) -->
+      <div id="boss-bar-container" class="hidden">
+        <div id="boss-title">⚠️ MENOS GRANDE (GILLIAN) - CLASSE MENOS</div>
+        <div id="boss-hp-bg">
+          <div id="boss-hp-fill"></div>
+        </div>
+      </div>
+
+      <!-- Instruções de Controle -->
+      <div id="bottom-instructions">
+        <span><b>WASD</b> ou <b>Setas</b>: Mover Recruta · Katana (Asauchi) ataca automaticamente</span>
+      </div>
+    </div>
+
+    <!-- Modal de Level Up: 3 Cartas de Habilidades -->
+    <div id="levelup-modal" class="modal hidden">
+      <div class="modal-card">
+        <h2>ESCOLHA UMA HABILIDADE ESPIRITUAL</h2>
+        <p class="subtitle">Canalize o Reishi coletado dos Hollows para expandir seu poder</p>
+        <div id="cards-container"></div>
+      </div>
+    </div>
+
+    <!-- Modal de Relatório Final: Vitória ou Derrota -->
+    <div id="gameover-modal" class="modal hidden">
+      <div class="modal-card report-card">
+        <h1 id="report-title">MISSÃO CUMPRIDA!</h1>
+        <p id="report-subtitle">A invasão dos Hollows no Distrito de Karakura foi contida.</p>
+
+        <div class="stats-grid">
+          <div class="stat-item"><span class="stat-label">Tempo:</span> <b id="stat-time">00:00</b></div>
+          <div class="stat-item"><span class="stat-label">Nível Final:</span> <b id="stat-level">Nv. 1</b></div>
+          <div class="stat-item"><span class="stat-label">Almas Purificadas:</span> <b id="stat-kills">0</b></div>
+          <div class="stat-item"><span class="stat-label">Dano Total:</span> <b id="stat-damage">0</b></div>
+        </div>
+
+        <div class="report-section">
+          <h3>Censo de Hollows Derrotados</h3>
+          <ul id="enemies-census"></ul>
+        </div>
+
+        <div class="report-section">
+          <h3>Arsenal Utilizado</h3>
+          <ul id="weapons-census"></ul>
+        </div>
+
+        <div class="modal-actions">
+          <button id="btn-restart" class="btn primary">REINICIAR MISSÃO</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
