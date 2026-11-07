@@ -1,15 +1,14 @@
 import * as THREE from 'three';
 import { createSpritesheet } from './spritesheet.js';
-import { billboardVertexShader, billboardFragmentShader } from './shaders.js';
 
 // Constantes do jogo
 const ARENA_RADIUS = 75.0;
-const MAX_ENEMIES = 800;
-const CAM_DIST = 9.0;
-const CAM_PITCH = 0.45; // ~26° de inclinação para o chão
+const MAX_ENEMIES = 400;
+const CAM_DIST = 14.0;
+const CAM_PITCH = 0.55; // Inclinação da câmera para enxergar o chão e personagens com perfeição
 
 // Estado do Jogo
-const state = {
+export const state = {
   active: true,
   paused: false,
   time: 0,
@@ -17,7 +16,7 @@ const state = {
   damageDealt: 0,
   level: 1,
   xp: 0,
-  xpNext: 30,
+  xpNext: 20,
   bossSpawned: false,
   bossDefeated: false,
   census: {
@@ -27,7 +26,7 @@ const state = {
     menos: 0
   },
   weapons: {
-    asauchi: { name: 'Corte de Asauchi', level: 1, cooldown: 1.1, timer: 0, damage: 25, totalDamage: 0 },
+    asauchi: { name: 'Corte de Asauchi', level: 1, cooldown: 1.0, timer: 0, damage: 30, totalDamage: 0 },
     byakurai: { name: 'Hadō #4 Byakurai', level: 0, cooldown: 2.2, timer: 0, damage: 45, totalDamage: 0 },
     shakkaho: { name: 'Hadō #31 Shakkahō', level: 0, cooldown: 3.5, timer: 0, damage: 70, totalDamage: 0 }
   },
@@ -39,202 +38,253 @@ const state = {
 };
 
 // Dados do Jogador (Recruta Shinigami)
-const player = {
+export const player = {
   x: 0,
   y: 0,
   z: 0,
   hp: 100,
   maxHp: 100,
-  speed: 5.5,
+  speed: 6.0,
   dirX: 0,
   dirZ: 1,
   invulnerableTime: 0
 };
 
-// Input
+// Controles
 const keys = { w: false, a: false, s: false, d: false };
 
-// Three.js Core
+// Three.js Globais
 let scene, camera, renderer, clock;
-let spriteTexture;
-let enemyMesh, aPos, aSize, aUV, aFx;
-let playerMesh, pPos, pSize, pUV, pFx;
-let attackSlashes = [];
+let playerMesh, slashMesh, reishiGroup;
+let enemyMeshes = [];
 let reishiDrops = [];
+let spriteTextures = {};
 
-// Arrays de dados dos inimigos (SoA - Structure of Arrays)
-const enemies = {
-  count: 0,
-  x: new Float32Array(MAX_ENEMIES),
-  y: new Float32Array(MAX_ENEMIES),
-  z: new Float32Array(MAX_ENEMIES),
-  hp: new Float32Array(MAX_ENEMIES),
-  maxHp: new Float32Array(MAX_ENEMIES),
-  speed: new Float32Array(MAX_ENEMIES),
-  type: new Array(MAX_ENEMIES),
-  isBoss: new Uint8Array(MAX_ENEMIES),
-  flash: new Float32Array(MAX_ENEMIES),
-  dissolve: new Float32Array(MAX_ENEMIES),
-  active: new Uint8Array(MAX_ENEMIES)
-};
-
-// Inicialização
+// Iniciar após DOM carregado
 window.addEventListener('DOMContentLoaded', init);
 
 function init() {
   const canvas = document.getElementById('game-canvas');
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0c0f18);
-  scene.fog = new THREE.Fog(0x0c0f18, 30, 85);
+  scene.background = new THREE.Color(0x111625); // Azul-noite atmosférico visível
 
   clock = new THREE.Clock();
 
-  // 1. Câmera Perspectiva (PokéBonk: FOV 70°, CamDist 9.0, Pitch 0.45)
-  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 200);
-  updateCameraPosition();
+  // 1. Câmera
+  camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 300);
+  updateCamera();
 
   // 2. Renderizador WebGL
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-  // 3. Luzes
-  const ambLight = new THREE.AmbientLight(0xdde5f4, 0.85);
+  // 3. Iluminação
+  const ambLight = new THREE.AmbientLight(0xffffff, 1.2);
   scene.add(ambLight);
 
-  const dirLight = new THREE.DirectionalLight(0x9fc5e8, 1.2);
+  const dirLight = new THREE.DirectionalLight(0xa5c4f5, 1.0);
   dirLight.position.set(20, 40, 20);
   scene.add(dirLight);
 
-  // 4. Construção do Terreno da Arena Fechada (Karakura Town)
+  // 4. Construção da Arena de Karakura
   createArena();
 
-  // 5. Geração e Carregamento do Spritesheet
-  const { canvas: sheetCanvas, sprites } = createSpritesheet();
-  spriteTexture = new THREE.CanvasTexture(sheetCanvas);
-  spriteTexture.magFilter = THREE.NearestFilter;
-  spriteTexture.minFilter = THREE.NearestFilter;
-  spriteTexture.colorSpace = THREE.SRGBColorSpace;
+  // 5. Texturas e Sprites de Bleach
+  buildSprites();
 
-  // 6. Configuração dos Renderizadores Instanciados de Sprites
-  setupSpriteRenderers(sprites);
+  // 6. Criar Personagem do Jogador (Recruta Shinigami)
+  createPlayerMesh();
 
-  // 7. Eventos de Entrada (Teclado e Redimensionamento)
+  // 7. Criar Malha do Efeito de Corte (Katana Slash)
+  createSlashMesh();
+
+  // 8. Grupo de Orbes de Reishi
+  reishiGroup = new THREE.Group();
+  scene.add(reishiGroup);
+
+  // 9. Pool de Hollows
+  initEnemyPool();
+
+  // 10. Listeners de Teclado e Redimensionamento
   setupInputListeners();
 
-  // 8. Iniciar o Loop Principal
+  // Expor para debug via browser / playwright
+  window.debugGame = { scene, camera, player, state, enemyMeshes };
+
+  // 11. Iniciar Loop
   requestAnimationFrame(loop);
 }
 
 function createArena() {
-  // Chão Circular de Asfalto Urbano
-  const groundGeo = new THREE.CircleGeometry(ARENA_RADIUS, 48);
+  // 1. Chão de asfalto urbano com textura de grade
+  const groundGeo = new THREE.PlaneGeometry(ARENA_RADIUS * 2, ARENA_RADIUS * 2, 32, 32);
   groundGeo.rotateX(-Math.PI / 2);
+
+  // Textura procedural de calçamento/asfalto
+  const groundCanvas = document.createElement('canvas');
+  groundCanvas.width = 256;
+  groundCanvas.height = 256;
+  const gctx = groundCanvas.getContext('2d');
+  gctx.fillStyle = '#1e2638';
+  gctx.fillRect(0, 0, 256, 256);
+  gctx.strokeStyle = '#2b364e';
+  gctx.lineWidth = 2;
+  for (let i = 0; i < 256; i += 32) {
+    gctx.beginPath();
+    gctx.moveTo(i, 0); gctx.lineTo(i, 256);
+    gctx.moveTo(0, i); gctx.lineTo(256, i);
+    gctx.stroke();
+  }
+  const groundTex = new THREE.CanvasTexture(groundCanvas);
+  groundTex.wrapS = THREE.RepeatWrapping;
+  groundTex.wrapT = THREE.RepeatWrapping;
+  groundTex.repeat.set(16, 16);
+
   const groundMat = new THREE.MeshStandardMaterial({
-    color: 0x1a2130,
-    roughness: 0.85,
-    metalness: 0.1
+    map: groundTex,
+    roughness: 0.8
   });
   const ground = new THREE.Mesh(groundGeo, groundMat);
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // Muro/Barreira de Selamento Espiritual nas Bordas da Arena
-  const wallGeo = new THREE.RingGeometry(ARENA_RADIUS - 0.5, ARENA_RADIUS + 3.0, 48);
-  wallGeo.rotateX(-Math.PI / 2);
-  const wallMat = new THREE.MeshBasicMaterial({
-    color: 0x2b3852,
+  // 2. Barreira Espiritual Circular (Bordas da Arena)
+  const barrierGeo = new THREE.RingGeometry(ARENA_RADIUS - 0.8, ARENA_RADIUS + 0.5, 64);
+  barrierGeo.rotateX(-Math.PI / 2);
+  const barrierMat = new THREE.MeshBasicMaterial({
+    color: 0x3182ce,
     side: THREE.DoubleSide
   });
-  const wall = new THREE.Mesh(wallGeo, wallMat);
-  wall.position.y = 0.05;
-  scene.add(wall);
+  const barrier = new THREE.Mesh(barrierGeo, barrierMat);
+  barrier.position.y = 0.05;
+  scene.add(barrier);
 
-  // Postes de Luz e Fitas de Selamento
+  // 3. Postes com lanternas/fitas espirituais nas bordas
   for (let i = 0; i < 24; i++) {
     const angle = (i / 24) * Math.PI * 2;
     const px = Math.cos(angle) * ARENA_RADIUS;
     const pz = Math.sin(angle) * ARENA_RADIUS;
 
-    const poleGeo = new THREE.CylinderGeometry(0.2, 0.2, 5, 8);
-    poleGeo.translate(0, 2.5, 0);
-    const poleMat = new THREE.MeshStandardMaterial({ color: 0x2d3748 });
+    const poleGeo = new THREE.CylinderGeometry(0.2, 0.2, 4.5, 8);
+    poleGeo.translate(0, 2.25, 0);
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x4a5568 });
     const pole = new THREE.Mesh(poleGeo, poleMat);
     pole.position.set(px, 0, pz);
     scene.add(pole);
+
+    // Lanterna no topo do poste
+    const lampGeo = new THREE.BoxGeometry(0.7, 0.7, 0.7);
+    lampGeo.translate(0, 4.5, 0);
+    const lampMat = new THREE.MeshBasicMaterial({ color: 0x63b3ed });
+    const lamp = new THREE.Mesh(lampGeo, lampMat);
+    lamp.position.set(px, 0, pz);
+    scene.add(lamp);
   }
 }
 
-function setupSpriteRenderers(sprites) {
-  // Material compartilhado com Shaders Customizados
-  const spriteMat = new THREE.ShaderMaterial({
-    vertexShader: billboardVertexShader,
-    fragmentShader: billboardFragmentShader,
-    uniforms: {
-      map: { value: spriteTexture },
-      uTexel: { value: new THREE.Vector2(1 / 512, 1 / 512) },
-      uLean: { value: 0.35 },
-      uTime: { value: 0 }
-    },
-    transparent: true,
-    depthWrite: true
-  });
+function buildSprites() {
+  const { canvas, sprites } = createSpritesheet();
 
-  const baseQuad = new THREE.PlaneGeometry(1, 1);
-  baseQuad.translate(0, 0.5, 0); // Pivô nos pés do personagem
+  // Gera texturas individuais a partir do atlas para garantir renderização perfeita
+  for (const [key, sp] of Object.entries(sprites)) {
+    const sCanvas = document.createElement('canvas');
+    sCanvas.width = sp.w;
+    sCanvas.height = sp.h;
+    const sCtx = sCanvas.getContext('2d');
+    sCtx.imageSmoothingEnabled = false;
+    sCtx.drawImage(canvas, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w, sp.h);
 
-  // --- MESH DO JOGADOR ---
-  pPos = new Float32Array(3);
-  pSize = new Float32Array(2);
-  pUV = new Float32Array(4);
-  pFx = new Float32Array(4);
-
-  const pGeo = baseQuad.clone();
-  pGeo.setAttribute('iPos', new THREE.InstancedBufferAttribute(pPos, 3));
-  pGeo.setAttribute('iSize', new THREE.InstancedBufferAttribute(pSize, 2));
-  pGeo.setAttribute('iUV', new THREE.InstancedBufferAttribute(pUV, 4));
-  pGeo.setAttribute('iFx', new THREE.InstancedBufferAttribute(pFx, 4));
-
-  playerMesh = new THREE.InstancedMesh(pGeo, spriteMat, 1);
-  playerMesh.frustumCulled = false;
-  scene.add(playerMesh);
-
-  // Inicializar dados do player
-  const pSp = sprites.player;
-  pSize[0] = 1.6; pSize[1] = 1.6;
-  pUV[0] = pSp.x / 512; pUV[1] = pSp.y / 512;
-  pUV[2] = (pSp.x + pSp.w) / 512; pUV[3] = (pSp.y + pSp.h) / 512;
-  pFx[2] = 1.0; // Contorno branco/ciano do jogador
-
-  // --- MESH DOS INIMIGOS (Hollows) ---
-  aPos = new Float32Array(MAX_ENEMIES * 3);
-  aSize = new Float32Array(MAX_ENEMIES * 2);
-  aUV = new Float32Array(MAX_ENEMIES * 4);
-  aFx = new Float32Array(MAX_ENEMIES * 4);
-
-  const eGeo = baseQuad.clone();
-  eGeo.setAttribute('iPos', new THREE.InstancedBufferAttribute(aPos, 3));
-  eGeo.setAttribute('iSize', new THREE.InstancedBufferAttribute(aSize, 2));
-  eGeo.setAttribute('iUV', new THREE.InstancedBufferAttribute(aUV, 4));
-  eGeo.setAttribute('iFx', new THREE.InstancedBufferAttribute(aFx, 4));
-
-  enemyMesh = new THREE.InstancedMesh(eGeo, spriteMat, MAX_ENEMIES);
-  enemyMesh.frustumCulled = false;
-  scene.add(enemyMesh);
-
-  // Mapear UVs auxiliares
-  window.spriteDefs = sprites;
+    const tex = new THREE.CanvasTexture(sCanvas);
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestFilter;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    spriteTextures[key] = tex;
+  }
 }
 
-function updateCameraPosition() {
-  const targetX = player.x;
-  const targetZ = player.z;
+function createPlayerMesh() {
+  const pGeo = new THREE.PlaneGeometry(2.0, 2.0);
+  pGeo.translate(0, 1.0, 0); // Pivô nos pés
 
-  const camY = CAM_DIST * Math.sin(CAM_PITCH) + 1.2;
-  const camZ = targetZ + CAM_DIST * Math.cos(CAM_PITCH);
+  const pMat = new THREE.MeshBasicMaterial({
+    map: spriteTextures.player,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
 
-  camera.position.set(targetX, camY, camZ);
-  camera.lookAt(targetX, 1.2, targetZ);
+  playerMesh = new THREE.Mesh(pGeo, pMat);
+  playerMesh.position.set(0, 0, 0);
+  scene.add(playerMesh);
+
+  // Sombra suave sob os pés do jogador
+  const shadowGeo = new THREE.CircleGeometry(0.7, 16);
+  shadowGeo.rotateX(-Math.PI / 2);
+  const shadowMat = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.45
+  });
+  const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+  shadow.position.y = 0.02;
+  playerMesh.add(shadow);
+}
+
+function createSlashMesh() {
+  // Arco visual do golpe da Katana
+  const slashGeo = new THREE.RingGeometry(1.6, 3.4, 24, 1, 0, Math.PI * 0.7);
+  slashGeo.rotateX(-Math.PI / 2);
+  const slashMat = new THREE.MeshBasicMaterial({
+    color: 0x63b3ed,
+    transparent: true,
+    opacity: 0,
+    side: THREE.DoubleSide
+  });
+  slashMesh = new THREE.Mesh(slashGeo, slashMat);
+  slashMesh.position.y = 0.5;
+  scene.add(slashMesh);
+}
+
+function initEnemyPool() {
+  const baseGeo = new THREE.PlaneGeometry(2.2, 2.2);
+  baseGeo.translate(0, 1.1, 0);
+
+  for (let i = 0; i < MAX_ENEMIES; i++) {
+    const mat = new THREE.MeshBasicMaterial({
+      map: spriteTextures.fishbone,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+
+    const mesh = new THREE.Mesh(baseGeo.clone(), mat);
+    mesh.visible = false;
+    mesh.position.set(0, -999, 0);
+
+    // Sombra do monstro
+    const sGeo = new THREE.CircleGeometry(0.6, 16);
+    sGeo.rotateX(-Math.PI / 2);
+    const sMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 });
+    const sMesh = new THREE.Mesh(sGeo, sMat);
+    sMesh.position.y = 0.02;
+    mesh.add(sMesh);
+
+    scene.add(mesh);
+
+    enemyMeshes.push({
+      mesh,
+      active: false,
+      x: 0,
+      z: 0,
+      hp: 40,
+      maxHp: 40,
+      speed: 3.2,
+      type: 'fishbone',
+      isBoss: false,
+      flashTimer: 0
+    });
+  }
 }
 
 function setupInputListeners() {
@@ -260,12 +310,26 @@ function setupInputListeners() {
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  document.getElementById('btn-restart').onclick = restartGame;
+  document.getElementById('btn-restart').onclick = () => location.reload();
+}
+
+function updateCamera() {
+  const targetX = player.x;
+  const targetZ = player.z;
+
+  const camY = CAM_DIST * Math.sin(CAM_PITCH) + 1.2;
+  const camZ = targetZ + CAM_DIST * Math.cos(CAM_PITCH);
+
+  camera.position.set(targetX, camY, camZ);
+  camera.lookAt(targetX, 1.0, targetZ);
 }
 
 // ==========================================
-// LOOP PRINCIPAL DE SIMULAÇÃO E RENDERIZAÇÃO
+// LOOP DE JOGO
 // ==========================================
+let slashAlpha = 0;
+let spawnTimer = 0;
+
 function loop() {
   requestAnimationFrame(loop);
 
@@ -274,35 +338,29 @@ function loop() {
 
   state.time += dt;
 
-  // 1. Atualizar Jogador (Movimentação com Shunpo)
+  // 1. Atualizar Jogador
   updatePlayer(dt);
 
-  // 2. Armas e Ataques
+  // 2. Armas / Ataques
   updateWeapons(dt);
 
-  // 3. Spawns e IA de Hordas de Hollows
+  // 3. Spawns e Inimigos
   updateSpawns(dt);
   updateEnemies(dt);
 
   // 4. Coleta de Reishi
-  updateReishiDrops(dt);
+  updateReishi(dt);
 
-  // 5. Câmera e Shaders
-  updateCameraPosition();
-  enemyMesh.material.uniforms.uTime.value = state.time;
+  // 5. Câmera
+  updateCamera();
 
-  // Atualizar atributos no WebGL
-  playerMesh.geometry.attributes.iPos.needsUpdate = true;
-  playerMesh.geometry.attributes.iFx.needsUpdate = true;
-  enemyMesh.geometry.attributes.iPos.needsUpdate = true;
-  enemyMesh.geometry.attributes.iSize.needsUpdate = true;
-  enemyMesh.geometry.attributes.iUV.needsUpdate = true;
-  enemyMesh.geometry.attributes.iFx.needsUpdate = true;
+  // 6. Billboard: Sprites sempre encaram a rotação da câmera (estilo PokéBonk)
+  alignBillboards();
 
-  // Renderizar Cena 3D
+  // 7. Renderizar Cena
   renderer.render(scene, camera);
 
-  // Atualizar HUD
+  // 8. Atualizar HUD
   updateHUD();
 }
 
@@ -326,7 +384,7 @@ function updatePlayer(dt) {
     player.x += mx * currentSpeed * dt;
     player.z += mz * currentSpeed * dt;
 
-    // Confinar dentro da Arena Fechada
+    // Confinar na arena
     const dist = Math.hypot(player.x, player.z);
     if (dist > ARENA_RADIUS - 2.0) {
       const angle = Math.atan2(player.z, player.x);
@@ -335,24 +393,32 @@ function updatePlayer(dt) {
     }
   }
 
-  // Atualizar posição do sprite do jogador
-  pPos[0] = player.x;
-  pPos[1] = player.y;
-  pPos[2] = player.z;
+  playerMesh.position.set(player.x, 0, player.z);
 
-  // Piscar de invulnerabilidade se tomou dano
+  // Piscar de dano
   if (player.invulnerableTime > 0) {
     player.invulnerableTime -= dt;
-    pFx[0] = Math.sin(state.time * 30) > 0 ? 0.7 : 0.0;
+    playerMesh.material.opacity = Math.sin(state.time * 30) > 0 ? 0.4 : 1.0;
   } else {
-    pFx[0] = 0.0;
+    playerMesh.material.opacity = 1.0;
+  }
+}
+
+function alignBillboards() {
+  // Orienta os sprites para a câmera
+  playerMesh.quaternion.copy(camera.quaternion);
+
+  for (const en of enemyMeshes) {
+    if (en.active) {
+      en.mesh.quaternion.copy(camera.quaternion);
+    }
   }
 }
 
 function updateWeapons(dt) {
   const dmgBonus = 1 + state.passives.reiatsu * 0.2;
 
-  // 1. Asauchi Slash (Corte em arco frontal)
+  // 1. Asauchi Slash (Katana frontal automática)
   const asauchi = state.weapons.asauchi;
   asauchi.timer -= dt;
   if (asauchi.timer <= 0) {
@@ -360,7 +426,13 @@ function updateWeapons(dt) {
     executeAsauchiSlash(asauchi.damage * dmgBonus);
   }
 
-  // 2. Hadō #4 Byakurai (Raio Perfurante no Hollow mais próximo)
+  // Animação do Slash
+  if (slashAlpha > 0) {
+    slashAlpha -= dt * 4.0;
+    slashMesh.material.opacity = Math.max(0, slashAlpha);
+  }
+
+  // 2. Hadō #4 Byakurai (Raio Perfurante no mais próximo)
   const byakurai = state.weapons.byakurai;
   if (byakurai.level > 0) {
     byakurai.timer -= dt;
@@ -370,7 +442,7 @@ function updateWeapons(dt) {
     }
   }
 
-  // 3. Hadō #31 Shakkahō (Canhão de Fogo Explosivo)
+  // 3. Hadō #31 Shakkahō (Explosão em Área)
   const shakkaho = state.weapons.shakkaho;
   if (shakkaho.level > 0) {
     shakkaho.timer -= dt;
@@ -382,58 +454,60 @@ function updateWeapons(dt) {
 }
 
 function executeAsauchiSlash(dmg) {
-  const range = 4.2;
-  const arc = Math.PI * 0.75; // 135° frontal
+  slashAlpha = 0.8;
+  const pAngle = Math.atan2(player.dirZ, player.dirX);
+  slashMesh.position.set(player.x, 0.4, player.z);
+  slashMesh.rotation.y = -pAngle + Math.PI * 0.35;
 
-  for (let i = 0; i < MAX_ENEMIES; i++) {
-    if (!enemies.active[i]) continue;
-    const dx = enemies.x[i] - player.x;
-    const dz = enemies.z[i] - player.z;
+  const range = 4.5;
+  const arc = Math.PI * 0.8;
+
+  for (const en of enemyMeshes) {
+    if (!en.active) continue;
+    const dx = en.x - player.x;
+    const dz = en.z - player.z;
     const dist = Math.hypot(dx, dz);
 
     if (dist <= range) {
       const angleToEnemy = Math.atan2(dz, dx);
-      const playerAngle = Math.atan2(player.dirZ, player.dirX);
-      let diff = Math.abs(angleToEnemy - playerAngle);
+      let diff = Math.abs(angleToEnemy - pAngle);
       if (diff > Math.PI) diff = Math.PI * 2 - diff;
 
       if (diff <= arc / 2) {
-        damageEnemy(i, dmg, 'asauchi');
+        damageEnemy(en, dmg, 'asauchi');
       }
     }
   }
 }
 
 function executeByakurai(dmg) {
-  let closestIdx = -1;
+  let target = null;
   let minDist = 999;
-
-  for (let i = 0; i < MAX_ENEMIES; i++) {
-    if (!enemies.active[i]) continue;
-    const d = Math.hypot(enemies.x[i] - player.x, enemies.z[i] - player.z);
+  for (const en of enemyMeshes) {
+    if (!en.active) continue;
+    const d = Math.hypot(en.x - player.x, en.z - player.z);
     if (d < minDist) {
       minDist = d;
-      closestIdx = i;
+      target = en;
     }
   }
 
-  if (closestIdx !== -1) {
-    // Atinge o alvo e qualquer outro na mesma linha reta
-    const tx = enemies.x[closestIdx] - player.x;
-    const tz = enemies.z[closestIdx] - player.z;
+  if (target) {
+    const tx = target.x - player.x;
+    const tz = target.z - player.z;
     const len = Math.hypot(tx, tz) || 1;
     const nx = tx / len;
     const nz = tz / len;
 
-    for (let i = 0; i < MAX_ENEMIES; i++) {
-      if (!enemies.active[i]) continue;
-      const ex = enemies.x[i] - player.x;
-      const ez = enemies.z[i] - player.z;
+    for (const en of enemyMeshes) {
+      if (!en.active) continue;
+      const ex = en.x - player.x;
+      const ez = en.z - player.z;
       const proj = ex * nx + ez * nz;
       if (proj > 0 && proj < 25) {
         const perp = Math.abs(ex * nz - ez * nx);
-        if (perp < 1.5) {
-          damageEnemy(i, dmg, 'byakurai');
+        if (perp < 1.6) {
+          damageEnemy(en, dmg, 'byakurai');
         }
       }
     }
@@ -441,58 +515,70 @@ function executeByakurai(dmg) {
 }
 
 function executeShakkaho(dmg) {
-  // Dispara no aglomerado mais denso de Hollows
-  let targetX = player.x + player.dirX * 8;
-  let targetZ = player.z + player.dirZ * 8;
+  const targetX = player.x + player.dirX * 7;
+  const targetZ = player.z + player.dirZ * 7;
+  const radius = 5.0;
 
-  const blastRadius = 5.0;
-  for (let i = 0; i < MAX_ENEMIES; i++) {
-    if (!enemies.active[i]) continue;
-    const dist = Math.hypot(enemies.x[i] - targetX, enemies.z[i] - targetZ);
-    if (dist <= blastRadius) {
-      damageEnemy(i, dmg, 'shakkaho');
+  for (const en of enemyMeshes) {
+    if (!en.active) continue;
+    const d = Math.hypot(en.x - targetX, en.z - targetZ);
+    if (d <= radius) {
+      damageEnemy(en, dmg, 'shakkaho');
     }
   }
 }
 
-function damageEnemy(idx, dmg, weaponKey) {
-  enemies.hp[idx] -= dmg;
-  enemies.flash[idx] = 1.0; // Flash branco no shader
+function damageEnemy(en, dmg, weaponKey) {
+  en.hp -= dmg;
+  en.flashTimer = 0.12; // Flash branco
+  en.mesh.material.color.setHex(0xffffff);
+
   state.damageDealt += dmg;
   state.weapons[weaponKey].totalDamage += dmg;
 
-  if (enemies.hp[idx] <= 0) {
-    killEnemy(idx);
+  if (en.hp <= 0) {
+    killEnemy(en);
   }
 }
 
-function killEnemy(idx) {
-  enemies.active[idx] = 0;
-  aPos[idx * 3 + 1] = -999; // Move para fora da visão
+function killEnemy(en) {
+  en.active = false;
+  en.mesh.visible = false;
+  en.mesh.position.set(0, -999, 0);
   state.kills++;
-
-  const type = enemies.type[idx];
-  state.census[type] = (state.census[type] || 0) + 1;
+  state.census[en.type] = (state.census[en.type] || 0) + 1;
 
   // Drop de Reishi
-  spawnReishi(enemies.x[idx], enemies.z[idx], enemies.isBoss[idx] ? 20 : 1);
+  spawnReishi(en.x, en.z, en.isBoss ? 20 : 1);
 
-  // Se derrotou o Chefe Menos Grande -> Fim de Jogo com Vitória
-  if (enemies.isBoss[idx]) {
+  if (en.isBoss) {
     state.bossDefeated = true;
     showGameOver(true);
   }
 }
 
 function spawnReishi(x, z, amount) {
-  reishiDrops.push({ x, z, value: amount * 10 });
+  const geo = new THREE.PlaneGeometry(0.8, 0.8);
+  geo.translate(0, 0.4, 0);
+  const mat = new THREE.MeshBasicMaterial({
+    map: spriteTextures.reishi,
+    transparent: true,
+    side: THREE.DoubleSide
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(x, 0, z);
+  reishiGroup.add(mesh);
+
+  reishiDrops.push({ mesh, x, z, value: amount * 10 });
 }
 
-function updateReishiDrops(dt) {
-  const magnetRadius = 3.5 * (1 + state.passives.magnet * 0.3);
+function updateReishi(dt) {
+  const magnetRadius = 4.0 * (1 + state.passives.magnet * 0.3);
 
   for (let i = reishiDrops.length - 1; i >= 0; i--) {
     const r = reishiDrops[i];
+    r.mesh.quaternion.copy(camera.quaternion);
+
     const dx = player.x - r.x;
     const dz = player.z - r.z;
     const dist = Math.hypot(dx, dz);
@@ -500,9 +586,13 @@ function updateReishiDrops(dt) {
     if (dist < magnetRadius) {
       r.x += (dx / dist) * 12 * dt;
       r.z += (dz / dist) * 12 * dt;
+      r.mesh.position.set(r.x, 0, r.z);
 
       if (dist < 0.8) {
         state.xp += r.value;
+        reishiGroup.remove(r.mesh);
+        r.mesh.geometry.dispose();
+        r.mesh.material.dispose();
         reishiDrops.splice(i, 1);
         checkLevelUp();
       }
@@ -534,7 +624,6 @@ function openLevelUpModal() {
     { key: 'magnet', type: 'passive', name: 'Controle de Reishi', icon: '🧲', desc: '+30% no raio de atração das partículas de Reishi.' }
   ];
 
-  // Escolhe 3 aleatórias
   const shuffled = options.sort(() => 0.5 - Math.random()).slice(0, 3);
   shuffled.forEach(opt => {
     const card = document.createElement('div');
@@ -555,7 +644,7 @@ function selectSkill(opt) {
   if (opt.type === 'weapon') {
     state.weapons[opt.key].level++;
     state.weapons[opt.key].damage += 15;
-    state.weapons[opt.key].cooldown = Math.max(0.4, state.weapons[opt.key].cooldown * 0.88);
+    state.weapons[opt.key].cooldown = Math.max(0.35, state.weapons[opt.key].cooldown * 0.88);
   } else {
     state.passives[opt.key]++;
   }
@@ -565,10 +654,9 @@ function selectSkill(opt) {
 }
 
 // Spawns
-let spawnTimer = 0;
 function updateSpawns(dt) {
-  // Condição para Spawn do Chefe Menos Grande: Minuto 3 ou 80 kills
-  if (!state.bossSpawned && (state.time >= 180 || state.kills >= 80)) {
+  // Spawn do Chefe Menos Grande: minuto 2 ou 60 kills
+  if (!state.bossSpawned && (state.time >= 120 || state.kills >= 60)) {
     spawnBossMenosGrande();
     state.bossSpawned = true;
     return;
@@ -576,25 +664,24 @@ function updateSpawns(dt) {
 
   spawnTimer -= dt;
   if (spawnTimer <= 0) {
-    spawnTimer = Math.max(0.25, 1.2 - (state.time / 180) * 0.8);
-    const waveSize = 1 + Math.floor(state.time / 45);
-    for (let i = 0; i < waveSize; i++) {
+    spawnTimer = Math.max(0.3, 1.0 - (state.time / 180) * 0.7);
+    const count = 1 + Math.floor(state.time / 30);
+    for (let i = 0; i < count; i++) {
       spawnHollow();
     }
   }
 }
 
 function spawnHollow() {
-  const idx = findFreeEnemySlot();
-  if (idx === -1) return;
+  const en = enemyMeshes.find(e => !e.active);
+  if (!en) return;
 
-  // Nascem nas bordas da arena
+  // Nascem a 18-24 metros do jogador para entrarem na tela rapidamente
   const angle = Math.random() * Math.PI * 2;
-  const dist = ARENA_RADIUS - 4.0;
-  const x = Math.cos(angle) * dist;
-  const z = Math.sin(angle) * dist;
+  const dist = 16.0 + Math.random() * 8.0;
+  en.x = player.x + Math.cos(angle) * dist;
+  en.z = player.z + Math.sin(angle) * dist;
 
-  // Tipos de Hollows
   const rand = Math.random();
   let type = 'fishbone';
   let hp = 40;
@@ -610,82 +697,63 @@ function spawnHollow() {
     spd = 4.2;
   }
 
-  enemies.active[idx] = 1;
-  enemies.x[idx] = x;
-  enemies.y[idx] = 0;
-  enemies.z[idx] = z;
-  enemies.hp[idx] = hp;
-  enemies.maxHp[idx] = hp;
-  enemies.speed[idx] = spd;
-  enemies.type[idx] = type;
-  enemies.isBoss[idx] = 0;
-  enemies.flash[idx] = 0;
+  en.active = true;
+  en.type = type;
+  en.hp = hp;
+  en.maxHp = hp;
+  en.speed = spd;
+  en.isBoss = false;
 
-  // Setup de UV e Tamanho
-  const sp = window.spriteDefs[type];
-  aSize[idx * 2] = 1.6;
-  aSize[idx * 2 + 1] = 1.6;
-  aUV[idx * 4] = sp.x / 512;
-  aUV[idx * 4 + 1] = sp.y / 512;
-  aUV[idx * 4 + 2] = (sp.x + sp.w) / 512;
-  aUV[idx * 4 + 3] = (sp.y + sp.h) / 512;
-  aFx[idx * 4 + 2] = 0.0; // Sem contorno para mobs comuns
+  en.mesh.scale.set(1.0, 1.0, 1.0);
+  en.mesh.material.map = spriteTextures[type];
+  en.mesh.material.color.setHex(0xffffff);
+  en.mesh.position.set(en.x, 0, en.z);
+  en.mesh.visible = true;
 }
 
 function spawnBossMenosGrande() {
-  const idx = findFreeEnemySlot();
-  if (idx === -1) return;
+  const en = enemyMeshes.find(e => !e.active);
+  if (!en) return;
 
   const angle = Math.random() * Math.PI * 2;
-  const dist = 35.0;
+  const dist = 30.0;
+  en.x = Math.cos(angle) * dist;
+  en.z = Math.sin(angle) * dist;
 
-  enemies.active[idx] = 1;
-  enemies.x[idx] = Math.cos(angle) * dist;
-  enemies.y[idx] = 0;
-  enemies.z[idx] = Math.sin(angle) * dist;
-  enemies.hp[idx] = 2500;
-  enemies.maxHp[idx] = 2500;
-  enemies.speed[idx] = 1.8;
-  enemies.type[idx] = 'menos';
-  enemies.isBoss[idx] = 1;
-  enemies.flash[idx] = 0;
+  en.active = true;
+  en.type = 'menos';
+  en.hp = 2000;
+  en.maxHp = 2000;
+  en.speed = 2.0;
+  en.isBoss = true;
 
-  const sp = window.spriteDefs.menos;
-  aSize[idx * 2] = 5.2;     // Chefe Colossal (3.5x maior)
-  aSize[idx * 2 + 1] = 5.2;
-  aUV[idx * 4] = sp.x / 512;
-  aUV[idx * 4 + 1] = sp.y / 512;
-  aUV[idx * 4 + 2] = (sp.x + sp.w) / 512;
-  aUV[idx * 4 + 3] = (sp.y + sp.h) / 512;
-  aFx[idx * 4 + 2] = 2.5; // Contorno vermelho carmesim de Chefe no shader
+  en.mesh.scale.set(3.2, 3.2, 3.2); // Colossal
+  en.mesh.material.map = spriteTextures.menos;
+  en.mesh.material.color.setHex(0xffffff);
+  en.mesh.position.set(en.x, 0, en.z);
+  en.mesh.visible = true;
 
   document.getElementById('boss-bar-container').classList.remove('hidden');
 }
 
-function findFreeEnemySlot() {
-  for (let i = 0; i < MAX_ENEMIES; i++) {
-    if (!enemies.active[i]) return i;
-  }
-  return -1;
-}
-
 function updateEnemies(dt) {
-  for (let i = 0; i < MAX_ENEMIES; i++) {
-    if (!enemies.active[i]) continue;
+  for (const en of enemyMeshes) {
+    if (!en.active) continue;
 
-    // Perseguição do jogador
-    const dx = player.x - enemies.x[i];
-    const dz = player.z - enemies.z[i];
+    // Perseguição em direção ao jogador
+    const dx = player.x - en.x;
+    const dz = player.z - en.z;
     const dist = Math.hypot(dx, dz);
 
-    if (dist > 0.5) {
-      enemies.x[i] += (dx / dist) * enemies.speed[i] * dt;
-      enemies.z[i] += (dz / dist) * enemies.speed[i] * dt;
+    if (dist > 0.6) {
+      en.x += (dx / dist) * en.speed * dt;
+      en.z += (dz / dist) * en.speed * dt;
+      en.mesh.position.set(en.x, 0, en.z);
     }
 
-    // Dano no Jogador por contato
-    if (dist < 1.0 && player.invulnerableTime <= 0) {
-      player.hp -= enemies.isBoss[i] ? 35 : 12;
+    // Dano de contato no jogador
+    if (dist < 1.1 && player.invulnerableTime <= 0) {
+      player.hp -= en.isBoss ? 35 : 12;
       player.invulnerableTime = 0.6;
       if (player.hp <= 0) {
         player.hp = 0;
@@ -694,26 +762,22 @@ function updateEnemies(dt) {
     }
 
     // Flash de dano decai
-    if (enemies.flash[i] > 0) {
-      enemies.flash[i] -= dt * 6.0;
-      if (enemies.flash[i] < 0) enemies.flash[i] = 0;
+    if (en.flashTimer > 0) {
+      en.flashTimer -= dt;
+      if (en.flashTimer <= 0) {
+        en.mesh.material.color.setHex(0xffffff);
+      }
     }
-
-    // Atualiza buffers de shader
-    aPos[i * 3] = enemies.x[i];
-    aPos[i * 3 + 1] = enemies.y[i];
-    aPos[i * 3 + 2] = enemies.z[i];
-    aFx[i * 4] = enemies.flash[i];
   }
 }
 
 function updateHUD() {
-  // Barra de Vida
+  // HP
   const hpPercent = (player.hp / player.maxHp) * 100;
   document.getElementById('hp-bar-fill').style.width = hpPercent + '%';
   document.getElementById('hp-text').innerText = `${Math.ceil(player.hp)} / ${player.maxHp}`;
 
-  // XP / Reishi
+  // XP
   const xpPercent = (state.xp / state.xpNext) * 100;
   document.getElementById('xp-bar-fill').style.width = xpPercent + '%';
   document.getElementById('level-badge').innerText = `Nv. ${state.level}`;
@@ -726,12 +790,10 @@ function updateHUD() {
 
   // Barra de Vida do Chefe
   if (state.bossSpawned && !state.bossDefeated) {
-    for (let i = 0; i < MAX_ENEMIES; i++) {
-      if (enemies.active[i] && enemies.isBoss[i]) {
-        const bossHpPercent = (enemies.hp[i] / enemies.maxHp[i]) * 100;
-        document.getElementById('boss-hp-fill').style.width = Math.max(0, bossHpPercent) + '%';
-        break;
-      }
+    const boss = enemyMeshes.find(e => e.active && e.isBoss);
+    if (boss) {
+      const bossHpPercent = (boss.hp / boss.maxHp) * 100;
+      document.getElementById('boss-hp-fill').style.width = Math.max(0, bossHpPercent) + '%';
     }
   }
 }
@@ -745,11 +807,11 @@ function showGameOver(victory) {
   if (victory) {
     title.innerText = 'MISSÃO CUMPRIDA! (VITÓRIA)';
     title.style.color = '#48bb78';
-    subtitle.innerText = 'O Menos Grande (Gillian) foi destruído e a invasão a Karakura foi contida!';
+    subtitle.innerText = 'O Menos Grande (Gillian) foi purificado e Karakura está a salvo!';
   } else {
     title.innerText = 'VOCÊ CAIU EM COMBATE';
     title.style.color = '#f56565';
-    subtitle.innerText = 'Sua alma foi sobrepujada pela horda de Hollows.';
+    subtitle.innerText = 'Sua alma foi sobrepujada pela invasão dos Hollows.';
   }
 
   const mins = String(Math.floor(state.time / 60)).padStart(2, '0');
@@ -759,7 +821,6 @@ function showGameOver(victory) {
   document.getElementById('stat-kills').innerText = state.kills;
   document.getElementById('stat-damage').innerText = Math.round(state.damageDealt).toLocaleString('pt-BR');
 
-  // Censo de Monstros
   const censusList = document.getElementById('enemies-census');
   censusList.innerHTML = `
     <li><span>Fishbone D:</span> <b>${state.census.fishbone}</b></li>
@@ -768,7 +829,6 @@ function showGameOver(victory) {
     <li><span>Menos Grande (Chefe):</span> <b>${state.census.menos > 0 ? '1 (PURIFICADO)' : '0'}</b></li>
   `;
 
-  // Censo de Armas
   const weaponsList = document.getElementById('weapons-census');
   weaponsList.innerHTML = Object.values(state.weapons)
     .filter(w => w.level > 0)
@@ -776,8 +836,4 @@ function showGameOver(victory) {
     .join('');
 
   modal.classList.remove('hidden');
-}
-
-function restartGame() {
-  location.reload();
 }
