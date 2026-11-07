@@ -61,3 +61,45 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** `make size-check` em `src/**/*.js`. O inventário `scripts/lint/size_inventory.json` guarda o tamanho medido de quem já passou. Não cresce. Número novo só para baixo. Com o arquivo já na `main`, o teto da chave é o valor de lá.
 
 **Evidência:** contagem de `src/main.js` e `src/spritesheet.js` em 2026-11-07, o §1 de `AGENTS.md` do flow-spark, e os testes `test_funcao_nova_acima_do_teto_falha` e `test_repositorio_atual_respeita_o_inventario` em `scripts/lint/test_js_size.py`.
+
+## 8. Folha de props e mapas com chroma key magenta exige despill e anti-aliasing suave para evitar halo rosa no Three.js
+
+**Causa raiz:** Spritesheets de mapas e props usam fundo magenta `#e71fe7` ou `#ff00ff`. Um corte estrito por igualdade de cor (`r == 231 and g == 31 and b == 231`) deixa pixels semi-transparentes ou bordas antialiased com anéis de magenta visíveis quando iluminados por luz noturna ou renderizados em billboard transparente (`alphaTest: 0.05`).
+
+**O que fazer:** Calcular distância Euclidiana de cor em espaço RGB até `#e71fe7`, aplicar rampa de opacidade alpha (0 se dist < 28, 1 se dist > 48, linear no intervalo) e neutralizar derramamento de cor (de-spill) atenuando canais R e B em direção a G para pixels semitransparentes.
+
+**Evidência:** `geradores/map_generator.py` função `remove_chroma_key`, extração dos 19 props do Hueco Mundo sem pink fringing em `src/assets/maps/hueco_mundo/props/` e inspeção no 360° Map Studio (`preview_map.html`).
+
+## 9. Desacoplamento da matemática de movimento previne dessincronização de animFrame e direção em refatorações de loop
+
+**Causa raiz:** Ao compactar `updatePlayer` para respeitar o teto de 20 linhas de função, houve descompasso de contrato: `walkFrame` foi incrementado no lugar de `player.animFrame`, `player.animSpeed` não existia (travando a comparação do timer), e a atualização vetorial de `player.dirX` / `player.dirZ` foi omitida. Como a movimentação espacial ocorria (`player.x += dx`), o personagem deslizava na tela como um recorte estático, sem animação de pernas e sem virar a face/costas de acordo com a câmera.
+
+**O que fazer:** Extrair a matemática pura de deslocamento (`computePlayerDisplacement`), orientação direcional do billboard (`getSpriteDirection`) e avanço de ciclo de caminhada (`updateWalkCycle`, `resetWalkCycle`) para um módulo desacoplado sem dependência de Three.js ou DOM (`src/movement.js`). Criar testes unitários automatizados em `scripts/test_player_movement.py` (`make movement-test`) que validam os cálculos vetoriais, normalização diagonal e o avanço dos 4 frames da passada a cada intervalo de `walkFps`.
+
+**Evidência:** Os testes unitários em `scripts/test_player_movement.py` passando com 8/8 asserções em 0.3s e teste visual via Playwright em `scratch/test_walk_fix.py` confirmando ciclagem `[0, 1, 2, 3]` durante 'W' e reset para 1 em repouso.
+
+## 10. O `vite build` não leva os sprites: o dev server os serve de `/src/assets/`, a produção dá 404
+
+**Causa raiz:** `src/main.js`, `src/maps/hueco_mundo.js` e o `map_data.json` carregam texturas em runtime por URL (`/src/assets/characters/...`, `/fx/`, `/monsters/`, `/maps/`). O dev server do Vite serve esse caminho direto da pasta de código. O build só empacota o que é importado, então o `dist` saiu com 528 KB, sem nenhum PNG. O primeiro deploy subiu o jogo sem sprites, e o fallback de SPA do nginx respondeu 200 com `text/html` no lugar do 404, o que escondeu o erro em `curl` e `/healthz`.
+
+**O que fazer:** O `Dockerfile` copia `src/assets` para `/usr/share/nginx/html/src/assets`, no mesmo caminho do dev, e o `infra/nginx.container.conf` devolve 404 de verdade em `/src/assets/`. Mudou a forma de carregar textura (importar, ou mover para `public/`)? Revise os dois. Para o status de uma textura, cheque o `Content-Type`: `image/png`, não `text/html`.
+
+**Evidência:** Antes, `curl -I https://bleach.acoplum.com/src/assets/characters/ichigo_shikai/atlas.png` dava `200 text/html`. Depois da correção dá `200 image/png`, e `/src/assets/nao_existe.png` dá `404`.
+
+## 11. Multi-touch em controles mobile virtuais exige rastreamento estrito por `identifier` para evitar conflito com a rotação de câmera
+
+**Causa raiz:** Ao implementar joystick virtual móvel e câmera livre por arrasto na mesma tela touch, usar `e.touches[0]` faz o segundo dedo (ou o salto) assumir indevidamente o controle do joystick ou puxar a câmera repentinamente. Além disso, elementos com animação CSS contínua (ex.: botões com pulso infinito de escala) causam timeout em cliques automatizados do Playwright por falha no check de estabilidade (`element is not stable`).
+
+**O que fazer:** Em `src/joystick.js`, rastrear separadamente `joystickTouchId` (dedo alocado no joystick esquerdo) e `cameraTouchId` (dedo alocado na área de rotação direita) através de `e.changedTouches` e seus respectivos `t.identifier`. Para testes automatizados com Playwright em elementos animados por CSS contínuo, usar `force=True` ou despachar clique nativo via `page.evaluate`.
+
+**Evidência:** `src/joystick.js` gerencia `state.joystickTouchId` e `state.cameraTouchId` de forma independente; testes em `scratch/test_mobile_and_elite.py` executados com sucesso no iPhone 13 sem conflito entre o joystick analógico e o botão de salto.
+
+## 12. Exceções não capturadas no loop de renderização congelam o canvas sem gerar feedback na UI
+
+**Causa raiz:** O Three.js e o loop do jogo executam em `requestAnimationFrame(loop)`. Qualquer `ReferenceError` síncrono (como chamar uma variável renomeada `enemyPool` em vez de `enemyMeshes`) quebra a pilha de execução daquele frame. Como nenhum novo frame é agendado, o jogo congela silenciosamente no último estado desenhado no canvas, sem mensagem de erro visível na interface do jogador.
+
+**O que fazer:** Implementar coleta estruturada de telemetria e captura global em `window.onerror` e `window.onunhandledrejection` (`src/telemetry.js` despachando para `/api/telemetry/log` do backend). Em pipelines de teste, simular marcos críticos de transição de fase (como o limiar exato de abates de spawn de chefe) para garantir que caminhos de código com baixa frequência de execução sejam validados de ponta a ponta.
+
+**Evidência:** O teste automatizado `scratch/test_telemetry_and_boss_spawn.py` reproduzindo 59 para 60 hollows, a correção de `enemyPool` para `enemyMeshes` em `src/main.js`, e o registro de eventos no backend em `logs/telemetry.log`.
+
+

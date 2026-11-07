@@ -16,11 +16,12 @@ O objetivo central da Versão 1 é entregar uma experiência jogável completa, 
 * Movimentação responsiva via **WASD / Setas** no teclado relativo ao ângulo da câmera orbital 360°.
 * **Mecânica de Pulo (Tecla Espaço):** Salto vertical com física gravitacional acelerada ($v_y = 8.5\text{ m/s}, g = 24.0\text{ m/s}^2$) e sombra dinâmica atenuada projetada no solo, permitindo esquivar do contato físico de Hollows no chão.
 
-### 2. Cenário: Arena Fechada de Karakura Town
-* Mapa fechado em formato de arena circular ($170\text{ m}$ de diâmetro), espelhado na arquitetura de terreno do PokéBonk:
-  * Malha de altura 3D com texturas urbanas de asfalto (`ground.png`), muros/barricadas (`cliff.png`) e calçadão (`path.png`).
-  * Props urbanos em atlas 2D billboard (postes de luz japoneses, máquinas de venda automática, cercas, crateras de destruição).
-  * Limites físicos intransponíveis (barreira espiritual com fitas da Soul Society).
+### 2. Cenário Oficial V1: Deserto Infinito do Hueco Mundo
+* O primeiro mapa da Entrega 1 foi atualizado para a dimensão nativa dos Hollows: **Hueco Mundo** (substituindo a arena de Karakura Town):
+  * **Relevo 3D de Dunas Vivas (Heightmap Estilo Minecraft):** Solo orgânico com ondulações de areia branca de quartzo (`ground_sand.png`), variando entre dunas centrais navegáveis ($\pm 1.8\text{ m}$) e grandes penhascos rochosos nas bordas ($8\text{m}$ a $18\text{m}$) que delimitam a arena natural de combate ($176\text{ m}$ de diâmetro).
+  * **Props Canônicos de Bleach:** Árvores petrificadas de quartzo branco, obeliscos ancestrais e colunatas caídas em ruínas da fortaleza de Las Noches (`prop_hm_*.png` e `prop_ln_*.png`), instanciados com colisão física.
+  * **Atmosfera de Noite Eterna:** Céu cósmico escuro (`#070b14`), névoa espiritual profunda e a lua crescente do Hueco Mundo suspensa no firmamento.
+  * **Ferramenta de Geração por IA (`geradores/map_generator.py`):** Motor de mapas controlado por diretrizes em Markdown (`geradores/map_specs/*.md`), permitindo criar e versionar novos mapas, interiores e biomas futuros via IA.
 
 ### 3. Invasão de Hollows e Hordas
 * Sistema de horda de alta performance baseado em **Structure of Arrays (SoA)** capaz de processar centenas de entidades na tela simultaneamente.
@@ -44,12 +45,12 @@ O objetivo central da Versão 1 é entregar uma experiência jogável completa, 
 * **Condição de Vitória:** Derrotar o Menos Grande finaliza imediatamente a rodada, purificando a arena.
 
 ### 6. Arquitetura Multiplayer V1 (Mapa Único & Disputa de Reishi)
-* **Entrada no Mesmo Mapa:** Todos os jogadores iniciam na mesma arena de Karakura Town.
+* **Entrada no Mesmo Mapa:** Todos os jogadores iniciam na mesma arena do **Deserto do Hueco Mundo**.
 * **Hollows Globais e Compartilhados:** A horda de monstros é comum a todos os jogadores presentes.
 * **Distribuição de Reishi por DPS Winner:** Cada Hollow rastreia o histórico de contribuição de dano de todos os jogadores (`damageContributions`). Ao morrer, a bolinha de Reishi gerada pertence e é atraída **exclusivamente para o jogador que causou mais dano** naquele Hollow.
 * **Chefe Final Instanciado:** Cada jogador enfrenta seu próprio Menos Grande no clímax da partida.
 
-### 6. Tela de Conclusão / Estatísticas da Partida
+### 7. Tela de Conclusão / Estatísticas da Partida
 Ao vencer (ou ser derrotado), o jogo exibe um painel completo com:
 * Tempo de sobrevivência.
 * Nível final alcançado.
@@ -65,12 +66,13 @@ Ao vencer (ou ser derrotado), o jogo exibe um painel completo com:
 
 ## 🚀 VERSÃO 2 (Expansões Futuras)
 
-A Versão 2 transformará o núcleo estável da V1 em um jogo completo com múltiplos mundos e metaprogressão:
+A Versão 2 transformará o núcleo estável da V1 em um jogo completo com múltiplos mundos e metaprogressão gerados pelo motor de mapas:
 
 1. **Novos Mapas e Biomas:**
+   * **Karakura Town:** Distrito urbano residencial com ruas asfaltadas, postes e barricadas.
    * **Soul Society (Seireitei):** Ruas de pedra branca, muros tradicionais e portão Senkaimon.
-   * **Hueco Mundo:** Deserto infinito de areia branca quartzo, árvores petrificadas e ruínas de Las Noches.
    * **Dangai:** Espaço dimensional de alta pressão com o perigo ambiental do Koutotsu (o Limpador).
+   * **Interior de Palácios e Las Noches:** Arenas fechadas monumentais com colunas e trono.
 2. **Sistema de Evolução dos Personagens:**
    * Liberação de **Shikai** no nível 15 e **Bankai** no nível 35 com transformações visuais no sprite.
 3. **Novos Protagonistas Jogáveis:**

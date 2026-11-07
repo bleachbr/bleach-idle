@@ -170,6 +170,22 @@ async function fetchStagingCharacters() {
       frameCount: 1,
       targetSize: 128
     };
+    studioState.charactersData['fishbone'] = {
+      id: 'fishbone',
+      name: 'Fishbone D (Hollow Comum)',
+      category: 'monsters',
+      format: 'walk8',
+      frameCount: 8,
+      targetSize: 128
+    };
+    studioState.charactersData['menos_grande'] = {
+      id: 'menos_grande',
+      name: 'Menos Grande (Gillian)',
+      category: 'monsters',
+      format: 'walk8',
+      frameCount: 8,
+      targetSize: 128
+    };
   }
 
   studioState.manifest = studioState.charactersData[studioState.activeCharacter];
@@ -234,12 +250,13 @@ function updateMeshTextures() {
   // Textura do personagem ativo
   let primaryUrl = '';
   const isAnimated = manifest.format === 'walk8' || manifest.format === 'walk4x4';
+  const basePath = manifest.category === 'monsters' ? `/src/assets/monsters/${charId}` : `/geradores/staging/${charId}`;
   if (isAnimated) {
     const totalFrames = manifest.frameCount || (manifest.format === 'walk8' ? 8 : 4);
     const fIdx = studioState.currentFrame % totalFrames;
-    primaryUrl = `/geradores/staging/${charId}/${dir}_${fIdx}.png`;
+    primaryUrl = `${basePath}/${dir}_${fIdx}.png`;
   } else {
-    primaryUrl = `/geradores/staging/${charId}/${dir}.png`;
+    primaryUrl = `${basePath}/${dir}.png`;
   }
 
   const tex = loadTexture(primaryUrl);

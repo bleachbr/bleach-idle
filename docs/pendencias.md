@@ -14,14 +14,6 @@ Registrar aqui é a saída, não o default. Antes, tente resolver na branch aber
 
 O job `test` roda `npm run typecheck`, `npm test` e `npm run test:scripts`. O job `e2e` espera o workspace `e2e` e o cenário dos sete mapas. O job `deploy` publica a imagem `bleach-idle` num VPS. O `package.json` do protótipo só declara `dev`, `build` e `preview`. O job `docs` acrescentado em 2026-11-07 não substitui esses três.
 
-## 2. Dockerfile vazio
-
-**Impacto:** médio (`make docker-build` não produz imagem)
-
-**Por que não resolvido aqui:** fora do escopo — o alvo do Makefile e o job de deploy apontam para uma imagem que este protótipo ainda não empacota. Empacotar sem decidir a porta e o conteúdo estático seria chute.
-
-O `Dockerfile` na raiz tem tamanho zero. `make docker-run` publica a porta 5173 em cima dessa imagem.
-
 ## 3. Teste de jogo não é alvo
 
 **Impacto:** médio (regressão de câmera, sprite e FX só aparece se alguém lembrar do script)

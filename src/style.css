@@ -475,3 +475,585 @@ body, html {
 .btn.primary:hover {
   opacity: 0.9;
 }
+
+.btn.secondary {
+  background: rgba(30, 41, 59, 0.85);
+  color: #cbd5e0;
+  border: 1px solid #3b4252;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn.secondary:hover {
+  background: rgba(45, 55, 72, 0.95);
+  color: #fff;
+  border-color: #4a5568;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+/* =======================================================================
+   TELA DE LOGIN / MENU PRINCIPAL ESTILO POKÉBONK
+   ======================================================================= */
+#login-menu {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+#login-menu.hidden {
+  display: none !important;
+}
+
+.menu-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(7, 11, 20, 0.4) 0%, rgba(7, 11, 20, 0.82) 80%, rgba(7, 11, 20, 0.96) 100%);
+  pointer-events: none;
+}
+
+.menu-content {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  z-index: 2;
+  margin: auto;
+}
+
+/* Título Flamejante estilo PokéBonk */
+.title-container {
+  position: relative;
+  text-align: center;
+  animation: floatLogo 4s ease-in-out infinite;
+}
+
+@keyframes floatLogo {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.reiatsu-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  height: 120px;
+  background: radial-gradient(ellipse at center, rgba(255, 69, 0, 0.35) 0%, rgba(0, 240, 255, 0.15) 50%, transparent 80%);
+  filter: blur(24px);
+  pointer-events: none;
+  animation: reiatsuPulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes reiatsuPulse {
+  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.95; }
+}
+
+.subtitle-badge {
+  display: inline-block;
+  background: linear-gradient(90deg, #dd6b20, #e53e3e);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  margin-bottom: 4px;
+  box-shadow: 0 0 12px rgba(229, 62, 62, 0.6);
+}
+
+.game-logo {
+  font-size: 52px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin: 0;
+  line-height: 1;
+  background: linear-gradient(135deg, #ffeedd 0%, #ff6b35 45%, #e53e3e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 16px rgba(255, 107, 53, 0.65));
+}
+
+.logo-sub {
+  display: block;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: #63b3ed;
+  -webkit-text-fill-color: #63b3ed;
+  text-shadow: 0 0 14px rgba(99, 179, 237, 0.8);
+  margin-top: 4px;
+}
+
+.tagline {
+  font-size: 12.5px;
+  color: #a0aec0;
+  margin-top: 6px;
+  letter-spacing: 0.3px;
+}
+
+/* Card de Login */
+.login-card {
+  position: relative;
+  width: 100%;
+  background: rgba(14, 18, 30, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 240, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card-glow-border {
+  position: absolute;
+  inset: -1px;
+  border-radius: 21px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(229, 62, 62, 0.4), transparent 40%, rgba(99, 179, 237, 0.35));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Formulário de Nickname */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: #cbd5e0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.input-wrapper input {
+  width: 100%;
+  background: rgba(22, 28, 45, 0.9);
+  border: 1.5px solid #2d3748;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  outline: none;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.input-wrapper input:focus {
+  border-color: #e53e3e;
+  background: rgba(26, 32, 54, 0.95);
+  box-shadow: 0 0 16px rgba(229, 62, 62, 0.4), inset 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Chip de Personagem */
+.character-preview-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(22, 28, 45, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.chip-avatar {
+  font-size: 22px;
+  background: rgba(229, 62, 62, 0.15);
+  border: 1px solid rgba(229, 62, 62, 0.3);
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chip-info {
+  flex: 1;
+}
+
+.chip-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.chip-stage {
+  color: #f6ad55;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.chip-meta {
+  font-size: 11px;
+  color: #a0aec0;
+  margin-top: 2px;
+}
+
+.chip-status {
+  font-size: 10px;
+  font-weight: 800;
+  color: #48bb78;
+  background: rgba(72, 187, 120, 0.12);
+  border: 1px solid rgba(72, 187, 120, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.8px;
+}
+
+/* Botão Primário PokéBonk Pulsante */
+.btn-pokebonk-play {
+  position: relative;
+  width: 100%;
+  border: none;
+  border-radius: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #e53e3e 0%, #dd6b20 50%, #d69e2e 100%);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 24px rgba(229, 62, 62, 0.6), 0 8px 24px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: pokebonkPulse 2.8s infinite ease-in-out;
+}
+
+@keyframes pokebonkPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(229, 62, 62, 0.55), 0 8px 20px rgba(0, 0, 0, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(229, 62, 62, 0.85), 0 10px 28px rgba(0, 0, 0, 0.5);
+    transform: scale(1.018);
+  }
+}
+
+.btn-pokebonk-play:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 0 38px rgba(229, 62, 62, 0.9), 0 12px 30px rgba(0, 0, 0, 0.6);
+}
+
+.btn-pokebonk-play:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.play-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.play-icon {
+  font-size: 16px;
+}
+
+.play-subtext {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+  margin-top: 3px;
+  letter-spacing: 0.5px;
+}
+
+/* Brilho Varrendo o Botão */
+.play-flare {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: skewX(-25deg);
+  animation: flareSweep 3.5s infinite;
+}
+
+@keyframes flareSweep {
+  0% { left: -100%; }
+  35%, 100% { left: 200%; }
+}
+
+/* Divisor e Botões dos Estúdios 360° */
+.studio-access-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.studio-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #718096;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.studio-divider::before,
+.studio-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.studio-divider span {
+  padding: 0 8px;
+}
+
+.studio-buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.btn-studio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  background: rgba(22, 28, 45, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.25s ease;
+  text-align: left;
+}
+
+.btn-studio .studio-icon {
+  font-size: 20px;
+}
+
+.studio-text-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.studio-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.studio-desc {
+  font-size: 9.5px;
+  color: #a0aec0;
+}
+
+.btn-studio.map-studio {
+  border-color: rgba(72, 187, 120, 0.3);
+}
+
+.btn-studio.map-studio .studio-title {
+  color: #68d391;
+}
+
+.btn-studio.map-studio:hover {
+  background: rgba(72, 187, 120, 0.15);
+  border-color: #48bb78;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(72, 187, 120, 0.3);
+}
+
+.btn-studio.sprite-studio {
+  border-color: rgba(99, 179, 237, 0.3);
+}
+
+.btn-studio.sprite-studio .studio-title {
+  color: #63b3ed;
+}
+
+.btn-studio.sprite-studio:hover {
+  background: rgba(99, 179, 237, 0.15);
+  border-color: #3182ce;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(99, 179, 237, 0.3);
+}
+
+/* Rodapé do Menu */
+.menu-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.controls-hint-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #a0aec0;
+  background: rgba(14, 18, 30, 0.6);
+  padding: 4px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.controls-hint-bar b {
+  color: #e2e8f0;
+}
+
+.controls-hint-bar .dot {
+  color: #4a5568;
+}
+
+.version-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #4a5568;
+  letter-spacing: 1.5px;
+}
+
+/* ==========================================================================
+   CONTROLES VIRTUAIS TOUCH (MOBILE / DISPOSITIVOS TOUCH)
+   ========================================================================== */
+#virtual-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 45;
+  user-select: none;
+  touch-action: none;
+}
+
+#virtual-joystick-zone {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 50vw;
+  height: 55vh;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#virtual-joystick-base {
+  position: absolute;
+  left: 35px;
+  bottom: 35px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 26, 46, 0.72) 0%, rgba(8, 14, 26, 0.9) 100%);
+  border: 2px solid rgba(0, 240, 255, 0.45);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.35), inset 0 0 15px rgba(0, 240, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+
+#virtual-joystick-knob {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #00ffff 0%, #0088cc 60%, #003355 100%);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 16px rgba(0, 255, 255, 0.8), inset 0 0 6px rgba(255, 255, 255, 0.6);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -26px;
+  margin-left: -26px;
+  pointer-events: none;
+  will-change: transform;
+}
+
+#virtual-actions-zone {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 50vw;
+  height: 55vh;
+  pointer-events: none;
+}
+
+#btn-virtual-jump {
+  position: absolute;
+  right: 35px;
+  bottom: 45px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffb300 0%, #e65100 70%, #8c2500 100%);
+  border: 2px solid #ffe082;
+  box-shadow: 0 0 20px rgba(255, 179, 0, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+  touch-action: none;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+#btn-virtual-jump:active {
+  transform: scale(0.9);
+  box-shadow: 0 0 30px rgba(255, 200, 0, 0.9), inset 0 0 14px rgba(255, 255, 255, 0.7);
+}
+
+#btn-virtual-jump .jump-icon {
+  font-size: 16px;
+  line-height: 1;
+  text-shadow: 0 0 6px #000;
+}
+
+#btn-virtual-jump .jump-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-top: 2px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+  #bottom-instructions {
+    display: none;
+  }
+}
+

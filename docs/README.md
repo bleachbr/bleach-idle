@@ -27,3 +27,6 @@ Referência técnica. Não é lista de tarefas.
 7. [Normalização de sprites e testes](direcionamento/07-diretrizes-normalizacao-sprites-e-testes.md)
 8. [FX, habilidades e vínculo](direcionamento/08-arquitetura-fx-habilidades-e-vinculacao.md)
 9. [FX e projéteis escaláveis](direcionamento/09-arquitetura-escalavel-fx-e-projeteis.md)
+10. [Mira inteligente auto-battler e balanceamento](direcionamento/10-mira-inteligente-auto-battler-e-balanceamento.md)
+11. [Arquitetura multiplayer e distribuição de reishi](direcionamento/11-arquitetura-multiplayer-e-distribuicao-de-reishi.md)
+12. [Gerador de mapas orientado por IA e bioma Hueco Mundo](direcionamento/12-gerador-de-mapas-orientado-por-ia-e-bioma-hueco-mundo.md)

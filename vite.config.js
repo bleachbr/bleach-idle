@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import fs from 'fs';
 import path from 'path';
 import { execFile } from 'child_process';
+import { registerTelemetryAndMultiplayerRoutes } from './server/telemetry_orchestrator.js';
 
 export default defineConfig({
   server: {
@@ -23,6 +24,9 @@ export default defineConfig({
     {
       name: 'bleach-generators-api',
       configureServer(server) {
+        // Registra serviços de telemetria e orquestração multiplayer
+        registerTelemetryAndMultiplayerRoutes(server);
+
         // Servir arquivos de staging estaticamente
         server.middlewares.use('/geradores/staging', (req, res, next) => {
           const filePath = path.resolve(__dirname, 'geradores/staging', req.url.replace(/^\//, ''));

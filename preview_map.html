@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BleachBR · Estúdio 3D de Mapas & Biomas</title>
+    <link rel="stylesheet" href="/geradores/preview.css" />
+    <style>
+      .map-stat-badge {
+        background: #2b6cb0;
+        color: #fff;
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 700;
+      }
+      .prop-tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+        max-height: 120px;
+        overflow-y: auto;
+      }
+      .prop-tag {
+        background: rgba(45, 55, 72, 0.8);
+        border: 1px solid #4a5568;
+        border-radius: 4px;
+        padding: 3px 6px;
+        font-size: 10px;
+        color: #cbd5e0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app-container">
+      <!-- Painel Lateral: Controles & Inspeção do Mapa -->
+      <aside id="sidebar">
+        <header class="studio-header">
+          <div class="badge">GERADOR PROCEDURAL</div>
+          <h1>360° MAP STUDIO</h1>
+          <p class="subtitle">Inspeção de relevo 3D, dunas, iluminação e props canônicos</p>
+        </header>
+
+        <!-- Seletor de Mapa -->
+        <section class="panel-section">
+          <h3>1. Bioma / Mapa Ativo</h3>
+          <div class="control-group">
+            <label for="select-map">Mapa Carregado:</label>
+            <select id="select-map">
+              <option value="hueco_mundo">Deserto Infinito do Hueco Mundo (Ativo na V1)</option>
+              <option value="karakura_town" disabled>Karakura Town (Residencial - Em breve)</option>
+              <option value="soul_society" disabled>Soul Society / Seireitei (Em breve)</option>
+            </select>
+          </div>
+        </section>
+
+        <!-- Diagnóstico do Mapa -->
+        <section class="panel-section">
+          <h3>2. Diagnóstico do Terreno</h3>
+          <div class="info-grid">
+            <div class="info-item"><span>Bioma:</span> <b id="map-bioma">hueco_mundo</b></div>
+            <div class="info-item"><span>Dimensões:</span> <b id="map-size">220m x 220m</b></div>
+            <div class="info-item"><span>Raio da Arena:</span> <b id="map-radius">88.0m</b></div>
+            <div class="info-item"><span>Relevo (Min/Max):</span> <b id="map-heights">-2.0m / +17.9m</b></div>
+            <div class="info-item"><span>Resolução da Malha:</span> <b id="map-res">64 x 64 (4.225 vértices)</b></div>
+            <div class="info-item"><span>Props Canônicos:</span> <b id="map-props-count" class="highlight">99 elementos</b></div>
+          </div>
+        </section>
+
+        <!-- Modos de Visualização 3D -->
+        <section class="panel-section">
+          <h3>3. Modos de Visualização</h3>
+          <div class="toggle-row">
+            <label>
+              <input type="checkbox" id="toggle-wireframe" />
+              <span>Exibir Malha Wireframe (Estilo Minecraft)</span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <label>
+              <input type="checkbox" id="toggle-props" checked />
+              <span>Exibir Props Canônicos (Árvores e Ruínas)</span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <label>
+              <input type="checkbox" id="toggle-colliders" />
+              <span>Exibir Colisores Físicos (Gizmos)</span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <label>
+              <input type="checkbox" id="toggle-sunlight" />
+              <span>Iluminação Plena de Inspeção</span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Controles de Câmera 360° -->
+        <section class="panel-section">
+          <h3>4. Câmera Orbital 360°</h3>
+          <div class="control-group">
+            <label for="slider-yaw">Giro Horizontal (<span id="label-yaw">0°</span>):</label>
+            <input type="range" id="slider-yaw" min="0" max="360" value="45" step="1" />
+          </div>
+          <div class="control-group">
+            <label for="slider-pitch">Inclinação Vertical (<span id="label-pitch">35°</span>):</label>
+            <input type="range" id="slider-pitch" min="10" max="80" value="35" step="1" />
+          </div>
+          <div class="control-group">
+            <label for="slider-dist">Distância de Zoom (<span id="label-dist">65m</span>):</label>
+            <input type="range" id="slider-dist" min="20" max="180" value="65" step="1" />
+          </div>
+
+          <div class="toggle-row" style="margin-top: 10px;">
+            <label>
+              <input type="checkbox" id="toggle-autorotate" checked />
+              <span>Giro Automático Suave (Panorâmica)</span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Navegação rápida -->
+        <footer class="studio-footer">
+          <a href="/" class="btn secondary" style="display: block; text-align: center; text-decoration: none; margin-bottom: 8px;">
+            🎮 Jogar Partida em Hueco Mundo
+          </a>
+          <a href="/preview.html" class="btn secondary" style="display: block; text-align: center; text-decoration: none;">
+            🎨 Ir para o Sprite Studio 360°
+          </a>
+        </footer>
+      </aside>
+
+      <!-- Área de Renderização WebGL -->
+      <main id="viewport-container">
+        <canvas id="preview-canvas"></canvas>
+
+        <div id="viewport-overlay">
+          <div class="hud-pill">
+            <span class="dot live"></span>
+            <b>MODO DE INSPEÇÃO DE MAPA 3D</b>
+          </div>
+          <div class="hud-instructions">
+            <span><b>Arrastar Mouse</b>: Órbita Livre 360° · <b>Scroll</b>: Zoom · <b>Diretrizes</b>: geradores/map_specs/hueco_mundo.md</span>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="/geradores/preview_map.js"></script>
+  </body>
+</html>

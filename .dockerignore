@@ -22,3 +22,10 @@ server/dev.env
 acoplum-37d98af765d7.json
 # testes no navegador (M5-03): ficam fora da imagem
 e2e
+# protótipo bleach-soul-survivor: fontes de arte e ferramentas ficam fora da imagem (arts/ pesa 1,5 GB)
+arts
+scratch
+dist
+docs
+vite.log
+geradores/staging

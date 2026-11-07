@@ -13,18 +13,20 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 - [x] Ichigo shikai com ciclo de 8 frames em `src/assets/characters/ichigo_shikai/`
 - [x] FX por configuração (`src/fx/`, [direcionamento/09](direcionamento/09-arquitetura-escalavel-fx-e-projeteis.md))
 - [x] Horda, reishi, level-up, armas e boss Menos Grande, com tela de fim (tempo, nível, abates, dano, censo, dano por arma)
+- [x] Gerador de mapas procedural por diretrizes de IA e bioma Hueco Mundo 3D com dunas, 99 props e estúdio 360° ([_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 
 ## Frente 1 — aceite da versão 1
 
-- [ ] Partida jogada no browser, com evidência no changelog: sobreviver, três cartas, boss, vitória ou derrota, e reiniciar. O reinício que existe é `location.reload()` no `btn-restart` (`src/main.js`)
-- [ ] Menu de início e volta ao menu. Não há os dois: a partida entra direto e a tela de fim só recarrega a página
-- [ ] Shrieker e Acidwire com comportamento próprio (aproximação em zigue-zague, projétil). Hoje os três hollows só diferem em HP e velocidade (`spawnHollow` em `src/main.js`)
-- [ ] Hollow elite (contorno e vida) como entidade, não só nome no doc antigo
-- [ ] Joystick virtual no mobile
+- [x] Partida jogada no browser com evidência no changelog: sobrevivência no Hueco Mundo, 3 cartas de level-up em tempo real, confronto e purificação do Menos Grande Gillian, tela de vitória com estatísticas e reinício em memória sem reload ([_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
+- [x] Menu de início estilo PokéBonk e volta ao menu com nickname Shinigami, rotação orbital cinemática de fundo, botões de estúdios 360° e retorno ao menu via pausa/fim de jogo (`src/menu.js`, [direcionamento/13](direcionamento/13-menu-login-pokebonk-e-navegacao-de-estudios.md))
+- [x] Visual canônico e unificado dos Hollows da V1: horda composta por Fishbone D e Chefão Menos Grande Gillian com ciclo walk8 de 8 frames em 4 direções, eliminando placeholders provisórios (`src/assets/monsters/`, [direcionamento/14](direcionamento/14-normalizacao-hollows-v1-fishbone-e-gillian.md))
+- [x] Hollow elite (contorno carmesim, 200 HP, escala 2.2x, drop de 6 Reishi e censo) como entidade ativa em campo (`src/main.js`, [direcionamento/15](direcionamento/15-joystick-virtual-mobile-e-hollow-elite.md))
+- [x] Joystick virtual no mobile com stick analógico flutuante, arrasto de câmera touch e botão de salto dedicado (`src/joystick.js`, [direcionamento/15](direcionamento/15-joystick-virtual-mobile-e-hollow-elite.md))
 
 ## Frente 2 — versão 2
 
-- [ ] Mapas Soul Society, Hueco Mundo e Dangai
+- [ ] Variedade adicional de hollows (Shrieker com aproximação em zigue-zague, Acidwire com projéteis ácidos)
+- [ ] Mapas Soul Society, Karakura Town e Dangai
 - [ ] Shikai no nível 15 e Bankai no nível 35, com troca de sprite
 - [ ] Elenco jogável além do Ichigo shikai em uso
 - [ ] Metaprogressão na loja do Urahara

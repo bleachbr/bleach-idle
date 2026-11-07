@@ -5,6 +5,7 @@ __pycache__/
 *.sqlite
 *.sqlite-*
 *.log
+logs/
 .vite/
 .claude/settings.local.json
 CLAUDE.local.md

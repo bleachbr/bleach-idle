@@ -9,8 +9,102 @@
   <body>
     <canvas id="game-canvas"></canvas>
 
+    <!-- Tela de Login / Menu Principal estilo PokéBonk -->
+    <div id="login-menu">
+      <div class="menu-backdrop"></div>
+      <div class="menu-content">
+        <!-- Header com Título Flamejante & Reiatsu -->
+        <div class="title-container">
+          <div class="reiatsu-glow"></div>
+          <div class="subtitle-badge">ROGUELITE SURVIVOR 2.5D</div>
+          <h1 class="game-logo">BLEACH<span class="logo-sub">SOUL SURVIVOR</span></h1>
+          <p class="tagline">Sobreviva às hordas espirituais no Deserto Infinito do Hueco Mundo</p>
+        </div>
+
+        <!-- Card de Login do Shinigami -->
+        <div class="login-card">
+          <div class="card-glow-border"></div>
+
+          <!-- Seleção de Nickname -->
+          <div class="form-group">
+            <label for="player-nickname">
+              <span class="label-icon">⚔️</span> IDENTIFICAÇÃO DO SHINIGAMI:
+            </label>
+            <div class="input-wrapper">
+              <input
+                type="text"
+                id="player-nickname"
+                placeholder="Digite seu nome de guerra..."
+                maxlength="16"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <span class="input-focus-line"></span>
+            </div>
+          </div>
+
+          <!-- Informações do Personagem e Bioma Ativo -->
+          <div class="character-preview-chip">
+            <div class="chip-avatar">🗡️</div>
+            <div class="chip-info">
+              <div class="chip-name">Ichigo Kurosaki <span class="chip-stage">(Shikai Ativa)</span></div>
+              <div class="chip-meta">Bioma Oficial: <b>Hueco Mundo</b> · Dunas 3D & Noite Eterna</div>
+            </div>
+            <div class="chip-status">PRONTO</div>
+          </div>
+
+          <!-- Botão Primário PokéBonk Pulsante de Jogar -->
+          <button id="btn-play-game" class="btn-pokebonk-play">
+            <span class="play-flare"></span>
+            <span class="play-content">
+              <span class="play-icon">▶</span>
+              <span class="play-text">ENTRAR NO HUECO MUNDO</span>
+            </span>
+            <span class="play-subtext">Pressione [ENTER] para iniciar</span>
+          </button>
+
+          <!-- Botões dos Estúdios 360° -->
+          <div class="studio-access-row">
+            <div class="studio-divider">
+              <span>FERRAMENTAS & ESTÚDIOS 360°</span>
+            </div>
+            <div class="studio-buttons-grid">
+              <a href="/preview_map.html" id="btn-map-studio" class="btn-studio map-studio" target="_blank" rel="noopener">
+                <span class="studio-icon">🗺️</span>
+                <div class="studio-text-col">
+                  <span class="studio-title">360° MAP STUDIO</span>
+                  <span class="studio-desc">Relevo, Dunas & Props</span>
+                </div>
+              </a>
+              <a href="/preview.html" id="btn-sprite-studio" class="btn-studio sprite-studio" target="_blank" rel="noopener">
+                <span class="studio-icon">🎨</span>
+                <div class="studio-text-col">
+                  <span class="studio-title">360° SPRITE STUDIO</span>
+                  <span class="studio-desc">Inspeção 360° & Passadas</span>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rodapé de Controles e Versão -->
+        <div class="menu-footer">
+          <div class="controls-hint-bar">
+            <span><b>WASD</b> Mover</span>
+            <span class="dot">·</span>
+            <span><b>Espaço</b> Pular</span>
+            <span class="dot">·</span>
+            <span><b>Mouse</b> Olhar 360°</span>
+            <span class="dot">·</span>
+            <span><b>ESC</b> Pausar</span>
+          </div>
+          <div class="version-tag">V1.0.0 · BLEACH SURVIVOR ENGINE</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Overlay do HUD em tempo real -->
-    <div id="hud-overlay">
+    <div id="hud-overlay" class="hidden">
       <!-- Barra Superior de Reishi (XP) -->
       <div id="xp-bar-container">
         <div id="xp-bar-fill"></div>
@@ -37,13 +131,6 @@
         <div id="kills-box">💀 <span id="kills-count">0</span> Hollows</div>
       </div>
 
-      <!-- Atalho para o Estúdio 360° de Sprites -->
-      <div id="top-right-panel" style="position: absolute; top: 48px; right: 16px; pointer-events: auto;">
-        <a href="/preview.html" style="display: flex; align-items: center; gap: 6px; text-decoration: none; background: rgba(18, 22, 36, 0.9); border: 1px solid #3182ce; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; color: #63b3ed; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-          <span>🎨 360° Sprite Studio</span>
-        </a>
-      </div>
-
       <!-- Barra de Vida do Chefe Menos Grande (Gillian) -->
       <div id="boss-bar-container" class="hidden">
         <div id="boss-title">⚠️ MENOS GRANDE (GILLIAN) - CLASSE MENOS</div>
@@ -66,6 +153,23 @@
         </div>
         <div id="banner-cards-container"></div>
       </div>
+
+      <!-- Controles Virtuais Touch (Mobile / Telas Touch) -->
+      <div id="virtual-controls" class="hidden">
+        <!-- Joystick Analógico Flutuante (Lado Esquerdo) -->
+        <div id="virtual-joystick-zone">
+          <div id="virtual-joystick-base">
+            <div id="virtual-joystick-knob"></div>
+          </div>
+        </div>
+        <!-- Botão Virtual de Salto (Lado Direito) -->
+        <div id="virtual-actions-zone">
+          <button id="btn-virtual-jump" aria-label="Pular">
+            <span class="jump-icon">▲</span>
+            <span class="jump-label">PULO</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Modal de Pausa: Exibido ao pressionar ESC ou liberar o Pointer Lock -->
@@ -75,6 +179,7 @@
         <p class="subtitle">O cursor do mouse está liberado. Clique abaixo ou na tela para retomar.</p>
         <div class="modal-actions">
           <button id="btn-resume" class="btn primary">RETOMAR MISSÃO (TRAVAR MOUSE)</button>
+          <button id="btn-menu-pause" class="btn secondary">VOLTAR AO MENU</button>
         </div>
       </div>
     </div>
@@ -104,6 +209,7 @@
 
         <div class="modal-actions">
           <button id="btn-restart" class="btn primary">REINICIAR MISSÃO</button>
+          <button id="btn-menu-gameover" class="btn secondary">VOLTAR AO MENU</button>
         </div>
       </div>
     </div>

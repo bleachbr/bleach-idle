@@ -1,0 +1,150 @@
+---
+id: hueco_mundo
+title: Deserto Infinito do Hueco Mundo
+bioma: hueco_mundo
+version: 1.0.0
+description: >
+  Dimensão desértica eterna onde habitam os Hollows e Arrancars sob noite perpétua e luar frio.
+  O solo é composto por areia de quartzo branco fosco, esculpido em suaves dunas centrais e
+  penhascos montanhosos nas bordas que delimitam a arena natural de combate. Props incluem
+  árvores de quartzo petrificadas, obeliscos ancestrais e colunas monumentais das ruínas de Las Noches.
+
+world:
+  size: [220.0, 220.0]
+  arena_radius: 88.0
+  resolution: 64
+
+heightmap:
+  algorithm: dunes_and_mountains
+  seed: 4242
+  flat_center_radius: 20.0
+  dune_frequency: 0.035
+  dune_amplitude: 1.8
+  mountain_start_radius: 70.0
+  mountain_max_height: 14.0
+
+textures:
+  ground: /src/assets/maps/hueco_mundo/ground_sand.png
+  ground_repeat: [32, 32]
+  cliff_color: "#182030"
+
+atmosphere:
+  sky_color: "#070b14"
+  fog_color: "#0a0f1d"
+  fog_near: 40.0
+  fog_far: 115.0
+  ambient_light: "#9cb4d8"
+  ambient_intensity: 0.8
+  directional_light: "#e2ecff"
+  directional_intensity: 1.1
+  directional_pos: [50, 75, -40]
+  has_moon: true
+  moon_color: "#f0f6ff"
+  moon_pos: [60, 110, -90]
+  moon_size: 22.0
+
+props:
+  - id: prop_hm_0
+    name: Árvore Maior de Quartzo Petrificada
+    type: tree_quartz
+    file: /src/assets/maps/hueco_mundo/props/prop_hm_0.png
+    width: 4.8
+    height: 6.7
+    collider_radius: 1.1
+    density: 16
+    min_radius: 22.0
+    max_radius: 82.0
+
+  - id: prop_hm_1
+    name: Rochedo Duplo de Quartzo
+    type: rock_quartz
+    file: /src/assets/maps/hueco_mundo/props/prop_hm_1.png
+    width: 4.6
+    height: 3.8
+    collider_radius: 1.3
+    density: 14
+    min_radius: 18.0
+    max_radius: 80.0
+
+  - id: prop_hm_2
+    name: Obelisco de Quartzo Partido
+    type: obelisk
+    file: /src/assets/maps/hueco_mundo/props/prop_hm_2.png
+    width: 3.2
+    height: 4.9
+    collider_radius: 0.9
+    density: 12
+    min_radius: 24.0
+    max_radius: 84.0
+
+  - id: prop_hm_3
+    name: Formação Rochosa de Areia Branca
+    type: rock_quartz
+    file: /src/assets/maps/hueco_mundo/props/prop_hm_3.png
+    width: 3.8
+    height: 3.5
+    collider_radius: 1.0
+    density: 12
+    min_radius: 20.0
+    max_radius: 82.0
+
+  - id: prop_hm_4
+    name: Pilar Agulha de Quartzo
+    type: obelisk
+    file: /src/assets/maps/hueco_mundo/props/prop_hm_4.png
+    width: 2.2
+    height: 5.8
+    collider_radius: 0.7
+    density: 15
+    min_radius: 25.0
+    max_radius: 85.0
+
+  - id: prop_ln_0
+    name: Portal Arqueado de Las Noches
+    type: ruin_las_noches
+    file: /src/assets/maps/hueco_mundo/props/prop_ln_0.png
+    width: 5.2
+    height: 5.5
+    collider_radius: 1.5
+    density: 8
+    min_radius: 30.0
+    max_radius: 78.0
+
+  - id: prop_ln_1
+    name: Coluna Imperial de Las Noches
+    type: ruin_las_noches
+    file: /src/assets/maps/hueco_mundo/props/prop_ln_1.png
+    width: 4.0
+    height: 5.0
+    collider_radius: 1.1
+    density: 12
+    min_radius: 28.0
+    max_radius: 82.0
+
+  - id: prop_ln_2
+    name: Muro em Ruínas de Palácio
+    type: ruin_las_noches
+    file: /src/assets/maps/hueco_mundo/props/prop_ln_2.png
+    width: 4.8
+    height: 4.7
+    collider_radius: 1.3
+    density: 10
+    min_radius: 32.0
+    max_radius: 80.0
+
+spawns:
+  player: [0.0, 0.0]
+  hollow_min_dist: 22.0
+  hollow_max_dist: 45.0
+  boss_dist: 34.0
+---
+
+# Diretriz de Geração de Mapa: Deserto Infinito do Hueco Mundo
+
+## Filosofia de Design e Cenário
+O **Hueco Mundo** é o habitat natural dos Hollows e o principal palco dos conflitos de sobrevivência em Bleach.
+Para substituir a arena de Karakura Town na Versão 1, este mapa reproduz:
+1. **Relevo 3D de Dunas Vivas:** O solo não é um plano reto, mas possui elevações suaves ($\pm 1.5\text{m}$) que afetam a física de caminhada e visibilidade dos projéteis.
+2. **Penhascos Naturais de Quartzo:** Em vez de barreiras invisíveis artificiais, dunas altas e formações rochosas íngremes sobem nas bordas ($8\text{m}$ a $14\text{m}$), confinando o combate de maneira orgânica.
+3. **Props do Cânone:** Árvores petrificadas de quartzo branco e colunatas caídas de Las Noches espalhadas com distância regulada para permitir que o jogador manobre a horda.
+4. **Iluminação Fria de Luar Perpétuo:** Atmosfera azulada e escura com a lua do Hueco Mundo suspensa no firmamento.
