@@ -84,36 +84,54 @@ def process_walk_4x4(img, target_size=128):
     if not all_bboxes:
         raise ValueError("Nenhum sprite visível encontrado após remoção de fundo.")
 
-    # 2. Determinar a altura máxima e o pé mais baixo para manter o baseline estável
-    max_height = max(b[3] - b[1] for b in all_bboxes)
-    max_width  = max(b[2] - b[0] for b in all_bboxes)
+    target_char_height = int(target_size * 0.84)
+    target_baseline_y = int(target_size * 0.92)
 
-    # 3. Normalizar e centralizar cada quadro com padding uniforme no target_size (ex: 128x128)
+    # 2. Normalização Uniforme de Altura por Direção (Uniform Height 360°)
+    # Em folhas brutas de arte, a direção 'back' frequentemente é desenhada menor ou sem armas elevadas.
+    # Normalizamos a escala por direção para que o volume do corpo permaneça idêntico em rotação 360°.
+    dir_scales = {}
+    for dir_name, frame_list in frames_by_dir.items():
+        dir_bboxes = [b for _, b in frame_list if b]
+        if dir_bboxes:
+            dir_max_h = max(b[3] - b[1] for b in dir_bboxes)
+            dir_max_w = max(b[2] - b[0] for b in dir_bboxes)
+            scale_h = target_char_height / dir_max_h
+            scale_w = (target_size * 0.88) / dir_max_w
+            dir_scales[dir_name] = min(scale_h, scale_w)
+        else:
+            dir_scales[dir_name] = 1.0
+
+    # 3. Processar quadros normalizados
     processed_frames = {}
     atlas = Image.new("RGBA", (target_size * 4, target_size * 4), (0, 0, 0, 0))
-
-    scale_factor = (target_size * 0.82) / max(max_height, max_width)
+    diagnostics = {"renderedHeights": {}, "baselineY": target_baseline_y}
 
     for dir_name, row_idx in rows.items():
+        scale_factor = dir_scales[dir_name]
         processed_frames[dir_name] = []
+        max_rendered_h = 0
         for col_idx, (cell, bbox) in enumerate(frames_by_dir[dir_name]):
-            # Criar quadro quadrado normalizado
             frame = Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0))
             if bbox:
                 cropped = cell.crop(bbox)
                 new_w = max(1, int(cropped.width * scale_factor))
                 new_h = max(1, int(cropped.height * scale_factor))
+                max_rendered_h = max(max_rendered_h, new_h)
                 resized = cropped.resize((new_w, new_h), Image.Resampling.NEAREST)
 
-                # Alinhar: centro horizontal, pés ancorados na base com margem de 10%
                 dest_x = (target_size - new_w) // 2
-                dest_y = int(target_size * 0.92) - new_h
+                dest_y = target_baseline_y - new_h
                 frame.paste(resized, (dest_x, dest_y), resized)
 
             processed_frames[dir_name].append(frame)
             atlas.paste(frame, (col_idx * target_size, row_idx * target_size))
+        diagnostics["renderedHeights"][dir_name] = max_rendered_h
 
-    return atlas, processed_frames
+    h_values = list(diagnostics["renderedHeights"].values())
+    diagnostics["maxHeightVariancePercent"] = round(((max(h_values) - min(h_values)) / max(h_values)) * 100, 2)
+
+    return atlas, processed_frames, diagnostics
 
 def process_walk_8frame(img, target_size=128):
     """
@@ -152,31 +170,52 @@ def process_walk_8frame(img, target_size=128):
     if not all_bboxes:
         raise ValueError("Nenhum sprite visível encontrado após remoção de fundo.")
 
-    max_height = max(b[3] - b[1] for b in all_bboxes)
-    max_width  = max(b[2] - b[0] for b in all_bboxes)
+    target_char_height = int(target_size * 0.84)
+    target_baseline_y = int(target_size * 0.92)
+
+    # 2. Normalização Uniforme de Altura por Direção (Uniform Height 360°)
+    # Calcula escala independente por direção para que o personagem não encolha quando visto de costas.
+    dir_scales = {}
+    for dir_name, frame_list in frames_by_dir.items():
+        dir_bboxes = [b for _, b in frame_list if b]
+        if dir_bboxes:
+            dir_max_h = max(b[3] - b[1] for b in dir_bboxes)
+            dir_max_w = max(b[2] - b[0] for b in dir_bboxes)
+            scale_h = target_char_height / dir_max_h
+            scale_w = (target_size * 0.88) / dir_max_w
+            dir_scales[dir_name] = min(scale_h, scale_w)
+        else:
+            dir_scales[dir_name] = 1.0
 
     processed_frames = {}
     atlas = Image.new("RGBA", (target_size * 8, target_size * 4), (0, 0, 0, 0))
-    scale_factor = (target_size * 0.84) / max(max_height, max_width)
+    diagnostics = {"renderedHeights": {}, "baselineY": target_baseline_y}
 
     for dir_name, row_idx in rows.items():
+        scale_factor = dir_scales[dir_name]
         processed_frames[dir_name] = []
+        max_rendered_h = 0
         for col_idx, (cell, bbox) in enumerate(frames_by_dir[dir_name]):
             frame = Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0))
             if bbox:
                 cropped = cell.crop(bbox)
                 new_w = max(1, int(cropped.width * scale_factor))
                 new_h = max(1, int(cropped.height * scale_factor))
+                max_rendered_h = max(max_rendered_h, new_h)
                 resized = cropped.resize((new_w, new_h), Image.Resampling.NEAREST)
 
                 dest_x = (target_size - new_w) // 2
-                dest_y = int(target_size * 0.92) - new_h
+                dest_y = target_baseline_y - new_h
                 frame.paste(resized, (dest_x, dest_y), resized)
 
             processed_frames[dir_name].append(frame)
             atlas.paste(frame, (col_idx * target_size, row_idx * target_size))
+        diagnostics["renderedHeights"][dir_name] = max_rendered_h
 
-    return atlas, processed_frames
+    h_values = list(diagnostics["renderedHeights"].values())
+    diagnostics["maxHeightVariancePercent"] = round(((max(h_values) - min(h_values)) / max(h_values)) * 100, 2)
+
+    return atlas, processed_frames, diagnostics
 
 def process_single_front(img, target_size=128):
     """
@@ -222,7 +261,7 @@ def process_single_front(img, target_size=128):
 
     return atlas, processed_frames
 
-def export_character(name, category, atlas, processed_frames, out_dir, format_type, source_file, target_size=128):
+def export_character(name, category, atlas, processed_frames, out_dir, format_type, source_file, target_size=128, diagnostics=None):
     """
     Salva os arquivos processados na pasta de destino (staging ou oficial).
     """
@@ -262,6 +301,9 @@ def export_character(name, category, atlas, processed_frames, out_dir, format_ty
         }
     }
 
+    if diagnostics:
+        manifest["diagnostics"] = diagnostics
+
     manifest_path = os.path.join(out_dir, "manifest.json")
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
@@ -269,6 +311,8 @@ def export_character(name, category, atlas, processed_frames, out_dir, format_ty
     print(f"✅ Exportado com sucesso em: {out_dir}")
     print(f"   Atlas: {atlas_path}")
     print(f"   Manifest: {manifest_path}")
+    if diagnostics:
+        print(f"   Alturas Normalizadas: {diagnostics['renderedHeights']} (Variação: {diagnostics['maxHeightVariancePercent']}%)")
     return manifest
 
 def main():
@@ -305,10 +349,11 @@ def main():
     clean_img = remove_chroma_key(raw_img, tolerance=args.tolerance)
 
     print(f"📐 Processando formato '{format_type}' com quadro {args.target_size}x{args.target_size}...")
+    diagnostics = None
     if format_type == "walk8":
-        atlas, frames = process_walk_8frame(clean_img, target_size=args.target_size)
+        atlas, frames, diagnostics = process_walk_8frame(clean_img, target_size=args.target_size)
     elif format_type == "walk4x4":
-        atlas, frames = process_walk_4x4(clean_img, target_size=args.target_size)
+        atlas, frames, diagnostics = process_walk_4x4(clean_img, target_size=args.target_size)
     else:
         atlas, frames = process_single_front(clean_img, target_size=args.target_size)
 
@@ -319,7 +364,7 @@ def main():
     else:
         out_dir = os.path.join(base_repo, "geradores", "staging", args.name)
 
-    export_character(args.name, args.category, atlas, frames, out_dir, format_type, args.input, args.target_size)
+    export_character(args.name, args.category, atlas, frames, out_dir, format_type, args.input, args.target_size, diagnostics=diagnostics)
 
     # Se aprovado, atualizar src/characters.js
     if args.approve:

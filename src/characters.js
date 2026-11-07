@@ -40,6 +40,16 @@ export const PLAYABLE_CHARACTERS = {
         "frames": 8,
         "file": "back.png"
       }
+    },
+    "diagnostics": {
+      "renderedHeights": {
+        "front": 107,
+        "side_l": 107,
+        "side": 107,
+        "back": 107
+      },
+      "baselineY": 117,
+      "maxHeightVariancePercent": 0.0
     }
   }
 };

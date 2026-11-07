@@ -26,3 +26,9 @@ docker-build: ## Constrói a imagem Docker para o jogo
 
 docker-run: ## Executa o container Docker na porta 5173
 	docker run -p 5173:5173 bleach-soul-survivor:latest
+
+validate-sprites: ## Executa testes de qualidade estática nos sprites gerados (alturas, baseline, despill)
+	python3 geradores/validate_sprites.py --name ichigo_shikai
+
+test-sprites-e2e: ## Executa testes visuais E2E em navegador (Playwright 360 e viewport)
+	python3 scratch/test_sprite_consistency_e2e.py
