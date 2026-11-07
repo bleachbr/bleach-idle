@@ -468,38 +468,53 @@ function updateCamera() {
 }
 
 // =======================================================================
-// CÁLCULO DE PERSPECTIVA DO SPRITE (FRENTE, COSTAS, LADOS)
+// CÁLCULO DE PERSPECTIVA DO SPRITE: 4 DIREÇÕES (FRENTE, COSTAS, LADOS)
 // Matemática idêntica ao PokéBonk: dirRow()
 // =======================================================================
+// Determina qual quadrante angular o vetor de visão/deslocamento da entidade
+// ocupa em relação à câmera atual.
+// Retorna:
+// - 'back':   Entidade se move para longe da câmera (mostra as costas)
+// - 'front':  Entidade se move em direção à câmera (mostra o rosto/frente)
+// - 'side':   Entidade se move para a direita da visão da câmera (perfil direito)
+// - 'side_l': Entidade se move para a esquerda da visão da câmera (perfil esquerdo)
 function getSpriteDirection(facingX, facingZ) {
-  // Vetores de base da câmera
-  const camRightX = Math.cos(cameraState.yaw);
-  const camRightZ = -Math.sin(cameraState.yaw);
-  const camFwdX   = -Math.sin(cameraState.yaw);
-  const camFwdZ   = -Math.cos(cameraState.yaw);
+  const sinYaw = Math.sin(cameraState.yaw);
+  const cosYaw = Math.cos(cameraState.yaw);
 
-  // Projeção do vetor de visão do personagem em relação à câmera
+  // Vetor Fwd da Câmera (aponta para o fundo da tela no plano XZ)
+  const camFwdX = -sinYaw;
+  const camFwdZ = -cosYaw;
+
+  // Vetor Right da Câmera (aponta para a borda direita da tela no plano XZ)
+  const camRightX = cosYaw;
+  const camRightZ = -sinYaw;
+
+  // Projeção escalar do vetor da entidade nos eixos da câmera
   const rightProj = facingX * camRightX + facingZ * camRightZ;
   const fwdProj   = facingX * camFwdX   + facingZ * camFwdZ;
 
-  // Ângulo relativo: 0 = olhando para frente da câmera (costas para o jogador)
+  // Ângulo relativo: atan2(seno, cosseno)
   const angle = Math.atan2(rightProj, fwdProj);
 
-  // Mapeia para 4 setores principais:
-  // Frente (olhando para a câmera), Costas (olhando para longe), Lado Direito, Lado Esquerdo
+  // Setores de 90 graus cada:
+  // [-45°, +45°]: Olhando para a frente da câmera (mostra costas)
+  // [+45°, +135°]: Olhando para a direita da câmera (perfil direito)
+  // [-135°, -45°]: Olhando para a esquerda da câmera (perfil esquerdo)
+  // Restante: Olhando em direção à câmera (mostra frente)
   if (angle > -Math.PI * 0.25 && angle <= Math.PI * 0.25) {
-    return 'back'; // Personagem anda para frente (mostra costas)
+    return 'back';
   } else if (angle > Math.PI * 0.25 && angle <= Math.PI * 0.75) {
-    return 'side'; // Perfil direito
+    return 'side';
   } else if (angle < -Math.PI * 0.25 && angle >= -Math.PI * 0.75) {
-    return 'side_l'; // Perfil esquerdo
+    return 'side_l';
   } else {
-    return 'front'; // Personagem anda em direção à câmera (mostra a frente)
+    return 'front';
   }
 }
 
 // =======================================================================
-// LOOP PRINCIPAL DE JOGO
+// LOOP PRINCIPAL DE JOGO (60 FPS)
 // =======================================================================
 let slashAlpha = 0;
 let spawnTimer = 0;
@@ -515,48 +530,66 @@ function loop() {
   // 1. Atualizar Jogador (Movimento relativo ao ângulo da câmera)
   updatePlayer(dt);
 
-  // 2. Armas / Ataques
+  // 2. Armas / Ataques Espirituais
   updateWeapons(dt);
 
-  // 3. Spawns e Inimigos
+  // 3. Spawns e IA dos Inimigos
   updateSpawns(dt);
   updateEnemies(dt);
 
-  // 4. Coleta de Reishi
+  // 4. Coleta de Reishi (XP)
   updateReishi(dt);
 
-  // 5. Câmera Orbital
+  // 5. Câmera Orbital (Posicionamento suave)
   updateCamera();
 
-  // 6. Atualizar Sprites e Orientação de Billboarding
+  // 6. Atualizar Sprites e Orientação de Billboarding (4 Direções para todos)
   updateBillboards();
 
-  // 7. Renderizar Cena
+  // 7. Renderizar Cena WebGL
   renderer.render(scene, camera);
 
   // 8. Atualizar HUD
   updateHUD();
 }
 
+// =======================================================================
+// MOVIMENTAÇÃO DO JOGADOR RELATIVA AO ÂNGULO DA CÂMERA
+// =======================================================================
+// Quando o jogador gira a câmera (seja 90°, 180° ou qualquer ângulo),
+// o controle de movimentação com o teclado precisa acompanhar a visão:
+// - Pressionar 'W' ou '↑': O personagem SEMPRE avança para o fundo da tela.
+// - Pressionar 'S' ou '↓': O personagem SEMPRE recua em direção à tela.
+// - Pressionar 'D' ou '→': O personagem SEMPRE anda para a direita da tela.
+// - Pressionar 'A' ou '←': O personagem SEMPRE anda para a esquerda da tela.
 function updatePlayer(dt) {
-  let mx = 0;
-  let mz = 0;
-  if (keys.w) mz -= 1;
-  if (keys.s) mz += 1;
-  if (keys.a) mx -= 1;
-  if (keys.d) mx += 1;
+  let fwdInput = 0;
+  let rightInput = 0;
 
-  if (mx !== 0 || mz !== 0) {
-    const len = Math.hypot(mx, mz);
-    mx /= len;
-    mz /= len;
+  if (keys.w) fwdInput += 1;
+  if (keys.s) fwdInput -= 1;
+  if (keys.d) rightInput += 1;
+  if (keys.a) rightInput -= 1;
 
-    // Movimentação RELATIVA À CÂMERA (o 'W' sempre anda para onde a câmera está apontada)
+  if (fwdInput !== 0 || rightInput !== 0) {
+    // Normalizar entrada vetorial diagonal (evita velocidade extra na diagonal)
+    const len = Math.hypot(rightInput, fwdInput);
+    rightInput /= len;
+    fwdInput /= len;
+
+    // Vetores da base da câmera no plano horizontal XZ
     const sinYaw = Math.sin(cameraState.yaw);
     const cosYaw = Math.cos(cameraState.yaw);
 
-    const worldDx = mx * cosYaw - mz * sinYaw;
-    const worldDz = mx * sinYaw + mz * cosYaw;
+    const camFwdX = -sinYaw;
+    const camFwdZ = -cosYaw;
+
+    const camRightX = cosYaw;
+    const camRightZ = -sinYaw;
+
+    // Deslocamento no espaço de mundo (combinação linear)
+    const worldDx = rightInput * camRightX + fwdInput * camFwdX;
+    const worldDz = rightInput * camRightZ + fwdInput * camFwdZ;
 
     player.dirX = worldDx;
     player.dirZ = worldDz;
@@ -565,7 +598,7 @@ function updatePlayer(dt) {
     player.x += worldDx * currentSpeed * dt;
     player.z += worldDz * currentSpeed * dt;
 
-    // Confinar na arena
+    // Confinar o Recruta nos limites da barreira da arena
     const dist = Math.hypot(player.x, player.z);
     if (dist > ARENA_RADIUS - 2.0) {
       const angle = Math.atan2(player.z, player.x);
@@ -576,7 +609,7 @@ function updatePlayer(dt) {
 
   playerMesh.position.set(player.x, 0, player.z);
 
-  // Piscar de dano
+  // Efeito de piscar durante período de invulnerabilidade após receber dano
   if (player.invulnerableTime > 0) {
     player.invulnerableTime -= dt;
     playerMesh.material.opacity = Math.sin(state.time * 30) > 0 ? 0.4 : 1.0;
@@ -585,11 +618,14 @@ function updatePlayer(dt) {
   }
 }
 
+// =======================================================================
+// ATUALIZAÇÃO DE BILLBOARDS E SELEÇÃO DE TEXTURA DIRECIONAL
+// =======================================================================
 function updateBillboards() {
-  // 1. Sempre orienta a face do plano para a câmera
+  // 1. Orientação da malha: As faces dos planos sempre encaram a rotação da câmera (Billboard 2.5D)
   playerMesh.quaternion.copy(camera.quaternion);
 
-  // 2. Altera a textura do jogador de acordo com a direção em que está olhando (costas, frente, lados)
+  // 2. Textura do Recruta Shinigami (Frente, Costas, Perfil Direito ou Esquerdo)
   const pDir = getSpriteDirection(player.dirX, player.dirZ);
   const pTex = spriteTextures[`player_${pDir}`] || spriteTextures.player_back;
   if (playerMesh.material.map !== pTex) {
@@ -597,14 +633,18 @@ function updateBillboards() {
     playerMesh.material.needsUpdate = true;
   }
 
-  // 3. Atualiza os Hollows:
-  // No PokéBonk, os monstros da horda ficam SEMPRE DE FRENTE, encarando a tela/jogador com suas máscaras!
+  // 3. Textura dos Hollows (Fishbone D, Shrieker, Acidwire e Menos Grande):
+  // Ao girar a câmera em 360°, a rotação relativa entre a visão do jogador e o vetor
+  // de perseguição de cada monstro muda, permitindo ver os Hollows de FRENTE,
+  // de COSTAS (mostrando espinha de ossos, asas e manto) e de LADO (perfil com garras/bico)!
   for (const en of enemyMeshes) {
     if (en.active) {
       en.mesh.quaternion.copy(camera.quaternion);
 
-      const eTex = spriteTextures[`${en.type}_front`] || spriteTextures[en.type];
-      if (en.mesh.material.map !== eTex) {
+      const eDir = getSpriteDirection(en.dirX, en.dirZ);
+      const texKey = `${en.type}_${eDir}`;
+      const eTex = spriteTextures[texKey] || spriteTextures[`${en.type}_front`] || spriteTextures[en.type];
+      if (eTex && en.mesh.material.map !== eTex) {
         en.mesh.material.map = eTex;
         en.mesh.material.needsUpdate = true;
       }
@@ -910,7 +950,7 @@ function spawnHollow() {
   en.isBoss = false;
 
   en.mesh.scale.set(1.0, 1.0, 1.0);
-  en.mesh.material.map = spriteTextures[type === 'fishbone' ? 'fishbone_front' : type];
+  en.mesh.material.map = spriteTextures[`${type}_front`] || spriteTextures[type];
   en.mesh.material.color.setHex(0xffffff);
   en.mesh.position.set(en.x, 0, en.z);
   en.mesh.visible = true;
@@ -933,7 +973,7 @@ function spawnBossMenosGrande() {
   en.isBoss = true;
 
   en.mesh.scale.set(3.2, 3.2, 3.2);
-  en.mesh.material.map = spriteTextures.menos;
+  en.mesh.material.map = spriteTextures.menos_front || spriteTextures.menos;
   en.mesh.material.color.setHex(0xffffff);
   en.mesh.position.set(en.x, 0, en.z);
   en.mesh.visible = true;
