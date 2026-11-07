@@ -1,11 +1,17 @@
 import * as THREE from 'three';
 import { createSpritesheet } from './spritesheet.js';
 
-// Constantes do jogo
+// Constantes da Arena e Câmera
 const ARENA_RADIUS = 75.0;
 const MAX_ENEMIES = 400;
-const CAM_DIST = 14.0;
-const CAM_PITCH = 0.55; // Inclinação da câmera para enxergar o chão e personagens com perfeição
+
+// Configurações de Câmera estilo PokéBonk
+const cameraState = {
+  yaw: 0,            // Rotação horizontal em radianos (360° livre)
+  pitch: 0.50,       // Inclinação vertical (~28° para o chão)
+  dist: 13.0,        // Distância do personagem
+  target: new THREE.Vector3(0, 1.0, 0)
+};
 
 // Estado do Jogo
 export const state = {
@@ -46,12 +52,15 @@ export const player = {
   maxHp: 100,
   speed: 6.0,
   dirX: 0,
-  dirZ: 1,
+  dirZ: 1, // Começa olhando para o sul / frente
   invulnerableTime: 0
 };
 
-// Controles
+// Controles de Entrada
 const keys = { w: false, a: false, s: false, d: false };
+let isDraggingMouse = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
 
 // Three.js Globais
 let scene, camera, renderer, clock;
@@ -66,11 +75,11 @@ window.addEventListener('DOMContentLoaded', init);
 function init() {
   const canvas = document.getElementById('game-canvas');
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x111625); // Azul-noite atmosférico visível
+  scene.background = new THREE.Color(0x111625);
 
   clock = new THREE.Clock();
 
-  // 1. Câmera
+  // 1. Câmera Perspectiva
   camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 300);
   updateCamera();
 
@@ -79,7 +88,7 @@ function init() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-  // 3. Iluminação
+  // 3. Luzes
   const ambLight = new THREE.AmbientLight(0xffffff, 1.2);
   scene.add(ambLight);
 
@@ -87,41 +96,39 @@ function init() {
   dirLight.position.set(20, 40, 20);
   scene.add(dirLight);
 
-  // 4. Construção da Arena de Karakura
+  // 4. Arena de Karakura
   createArena();
 
   // 5. Texturas e Sprites de Bleach
   buildSprites();
 
-  // 6. Criar Personagem do Jogador (Recruta Shinigami)
+  // 6. Personagem do Jogador (Recruta Shinigami)
   createPlayerMesh();
 
-  // 7. Criar Malha do Efeito de Corte (Katana Slash)
+  // 7. Malha do Efeito de Corte (Katana Slash)
   createSlashMesh();
 
   // 8. Grupo de Orbes de Reishi
   reishiGroup = new THREE.Group();
   scene.add(reishiGroup);
 
-  // 9. Pool de Hollows
+  // 9. Pool de Inimigos Hollows
   initEnemyPool();
 
-  // 10. Listeners de Teclado e Redimensionamento
-  setupInputListeners();
+  // 10. Listeners de Teclado, Mouse (Rotação 360°) e Touch
+  setupInputListeners(canvas);
 
-  // Expor para debug via browser / playwright
-  window.debugGame = { scene, camera, player, state, enemyMeshes };
+  // Expor para inspeção e testes automatizados
+  window.debugGame = { scene, camera, cameraState, player, state, enemyMeshes };
 
   // 11. Iniciar Loop
   requestAnimationFrame(loop);
 }
 
 function createArena() {
-  // 1. Chão de asfalto urbano com textura de grade
   const groundGeo = new THREE.PlaneGeometry(ARENA_RADIUS * 2, ARENA_RADIUS * 2, 32, 32);
   groundGeo.rotateX(-Math.PI / 2);
 
-  // Textura procedural de calçamento/asfalto
   const groundCanvas = document.createElement('canvas');
   groundCanvas.width = 256;
   groundCanvas.height = 256;
@@ -149,7 +156,7 @@ function createArena() {
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // 2. Barreira Espiritual Circular (Bordas da Arena)
+  // Barreira Espiritual Circular
   const barrierGeo = new THREE.RingGeometry(ARENA_RADIUS - 0.8, ARENA_RADIUS + 0.5, 64);
   barrierGeo.rotateX(-Math.PI / 2);
   const barrierMat = new THREE.MeshBasicMaterial({
@@ -160,7 +167,7 @@ function createArena() {
   barrier.position.y = 0.05;
   scene.add(barrier);
 
-  // 3. Postes com lanternas/fitas espirituais nas bordas
+  // Postes de barreira com lanternas
   for (let i = 0; i < 24; i++) {
     const angle = (i / 24) * Math.PI * 2;
     const px = Math.cos(angle) * ARENA_RADIUS;
@@ -173,7 +180,6 @@ function createArena() {
     pole.position.set(px, 0, pz);
     scene.add(pole);
 
-    // Lanterna no topo do poste
     const lampGeo = new THREE.BoxGeometry(0.7, 0.7, 0.7);
     lampGeo.translate(0, 4.5, 0);
     const lampMat = new THREE.MeshBasicMaterial({ color: 0x63b3ed });
@@ -186,7 +192,6 @@ function createArena() {
 function buildSprites() {
   const { canvas, sprites } = createSpritesheet();
 
-  // Gera texturas individuais a partir do atlas para garantir renderização perfeita
   for (const [key, sp] of Object.entries(sprites)) {
     const sCanvas = document.createElement('canvas');
     sCanvas.width = sp.w;
@@ -205,10 +210,10 @@ function buildSprites() {
 
 function createPlayerMesh() {
   const pGeo = new THREE.PlaneGeometry(2.0, 2.0);
-  pGeo.translate(0, 1.0, 0); // Pivô nos pés
+  pGeo.translate(0, 1.0, 0);
 
   const pMat = new THREE.MeshBasicMaterial({
-    map: spriteTextures.player,
+    map: spriteTextures.player_front,
     transparent: true,
     depthWrite: false,
     side: THREE.DoubleSide
@@ -218,7 +223,7 @@ function createPlayerMesh() {
   playerMesh.position.set(0, 0, 0);
   scene.add(playerMesh);
 
-  // Sombra suave sob os pés do jogador
+  // Sombra suave sob os pés
   const shadowGeo = new THREE.CircleGeometry(0.7, 16);
   shadowGeo.rotateX(-Math.PI / 2);
   const shadowMat = new THREE.MeshBasicMaterial({
@@ -232,7 +237,6 @@ function createPlayerMesh() {
 }
 
 function createSlashMesh() {
-  // Arco visual do golpe da Katana
   const slashGeo = new THREE.RingGeometry(1.6, 3.4, 24, 1, 0, Math.PI * 0.7);
   slashGeo.rotateX(-Math.PI / 2);
   const slashMat = new THREE.MeshBasicMaterial({
@@ -252,7 +256,7 @@ function initEnemyPool() {
 
   for (let i = 0; i < MAX_ENEMIES; i++) {
     const mat = new THREE.MeshBasicMaterial({
-      map: spriteTextures.fishbone,
+      map: spriteTextures.fishbone_front,
       transparent: true,
       depthWrite: false,
       side: THREE.DoubleSide
@@ -262,7 +266,6 @@ function initEnemyPool() {
     mesh.visible = false;
     mesh.position.set(0, -999, 0);
 
-    // Sombra do monstro
     const sGeo = new THREE.CircleGeometry(0.6, 16);
     sGeo.rotateX(-Math.PI / 2);
     const sMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 });
@@ -277,6 +280,8 @@ function initEnemyPool() {
       active: false,
       x: 0,
       z: 0,
+      dirX: 0,
+      dirZ: 1,
       hp: 40,
       maxHp: 40,
       speed: 3.2,
@@ -287,13 +292,21 @@ function initEnemyPool() {
   }
 }
 
-function setupInputListeners() {
+// =======================================================================
+// CONTROLES DE ENTRADA: TECLADO + ROTAÇÃO DO MOUSE (POINTER LOCK E DRAG)
+// =======================================================================
+function setupInputListeners(canvas) {
+  // 1. Teclado
   window.addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase();
     if (k === 'w' || k === 'arrowup') keys.w = true;
     if (k === 'a' || k === 'arrowleft') keys.a = true;
     if (k === 's' || k === 'arrowdown') keys.s = true;
     if (k === 'd' || k === 'arrowright') keys.d = true;
+
+    // Rotação rápida via teclas Q e E (opcional)
+    if (k === 'q') cameraState.yaw -= 0.15;
+    if (k === 'e') cameraState.yaw += 0.15;
   });
 
   window.addEventListener('keyup', (e) => {
@@ -304,6 +317,71 @@ function setupInputListeners() {
     if (k === 'd' || k === 'arrowright') keys.d = false;
   });
 
+  // 2. Rotação da Câmera com o Mouse (Estilo PokéBonk)
+  // Suporta:
+  // - Clique e arraste na tela (Mouse Drag)
+  // - Pointer Lock opcional (ao clicar na área de jogo)
+  canvas.addEventListener('mousedown', (e) => {
+    isDraggingMouse = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDraggingMouse = false;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    // Se o ponteiro estiver travado via PointerLock API (estilo PokéBonk)
+    if (document.pointerLockElement === canvas) {
+      const sens = 0.0035;
+      cameraState.yaw -= e.movementX * sens;
+      cameraState.pitch += e.movementY * sens;
+      cameraState.pitch = Math.max(0.15, Math.min(1.15, cameraState.pitch));
+      return;
+    }
+
+    // Se estiver arrastando com botão do mouse
+    if (isDraggingMouse) {
+      const dx = e.clientX - lastMouseX;
+      const dy = e.clientY - lastMouseY;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+
+      const sens = 0.006;
+      cameraState.yaw -= dx * sens;
+      cameraState.pitch += dy * sens;
+      cameraState.pitch = Math.max(0.15, Math.min(1.15, cameraState.pitch));
+    }
+  });
+
+  // Zoom da Câmera com a roda do mouse (Scroll Wheel)
+  window.addEventListener('wheel', (e) => {
+    cameraState.dist = Math.max(7.0, Math.min(24.0, cameraState.dist + Math.sign(e.deltaY) * 1.0));
+  }, { passive: true });
+
+  // 3. Suporte a Touch no Mobile (Deslizar para girar a câmera)
+  let touchStartX = 0;
+  let touchStartY = 0;
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  canvas.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 0) {
+      const dx = e.touches[0].clientX - touchStartX;
+      const dy = e.touches[0].clientY - touchStartY;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+
+      cameraState.yaw -= dx * 0.008;
+      cameraState.pitch = Math.max(0.15, Math.min(1.15, cameraState.pitch + dy * 0.006));
+    }
+  }, { passive: true });
+
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -313,20 +391,54 @@ function setupInputListeners() {
   document.getElementById('btn-restart').onclick = () => location.reload();
 }
 
+// Atualização da Câmera baseada no Yaw (360° livre) e Pitch
 function updateCamera() {
-  const targetX = player.x;
-  const targetZ = player.z;
+  const h = Math.cos(cameraState.pitch);
+  const g = Math.sin(cameraState.pitch);
+  const dist = cameraState.dist;
 
-  const camY = CAM_DIST * Math.sin(CAM_PITCH) + 1.2;
-  const camZ = targetZ + CAM_DIST * Math.cos(CAM_PITCH);
+  const camX = player.x + Math.sin(cameraState.yaw) * h * dist;
+  const camY = player.y + g * dist + 0.8;
+  const camZ = player.z + Math.cos(cameraState.yaw) * h * dist;
 
-  camera.position.set(targetX, camY, camZ);
-  camera.lookAt(targetX, 1.0, targetZ);
+  camera.position.set(camX, camY, camZ);
+  camera.lookAt(player.x, 1.2, player.z);
 }
 
-// ==========================================
-// LOOP DE JOGO
-// ==========================================
+// =======================================================================
+// CÁLCULO DE PERSPECTIVA DO SPRITE (FRENTE, COSTAS, LADOS)
+// Matemática idêntica ao PokéBonk: dirRow()
+// =======================================================================
+function getSpriteDirection(facingX, facingZ) {
+  // Vetores de base da câmera
+  const camRightX = Math.cos(cameraState.yaw);
+  const camRightZ = -Math.sin(cameraState.yaw);
+  const camFwdX   = -Math.sin(cameraState.yaw);
+  const camFwdZ   = -Math.cos(cameraState.yaw);
+
+  // Projeção do vetor de visão do personagem em relação à câmera
+  const rightProj = facingX * camRightX + facingZ * camRightZ;
+  const fwdProj   = facingX * camFwdX   + facingZ * camFwdZ;
+
+  // Ângulo relativo: 0 = olhando para frente da câmera (costas para o jogador)
+  const angle = Math.atan2(rightProj, fwdProj);
+
+  // Mapeia para 4 setores principais:
+  // Frente (olhando para a câmera), Costas (olhando para longe), Lado Direito, Lado Esquerdo
+  if (angle > -Math.PI * 0.25 && angle <= Math.PI * 0.25) {
+    return 'back'; // Personagem anda para frente (mostra costas)
+  } else if (angle > Math.PI * 0.25 && angle <= Math.PI * 0.75) {
+    return 'side'; // Perfil direito
+  } else if (angle < -Math.PI * 0.25 && angle >= -Math.PI * 0.75) {
+    return 'side_l'; // Perfil esquerdo
+  } else {
+    return 'front'; // Personagem anda em direção à câmera (mostra a frente)
+  }
+}
+
+// =======================================================================
+// LOOP PRINCIPAL DE JOGO
+// =======================================================================
 let slashAlpha = 0;
 let spawnTimer = 0;
 
@@ -338,7 +450,7 @@ function loop() {
 
   state.time += dt;
 
-  // 1. Atualizar Jogador
+  // 1. Atualizar Jogador (Movimento relativo ao ângulo da câmera)
   updatePlayer(dt);
 
   // 2. Armas / Ataques
@@ -351,11 +463,11 @@ function loop() {
   // 4. Coleta de Reishi
   updateReishi(dt);
 
-  // 5. Câmera
+  // 5. Câmera Orbital
   updateCamera();
 
-  // 6. Billboard: Sprites sempre encaram a rotação da câmera (estilo PokéBonk)
-  alignBillboards();
+  // 6. Atualizar Sprites e Orientação de Billboarding
+  updateBillboards();
 
   // 7. Renderizar Cena
   renderer.render(scene, camera);
@@ -377,12 +489,19 @@ function updatePlayer(dt) {
     mx /= len;
     mz /= len;
 
-    player.dirX = mx;
-    player.dirZ = mz;
+    // Movimentação RELATIVA À CÂMERA (o 'W' sempre anda para onde a câmera está apontada)
+    const sinYaw = Math.sin(cameraState.yaw);
+    const cosYaw = Math.cos(cameraState.yaw);
+
+    const worldDx = mx * cosYaw - mz * sinYaw;
+    const worldDz = mx * sinYaw + mz * cosYaw;
+
+    player.dirX = worldDx;
+    player.dirZ = worldDz;
 
     const currentSpeed = player.speed * (1 + state.passives.shunpo * 0.15);
-    player.x += mx * currentSpeed * dt;
-    player.z += mz * currentSpeed * dt;
+    player.x += worldDx * currentSpeed * dt;
+    player.z += worldDz * currentSpeed * dt;
 
     // Confinar na arena
     const dist = Math.hypot(player.x, player.z);
@@ -404,13 +523,31 @@ function updatePlayer(dt) {
   }
 }
 
-function alignBillboards() {
-  // Orienta os sprites para a câmera
+function updateBillboards() {
+  // 1. Sempre orienta a face do plano para a câmera
   playerMesh.quaternion.copy(camera.quaternion);
 
+  // 2. Altera a textura do jogador de acordo com a direção em que está olhando
+  const pDir = getSpriteDirection(player.dirX, player.dirZ);
+  const pTex = spriteTextures[`player_${pDir}`] || spriteTextures.player_front;
+  if (playerMesh.material.map !== pTex) {
+    playerMesh.material.map = pTex;
+    playerMesh.material.needsUpdate = true;
+  }
+
+  // 3. Atualiza os Hollows (para o Fishbone D também muda frente/costas/lados)
   for (const en of enemyMeshes) {
     if (en.active) {
       en.mesh.quaternion.copy(camera.quaternion);
+
+      if (en.type === 'fishbone') {
+        const eDir = getSpriteDirection(en.dirX, en.dirZ);
+        const eTex = spriteTextures[`fishbone_${eDir}`] || spriteTextures.fishbone_front;
+        if (en.mesh.material.map !== eTex) {
+          en.mesh.material.map = eTex;
+          en.mesh.material.needsUpdate = true;
+        }
+      }
     }
   }
 }
@@ -530,7 +667,7 @@ function executeShakkaho(dmg) {
 
 function damageEnemy(en, dmg, weaponKey) {
   en.hp -= dmg;
-  en.flashTimer = 0.12; // Flash branco
+  en.flashTimer = 0.12;
   en.mesh.material.color.setHex(0xffffff);
 
   state.damageDealt += dmg;
@@ -548,7 +685,6 @@ function killEnemy(en) {
   state.kills++;
   state.census[en.type] = (state.census[en.type] || 0) + 1;
 
-  // Drop de Reishi
   spawnReishi(en.x, en.z, en.isBoss ? 20 : 1);
 
   if (en.isBoss) {
@@ -655,7 +791,6 @@ function selectSkill(opt) {
 
 // Spawns
 function updateSpawns(dt) {
-  // Spawn do Chefe Menos Grande: minuto 2 ou 60 kills
   if (!state.bossSpawned && (state.time >= 120 || state.kills >= 60)) {
     spawnBossMenosGrande();
     state.bossSpawned = true;
@@ -676,7 +811,6 @@ function spawnHollow() {
   const en = enemyMeshes.find(e => !e.active);
   if (!en) return;
 
-  // Nascem a 18-24 metros do jogador para entrarem na tela rapidamente
   const angle = Math.random() * Math.PI * 2;
   const dist = 16.0 + Math.random() * 8.0;
   en.x = player.x + Math.cos(angle) * dist;
@@ -705,7 +839,7 @@ function spawnHollow() {
   en.isBoss = false;
 
   en.mesh.scale.set(1.0, 1.0, 1.0);
-  en.mesh.material.map = spriteTextures[type];
+  en.mesh.material.map = spriteTextures[type === 'fishbone' ? 'fishbone_front' : type];
   en.mesh.material.color.setHex(0xffffff);
   en.mesh.position.set(en.x, 0, en.z);
   en.mesh.visible = true;
@@ -727,7 +861,7 @@ function spawnBossMenosGrande() {
   en.speed = 2.0;
   en.isBoss = true;
 
-  en.mesh.scale.set(3.2, 3.2, 3.2); // Colossal
+  en.mesh.scale.set(3.2, 3.2, 3.2);
   en.mesh.material.map = spriteTextures.menos;
   en.mesh.material.color.setHex(0xffffff);
   en.mesh.position.set(en.x, 0, en.z);
@@ -740,18 +874,19 @@ function updateEnemies(dt) {
   for (const en of enemyMeshes) {
     if (!en.active) continue;
 
-    // Perseguição em direção ao jogador
     const dx = player.x - en.x;
     const dz = player.z - en.z;
     const dist = Math.hypot(dx, dz);
 
     if (dist > 0.6) {
-      en.x += (dx / dist) * en.speed * dt;
-      en.z += (dz / dist) * en.speed * dt;
+      en.dirX = dx / dist;
+      en.dirZ = dz / dist;
+      en.x += en.dirX * en.speed * dt;
+      en.z += en.dirZ * en.speed * dt;
       en.mesh.position.set(en.x, 0, en.z);
     }
 
-    // Dano de contato no jogador
+    // Dano de contato
     if (dist < 1.1 && player.invulnerableTime <= 0) {
       player.hp -= en.isBoss ? 35 : 12;
       player.invulnerableTime = 0.6;
@@ -761,7 +896,6 @@ function updateEnemies(dt) {
       }
     }
 
-    // Flash de dano decai
     if (en.flashTimer > 0) {
       en.flashTimer -= dt;
       if (en.flashTimer <= 0) {
@@ -772,23 +906,19 @@ function updateEnemies(dt) {
 }
 
 function updateHUD() {
-  // HP
   const hpPercent = (player.hp / player.maxHp) * 100;
   document.getElementById('hp-bar-fill').style.width = hpPercent + '%';
   document.getElementById('hp-text').innerText = `${Math.ceil(player.hp)} / ${player.maxHp}`;
 
-  // XP
   const xpPercent = (state.xp / state.xpNext) * 100;
   document.getElementById('xp-bar-fill').style.width = xpPercent + '%';
   document.getElementById('level-badge').innerText = `Nv. ${state.level}`;
 
-  // Relógio
   const mins = String(Math.floor(state.time / 60)).padStart(2, '0');
   const secs = String(Math.floor(state.time % 60)).padStart(2, '0');
   document.getElementById('timer-box').innerText = `${mins}:${secs}`;
   document.getElementById('kills-count').innerText = state.kills;
 
-  // Barra de Vida do Chefe
   if (state.bossSpawned && !state.bossDefeated) {
     const boss = enemyMeshes.find(e => e.active && e.isBoss);
     if (boss) {
