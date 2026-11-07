@@ -10,7 +10,8 @@ Formatos esperados pelo processador:
 - FX: folha 4x4 (--category fx --row N); cada linha é uma animação de 4 quadros.
 
 Os prompts não citam nomes de obras: os seres são descritos só pela aparência.
-Uso: python geradores/gen_codex.py [id ...]   (sem ids: todos os que faltam)
+Uso: python geradores/gen_codex.py [id ...]           (sem ids: todos os que faltam)
+     python geradores/gen_codex.py --walk8 [id ...]   (caminhada de 8 quadros dos monstros, formato walk8)
 """
 import subprocess
 import sys
@@ -99,10 +100,120 @@ def job(id_: str) -> str:
     return f"{out.name}: {'ok' if out.exists() else 'FALHOU'}"
 
 
+# --- Caminhada de 8 quadros (formato walk8 do processador, igual ao do Ichigo) ---
+# Pedir a folha 8x4 inteira de uma vez sai pior; como no Bleach Idle, cada direção vem numa
+# imagem quadrada 4x2 (8 quadros) e a folha 8x4 é montada aqui. O lado direito é o esquerdo espelhado.
+OUT_W8 = OUT / "walk8"
+CYCLE8 = ("Make the image SQUARE. A 4x2 grid (4 columns, 2 rows, 8 equal square cells, no visible grid lines) showing ONE "
+          "smooth 8-frame walk cycle of this creature, read left to right on row 1 then on row 2: the legs (or tail, as the "
+          "creature has) alternate step by step through contact, weight, passing and reaching poses, the body bobs slightly "
+          "down and up, arms, claws, wings, tails and cloaks sway with the motion. Every frame must be clearly different, and "
+          "the cycle must loop smoothly from frame 8 back to frame 1. In every cell the creature is centered, fully inside the "
+          "central 75% of the cell with magenta padding, identical scale and identical feet baseline in all 8 cells; nothing "
+          "crosses a cell edge.")
+DIRS8 = {"down": "Walking DOWN toward the camera (front view).", "left": "Walking LEFT (left side view, facing left).",
+         "up": "Walking UP away from the camera (back view)."}
+WALK_IDS = [i for i, (_, _, kind) in JOBS.items() if kind == "walk"]
+
+
+def job_walk8(id_: str, d: str) -> str:
+    out = OUT_W8 / f"{id_}_{d}.png"
+    if out.exists():
+        return f"{out.name} já existe"
+    sheet4 = f"arts/codex/{id_}_sheet.png"  # a folha 4x4 do próprio monstro fixa o design
+    prompt = ("Use your built-in image_gen tool to create exactly ONE image. The attached images are references from this game: "
+              "the first is the art style to match, the second is THIS EXACT creature (same design, colors, mask and "
+              "proportions); use them as the visual reference for image_gen. Do not write code to draw art. After generating, "
+              f"copy the resulting PNG from $CODEX_HOME/generated_images/... to ./arts/codex/walk8/{out.name} and reply only "
+              f"with the source path and the final path.\n\nImage prompt:\n{JOBS[id_][0]} {DIRS8[d]} {CYCLE8} {STYLE}")
+    (PROMPTS / f"{id_}_walk8_{d}.txt").write_text(prompt, encoding="utf-8")
+    cmd = ["codex", "exec", "-s", "workspace-write", "--skip-git-repo-check", "-C", str(ROOT),
+           "-i", STYLE_REF, "-i", sheet4, "-"]
+    with open(OUT_W8 / f"log_{id_}_{d}.txt", "w", encoding="utf-8") as log:
+        subprocess.run(cmd, input=prompt, text=True, stdout=log, stderr=subprocess.STDOUT, shell=sys.platform == "win32")
+    return f"{out.name}: {'ok' if out.exists() else 'FALHOU'}"
+
+
+def silhueta(img):
+    """Máscara booleana do que não é magenta, recortada na caixa do conteúdo e num tamanho fixo."""
+    import numpy as np
+    from PIL import Image
+    a = np.asarray(img.convert("RGB")).astype(int)
+    fundo = (a[..., 0] > 180) & (a[..., 2] > 180) & (a[..., 1] < 100)
+    m = Image.fromarray(((~fundo) * 255).astype("uint8"))
+    box = m.getbbox()
+    return np.asarray(m.crop(box).resize((64, 96))) > 127 if box else np.zeros((96, 64), bool)
+
+
+def orientar_como_primeiro(frames):
+    """O Codex às vezes vira o perfil para o outro lado numa linha da grade. Cada quadro é comparado
+    com o 1º e com o espelho do 1º; se parece mais com o espelho, é desvirado."""
+    from PIL import ImageOps
+    ref = silhueta(frames[0])
+    out = []
+    for f in frames:
+        s = silhueta(f)
+        igual, espelho = (s == ref).mean(), (s[:, ::-1] == ref).mean()
+        out.append(ImageOps.mirror(f) if espelho > igual else f)
+    return out
+
+
+def ereto_no_segundo(frames):
+    """O processador usa o 2º quadro como pose parada (direção.png) e o validador mede a altura dela.
+    Gira o ciclo (a animação em loop não muda) para que o quadro mais alto, o mais ereto, fique em 2º;
+    senão a pose parada pode cair no ponto mais baixo da passada."""
+    import numpy as np
+
+    def altura(f):
+        a = np.asarray(f.convert("RGB")).astype(int)
+        linhas = np.where((~((a[..., 0] > 180) & (a[..., 2] > 180) & (a[..., 1] < 100))).any(axis=1))[0]
+        return linhas[-1] - linhas[0] if len(linhas) else 0
+
+    k = (max(range(len(frames)), key=lambda i: altura(frames[i])) - 1) % len(frames)
+    return frames[k:] + frames[:k]
+
+
+def montar_walk8(id_: str) -> str:
+    """Junta as 3 imagens 4x2 numa folha 8x4 (frente, esquerda, direita espelhada, costas), fundo magenta."""
+    from PIL import Image, ImageOps
+    parts = {d: OUT_W8 / f"{id_}_{d}.png" for d in DIRS8}
+    if not all(p.exists() for p in parts.values()):
+        return f"{id_}: faltam direções, folha não montada"
+    # Numa imagem quadrada em 4x2 cada célula é retangular (duas vezes mais alta que larga):
+    # mantém o tamanho original da célula para não achatar o monstro. O processador aceita
+    # células não quadradas (largura/8, altura/4).
+    first = Image.open(parts["down"])
+    cw, ch = first.width // 4, first.height // 2
+
+    def frames(path):
+        img = Image.open(path).convert("RGB").resize((cw * 4, ch * 2), Image.Resampling.NEAREST)
+        return [img.crop((c * cw, r * ch, (c + 1) * cw, (r + 1) * ch)) for r in range(2) for c in range(4)]
+
+    left = ereto_no_segundo(orientar_como_primeiro(frames(parts["left"])))
+    rows = [ereto_no_segundo(frames(parts["down"])), left, [ImageOps.mirror(f) for f in left],
+            ereto_no_segundo(frames(parts["up"]))]
+    sheet = Image.new("RGB", (cw * 8, ch * 4), (255, 0, 255))
+    for r, row in enumerate(rows):
+        for c, f in enumerate(row):
+            sheet.paste(f, (c * cw, r * ch))
+    out = OUT / f"{id_}_walk8_sheet.png"
+    sheet.save(out)
+    return f"{out.name}: montada"
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     PROMPTS.mkdir(parents=True, exist_ok=True)
-    ids = sys.argv[1:] or list(JOBS)
-    with ThreadPoolExecutor(max_workers=5) as ex:
-        for r in ex.map(job, ids):
-            print(r, flush=True)
+    args = sys.argv[1:]
+    if args[:1] == ["--walk8"]:  # python gen_codex.py --walk8 [id ...]
+        OUT_W8.mkdir(parents=True, exist_ok=True)
+        ids = args[1:] or WALK_IDS
+        with ThreadPoolExecutor(max_workers=6) as ex:
+            for r in ex.map(lambda a: job_walk8(*a), [(i, d) for i in ids for d in DIRS8]):
+                print(r, flush=True)
+        for i in ids:
+            print(montar_walk8(i), flush=True)
+    else:
+        with ThreadPoolExecutor(max_workers=5) as ex:
+            for r in ex.map(job, args or list(JOBS)):
+                print(r, flush=True)

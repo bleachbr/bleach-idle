@@ -50,7 +50,14 @@ python -I -X utf8 geradores/sprite_processor.py -i arts/codex/fx_kido_sheet.png 
 
 No Windows, use `-X utf8`: os `print` com emoji do processador quebram no console `cp1252`.
 
-Rodada de 07/11/2026 (Codex CLI 0.160.1): as 5 folhas saíram na 1ª tentativa, sem recusas e em cerca de 3 min no total, com os 5 jobs em paralelo. Foram os Hollows `fishbone`, `shrieker`, `acidwire` e `menos`, mais `fx_kido`. A `fx_kido` se divide em `skill_byakurai` (linha 0), `hit_byakurai` (1), `skill_shakkaho` (2) e `hit_shakkaho` (3). Tudo está em `geradores/staging/`, aguardando aprovação no Estúdio 360°.
+**Caminhada de 8 quadros (walk8, igual ao Ichigo).** A folha 4x4 tem só 4 quadros por direção, e dois deles são o mesmo neutro, então a passada fica dura. O comando `python -I geradores/gen_codex.py --walk8` pede ao Codex uma imagem 4x2 por direção (frente, esquerda e costas), com 8 poses diferentes num ciclo que fecha. A folha 4x4 do próprio monstro vai junto como referência de design. Depois o script monta `arts/codex/<id>_walk8_sheet.png` (8x4) e faz três correções:
+- **Direita espelhada:** a direita é o espelho da esquerda.
+- **Perfil desvirado:** o Codex às vezes vira o perfil numa linha da grade. Cada quadro é comparado com o 1º e com o espelho dele, e o que vier virado é desvirado (na rodada de 07/11 isso aconteceu com a 2ª linha do `shrieker`).
+- **Ciclo girado:** o processador usa o 2º quadro como pose parada, e o validador mede a altura dela. O ciclo de cada direção é girado para que o quadro mais ereto fique em 2º; caso contrário, a pose parada pode cair no ponto mais baixo da passada e reprovar na uniformidade de altura. O loop não muda.
+
+Montada a folha, o processamento é `sprite_processor.py -t walk8`.
+
+Rodada de 07/11/2026 (Codex CLI 0.160.1): as 5 folhas saíram na 1ª tentativa, sem recusas e em cerca de 3 min no total, com os 5 jobs em paralelo. Foram os Hollows `fishbone`, `shrieker`, `acidwire` e `menos`, mais `fx_kido`. A `fx_kido` se divide em `skill_byakurai` (linha 0), `hit_byakurai` (1), `skill_shakkaho` (2) e `hit_shakkaho` (3). Depois vieram as 12 imagens de 8 quadros (4 Hollows x 3 direções), também na 1ª tentativa, e os 4 Hollows passaram a usar `walk8` a 10 fps. Os quatro passam no `validate_sprites.py`: altura 360° com variação de até 0,93%, jitter dos pés de 0 px e nenhum vazamento de magenta. Tudo está em `geradores/staging/`, aguardando aprovação no Estúdio 360°.
 
 ---
 
