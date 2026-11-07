@@ -439,12 +439,7 @@ function setupInputListeners(canvas) {
       }
       if (!state.gameOver) {
         if (!state.paused) {
-          state.paused = true;
-          if (document.pointerLockElement === canvas) {
-            document.exitPointerLock();
-          }
-          const pauseModal = document.getElementById('pause-modal');
-          if (pauseModal) pauseModal.classList.remove('hidden');
+          pauseGame();
         } else {
           resumeGame();
         }
@@ -469,6 +464,27 @@ function setupInputListeners(canvas) {
     }
   }
 
+  function pauseGame() {
+    state.paused = true;
+    if (document.pointerLockElement === canvas) {
+      document.exitPointerLock();
+    }
+    const pauseModal = document.getElementById('pause-modal');
+    if (pauseModal) pauseModal.classList.remove('hidden');
+  }
+
+  // Perder o foco da janela (Alt+Tab, trocar de aba, minimizar) pausa a partida.
+  // Vale também com o banner de level up aberto, pois ele não congela o jogo.
+  // As teclas são soltas porque o keyup não chega com a janela sem foco.
+  function pauseOnFocusLoss() {
+    keys.w = keys.a = keys.s = keys.d = false;
+    if (state.active && !state.gameOver && !state.paused) pauseGame();
+  }
+  window.addEventListener('blur', pauseOnFocusLoss);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) pauseOnFocusLoss();
+  });
+
   function resumeGame() {
     state.paused = false;
     const pauseModal = document.getElementById('pause-modal');
@@ -481,6 +497,15 @@ function setupInputListeners(canvas) {
       resumeGame();
     }
   });
+
+  // O modal de pausa cobre o canvas inteiro: clicar em qualquer ponto dele
+  // retoma a partida e devolve o mouse travado à câmera do jogo.
+  const pauseModalEl = document.getElementById('pause-modal');
+  if (pauseModalEl) {
+    pauseModalEl.addEventListener('click', () => {
+      if (!state.gameOver) resumeGame();
+    });
+  }
 
   document.addEventListener('pointerlockchange', () => {
     const isLocked = (document.pointerLockElement === canvas);
@@ -497,6 +522,13 @@ function setupInputListeners(canvas) {
       state.paused = false;
       if (pauseModal) pauseModal.classList.add('hidden');
     }
+  });
+
+  // O navegador pode recusar a trava (ex.: Chrome recusa por ~1 s depois de
+  // sair com ESC). Sem trava não há câmera pelo mouse, então segue pausado e
+  // o próximo clique tenta de novo.
+  document.addEventListener('pointerlockerror', () => {
+    if (state.active && !state.levelUpOpen && !state.gameOver) pauseGame();
   });
 
   const resumeBtn = document.getElementById('btn-resume');
