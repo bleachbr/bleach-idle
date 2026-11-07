@@ -261,6 +261,73 @@ def process_single_front(img, target_size=128):
 
     return atlas, processed_frames
 
+def process_fx_animation(img, row_idx=0, num_frames=4, target_size=128):
+    """
+    Processa uma linha de efeito visual (FX: aura, combat slash, skill projectile)
+    a partir de uma folha 4x4 (como arts/64_fx_aura.png, arts/62_fx_combat.png, arts/63_fx_skills.png).
+    Gera atlas horizontal e quadros normalizados com canal alpha limpo.
+    """
+    ch = img.height // 4
+    cw = img.width // 4
+
+    frames = []
+    atlas = Image.new("RGBA", (target_size * num_frames, target_size), (0, 0, 0, 0))
+
+    for c in range(num_frames):
+        box = (c * cw, row_idx * ch, (c + 1) * cw, (row_idx + 1) * ch)
+        cell = img.crop(box)
+        bbox = cell.getbbox()
+        frame = Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0))
+        if bbox:
+            cropped = cell.crop(bbox)
+            scale = (target_size * 0.90) / max(cropped.width, cropped.height)
+            nw = max(1, int(cropped.width * scale))
+            nh = max(1, int(cropped.height * scale))
+            resized = cropped.resize((nw, nh), Image.Resampling.BILINEAR)
+
+            dest_x = (target_size - nw) // 2
+            dest_y = (target_size - nh) // 2
+            frame.paste(resized, (dest_x, dest_y), resized)
+
+        frames.append(frame)
+        atlas.paste(frame, (c * target_size, 0))
+
+    return atlas, frames
+
+def export_fx(name, atlas, frames, out_dir, source_file, target_size=128, fx_type="aura", fps=10, blend_mode="additive"):
+    """
+    Salva efeito visual (FX) com metadados de vinculação para Three.js.
+    """
+    os.makedirs(out_dir, exist_ok=True)
+    atlas_path = os.path.join(out_dir, "atlas.png")
+    atlas.save(atlas_path, "PNG")
+
+    for idx, f in enumerate(frames):
+        f.save(os.path.join(out_dir, f"frame_{idx}.png"), "PNG")
+    frames[0].save(os.path.join(out_dir, "preview.png"), "PNG")
+
+    manifest = {
+        "id": name,
+        "name": name.replace("_", " ").title(),
+        "category": "fx",
+        "type": fx_type,
+        "source": source_file,
+        "targetSize": target_size,
+        "frameCount": len(frames),
+        "fps": fps,
+        "blendMode": blend_mode,
+        "worldScale": [2.6, 2.6] if fx_type == "aura" else [2.0, 2.0]
+    }
+
+    manifest_path = os.path.join(out_dir, "manifest.json")
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2, ensure_ascii=False)
+
+    print(f"✅ FX exportado com sucesso em: {out_dir}")
+    print(f"   Atlas: {atlas_path}")
+    print(f"   Manifest: {manifest_path}")
+    return manifest
+
 def export_character(name, category, atlas, processed_frames, out_dir, format_type, source_file, target_size=128, diagnostics=None):
     """
     Salva os arquivos processados na pasta de destino (staging ou oficial).
@@ -318,9 +385,11 @@ def export_character(name, category, atlas, processed_frames, out_dir, format_ty
 def main():
     parser = argparse.ArgumentParser(description="Processador de Sprites 360 BleachBR")
     parser.add_argument("--input", "-i", required=True, help="Caminho da imagem de entrada")
-    parser.add_argument("--name", "-n", required=True, help="Nome/ID do personagem (ex: ichigo_shikai)")
+    parser.add_argument("--name", "-n", required=True, help="Nome/ID do asset (ex: ichigo_shikai, aura_shikai)")
     parser.add_argument("--category", "-c", default="characters", choices=["characters", "monsters", "props", "fx"])
-    parser.add_argument("--type", "-t", default="auto", choices=["auto", "walk8", "walk4x4", "single_front"])
+    parser.add_argument("--type", "-t", default="auto", choices=["auto", "walk8", "walk4x4", "single_front", "fx_anim"])
+    parser.add_argument("--row", "-r", type=int, default=0, help="Linha da folha para extração de FX (0 a 3)")
+    parser.add_argument("--fx-type", default="aura", choices=["aura", "combat", "skill"], help="Tipo de efeito visual")
     parser.add_argument("--target-size", "-s", type=int, default=128, help="Tamanho do quadro quadrado (padrão 128)")
     parser.add_argument("--tolerance", type=int, default=120, help="Tolerância da cor magenta")
     parser.add_argument("--approve", action="store_true", help="Se definido, exporta direto para src/assets/")
@@ -337,8 +406,9 @@ def main():
     # Auto-detectar tipo se necessário
     format_type = args.type
     if format_type == "auto":
-        # Se for do diretório walk8 ou tiver proporção 8 colunas (ex: 2512x2508 com walk8 no nome)
-        if "walk8" in args.input.lower() and "sheet" in args.input.lower():
+        if args.category == "fx" or "fx" in args.input.lower():
+            format_type = "fx_anim"
+        elif "walk8" in args.input.lower() and "sheet" in args.input.lower():
             format_type = "walk8"
         elif "walk" in args.input.lower():
             format_type = "walk4x4"
@@ -348,36 +418,51 @@ def main():
     print(f"🧹 Removendo fundo magenta (Chroma Key tolerância={args.tolerance})...")
     clean_img = remove_chroma_key(raw_img, tolerance=args.tolerance)
 
-    print(f"📐 Processando formato '{format_type}' com quadro {args.target_size}x{args.target_size}...")
-    diagnostics = None
-    if format_type == "walk8":
-        atlas, frames, diagnostics = process_walk_8frame(clean_img, target_size=args.target_size)
-    elif format_type == "walk4x4":
-        atlas, frames, diagnostics = process_walk_4x4(clean_img, target_size=args.target_size)
-    else:
-        atlas, frames = process_single_front(clean_img, target_size=args.target_size)
-
-    # Determinar pasta de saída
     base_repo = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    if args.approve:
-        out_dir = os.path.join(base_repo, "src", "assets", args.category, args.name)
-    else:
-        out_dir = os.path.join(base_repo, "geradores", "staging", args.name)
 
-    export_character(args.name, args.category, atlas, frames, out_dir, format_type, args.input, args.target_size, diagnostics=diagnostics)
+    # Ramo especial para FX (Auras, Combate, Habilidades)
+    if format_type == "fx_anim" or args.category == "fx":
+        print(f"⚡ Processando FX '{args.name}' (linha {args.row}, tipo '{args.fx_type}')...")
+        atlas, frames = process_fx_animation(clean_img, row_idx=args.row, num_frames=4, target_size=args.target_size)
+        if args.approve:
+            out_dir = os.path.join(base_repo, "src", "assets", "fx", args.name)
+        else:
+            out_dir = os.path.join(base_repo, "geradores", "staging", "fx", args.name)
+        export_fx(args.name, atlas, frames, out_dir, args.input, target_size=args.target_size, fx_type=args.fx_type)
+    else:
+        print(f"📐 Processando formato '{format_type}' com quadro {args.target_size}x{args.target_size}...")
+        diagnostics = None
+        if format_type == "walk8":
+            atlas, frames, diagnostics = process_walk_8frame(clean_img, target_size=args.target_size)
+        elif format_type == "walk4x4":
+            atlas, frames, diagnostics = process_walk_4x4(clean_img, target_size=args.target_size)
+        else:
+            atlas, frames = process_single_front(clean_img, target_size=args.target_size)
+
+        if args.approve:
+            out_dir = os.path.join(base_repo, "src", "assets", args.category, args.name)
+        else:
+            out_dir = os.path.join(base_repo, "geradores", "staging", args.name)
+
+        export_character(args.name, args.category, atlas, frames, out_dir, format_type, args.input, args.target_size, diagnostics=diagnostics)
 
     # Se aprovado, atualizar src/characters.js
     if args.approve:
         chars_dir = os.path.join(base_repo, "src", "assets", "characters")
         monsters_dir = os.path.join(base_repo, "src", "assets", "monsters")
+        fx_dir = os.path.join(base_repo, "src", "assets", "fx")
+
         chars = {}
         monsters = {}
+        fx_registry = {}
+
         if os.path.exists(chars_dir):
             for c_name in sorted(os.listdir(chars_dir)):
                 mf = os.path.join(chars_dir, c_name, "manifest.json")
                 if os.path.exists(mf):
                     with open(mf, "r", encoding="utf-8") as f:
                         chars[c_name] = json.load(f)
+
         if os.path.exists(monsters_dir):
             for m_name in sorted(os.listdir(monsters_dir)):
                 mf = os.path.join(monsters_dir, m_name, "manifest.json")
@@ -385,17 +470,34 @@ def main():
                     with open(mf, "r", encoding="utf-8") as f:
                         monsters[m_name] = json.load(f)
 
+        if os.path.exists(fx_dir):
+            for f_name in sorted(os.listdir(fx_dir)):
+                mf = os.path.join(fx_dir, f_name, "manifest.json")
+                if os.path.exists(mf):
+                    with open(mf, "r", encoding="utf-8") as f:
+                        fx_registry[f_name] = json.load(f)
+
+        # Vincular FX conhecidos ao Ichigo se existirem
+        if "ichigo_shikai" in chars:
+            chars["ichigo_shikai"]["fx"] = {
+                "aura": "aura_shikai" if "aura_shikai" in fx_registry else None,
+                "attack": "slash_combat" if "slash_combat" in fx_registry else None,
+                "skill": "skill_getsuga" if "skill_getsuga" in fx_registry else None
+            }
+
         reg_path = os.path.join(base_repo, "src", "characters.js")
         content = f"""// =======================================================================
 // BLEACH: SOUL SURVIVOR - REGISTRO OFICIAL DE ASSETS E PERSONAGENS
 // =======================================================================
 // Este arquivo é atualizado automaticamente pelo gerador de sprites
-// sempre que um novo personagem ou monstro é APROVADO via 360 Preview Studio.
+// sempre que um novo personagem, monstro ou efeito FX é APROVADO.
 // =======================================================================
 
 export const PLAYABLE_CHARACTERS = {json.dumps(chars, indent=2, ensure_ascii=False)};
 
 export const MONSTERS_REGISTRY = {json.dumps(monsters, indent=2, ensure_ascii=False)};
+
+export const FX_REGISTRY = {json.dumps(fx_registry, indent=2, ensure_ascii=False)};
 """
         with open(reg_path, "w", encoding="utf-8") as f:
             f.write(content)

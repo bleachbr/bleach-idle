@@ -1,0 +1,15 @@
+{
+  "id": "skill_getsuga",
+  "name": "Skill Getsuga",
+  "category": "fx",
+  "type": "skill",
+  "source": "arts/63_fx_skills.png",
+  "targetSize": 128,
+  "frameCount": 4,
+  "fps": 10,
+  "blendMode": "additive",
+  "worldScale": [
+    2.0,
+    2.0
+  ]
+}

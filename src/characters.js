@@ -2,7 +2,7 @@
 // BLEACH: SOUL SURVIVOR - REGISTRO OFICIAL DE ASSETS E PERSONAGENS
 // =======================================================================
 // Este arquivo é atualizado automaticamente pelo gerador de sprites
-// sempre que um novo personagem ou monstro é APROVADO via 360 Preview Studio.
+// sempre que um novo personagem, monstro ou efeito FX é APROVADO.
 // =======================================================================
 
 export const PLAYABLE_CHARACTERS = {
@@ -50,8 +50,61 @@ export const PLAYABLE_CHARACTERS = {
       },
       "baselineY": 117,
       "maxHeightVariancePercent": 0.0
+    },
+    "fx": {
+      "aura": "aura_shikai",
+      "attack": "slash_combat",
+      "skill": "skill_getsuga"
     }
   }
 };
 
 export const MONSTERS_REGISTRY = {};
+
+export const FX_REGISTRY = {
+  "aura_shikai": {
+    "id": "aura_shikai",
+    "name": "Aura Shikai",
+    "category": "fx",
+    "type": "aura",
+    "source": "arts/64_fx_aura.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 10,
+    "blendMode": "additive",
+    "worldScale": [
+      2.6,
+      2.6
+    ]
+  },
+  "skill_getsuga": {
+    "id": "skill_getsuga",
+    "name": "Skill Getsuga",
+    "category": "fx",
+    "type": "skill",
+    "source": "arts/63_fx_skills.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 10,
+    "blendMode": "additive",
+    "worldScale": [
+      2.0,
+      2.0
+    ]
+  },
+  "slash_combat": {
+    "id": "slash_combat",
+    "name": "Slash Combat",
+    "category": "fx",
+    "type": "combat",
+    "source": "arts/62_fx_combat.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 10,
+    "blendMode": "additive",
+    "worldScale": [
+      2.0,
+      2.0
+    ]
+  }
+};

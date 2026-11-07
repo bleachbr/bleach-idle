@@ -1,0 +1,15 @@
+{
+  "id": "slash_combat",
+  "name": "Slash Combat",
+  "category": "fx",
+  "type": "combat",
+  "source": "arts/62_fx_combat.png",
+  "targetSize": 128,
+  "frameCount": 4,
+  "fps": 10,
+  "blendMode": "additive",
+  "worldScale": [
+    2.0,
+    2.0
+  ]
+}

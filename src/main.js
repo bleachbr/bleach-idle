@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { createSpritesheet } from './spritesheet.js';
-import { PLAYABLE_CHARACTERS } from './characters.js';
+import { PLAYABLE_CHARACTERS, FX_REGISTRY } from './characters.js';
 
 // Constantes da Arena e Câmera
 const ARENA_RADIUS = 75.0;
@@ -72,7 +72,7 @@ let lastMouseY = 0;
 
 // Three.js Globais
 let scene, camera, renderer, clock;
-let playerMesh, slashMesh, reishiGroup;
+let playerMesh, playerAuraMesh, slashMesh, reishiGroup;
 let enemyMeshes = [];
 let reishiDrops = [];
 let spriteTextures = {};
@@ -258,6 +258,22 @@ function buildSprites() {
     const avatarEl = document.getElementById('avatar-box');
     if (avatarEl) avatarEl.innerText = '⚔️';
   }
+
+  // 3. Carregar efeitos visuais (FX) registrados no FX_REGISTRY (Auras, Cortes, Habilidades)
+  if (typeof FX_REGISTRY !== 'undefined') {
+    const fxLoader = new THREE.TextureLoader();
+    for (const [fxId, fxInfo] of Object.entries(FX_REGISTRY)) {
+      const fCount = fxInfo.frameCount || 4;
+      for (let f = 0; f < fCount; f++) {
+        const fPath = `/src/assets/fx/${fxId}/frame_${f}.png`;
+        const fTex = fxLoader.load(fPath);
+        fTex.magFilter = THREE.LinearFilter;
+        fTex.minFilter = THREE.LinearFilter;
+        fTex.colorSpace = THREE.SRGBColorSpace;
+        spriteTextures[`fx_${fxId}_${f}`] = fTex;
+      }
+    }
+  }
 }
 
 function createPlayerMesh() {
@@ -275,6 +291,20 @@ function createPlayerMesh() {
   playerMesh.position.set(0, 0, 0);
   scene.add(playerMesh);
 
+  // Aura de Reiatsu (Billboard Additive ancorado ao jogador)
+  const auraGeo = new THREE.PlaneGeometry(2.6, 2.6);
+  auraGeo.translate(0, 1.05, 0);
+  const auraMat = new THREE.MeshBasicMaterial({
+    map: spriteTextures.fx_aura_shikai_0 || null,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    opacity: 0.65,
+    side: THREE.DoubleSide
+  });
+  playerAuraMesh = new THREE.Mesh(auraGeo, auraMat);
+  scene.add(playerAuraMesh);
+
   // Sombra suave sob os pés
   const shadowGeo = new THREE.CircleGeometry(0.7, 16);
   shadowGeo.rotateX(-Math.PI / 2);
@@ -289,16 +319,19 @@ function createPlayerMesh() {
 }
 
 function createSlashMesh() {
-  const slashGeo = new THREE.RingGeometry(1.6, 3.4, 24, 1, 0, Math.PI * 0.7);
+  // Arco de corte animado (4 quadros de efeito de combate)
+  const slashGeo = new THREE.PlaneGeometry(3.2, 3.2);
   slashGeo.rotateX(-Math.PI / 2);
   const slashMat = new THREE.MeshBasicMaterial({
-    color: 0x63b3ed,
+    map: spriteTextures.fx_slash_combat_0 || null,
     transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
     opacity: 0,
     side: THREE.DoubleSide
   });
   slashMesh = new THREE.Mesh(slashGeo, slashMat);
-  slashMesh.position.y = 0.5;
+  slashMesh.position.y = 0.45;
   scene.add(slashMesh);
 }
 
@@ -690,6 +723,18 @@ function updateBillboards() {
   // 1. Orientação da malha: As faces dos planos sempre encaram a rotação da câmera (Billboard 2.5D)
   playerMesh.quaternion.copy(camera.quaternion);
 
+  // Orientação e animação da Aura de Reiatsu (segue o jogador e anima 4 quadros a 8 FPS)
+  if (playerAuraMesh) {
+    playerAuraMesh.position.set(player.x, 0, player.z);
+    playerAuraMesh.quaternion.copy(camera.quaternion);
+    const auraFrame = Math.floor(state.time * 8) % 4;
+    const auraTex = spriteTextures[`fx_aura_shikai_${auraFrame}`];
+    if (auraTex && playerAuraMesh.material.map !== auraTex) {
+      playerAuraMesh.material.map = auraTex;
+      playerAuraMesh.material.needsUpdate = true;
+    }
+  }
+
   // 2. Textura do Personagem (Ichigo Shikai / Recruta):
   // Se estiver se movendo, usa o quadro animado correspondente (ex: player_front_0..3)
   // Se estiver parado, usa o quadro neutro (ex: player_front_1 ou player_front)
@@ -712,9 +757,6 @@ function updateBillboards() {
   }
 
   // 3. Textura dos Hollows (Fishbone D, Shrieker, Acidwire e Menos Grande):
-  // Ao girar a câmera em 360°, a rotação relativa entre a visão do jogador e o vetor
-  // de perseguição de cada monstro muda, permitindo ver os Hollows de FRENTE,
-  // de COSTAS (mostrando espinha de ossos, asas e manto) e de LADO (perfil com garras/bico)!
   for (const en of enemyMeshes) {
     if (en.active) {
       en.mesh.quaternion.copy(camera.quaternion);
@@ -733,7 +775,7 @@ function updateBillboards() {
 function updateWeapons(dt) {
   const dmgBonus = 1 + state.passives.reiatsu * 0.2;
 
-  // 1. Asauchi Slash (Katana frontal automática)
+  // 1. Asauchi Slash / Corte da Katana (com efeito animado de lâmina)
   const asauchi = state.weapons.asauchi;
   asauchi.timer -= dt;
   if (asauchi.timer <= 0) {
@@ -741,9 +783,16 @@ function updateWeapons(dt) {
     executeAsauchiSlash(asauchi.damage * dmgBonus);
   }
 
-  // Animação do Slash
+  // Animação do Slash (avança os 4 quadros da lâmina com base no tempo de vida)
   if (slashAlpha > 0) {
     slashAlpha -= dt * 4.0;
+    const progress = Math.max(0, Math.min(1.0, 1.0 - (slashAlpha / 0.8)));
+    const frame = Math.min(3, Math.floor(progress * 4));
+    const slashTex = spriteTextures[`fx_slash_combat_${frame}`];
+    if (slashTex && slashMesh.material.map !== slashTex) {
+      slashMesh.material.map = slashTex;
+      slashMesh.material.needsUpdate = true;
+    }
     slashMesh.material.opacity = Math.max(0, slashAlpha);
   }
 
@@ -771,8 +820,14 @@ function updateWeapons(dt) {
 function executeAsauchiSlash(dmg) {
   slashAlpha = 0.8;
   const pAngle = Math.atan2(player.dirZ, player.dirX);
-  slashMesh.position.set(player.x, 0.4, player.z);
-  slashMesh.rotation.y = -pAngle + Math.PI * 0.35;
+  // Posiciona o slash ligeiramente à frente do personagem na direção do golpe
+  slashMesh.position.set(player.x + player.dirX * 1.2, 0.45, player.z + player.dirZ * 1.2);
+  slashMesh.rotation.y = -pAngle;
+  const slashTex = spriteTextures['fx_slash_combat_0'];
+  if (slashTex) {
+    slashMesh.material.map = slashTex;
+    slashMesh.material.needsUpdate = true;
+  }
 
   const range = 4.5;
   const arc = Math.PI * 0.8;

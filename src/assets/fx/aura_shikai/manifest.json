@@ -1,0 +1,15 @@
+{
+  "id": "aura_shikai",
+  "name": "Aura Shikai",
+  "category": "fx",
+  "type": "aura",
+  "source": "arts/64_fx_aura.png",
+  "targetSize": 128,
+  "frameCount": 4,
+  "fps": 10,
+  "blendMode": "additive",
+  "worldScale": [
+    2.6,
+    2.6
+  ]
+}
