@@ -47,7 +47,18 @@
 
       <!-- Instruções de Controle -->
       <div id="bottom-instructions">
-        <span><b>WASD</b> ou <b>Setas</b>: Mover Recruta · Katana (Asauchi) ataca automaticamente</span>
+        <span><b>WASD / Setas</b>: Mover Recruta · <b>Mouse Livre</b>: Olhar 360° (Fluido) · <b>ESC</b>: Liberar Mouse / Pausar</span>
+      </div>
+    </div>
+
+    <!-- Modal de Pausa: Exibido ao pressionar ESC ou liberar o Pointer Lock -->
+    <div id="pause-modal" class="modal hidden">
+      <div class="modal-card">
+        <h2>MISSÃO EM PAUSA</h2>
+        <p class="subtitle">O cursor do mouse está liberado. Clique abaixo ou na tela para retomar.</p>
+        <div class="modal-actions">
+          <button id="btn-resume" class="btn primary">RETOMAR MISSÃO (TRAVAR MOUSE)</button>
+        </div>
       </div>
     </div>
 

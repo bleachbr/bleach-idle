@@ -17,6 +17,8 @@ const cameraState = {
 export const state = {
   active: true,
   paused: false,
+  levelUpOpen: false,
+  gameOver: false,
   time: 0,
   kills: 0,
   damageDealt: 0,
@@ -52,7 +54,7 @@ export const player = {
   maxHp: 100,
   speed: 6.0,
   dirX: 0,
-  dirZ: 1, // Começa olhando para o sul / frente
+  dirZ: -1, // Começa olhando para frente (norte), mostrando as costas em terceira pessoa
   invulnerableTime: 0
 };
 
@@ -213,7 +215,7 @@ function createPlayerMesh() {
   pGeo.translate(0, 1.0, 0);
 
   const pMat = new THREE.MeshBasicMaterial({
-    map: spriteTextures.player_front,
+    map: spriteTextures.player_back, // Visão em 3ª pessoa padrão (costas)
     transparent: true,
     depthWrite: false,
     side: THREE.DoubleSide
@@ -307,6 +309,22 @@ function setupInputListeners(canvas) {
     // Rotação rápida via teclas Q e E (opcional)
     if (k === 'q') cameraState.yaw -= 0.15;
     if (k === 'e') cameraState.yaw += 0.15;
+
+    // Tecla ESC: Alternar pausa e liberar/recuperar mouse
+    if (k === 'escape') {
+      if (!state.levelUpOpen && !state.gameOver) {
+        if (!state.paused) {
+          state.paused = true;
+          if (document.pointerLockElement === canvas) {
+            document.exitPointerLock();
+          }
+          const pauseModal = document.getElementById('pause-modal');
+          if (pauseModal) pauseModal.classList.remove('hidden');
+        } else {
+          resumeGame();
+        }
+      }
+    }
   });
 
   window.addEventListener('keyup', (e) => {
@@ -317,22 +335,56 @@ function setupInputListeners(canvas) {
     if (k === 'd' || k === 'arrowright') keys.d = false;
   });
 
-  // 2. Rotação da Câmera com o Mouse (Estilo PokéBonk)
-  // Suporta:
-  // - Clique e arraste na tela (Mouse Drag)
-  // - Pointer Lock opcional (ao clicar na área de jogo)
-  canvas.addEventListener('mousedown', (e) => {
-    isDraggingMouse = true;
-    lastMouseX = e.clientX;
-    lastMouseY = e.clientY;
+  // 2. Travar Mouse (Pointer Lock API) ao clicar no canvas (estilo PokéBonk)
+  function requestGamePointerLock() {
+    if (state.active && !state.levelUpOpen && !state.gameOver) {
+      if (document.pointerLockElement !== canvas) {
+        canvas.requestPointerLock().catch(() => {});
+      }
+    }
+  }
+
+  function resumeGame() {
+    state.paused = false;
+    const pauseModal = document.getElementById('pause-modal');
+    if (pauseModal) pauseModal.classList.add('hidden');
+    requestGamePointerLock();
+  }
+
+  canvas.addEventListener('click', () => {
+    if (!state.levelUpOpen && !state.gameOver) {
+      resumeGame();
+    }
   });
 
-  window.addEventListener('mouseup', () => {
-    isDraggingMouse = false;
+  document.addEventListener('pointerlockchange', () => {
+    const isLocked = (document.pointerLockElement === canvas);
+    const pauseModal = document.getElementById('pause-modal');
+
+    if (!isLocked) {
+      // Se liberou o cursor e o jogo não está em level up nem em fim de jogo, pausa
+      if (state.active && !state.levelUpOpen && !state.gameOver) {
+        state.paused = true;
+        if (pauseModal) pauseModal.classList.remove('hidden');
+      }
+    } else {
+      // Mouse capturado: despausa
+      state.paused = false;
+      if (pauseModal) pauseModal.classList.add('hidden');
+    }
   });
 
+  const resumeBtn = document.getElementById('btn-resume');
+  if (resumeBtn) {
+    resumeBtn.onclick = (e) => {
+      e.stopPropagation();
+      resumeGame();
+    };
+  }
+
+  // 3. Rotação Fluida da Câmera com o Mouse
+  // Quando o mouse está preso (Pointer Lock), o usuário apenas move o mouse (sem segurar clique)
   window.addEventListener('mousemove', (e) => {
-    // Se o ponteiro estiver travado via PointerLock API (estilo PokéBonk)
     if (document.pointerLockElement === canvas) {
       const sens = 0.0035;
       cameraState.yaw -= e.movementX * sens;
@@ -341,7 +393,7 @@ function setupInputListeners(canvas) {
       return;
     }
 
-    // Se estiver arrastando com botão do mouse
+    // Fallback: Se não estiver em Pointer Lock, permite arrastar segurando o botão
     if (isDraggingMouse) {
       const dx = e.clientX - lastMouseX;
       const dy = e.clientY - lastMouseY;
@@ -355,12 +407,22 @@ function setupInputListeners(canvas) {
     }
   });
 
+  canvas.addEventListener('mousedown', (e) => {
+    isDraggingMouse = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDraggingMouse = false;
+  });
+
   // Zoom da Câmera com a roda do mouse (Scroll Wheel)
   window.addEventListener('wheel', (e) => {
     cameraState.dist = Math.max(7.0, Math.min(24.0, cameraState.dist + Math.sign(e.deltaY) * 1.0));
   }, { passive: true });
 
-  // 3. Suporte a Touch no Mobile (Deslizar para girar a câmera)
+  // 4. Suporte a Touch no Mobile
   let touchStartX = 0;
   let touchStartY = 0;
   canvas.addEventListener('touchstart', (e) => {
@@ -527,26 +589,24 @@ function updateBillboards() {
   // 1. Sempre orienta a face do plano para a câmera
   playerMesh.quaternion.copy(camera.quaternion);
 
-  // 2. Altera a textura do jogador de acordo com a direção em que está olhando
+  // 2. Altera a textura do jogador de acordo com a direção em que está olhando (costas, frente, lados)
   const pDir = getSpriteDirection(player.dirX, player.dirZ);
-  const pTex = spriteTextures[`player_${pDir}`] || spriteTextures.player_front;
+  const pTex = spriteTextures[`player_${pDir}`] || spriteTextures.player_back;
   if (playerMesh.material.map !== pTex) {
     playerMesh.material.map = pTex;
     playerMesh.material.needsUpdate = true;
   }
 
-  // 3. Atualiza os Hollows (para o Fishbone D também muda frente/costas/lados)
+  // 3. Atualiza os Hollows:
+  // No PokéBonk, os monstros da horda ficam SEMPRE DE FRENTE, encarando a tela/jogador com suas máscaras!
   for (const en of enemyMeshes) {
     if (en.active) {
       en.mesh.quaternion.copy(camera.quaternion);
 
-      if (en.type === 'fishbone') {
-        const eDir = getSpriteDirection(en.dirX, en.dirZ);
-        const eTex = spriteTextures[`fishbone_${eDir}`] || spriteTextures.fishbone_front;
-        if (en.mesh.material.map !== eTex) {
-          en.mesh.material.map = eTex;
-          en.mesh.material.needsUpdate = true;
-        }
+      const eTex = spriteTextures[`${en.type}_front`] || spriteTextures[en.type];
+      if (en.mesh.material.map !== eTex) {
+        en.mesh.material.map = eTex;
+        en.mesh.material.needsUpdate = true;
       }
     }
   }
@@ -747,6 +807,11 @@ function checkLevelUp() {
 
 function openLevelUpModal() {
   state.paused = true;
+  state.levelUpOpen = true;
+  if (document.pointerLockElement) {
+    document.exitPointerLock();
+  }
+
   const modal = document.getElementById('levelup-modal');
   const container = document.getElementById('cards-container');
   container.innerHTML = '';
@@ -786,7 +851,13 @@ function selectSkill(opt) {
   }
 
   document.getElementById('levelup-modal').classList.add('hidden');
+  state.levelUpOpen = false;
   state.paused = false;
+
+  const canvas = document.getElementById('game-canvas');
+  if (canvas) {
+    canvas.requestPointerLock().catch(() => {});
+  }
 }
 
 // Spawns
@@ -930,6 +1001,11 @@ function updateHUD() {
 
 function showGameOver(victory) {
   state.active = false;
+  state.gameOver = true;
+  if (document.pointerLockElement) {
+    document.exitPointerLock();
+  }
+
   const modal = document.getElementById('gameover-modal');
   const title = document.getElementById('report-title');
   const subtitle = document.getElementById('report-subtitle');
