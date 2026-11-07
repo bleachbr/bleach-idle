@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BleachBR · Estúdio 360° de Sprites e Aprovação</title>
+    <link rel="stylesheet" href="/geradores/preview.css" />
+  </head>
+  <body>
+    <div id="app-container">
+      <!-- Painel Lateral Esquerdo: Controles & Inspeção -->
+      <aside id="sidebar">
+        <header class="studio-header">
+          <div class="badge">FERRAMENTA INTERNA</div>
+          <h1>360° SPRITE STUDIO</h1>
+          <p class="subtitle">Inspeção em tempo real, rotação 360° e aprovação para o jogo</p>
+        </header>
+
+        <!-- Seletor de Personagem / Sprite -->
+        <section class="panel-section">
+          <h3>1. Selecionar Sprite em Análise</h3>
+          <div class="control-group">
+            <label for="select-character">Sprite Ativo:</label>
+            <select id="select-character">
+              <option value="ichigo_shikai">06_ichigo_shikai_walk_v2 (4x4 Walk Cycle)</option>
+              <option value="ichigo_chibi">01_ichigo_shikai_front_ref (Chibi Ref)</option>
+            </select>
+          </div>
+
+          <div class="toggle-row">
+            <label>
+              <input type="checkbox" id="toggle-compare" />
+              <b>Modo Comparativo Lado a Lado (A vs B)</b>
+            </label>
+          </div>
+        </section>
+
+        <!-- Informações e Diagnóstico do Sprite -->
+        <section class="panel-section">
+          <h3>2. Diagnóstico do Sprite</h3>
+          <div class="info-grid">
+            <div class="info-item"><span>Formato:</span> <b id="info-format">walk4x4</b></div>
+            <div class="info-item"><span>Resolução:</span> <b id="info-res">128x128 px</b></div>
+            <div class="info-item"><span>Direção Ativa:</span> <b id="info-dir" class="highlight">back</b></div>
+            <div class="info-item"><span>Quadro Atual:</span> <b id="info-frame">1 / 4</b></div>
+            <div class="info-item"><span>Ângulo da Câmera:</span> <b id="info-angle">0.0°</b></div>
+            <div class="info-item"><span>Status:</span> <b id="info-status" class="status-staging">STAGING</b></div>
+          </div>
+        </section>
+
+        <!-- Controles de Rotação 360° da Câmera -->
+        <section class="panel-section">
+          <h3>3. Rotação 360° da Câmera</h3>
+          <div class="control-group">
+            <label for="slider-yaw">Giro Orbital (<span id="label-yaw">0°</span>):</label>
+            <input type="range" id="slider-yaw" min="0" max="360" value="0" step="1" />
+          </div>
+
+          <div class="quick-angles">
+            <button class="btn angle-btn" data-angle="0">Costas (0°)</button>
+            <button class="btn angle-btn" data-angle="90">Lado Dir (90°)</button>
+            <button class="btn angle-btn" data-angle="180">Frente (180°)</button>
+            <button class="btn angle-btn" data-angle="270">Lado Esq (270°)</button>
+          </div>
+
+          <div class="toggle-row" style="margin-top: 10px;">
+            <button id="btn-auto-orbit" class="btn secondary">▶ Iniciar Giro Automático 360°</button>
+          </div>
+        </section>
+
+        <!-- Controles do Ciclo de Passos (Walk Cycle) -->
+        <section class="panel-section">
+          <h3>4. Ciclo de Passos (Walk Animation)</h3>
+          <div class="anim-controls">
+            <button id="btn-toggle-anim" class="btn primary">⏸ Pausar Passo</button>
+            <button id="btn-step-frame" class="btn secondary">Próximo Quadro ⏭</button>
+          </div>
+          <div class="control-group" style="margin-top: 10px;">
+            <label for="slider-fps">Velocidade da Passada: <span id="label-fps">8 FPS</span></label>
+            <input type="range" id="slider-fps" min="2" max="16" value="8" step="1" />
+          </div>
+        </section>
+
+        <!-- Ajustes de Escala e Iluminação -->
+        <section class="panel-section">
+          <h3>5. Configuração no Espaço 3D</h3>
+          <div class="control-group">
+            <label for="slider-scale">Escala Mundial: <span id="label-scale">2.2x</span></label>
+            <input type="range" id="slider-scale" min="1.0" max="3.5" value="2.2" step="0.1" />
+          </div>
+          <div class="toggle-row">
+            <label><input type="checkbox" id="toggle-shadow" checked /> Sombra nos Pés</label>
+            <label><input type="checkbox" id="toggle-grid" checked /> Grid do Solo</label>
+          </div>
+        </section>
+
+        <!-- Ação de Aprovação (Passo 3) -->
+        <section class="panel-section approval-box">
+          <h3>6. Aprovação & Instalação Oficial</h3>
+          <p class="desc">Ao aprovar, o sprite sai da fase de testes e é instalado automaticamente em <code>src/assets/characters/</code> com registro em <code>src/characters.js</code>.</p>
+          <button id="btn-approve" class="btn success">
+            ✓ APROVAR & INSTALAR NO JOGO
+          </button>
+          <div id="approve-feedback" class="feedback-msg hidden"></div>
+        </section>
+
+        <footer class="studio-footer">
+          <a href="/" class="btn back-link">← Voltar para o Jogo Principal</a>
+        </footer>
+      </aside>
+
+      <!-- Viewport 3D Principal -->
+      <main id="viewport-container">
+        <canvas id="studio-canvas"></canvas>
+
+        <div id="viewport-overlay">
+          <div class="overlay-badge">
+            Arraste com o botão do mouse para girar 360° livremente · Use a roda do mouse para Zoom
+          </div>
+          <div id="direction-indicator">
+            VISÃO ATUAL: <span id="indicator-text">COSTAS (BACK)</span>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="/geradores/preview.js"></script>
+  </body>
+</html>

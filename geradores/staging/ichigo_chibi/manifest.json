@@ -1,0 +1,36 @@
+{
+  "id": "ichigo_chibi",
+  "name": "Ichigo Chibi",
+  "category": "characters",
+  "format": "single_front",
+  "source": "arts/_chibi_descartado/01_ichigo_shikai_front_ref.png",
+  "targetSize": 128,
+  "worldScale": [
+    2.2,
+    2.2
+  ],
+  "fps": 0,
+  "frameCount": 1,
+  "directions": {
+    "front": {
+      "row": 0,
+      "frames": 1,
+      "file": "front.png"
+    },
+    "side_l": {
+      "row": 1,
+      "frames": 1,
+      "file": "side_l.png"
+    },
+    "side": {
+      "row": 2,
+      "frames": 1,
+      "file": "side.png"
+    },
+    "back": {
+      "row": 3,
+      "frames": 1,
+      "file": "back.png"
+    }
+  }
+}

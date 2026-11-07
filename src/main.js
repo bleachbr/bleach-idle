@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createSpritesheet } from './spritesheet.js';
+import { PLAYABLE_CHARACTERS } from './characters.js';
 
 // Constantes da Arena e Câmera
 const ARENA_RADIUS = 75.0;
@@ -19,6 +20,7 @@ export const state = {
   paused: false,
   levelUpOpen: false,
   gameOver: false,
+  selectedCharacter: 'ichigo_shikai', // Seleção ativa dos personagens aprovados
   time: 0,
   kills: 0,
   damageDealt: 0,
@@ -194,6 +196,7 @@ function createArena() {
 function buildSprites() {
   const { canvas, sprites } = createSpritesheet();
 
+  // 1. Carregar texturas procedurais padrão
   for (const [key, sp] of Object.entries(sprites)) {
     const sCanvas = document.createElement('canvas');
     sCanvas.width = sp.w;
@@ -207,6 +210,26 @@ function buildSprites() {
     tex.minFilter = THREE.NearestFilter;
     tex.colorSpace = THREE.SRGBColorSpace;
     spriteTextures[key] = tex;
+  }
+
+  // 2. Se houver um personagem oficial aprovado em PLAYABLE_CHARACTERS (ex: Ichigo Shikai)
+  const approvedChar = PLAYABLE_CHARACTERS[state.selectedCharacter];
+  if (approvedChar && approvedChar.directions) {
+    const loader = new THREE.TextureLoader();
+    for (const [dirKey, dirInfo] of Object.entries(approvedChar.directions)) {
+      const texPath = `/src/assets/characters/${approvedChar.id}/${dirInfo.file}`;
+      const tex = loader.load(texPath);
+      tex.magFilter = THREE.NearestFilter;
+      tex.minFilter = THREE.NearestFilter;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      spriteTextures[`player_${dirKey}`] = tex;
+    }
+
+    // Atualizar HUD com informações oficiais do personagem
+    const titleEl = document.getElementById('player-title');
+    if (titleEl) titleEl.innerText = approvedChar.name || 'Ichigo Kurosaki (Shikai)';
+    const avatarEl = document.getElementById('avatar-box');
+    if (avatarEl) avatarEl.innerText = '⚔️';
   }
 }
 
