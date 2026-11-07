@@ -115,6 +115,69 @@ def process_walk_4x4(img, target_size=128):
 
     return atlas, processed_frames
 
+def process_walk_8frame(img, target_size=128):
+    """
+    Processa uma folha oficial de 8 quadros por direção (como arts/walk8/ichigo_shikai_sheet.png):
+    Dimensões: 8 colunas x 4 linhas (2512 x 2508 px)
+    Row 0: Front / Down (8 quadros da passada completa: contato, absorção, passagem, alcance...)
+    Row 1: Side Left (8 quadros de perfil esquerdo)
+    Row 2: Side Right (8 quadros de perfil direito)
+    Row 3: Back / Up (8 quadros de costas)
+    """
+    w, h = img.size
+    cw = w // 8
+    ch = h // 4
+
+    rows = {
+        'front':  0,
+        'side_l': 1,
+        'side':   2,
+        'back':   3
+    }
+
+    frames_by_dir = {}
+    all_bboxes = []
+
+    # 1. Extrair todas as células e calcular bboxes
+    for dir_name, row_idx in rows.items():
+        frames_by_dir[dir_name] = []
+        for col_idx in range(8):
+            box = (col_idx * cw, row_idx * ch, (col_idx + 1) * cw, (row_idx + 1) * ch)
+            cell = img.crop(box)
+            bbox = cell.getbbox()
+            if bbox:
+                all_bboxes.append(bbox)
+            frames_by_dir[dir_name].append((cell, bbox))
+
+    if not all_bboxes:
+        raise ValueError("Nenhum sprite visível encontrado após remoção de fundo.")
+
+    max_height = max(b[3] - b[1] for b in all_bboxes)
+    max_width  = max(b[2] - b[0] for b in all_bboxes)
+
+    processed_frames = {}
+    atlas = Image.new("RGBA", (target_size * 8, target_size * 4), (0, 0, 0, 0))
+    scale_factor = (target_size * 0.84) / max(max_height, max_width)
+
+    for dir_name, row_idx in rows.items():
+        processed_frames[dir_name] = []
+        for col_idx, (cell, bbox) in enumerate(frames_by_dir[dir_name]):
+            frame = Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0))
+            if bbox:
+                cropped = cell.crop(bbox)
+                new_w = max(1, int(cropped.width * scale_factor))
+                new_h = max(1, int(cropped.height * scale_factor))
+                resized = cropped.resize((new_w, new_h), Image.Resampling.NEAREST)
+
+                dest_x = (target_size - new_w) // 2
+                dest_y = int(target_size * 0.92) - new_h
+                frame.paste(resized, (dest_x, dest_y), resized)
+
+            processed_frames[dir_name].append(frame)
+            atlas.paste(frame, (col_idx * target_size, row_idx * target_size))
+
+    return atlas, processed_frames
+
 def process_single_front(img, target_size=128):
     """
     Processa um sprite único frontal (como arts/_chibi_descartado/01_ichigo_shikai_front_ref.png).
@@ -189,8 +252,8 @@ def export_character(name, category, atlas, processed_frames, out_dir, format_ty
         "source": source_file,
         "targetSize": target_size,
         "worldScale": [2.2, 2.2],
-        "fps": 8 if format_type == "walk4x4" else 0,
-        "frameCount": 4 if format_type == "walk4x4" else 1,
+        "fps": 10 if format_type == "walk8" else (8 if format_type == "walk4x4" else 0),
+        "frameCount": 8 if format_type == "walk8" else (4 if format_type == "walk4x4" else 1),
         "directions": {
             "front":  {"row": 0, "frames": len(processed_frames['front']),  "file": "front.png"},
             "side_l": {"row": 1, "frames": len(processed_frames['side_l']), "file": "side_l.png"},
@@ -213,7 +276,7 @@ def main():
     parser.add_argument("--input", "-i", required=True, help="Caminho da imagem de entrada")
     parser.add_argument("--name", "-n", required=True, help="Nome/ID do personagem (ex: ichigo_shikai)")
     parser.add_argument("--category", "-c", default="characters", choices=["characters", "monsters", "props", "fx"])
-    parser.add_argument("--type", "-t", default="auto", choices=["auto", "walk4x4", "single_front"])
+    parser.add_argument("--type", "-t", default="auto", choices=["auto", "walk8", "walk4x4", "single_front"])
     parser.add_argument("--target-size", "-s", type=int, default=128, help="Tamanho do quadro quadrado (padrão 128)")
     parser.add_argument("--tolerance", type=int, default=120, help="Tolerância da cor magenta")
     parser.add_argument("--approve", action="store_true", help="Se definido, exporta direto para src/assets/")
@@ -230,8 +293,10 @@ def main():
     # Auto-detectar tipo se necessário
     format_type = args.type
     if format_type == "auto":
-        # Se o nome tem "walk" ou dimensões são quadradas 4x4
-        if "walk" in args.input.lower():
+        # Se for do diretório walk8 ou tiver proporção 8 colunas (ex: 2512x2508 com walk8 no nome)
+        if "walk8" in args.input.lower() and "sheet" in args.input.lower():
+            format_type = "walk8"
+        elif "walk" in args.input.lower():
             format_type = "walk4x4"
         else:
             format_type = "single_front"
@@ -240,7 +305,9 @@ def main():
     clean_img = remove_chroma_key(raw_img, tolerance=args.tolerance)
 
     print(f"📐 Processando formato '{format_type}' com quadro {args.target_size}x{args.target_size}...")
-    if format_type == "walk4x4":
+    if format_type == "walk8":
+        atlas, frames = process_walk_8frame(clean_img, target_size=args.target_size)
+    elif format_type == "walk4x4":
         atlas, frames = process_walk_4x4(clean_img, target_size=args.target_size)
     else:
         atlas, frames = process_single_front(clean_img, target_size=args.target_size)
@@ -253,6 +320,41 @@ def main():
         out_dir = os.path.join(base_repo, "geradores", "staging", args.name)
 
     export_character(args.name, args.category, atlas, frames, out_dir, format_type, args.input, args.target_size)
+
+    # Se aprovado, atualizar src/characters.js
+    if args.approve:
+        chars_dir = os.path.join(base_repo, "src", "assets", "characters")
+        monsters_dir = os.path.join(base_repo, "src", "assets", "monsters")
+        chars = {}
+        monsters = {}
+        if os.path.exists(chars_dir):
+            for c_name in sorted(os.listdir(chars_dir)):
+                mf = os.path.join(chars_dir, c_name, "manifest.json")
+                if os.path.exists(mf):
+                    with open(mf, "r", encoding="utf-8") as f:
+                        chars[c_name] = json.load(f)
+        if os.path.exists(monsters_dir):
+            for m_name in sorted(os.listdir(monsters_dir)):
+                mf = os.path.join(monsters_dir, m_name, "manifest.json")
+                if os.path.exists(mf):
+                    with open(mf, "r", encoding="utf-8") as f:
+                        monsters[m_name] = json.load(f)
+
+        reg_path = os.path.join(base_repo, "src", "characters.js")
+        content = f"""// =======================================================================
+// BLEACH: SOUL SURVIVOR - REGISTRO OFICIAL DE ASSETS E PERSONAGENS
+// =======================================================================
+// Este arquivo é atualizado automaticamente pelo gerador de sprites
+// sempre que um novo personagem ou monstro é APROVADO via 360 Preview Studio.
+// =======================================================================
+
+export const PLAYABLE_CHARACTERS = {json.dumps(chars, indent=2, ensure_ascii=False)};
+
+export const MONSTERS_REGISTRY = {json.dumps(monsters, indent=2, ensure_ascii=False)};
+"""
+        with open(reg_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"🔄 Sincronizado registro em: {reg_path}")
 
 if __name__ == "__main__":
     main()

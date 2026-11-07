@@ -2,34 +2,34 @@
   "id": "ichigo_shikai",
   "name": "Ichigo Shikai",
   "category": "characters",
-  "format": "walk4x4",
-  "source": "arts/06_ichigo_shikai_walk_v2.png",
+  "format": "walk8",
+  "source": "arts/walk8/ichigo_shikai_sheet.png",
   "targetSize": 128,
   "worldScale": [
     2.2,
     2.2
   ],
-  "fps": 8,
-  "frameCount": 4,
+  "fps": 10,
+  "frameCount": 8,
   "directions": {
     "front": {
       "row": 0,
-      "frames": 4,
+      "frames": 8,
       "file": "front.png"
     },
     "side_l": {
       "row": 1,
-      "frames": 4,
+      "frames": 8,
       "file": "side_l.png"
     },
     "side": {
       "row": 2,
-      "frames": 4,
+      "frames": 8,
       "file": "side.png"
     },
     "back": {
       "row": 3,
-      "frames": 4,
+      "frames": 8,
       "file": "back.png"
     }
   }

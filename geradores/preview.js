@@ -12,7 +12,7 @@ import * as THREE from 'three';
 
 // Estado do Estúdio
 const studioState = {
-  activeCharacter: 'ichigo_shikai',
+  activeCharacter: 'ichigo_shikai_w8',
   charactersData: {},
   manifest: null,
   yaw: 0,            // Rotação horizontal em radianos
@@ -20,9 +20,9 @@ const studioState = {
   dist: 8.5,         // Distância da câmera
   autoOrbit: false,
   isAnimating: true,
-  fps: 8,
+  fps: 10,
   animTimer: 0,
-  currentFrame: 1,   // 0: passo esq, 1: neutro, 2: passo dir, 3: neutro
+  currentFrame: 1,
   worldScale: 2.2,
   compareMode: false,
   isDragging: false,
@@ -173,6 +173,10 @@ async function fetchStagingCharacters() {
   }
 
   studioState.manifest = studioState.charactersData[studioState.activeCharacter];
+  const selectChar = document.getElementById('select-character');
+  if (selectChar) {
+    selectChar.value = studioState.activeCharacter;
+  }
 }
 
 function loadTexture(url) {
@@ -221,7 +225,7 @@ function createCharacterMeshes() {
 
 function updateMeshTextures() {
   const charId = studioState.activeCharacter;
-  const manifest = studioState.charactersData[charId] || { format: 'walk4x4' };
+  const manifest = studioState.charactersData[charId] || { format: 'walk8', frameCount: 8 };
   studioState.manifest = manifest;
 
   // Determinar a direção com base no ângulo da câmera
@@ -229,8 +233,10 @@ function updateMeshTextures() {
 
   // Textura do personagem ativo
   let primaryUrl = '';
-  if (manifest.format === 'walk4x4') {
-    const fIdx = studioState.currentFrame;
+  const isAnimated = manifest.format === 'walk8' || manifest.format === 'walk4x4';
+  if (isAnimated) {
+    const totalFrames = manifest.frameCount || (manifest.format === 'walk8' ? 8 : 4);
+    const fIdx = studioState.currentFrame % totalFrames;
     primaryUrl = `/geradores/staging/${charId}/${dir}_${fIdx}.png`;
   } else {
     primaryUrl = `/geradores/staging/${charId}/${dir}.png`;
@@ -244,12 +250,14 @@ function updateMeshTextures() {
 
   // Se modo comparativo estiver ativo
   if (studioState.compareMode) {
-    const compId = (charId === 'ichigo_shikai') ? 'ichigo_chibi' : 'ichigo_shikai';
-    const compManifest = studioState.charactersData[compId] || { format: 'single_front' };
+    const compId = (charId === 'ichigo_shikai_w8' || charId === 'ichigo_shikai') ? 'ichigo_shikai_4f' : 'ichigo_shikai_w8';
+    const compManifest = studioState.charactersData[compId] || { format: 'walk4x4', frameCount: 4 };
 
     let compUrl = '';
-    if (compManifest.format === 'walk4x4') {
-      const fIdx = studioState.currentFrame;
+    const compAnimated = compManifest.format === 'walk8' || compManifest.format === 'walk4x4';
+    if (compAnimated) {
+      const totalFrames = compManifest.frameCount || (compManifest.format === 'walk8' ? 8 : 4);
+      const fIdx = studioState.currentFrame % totalFrames;
       compUrl = `/geradores/staging/${compId}/${dir}_${fIdx}.png`;
     } else {
       compUrl = `/geradores/staging/${compId}/${dir}.png`;
@@ -316,14 +324,17 @@ function studioLoop() {
     updateCameraPos();
   }
 
-  // 2. Animação de caminhada (Walk Cycle)
-  if (studioState.isAnimating && studioState.manifest?.format === 'walk4x4') {
+  // 2. Animação de caminhada (Walk Cycle 8 frames ou 4 frames)
+  const isAnimated = studioState.manifest?.format === 'walk8' || studioState.manifest?.format === 'walk4x4';
+  const totalFrames = studioState.manifest?.frameCount || (studioState.manifest?.format === 'walk8' ? 8 : 4);
+
+  if (studioState.isAnimating && isAnimated) {
     studioState.animTimer += dt;
     const interval = 1.0 / studioState.fps;
     if (studioState.animTimer >= interval) {
       studioState.animTimer = 0;
-      studioState.currentFrame = (studioState.currentFrame + 1) % 4;
-      document.getElementById('info-frame').innerText = `${studioState.currentFrame + 1} / 4`;
+      studioState.currentFrame = (studioState.currentFrame + 1) % totalFrames;
+      document.getElementById('info-frame').innerText = `${studioState.currentFrame + 1} / ${totalFrames}`;
     }
   }
 
@@ -433,8 +444,9 @@ function setupUIEventListeners(canvas) {
   btnStep.addEventListener('click', () => {
     studioState.isAnimating = false;
     btnAnim.innerText = '▶ Retomar Passo';
-    studioState.currentFrame = (studioState.currentFrame + 1) % 4;
-    document.getElementById('info-frame').innerText = `${studioState.currentFrame + 1} / 4`;
+    const totalFrames = studioState.manifest?.frameCount || (studioState.manifest?.format === 'walk8' ? 8 : 4);
+    studioState.currentFrame = (studioState.currentFrame + 1) % totalFrames;
+    document.getElementById('info-frame').innerText = `${studioState.currentFrame + 1} / ${totalFrames}`;
   });
 
   const sliderFps = document.getElementById('slider-fps');

@@ -229,8 +229,8 @@ function buildSprites() {
       tex.colorSpace = THREE.SRGBColorSpace;
       spriteTextures[`player_${dirKey}`] = tex;
 
-      // Se for formato walk4x4, carregar os 4 quadros do ciclo de caminhada
-      const frameCount = dirInfo.frames || (approvedChar.format === 'walk4x4' ? 4 : 1);
+      // Se for formato walk4x4 ou walk8, carregar os quadros do ciclo de caminhada
+      const frameCount = dirInfo.frames || (approvedChar.format === 'walk8' ? 8 : (approvedChar.format === 'walk4x4' ? 4 : 1));
       if (frameCount > 1) {
         for (let f = 0; f < frameCount; f++) {
           const fPath = `/src/assets/characters/${approvedChar.id}/${dirKey}_${f}.png`;
@@ -250,6 +250,7 @@ function buildSprites() {
     if (approvedChar.fps) {
       player.walkFps = approvedChar.fps;
     }
+    player.frameCount = approvedChar.frameCount || (approvedChar.format === 'walk8' ? 8 : (approvedChar.format === 'walk4x4' ? 4 : 1));
 
     // Atualizar HUD com informações oficiais do personagem
     const titleEl = document.getElementById('player-title');
@@ -658,11 +659,11 @@ function updatePlayer(dt) {
 
     // Ciclo de caminhada (Walk Cycle): avança o quadro das pernas enquanto se move
     player.animTimer += dt;
-    const frameInterval = 1.0 / (player.walkFps || 8);
+    const frameInterval = 1.0 / (player.walkFps || 10);
     if (player.animTimer >= frameInterval) {
       player.animTimer = 0;
-      // 4 quadros: 0 (passo esq) -> 1 (neutro) -> 2 (passo dir) -> 3 (neutro)
-      player.animFrame = (player.animFrame + 1) % 4;
+      const totalFrames = player.frameCount || 4;
+      player.animFrame = (player.animFrame + 1) % totalFrames;
     }
   } else {
     // Parado (Idle): volta ao quadro neutro com pés juntos
