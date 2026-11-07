@@ -38,6 +38,7 @@ Se todas forem não, pare. Não invente atualização.
 ```bash
 make docs-sync
 make docs-check
+make size-check
 ```
 
 `docs-sync` reescreve só o bloco entre `<!-- docs:progress:start -->` e `<!-- docs:progress:end -->`. Não edite esse bloco à mão.

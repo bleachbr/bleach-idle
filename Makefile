@@ -41,3 +41,9 @@ docs-check: ## Falha se pendência, aprendizado, progresso ou link relativo esti
 
 docs-test: ## Testes do checker de governança
 	python3 scripts/docs/test_governanca.py
+
+size-check: ## Falha se função ou arquivo JS passar do teto ou se a dívida crescer
+	python3 scripts/lint/js_size.py
+
+size-test: ## Testes da catraca de tamanho do JS
+	python3 scripts/lint/test_js_size.py

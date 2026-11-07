@@ -53,3 +53,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** `--format antigravity-stop`. Sem aviso, `{"decision":"stop"}`. Com aviso, `{"decision":"continue","reason":"..."}` só se `executionNum` do stdin estiver ausente ou for no máximo 1. Acima disso, `decision: stop`, para o loop não repetir. O `SessionStart` permanece em `--format antigravity`.
 
 **Evidência:** seção Stop da doc acima (campo `decision` obrigatório; `reason` só entra com `continue`) e os testes `test_aviso_vira_continue` e `test_execution_num_acima_de_um_forca_stop` em `scripts/docs/test_governanca.py`.
+
+## 7. Teto de tamanho sem catraca não pega o arquivo que já estourou
+
+**Causa raiz:** o flow-spark declara 20 linhas por função e menos de 500 por arquivo, e o gate `make function-size-check` só reprova função nova acima do teto ou função inventariada que cresce. Copiar o teto como frase, neste repo, mentiria: `src/main.js` tem 1493 linhas e `src/spritesheet.js` tem 505. Um check que falha no código de hoje obriga um split que não é esta mudança, e um teto sem check é ignorado na próxima função.
+
+**O que fazer:** `make size-check` em `src/**/*.js`. O inventário `scripts/lint/size_inventory.json` guarda o tamanho medido de quem já passou. Não cresce. Número novo só para baixo. Com o arquivo já na `main`, o teto da chave é o valor de lá.
+
+**Evidência:** contagem de `src/main.js` e `src/spritesheet.js` em 2026-11-07, o §1 de `AGENTS.md` do flow-spark, e os testes `test_funcao_nova_acima_do_teto_falha` e `test_repositorio_atual_respeita_o_inventario` em `scripts/lint/test_js_size.py`.

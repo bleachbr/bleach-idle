@@ -14,4 +14,6 @@ O Stop do Claude não injeta texto puro. O hook desse evento usa `--format claud
 
 O Stop do Antigravity ignora `injectSteps`. Esse evento usa `--format antigravity-stop`: `decision: continue` e `reason` quando há aviso, `decision: stop` quando não há, e `decision: stop` de novo se `executionNum` é maior que 1. O `SessionStart` continua com `injectSteps`. Aprendizado 6.
 
+Tamanho de função (20 linhas de código) e de arquivo (menos de 500) do `src/**/*.js` virou catraca em `make size-check`. A dívida já medida fica em `scripts/lint/size_inventory.json` e só desce. Desacoplamento entre módulos está em `AGENTS.md`. Aprendizado 7.
+
 A frente 1 separou a partida jogada do menu. O reinício que existe é `location.reload()` no `btn-restart`. Menu de início e volta ao menu é outra caixa, aberta. Nenhuma caixa da frente 1 foi marcada. O código da frente 0 já estava em `main` antes desta entrega.

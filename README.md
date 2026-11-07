@@ -19,7 +19,7 @@ O plano aberto está em **[`docs/ROADMAP.md`](docs/ROADMAP.md)**. [`ENTREGAS_ROA
 
 ## Agentes
 
-O contrato para Claude, Antigravity, Kiro e Grok é [`AGENTS.md`](AGENTS.md). Quem lê cada arquivo está em [`docs/governanca/harness.md`](docs/governanca/harness.md).
+O contrato para Claude, Antigravity, Kiro e Grok é [`AGENTS.md`](AGENTS.md). Quem lê cada arquivo está em [`docs/governanca/harness.md`](docs/governanca/harness.md). Tamanho de função e de arquivo do JS, e o desacoplamento entre módulos, estão nesse contrato. O gate é `make size-check`.
 
 ## 🗺️ Visão que o roadmap detalha
 

@@ -102,10 +102,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Governança dos docs vivos
+      - name: Governança dos docs vivos e tamanho do JS
         run: |
           python3 scripts/docs/test_governanca.py
           python3 scripts/docs/docs_check.py
+          python3 scripts/lint/test_js_size.py
+          python3 scripts/lint/js_size.py
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
