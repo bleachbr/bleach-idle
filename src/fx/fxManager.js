@@ -182,12 +182,13 @@ export class FXManager {
 
       // 5. Verificação de Colisão com Inimigos (Hollows)
       for (const en of enemyMeshes) {
-        if (!en.active || p.hitEnemies.has(en.id)) continue;
+        const enemyKey = en.id !== undefined ? en.id : en;
+        if (!en.active || p.hitEnemies.has(enemyKey)) continue;
 
         const dist = Math.hypot(en.x - p.x, en.z - p.z);
         if (dist <= p.config.hitRadius + (en.radius || 0.8)) {
-          p.hitEnemies.add(en.id);
-          onHitCallback && onHitCallback(en, p.damage, 'getsuga_tenshou', p.x, p.z);
+          p.hitEnemies.add(enemyKey);
+          onHitCallback && onHitCallback(en, p.damage, 'getsuga', p.x, p.z);
 
           // Se não perfura, encerra o projétil no primeiro impacto
           if (!p.config.pierce) {
