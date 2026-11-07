@@ -36,6 +36,8 @@ export const state = {
     acidwire: 0,
     menos: 0
   },
+  localPlayerId: 'shinigami_' + Math.random().toString(36).substring(2, 6),
+  activeBannerOptions: [],
   weapons: {
     asauchi: { name: 'Corte de Asauchi', level: 1, cooldown: 1.0, timer: 0, damage: 35, totalDamage: 0 },
     getsuga: { name: 'Getsuga Tenshō', level: 1, cooldown: 2.8, timer: 0.8, damage: 180, totalDamage: 0 },
@@ -54,6 +56,10 @@ export const player = {
   x: 0,
   y: 0,
   z: 0,
+  vy: 0,
+  isGrounded: true,
+  jumpStrength: 8.5,
+  gravity: 24.0,
   hp: 100,
   maxHp: 100,
   speed: 6.0,
@@ -74,7 +80,7 @@ let lastMouseY = 0;
 
 // Three.js Globais
 let scene, camera, renderer, clock;
-let playerMesh, slashMesh, reishiGroup, fxManager;
+let playerMesh, playerShadowMesh, slashMesh, reishiGroup, fxManager;
 let enemyMeshes = [];
 let reishiDrops = [];
 let spriteTextures = {};
@@ -132,7 +138,19 @@ function init() {
   setupInputListeners(canvas);
 
   // Expor para inspeção e testes automatizados
-  window.debugGame = { scene, camera, cameraState, player, state, enemyMeshes, fxManager };
+  window.debugGame = {
+    scene,
+    camera,
+    cameraState,
+    player,
+    state,
+    enemyMeshes,
+    fxManager,
+    jumpPlayer,
+    openLevelUpBanner,
+    selectBannerOption,
+    skipLevelUp
+  };
 
   // 11. Iniciar Loop
   requestAnimationFrame(loop);
@@ -306,6 +324,7 @@ function createPlayerMesh() {
   });
   const shadow = new THREE.Mesh(shadowGeo, shadowMat);
   shadow.position.y = 0.02;
+  playerShadowMesh = shadow;
   playerMesh.add(shadow);
 }
 
@@ -364,7 +383,8 @@ function initEnemyPool() {
       speed: 3.2,
       type: 'fishbone',
       isBoss: false,
-      flashTimer: 0
+      flashTimer: 0,
+      damageContributions: {} // Rastreamento de dano multiplayer por jogador
     });
   }
 }
@@ -381,13 +401,43 @@ function setupInputListeners(canvas) {
     if (k === 's' || k === 'arrowdown') keys.s = true;
     if (k === 'd' || k === 'arrowright') keys.d = true;
 
+    // Tecla Espaço: Pulo do personagem
+    if (e.code === 'Space' || k === ' ') {
+      e.preventDefault();
+      jumpPlayer();
+    }
+
+    // Atalhos do Banner de Level Up (1, 2, 3 para escolher ou 0/P para pular)
+    if (state.levelUpOpen) {
+      if (k === '1') {
+        selectBannerOption(0);
+        return;
+      }
+      if (k === '2') {
+        selectBannerOption(1);
+        return;
+      }
+      if (k === '3') {
+        selectBannerOption(2);
+        return;
+      }
+      if (k === '0' || k === 'p') {
+        skipLevelUp();
+        return;
+      }
+    }
+
     // Rotação rápida via teclas Q e E (opcional)
     if (k === 'q') cameraState.yaw -= 0.15;
     if (k === 'e') cameraState.yaw += 0.15;
 
-    // Tecla ESC: Alternar pausa e liberar/recuperar mouse
+    // Tecla ESC: Se banner de level up estiver aberto, pula. Se não, pausa/despausa
     if (k === 'escape') {
-      if (!state.levelUpOpen && !state.gameOver) {
+      if (state.levelUpOpen) {
+        skipLevelUp();
+        return;
+      }
+      if (!state.gameOver) {
         if (!state.paused) {
           state.paused = true;
           if (document.pointerLockElement === canvas) {
@@ -705,7 +755,29 @@ function updatePlayer(dt) {
     player.animTimer = 0;
   }
 
-  playerMesh.position.set(player.x, 0, player.z);
+  // 2. Física do Pulo Vertical com Gravidade (Espaço)
+  if (!player.isGrounded) {
+    player.vy -= player.gravity * dt;
+    player.y += player.vy * dt;
+    if (player.y <= 0) {
+      player.y = 0;
+      player.vy = 0;
+      player.isGrounded = true;
+    }
+  }
+
+  // 3. Atualizar posição 3D do personagem (incluindo elevação Y do pulo)
+  playerMesh.position.set(player.x, player.y, player.z);
+
+  // 4. Manter a sombra sob os pés colada ao solo (y = 0.02) com atenuação de escala/opacidade
+  if (playerShadowMesh) {
+    playerShadowMesh.position.set(0, 0.02 - player.y, 0);
+    const shadowFactor = Math.max(0.35, 1.0 - (player.y / 2.5) * 0.5);
+    playerShadowMesh.scale.set(shadowFactor, shadowFactor, 1.0);
+    if (playerShadowMesh.material) {
+      playerShadowMesh.material.opacity = Math.max(0.12, 0.45 - (player.y / 2.5) * 0.3);
+    }
+  }
 
   // Efeito de piscar durante período de invulnerabilidade após receber dano
   if (player.invulnerableTime > 0) {
@@ -713,6 +785,13 @@ function updatePlayer(dt) {
     playerMesh.material.opacity = Math.sin(state.time * 30) > 0 ? 0.4 : 1.0;
   } else {
     playerMesh.material.opacity = 1.0;
+  }
+}
+
+function jumpPlayer() {
+  if (player.isGrounded && state.active && !state.paused) {
+    player.vy = player.jumpStrength;
+    player.isGrounded = false;
   }
 }
 
@@ -994,10 +1073,14 @@ function executeShakkaho(dmg) {
   }
 }
 
-function damageEnemy(en, dmg, weaponKey) {
+function damageEnemy(en, dmg, weaponKey, attackerId = state.localPlayerId) {
   en.hp -= dmg;
   en.flashTimer = 0.12;
   en.mesh.material.color.setHex(0xffffff);
+
+  // Registro de dano multiplayer (quem mais causar dano ganha a bolinha de Reishi)
+  if (!en.damageContributions) en.damageContributions = {};
+  en.damageContributions[attackerId] = (en.damageContributions[attackerId] || 0) + dmg;
 
   state.damageDealt += dmg;
   const key = weaponKey === 'getsuga_tenshou' ? 'getsuga' : weaponKey;
@@ -1017,7 +1100,17 @@ function killEnemy(en) {
   state.kills++;
   state.census[en.type] = (state.census[en.type] || 0) + 1;
 
-  spawnReishi(en.x, en.z, en.isBoss ? 20 : 1);
+  // Lógica Multiplayer: O jogador com maior contribuição de dano leva o drop de Reishi
+  let maxDmg = -1;
+  let topPlayerId = state.localPlayerId;
+  for (const [pid, d] of Object.entries(en.damageContributions || {})) {
+    if (d > maxDmg) {
+      maxDmg = d;
+      topPlayerId = pid;
+    }
+  }
+
+  spawnReishi(en.x, en.z, en.isBoss ? 20 : 1, topPlayerId);
 
   if (en.isBoss) {
     state.bossDefeated = true;
@@ -1025,7 +1118,7 @@ function killEnemy(en) {
   }
 }
 
-function spawnReishi(x, z, amount) {
+function spawnReishi(x, z, amount, ownerPlayerId = state.localPlayerId) {
   const geo = new THREE.PlaneGeometry(0.8, 0.8);
   geo.translate(0, 0.4, 0);
   const mat = new THREE.MeshBasicMaterial({
@@ -1037,7 +1130,7 @@ function spawnReishi(x, z, amount) {
   mesh.position.set(x, 0, z);
   reishiGroup.add(mesh);
 
-  reishiDrops.push({ mesh, x, z, value: amount * 10 });
+  reishiDrops.push({ mesh, x, z, value: amount * 10, ownerPlayerId });
 }
 
 function updateReishi(dt) {
@@ -1046,6 +1139,11 @@ function updateReishi(dt) {
   for (let i = reishiDrops.length - 1; i >= 0; i--) {
     const r = reishiDrops[i];
     r.mesh.quaternion.copy(camera.quaternion);
+
+    // No multiplayer, a partícula só é atraída para o jogador que causou mais dano
+    if (r.ownerPlayerId && r.ownerPlayerId !== state.localPlayerId) {
+      continue;
+    }
 
     const dx = player.x - r.x;
     const dz = player.z - r.z;
@@ -1073,62 +1171,136 @@ function checkLevelUp() {
     state.xp -= state.xpNext;
     state.level++;
     state.xpNext = Math.round(state.xpNext * 1.4);
-    openLevelUpModal();
+    if (!state.levelUpOpen) {
+      openLevelUpBanner();
+    } else {
+      state.pendingLevelUps = (state.pendingLevelUps || 0) + 1;
+    }
   }
 }
 
-function openLevelUpModal() {
-  state.paused = true;
-  state.levelUpOpen = true;
-  if (document.pointerLockElement) {
-    document.exitPointerLock();
-  }
+// =======================================================================
+// BANNER FLUTUANTE DE LEVEL UP (NÃO CONGELA O JOGO)
+// Atalhos [1], [2], [3] ou Pular [0 / P]
+// A nova escolha SOBRESCREVE o poder anterior (mecânica de substituição)
+// =======================================================================
+let currentBannerOptions = [];
 
-  const modal = document.getElementById('levelup-modal');
-  const container = document.getElementById('cards-container');
+function openLevelUpBanner() {
+  state.levelUpOpen = true;
+  // NÃO CONGELA O JOGO: state.paused permanece false!
+  const banner = document.getElementById('levelup-banner');
+  const container = document.getElementById('banner-cards-container');
+  if (!banner || !container) return;
+
   container.innerHTML = '';
 
-  const options = [
-    { key: 'asauchi', type: 'weapon', name: 'Corte de Asauchi', icon: '🗡️', desc: 'Aumenta o dano da katana e reduz o intervalo de corte.' },
-    { key: 'byakurai', type: 'weapon', name: 'Hadō #4 Byakurai', icon: '⚡', desc: 'Dispara um raio perfurante veloz em linha reta.' },
-    { key: 'shakkaho', type: 'weapon', name: 'Hadō #31 Shakkahō', icon: '🔥', desc: 'Lança uma esfera de fogo de Reiatsu que explode em área.' },
-    { key: 'shunpo', type: 'passive', name: 'Treino de Shunpo', icon: '👟', desc: '+15% de velocidade de movimento permanente.' },
-    { key: 'reiatsu', type: 'passive', name: 'Densidade de Reiatsu', icon: '💎', desc: '+20% de dano espiritual para todos os ataques.' },
-    { key: 'magnet', type: 'passive', name: 'Controle de Reishi', icon: '🧲', desc: '+30% no raio de atração das partículas de Reishi.' }
+  const allOptions = [
+    { key: 'getsuga', type: 'weapon', name: 'Getsuga Tenshō', icon: '🌙', desc: 'Rajada espiritual perfurante devastadora (180 Dano).' },
+    { key: 'byakurai', type: 'weapon', name: 'Hadō #4 Byakurai', icon: '⚡', desc: 'Raio elétrico perfurante veloz em linha reta (45 Dano).' },
+    { key: 'shakkaho', type: 'weapon', name: 'Hadō #31 Shakkahō', icon: '🔥', desc: 'Esfera ígnea de Reiatsu com explosão em área (70 Dano).' },
+    { key: 'shunpo', type: 'passive', name: 'Especialista Shunpo', icon: '👟', desc: '+30% velocidade de movimento e pulo ágil.' },
+    { key: 'reiatsu', type: 'passive', name: 'Pressão Espiritual', icon: '💎', desc: '+35% de dano espiritual em todos os ataques.' },
+    { key: 'magnet', type: 'passive', name: 'Vórtice de Reishi', icon: '🧲', desc: '+80% de alcance para atrair Reishi caído.' }
   ];
 
-  const shuffled = options.sort(() => 0.5 - Math.random()).slice(0, 3);
-  shuffled.forEach(opt => {
+  // Sorteia até 3 opções distintas
+  currentBannerOptions = allOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
+  state.activeBannerOptions = currentBannerOptions;
+
+  currentBannerOptions.forEach((opt, idx) => {
     const card = document.createElement('div');
-    card.className = 'skill-card';
+    card.className = 'banner-card';
+    const isWeapon = opt.type === 'weapon';
+    const typeLabel = isWeapon ? 'Poder Ativo' : 'Passiva Ativa';
+    const typeClass = isWeapon ? 'weapon' : 'passive';
+    const num = idx + 1;
+
     card.innerHTML = `
-      <div class="skill-icon">${opt.icon}</div>
-      <div class="skill-name">${opt.name}</div>
-      <div class="skill-desc">${opt.desc}</div>
+      <div class="banner-card-top">
+        <span class="card-num-badge">[${num}]</span>
+        <span class="card-type-tag ${typeClass}">${typeLabel}</span>
+      </div>
+      <div class="banner-card-body">
+        <div class="banner-card-icon">${opt.icon}</div>
+        <div>
+          <div class="banner-card-title">${opt.name}</div>
+          <div class="banner-card-desc">${opt.desc}</div>
+          <div class="banner-card-subtag">⚠️ Substitui poder anterior</div>
+        </div>
+      </div>
     `;
-    card.onclick = () => selectSkill(opt);
+
+    card.onclick = (e) => {
+      e.stopPropagation();
+      selectBannerOption(idx);
+    };
     container.appendChild(card);
   });
 
-  modal.classList.remove('hidden');
-}
-
-function selectSkill(opt) {
-  if (opt.type === 'weapon') {
-    state.weapons[opt.key].level++;
-    state.weapons[opt.key].damage += 15;
-    state.weapons[opt.key].cooldown = Math.max(0.35, state.weapons[opt.key].cooldown * 0.88);
-  } else {
-    state.passives[opt.key]++;
+  const skipBtn = document.getElementById('btn-skip-levelup');
+  if (skipBtn) {
+    skipBtn.onclick = (e) => {
+      e.stopPropagation();
+      skipLevelUp();
+    };
   }
 
-  document.getElementById('levelup-modal').classList.add('hidden');
-  state.levelUpOpen = false;
-  state.paused = false;
+  banner.classList.remove('hidden');
+}
 
-  const canvas = document.getElementById('game-canvas');
-  if (canvas) {
-    canvas.requestPointerLock().catch(() => {});
+function selectBannerOption(index) {
+  if (!state.levelUpOpen || !currentBannerOptions[index]) return;
+  const opt = currentBannerOptions[index];
+
+  if (opt.type === 'weapon') {
+    // SOBRESCRITA: Outras armas especiais são desativadas (perde poderes anteriores)
+    const specialKeys = ['getsuga', 'byakurai', 'shakkaho'];
+    for (const k of specialKeys) {
+      if (k !== opt.key && state.weapons[k]) {
+        state.weapons[k].level = 0;
+      }
+    }
+    // Ativa a nova arma escolhida
+    if (state.weapons[opt.key]) {
+      state.weapons[opt.key].level = 1;
+      state.weapons[opt.key].timer = 0; // pronta para disparar
+    }
+  } else if (opt.type === 'passive') {
+    // SOBRESCRITA: Passiva anterior é substituída pela nova
+    for (const k of Object.keys(state.passives)) {
+      state.passives[k] = 0;
+    }
+    state.passives[opt.key] = 1;
+  }
+
+  finishLevelUp();
+}
+
+function skipLevelUp() {
+  // Pula a escolha mantendo a build atual intacta sem sobrescrever nada
+  finishLevelUp();
+}
+
+function finishLevelUp() {
+  closeLevelUpBanner();
+  if (state.pendingLevelUps && state.pendingLevelUps > 0) {
+    state.pendingLevelUps--;
+    setTimeout(() => {
+      if (state.active && !state.gameOver) {
+        openLevelUpBanner();
+      }
+    }, 120);
+  }
+}
+
+function closeLevelUpBanner() {
+  state.levelUpOpen = false;
+  currentBannerOptions = [];
+  state.activeBannerOptions = [];
+  const banner = document.getElementById('levelup-banner');
+  if (banner) {
+    banner.classList.add('hidden');
   }
 }
 
@@ -1180,6 +1352,8 @@ function spawnHollow() {
   en.maxHp = hp;
   en.speed = spd;
   en.isBoss = false;
+  en.targetPlayerId = null; // Hollows normais são compartilhados entre todos os jogadores
+  en.damageContributions = {}; // Reseta o histórico de dano para novo ciclo
 
   en.mesh.scale.set(1.0, 1.0, 1.0);
   en.mesh.material.map = spriteTextures[`${type}_front`] || spriteTextures[type];
@@ -1188,7 +1362,7 @@ function spawnHollow() {
   en.mesh.visible = true;
 }
 
-function spawnBossMenosGrande() {
+function spawnBossMenosGrande(targetPlayerId = state.localPlayerId) {
   const en = enemyMeshes.find(e => !e.active);
   if (!en) return;
 
@@ -1203,6 +1377,8 @@ function spawnBossMenosGrande() {
   en.maxHp = 2000;
   en.speed = 2.0;
   en.isBoss = true;
+  en.targetPlayerId = targetPlayerId; // Instância individual de Boss por jogador
+  en.damageContributions = {};
 
   en.mesh.scale.set(3.2, 3.2, 3.2);
   en.mesh.material.map = spriteTextures.menos_front || spriteTextures.menos;
@@ -1229,8 +1405,8 @@ function updateEnemies(dt) {
       en.mesh.position.set(en.x, 0, en.z);
     }
 
-    // Dano de contato
-    if (dist < 1.1 && player.invulnerableTime <= 0) {
+    // Dano de contato: Se o jogador pulou alto (player.y >= 0.9), ele esquiva por cima do Hollow!
+    if (dist < 1.1 && player.y < 0.9 && player.invulnerableTime <= 0) {
       player.hp -= en.isBoss ? 35 : 12;
       player.invulnerableTime = 0.6;
       if (player.hp <= 0) {

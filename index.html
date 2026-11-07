@@ -54,7 +54,17 @@
 
       <!-- Instruções de Controle -->
       <div id="bottom-instructions">
-        <span><b>WASD / Setas</b>: Mover Recruta · <b>Mouse Livre</b>: Olhar 360° (Fluido) · <b>ESC</b>: Liberar Mouse / Pausar</span>
+        <span><b>WASD / Setas</b>: Mover Recruta · <b>Espaço</b>: Pular · <b>Mouse Livre</b>: Olhar 360° · <b>ESC</b>: Pausar</span>
+      </div>
+
+      <!-- Banner Flutuante de Level Up (Não congela o jogo, atalhos [1, 2, 3] ou [0 / P] para Pular) -->
+      <div id="levelup-banner" class="hidden">
+        <div class="banner-top-row">
+          <div class="banner-badge">⚡ NOVO NÍVEL</div>
+          <div class="banner-title">ESCOLHA SEU PODER (SOBRESCREVE O ANTERIOR)</div>
+          <button id="btn-skip-levelup" class="btn-skip-pill" title="Manter os poderes e itens atuais sem trocar">[0 / P] PULAR ESCOLHA</button>
+        </div>
+        <div id="banner-cards-container"></div>
       </div>
     </div>
 
@@ -66,15 +76,6 @@
         <div class="modal-actions">
           <button id="btn-resume" class="btn primary">RETOMAR MISSÃO (TRAVAR MOUSE)</button>
         </div>
-      </div>
-    </div>
-
-    <!-- Modal de Level Up: 3 Cartas de Habilidades -->
-    <div id="levelup-modal" class="modal hidden">
-      <div class="modal-card">
-        <h2>ESCOLHA UMA HABILIDADE ESPIRITUAL</h2>
-        <p class="subtitle">Canalize o Reishi coletado dos Hollows para expandir seu poder</p>
-        <div id="cards-container"></div>
       </div>
     </div>
 

@@ -244,49 +244,160 @@ body, html {
   margin-bottom: 24px;
 }
 
-/* Grade de 3 Cartas de Habilidades */
-#cards-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+/* Banner Flutuante de Level Up (Não congela o jogo, em tempo real) */
+#levelup-banner {
+  position: absolute;
+  bottom: 54px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 860px;
+  background: rgba(15, 20, 32, 0.95);
+  border: 1.5px solid rgba(99, 179, 237, 0.5);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85), 0 0 24px rgba(49, 130, 206, 0.35);
+  border-radius: 14px;
+  padding: 10px 16px 12px;
+  z-index: 90;
+  pointer-events: auto;
+  backdrop-filter: blur(8px);
 }
 
-.skill-card {
-  background: #1f2737;
-  border: 2px solid #3b475f;
-  border-radius: 12px;
-  padding: 16px;
+.banner-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.banner-badge {
+  background: linear-gradient(135deg, #e53e3e, #dd6b20);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.5px;
+}
+
+.banner-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #63b3ed;
+  flex: 1;
+  text-align: left;
+}
+
+.btn-skip-pill {
+  background: rgba(45, 55, 72, 0.8);
+  border: 1px solid #4a5568;
+  color: #cbd5e0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  transition: all 0.15s ease;
+}
+
+.btn-skip-pill:hover {
+  background: #4a5568;
+  color: #fff;
+  border-color: #cbd5e0;
+}
+
+#banner-cards-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.banner-card {
+  position: relative;
+  background: #1a2233;
+  border: 1.5px solid #2d3748;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
   display: flex;
   flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.banner-card:hover {
+  transform: translateY(-2px);
+  border-color: #4299e1;
+  background: #242f47;
+  box-shadow: 0 4px 14px rgba(66, 153, 225, 0.25);
+}
+
+.banner-card-top {
+  display: flex;
   align-items: center;
-  text-align: center;
-  pointer-events: auto;
+  justify-content: space-between;
 }
 
-.skill-card:hover {
-  transform: translateY(-4px);
-  border-color: #63b3ed;
-  background: #253046;
-}
-
-.skill-icon {
-  font-size: 32px;
-  margin-bottom: 10px;
-}
-
-.skill-name {
-  font-size: 15px;
+.card-num-badge {
+  background: #2b6cb0;
+  color: #fff;
+  font-size: 11px;
   font-weight: 800;
-  color: #f7fafc;
-  margin-bottom: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
-.skill-desc {
-  font-size: 12px;
-  color: #cbd5e0;
-  line-height: 1.4;
+.card-type-tag {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(226, 232, 240, 0.1);
+  color: #a0aec0;
+}
+
+.card-type-tag.weapon {
+  background: rgba(237, 137, 54, 0.2);
+  color: #ed8936;
+}
+
+.card-type-tag.passive {
+  background: rgba(72, 187, 120, 0.2);
+  color: #48bb78;
+}
+
+.banner-card-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.banner-card-icon {
+  font-size: 20px;
+}
+
+.banner-card-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.banner-card-desc {
+  font-size: 11px;
+  color: #a0aec0;
+  line-height: 1.25;
+}
+
+.banner-card-subtag {
+  font-size: 9.5px;
+  color: #fc8181;
+  font-weight: 600;
 }
 
 /* Relatório de Fim de Partida */
