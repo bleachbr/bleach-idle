@@ -62,6 +62,7 @@ O job `deploy` do `.github/workflows/ci.yml` ainda é o do bleach-idle (pendênc
 
 | Data | SHA | Quem | Observação |
 |---|---|---|---|
+| 2026-11-08 | `e001a6489489d845d8a39408eaf5d755f4df5349` | wjunior (via agente) | Sobrevivência Infinita (Endless Survivor Loop), temporizador de auto-escolha de 10s no Level-Up, expansão 4x do Hueco Mundo com dunas/floresta/lua/estrelas, modo AFK com camuflagem espiritual e agro dinâmico por Pressão Espiritual (Reiatsu). Validado em produção (`https://bleach.acoplum.com`). |
 | 2026-11-08 | `560c15f6b0f66eff779113d457dd9d9e47e1226e` | wjunior (via agente) | Início da jornada no Dangai com esteira de corrida infinita (treadmill runner), travamento de controles do jogador durante o briefing da Rukia, passadas a 10 FPS e transição Senkaimon para Hueco Mundo. Validado em produção (`https://bleach.acoplum.com`). |
 | 2026-11-08 | `b28383a93fb0992a9bb3c8e619e29ca17aeff48c` | wjunior (via agente) | Calibração de câmera (distância inicial mais próxima = 10.0, clamp [8.0, 14.0]) e aumento da proporção heroica do personagem para 2.35x2.35. Validado em produção. |
 | 2026-11-08 | `39e80ac97284d8f4699d2854214f6d938ded3636` | wjunior (via agente) | Atualização com Prólogo no Dangai (DG), briefing animado com Rukia Kuchiki, transição Senkaimon, Hollows V1 (Fishbone e Elite), joystick virtual mobile, Hall da Fama / Leaderboard global e clamping de câmera PokéBonk. Validado via Playwright em produção (`https://bleach.acoplum.com`). |
