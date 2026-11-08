@@ -199,6 +199,7 @@ def generate_map(spec_path, output_dir=None):
 
 def generate_js_module(map_data, output_path):
     map_id = map_data['id']
+    pascal_name = "".join(word.capitalize() for word in map_id.split("_"))
 
     js_code = f"""// =======================================================================
 // MAPA 3D AUTO-GERADO VIA DIRETRIZES DE IA: {map_data['title']}
@@ -270,8 +271,9 @@ function createAtmosphere(scene, group) {{
   const dir = new THREE.DirectionalLight(atmos.directional_light || 0xe2ecff, atmos.directional_intensity || 1.1);
   dir.position.fromArray(atmos.directional_pos || [50, 75, -40]);
   group.add(dir);
+  if (!atmos.has_moon) return;
   const moonGeo = new THREE.CircleGeometry(atmos.moon_size || 22.0, 32);
-  const moonMat = new THREE.MeshBasicMaterial({{ color: 0xf0f6ff, transparent: true, opacity: 0.92, side: THREE.DoubleSide }});
+  const moonMat = new THREE.MeshBasicMaterial({{ color: atmos.moon_color || 0xf0f6ff, transparent: true, opacity: 0.92, side: THREE.DoubleSide }});
   const moon = new THREE.Mesh(moonGeo, moonMat);
   moon.position.fromArray(atmos.moon_pos || [60, 110, -90]);
   moon.lookAt(0, 0, 0);
@@ -296,7 +298,7 @@ function createPropNode(loader, p, cache, sGeo, sMat) {{
 
 function buildPropsGroup(loader) {{
   const group = new THREE.Group();
-  group.name = 'hueco_mundo_props';
+  group.name = '{map_id}_props';
   const sGeo = new THREE.CircleGeometry(1.0, 16);
   sGeo.rotateX(-Math.PI / 2);
   const sMat = new THREE.MeshBasicMaterial({{ color: 0x000000, transparent: true, opacity: 0.4 }});
@@ -309,9 +311,9 @@ function buildPropsGroup(loader) {{
   return group;
 }}
 
-export function createHuecoMundoMap(scene, textureLoader) {{
+export function create{pascal_name}Map(scene, textureLoader) {{
   const mapGroup = new THREE.Group();
-  mapGroup.name = 'map_hueco_mundo';
+  mapGroup.name = 'map_{map_id}';
   const terrainMesh = createGroundMesh(textureLoader);
   mapGroup.add(terrainMesh);
   createAtmosphere(scene, mapGroup);

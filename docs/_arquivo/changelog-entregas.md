@@ -1,5 +1,25 @@
 # Changelog de entregas
 
+## 2026-11-08 — Prólogo e Briefing da Missão no Dangai com Rukia Kuchiki
+
+- **Pipeline do Gerador de Sprites da Rukia (`geradores/sprite_processor.py`, `src/assets/characters/rukia/`, `src/characters.js`):**
+  - Processamento automatizado da folha `arts/walk8/rukia_sheet.png` com remoção de chroma key (#FF00FF), despill de contorno e alinhamento de baseline de solo (107px uniformes em 4 direções: front, back, side e side_l).
+  - Validação completa com `geradores/validate_sprites.py` (0% variação de altura, jitter de 0px) e aprovação oficial com geração de `atlas.png`, `manifest.json` e sincronização no registro `PLAYABLE_CHARACTERS` em `src/characters.js`.
+- **Geração Procedural do Bioma Dangai (`geradores/map_specs/dangai.md`, `geradores/map_generator.py`, `src/maps/dangai.js`, `src/assets/maps/dangai/`):**
+  - Extração de 9 props canônicos de tempo-espaço do Mundo do Precipício a partir de `arts/57_dg_props.png` com chroma key e despill (`prop_dg_0` a `prop_dg_8`).
+  - Textura de solo rochoso espiritual a partir de `arts/56_dg_ground.png` aplicada em relevo procedural 3D com barreiras montanhosas de Kōryū limitando a arena em 46m.
+  - Atmosfera abissal cósmica (`sky_color: #0a0512`, névoa roxa, iluminação espiritual sem luar).
+  - Atualização do motor gerador de mapas para exportar dinamicamente módulos Three.js (`createDangaiMap`).
+- **Sistema de Prólogo e Diálogo Narrativo Interativo (`src/prologue.js`, `src/style.css`):**
+  - Instanciação da NPC Rukia Kuchiki em 3D no Dangai em `(0, y, -3.2)` com placa flutuante de Reiatsu (`src/nametag.js`), sombra de solo e animação contínua de respiração/bobbing com billboarding.
+  - Interface visual novel estilo Bleach com avatar de alta fidelidade da Rukia, título da 13ª Divisão, efeito typewriter acelerado para exibição das falas e controle por teclado (Espaço/Enter) ou toque.
+  - Briefing canônico em 4 etapas: (1) alerta de ruptura no Dangai, (2) invasão massiva no Hueco Mundo ameaçando o Seireitei, (3) missão de travessia e contenção, (4) ordem de purificação do Menos Grande (Gillian) e retorno vivo ao Seireitei.
+  - Transição dimensional com flash de Reiatsu do Senkaimon ao concluir o briefing ou ao acionar o botão "Pular Briefing", teleportando o Shinigami diretamente para o combate no Hueco Mundo.
+- **Desacoplamento de HUD e Ratchet de Tamanho (`src/hud.js`, `src/main.js`, `scripts/lint/size_inventory.json`):**
+  - Extração limpa de `updateHUD` e `showGameOver` para o módulo modular `src/hud.js` com funções $\le 20$ linhas.
+  - Redução da dívida técnica de `src/main.js` de 1357 para 1336 linhas (ratchet catraca baixado em `size_inventory.json`).
+  - Todos os quality gates verdes: `make test` (46/46), `make size-check`, `make docs-check`, `npm run build`.
+
 ## 2026-11-08 — Ranking Global e Hall da Fama no Menu Principal
 
 - **Ranking Global e Hall da Fama (`src/leaderboard.js`, `index.html`, `src/style.css`):**

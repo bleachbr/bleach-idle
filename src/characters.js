@@ -56,6 +56,52 @@ export const PLAYABLE_CHARACTERS = {
       "attack": "slash_combat",
       "skill": "skill_getsuga"
     }
+  },
+  "rukia": {
+    "id": "rukia",
+    "name": "Rukia",
+    "category": "characters",
+    "format": "walk8",
+    "source": "arts/walk8/rukia_sheet.png",
+    "targetSize": 128,
+    "worldScale": [
+      2.2,
+      2.2
+    ],
+    "fps": 10,
+    "frameCount": 8,
+    "directions": {
+      "front": {
+        "row": 0,
+        "frames": 8,
+        "file": "front.png"
+      },
+      "side_l": {
+        "row": 1,
+        "frames": 8,
+        "file": "side_l.png"
+      },
+      "side": {
+        "row": 2,
+        "frames": 8,
+        "file": "side.png"
+      },
+      "back": {
+        "row": 3,
+        "frames": 8,
+        "file": "back.png"
+      }
+    },
+    "diagnostics": {
+      "renderedHeights": {
+        "front": 107,
+        "side_l": 107,
+        "side": 107,
+        "back": 107
+      },
+      "baselineY": 117,
+      "maxHeightVariancePercent": 0.0
+    }
   }
 };
 
@@ -170,12 +216,72 @@ export const FX_REGISTRY = {
       2.6
     ]
   },
+  "hit_byakurai": {
+    "id": "hit_byakurai",
+    "name": "Hit Byakurai",
+    "category": "fx",
+    "type": "combat",
+    "source": "arts/codex/fx_kido_sheet.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 10,
+    "blendMode": "additive",
+    "worldScale": [
+      2.0,
+      2.0
+    ]
+  },
+  "hit_shakkaho": {
+    "id": "hit_shakkaho",
+    "name": "Hit Shakkaho",
+    "category": "fx",
+    "type": "combat",
+    "source": "arts/codex/fx_kido_sheet.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 10,
+    "blendMode": "additive",
+    "worldScale": [
+      2.0,
+      2.0
+    ]
+  },
+  "skill_byakurai": {
+    "id": "skill_byakurai",
+    "name": "Skill Byakurai",
+    "category": "fx",
+    "type": "skill",
+    "source": "arts/codex/fx_kido_sheet.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 10,
+    "blendMode": "additive",
+    "worldScale": [
+      2.0,
+      2.0
+    ]
+  },
   "skill_getsuga": {
     "id": "skill_getsuga",
     "name": "Skill Getsuga",
     "category": "fx",
     "type": "skill",
     "source": "arts/63_fx_skills.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 10,
+    "blendMode": "additive",
+    "worldScale": [
+      2.0,
+      2.0
+    ]
+  },
+  "skill_shakkaho": {
+    "id": "skill_shakkaho",
+    "name": "Skill Shakkaho",
+    "category": "fx",
+    "type": "skill",
+    "source": "arts/codex/fx_kido_sheet.png",
     "targetSize": 128,
     "frameCount": 4,
     "fps": 10,
@@ -199,53 +305,5 @@ export const FX_REGISTRY = {
       2.0,
       2.0
     ]
-  },
-  "skill_byakurai": {
-    "id": "skill_byakurai",
-    "name": "Skill Byakurai",
-    "category": "fx",
-    "type": "skill",
-    "source": "arts/codex/fx_kido_sheet.png",
-    "targetSize": 128,
-    "frameCount": 4,
-    "fps": 12,
-    "blendMode": "additive",
-    "worldScale": [2.0, 2.0]
-  },
-  "hit_byakurai": {
-    "id": "hit_byakurai",
-    "name": "Hit Byakurai",
-    "category": "fx",
-    "type": "hit",
-    "source": "arts/codex/fx_kido_sheet.png",
-    "targetSize": 128,
-    "frameCount": 4,
-    "fps": 12,
-    "blendMode": "additive",
-    "worldScale": [2.2, 2.2]
-  },
-  "skill_shakkaho": {
-    "id": "skill_shakkaho",
-    "name": "Skill Shakkaho",
-    "category": "fx",
-    "type": "skill",
-    "source": "arts/codex/fx_kido_sheet.png",
-    "targetSize": 128,
-    "frameCount": 4,
-    "fps": 10,
-    "blendMode": "additive",
-    "worldScale": [2.4, 2.4]
-  },
-  "hit_shakkaho": {
-    "id": "hit_shakkaho",
-    "name": "Hit Shakkaho",
-    "category": "fx",
-    "type": "hit",
-    "source": "arts/codex/fx_kido_sheet.png",
-    "targetSize": 128,
-    "frameCount": 4,
-    "fps": 12,
-    "blendMode": "additive",
-    "worldScale": [3.2, 3.2]
   }
 };

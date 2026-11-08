@@ -3,12 +3,15 @@ import { createSpritesheet } from './spritesheet.js';
 import { PLAYABLE_CHARACTERS, MONSTERS_REGISTRY, FX_REGISTRY } from './characters.js';
 import { FXManager } from './fx/fxManager.js';
 import { createHuecoMundoMap, getTerrainHeight, MAP_CONFIG, clampPlayerToMap, updateMapPropsBillboard } from './maps/hueco_mundo.js';
+import { createDangaiMap } from './maps/dangai.js';
+import { startPrologue, updatePrologue, isPrologueActive, cancelPrologue } from './prologue.js';
 import { computePlayerDisplacement, getSpriteDirection, updateWalkCycle, resetWalkCycle } from './movement.js';
 import { initLoginMenu, showLoginMenu, hideLoginMenu, updateMenuCamera } from './menu.js';
 import { initVirtualJoystick, getJoystickVector, showVirtualJoystick, hideVirtualJoystick, isTouchDevice } from './joystick.js';
 import { initTelemetry, logTelemetry, syncMultiplayerSession } from './telemetry.js';
 import { submitMatchScore } from './leaderboard.js';
 import { createPlayerNameTag, updatePlayerNameTag } from './nametag.js';
+import { updateHUD as renderHUD, showGameOver as displayGameOver } from './hud.js';
 // Constantes da Arena e Câmera (Hueco Mundo - Bioma Ativo da Entrega 1)
 const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 88.0;
 const MAX_ENEMIES = 400;
@@ -86,7 +89,7 @@ let lastMouseY = 0;
 // Three.js Globais
 let scene, camera, renderer, clock;
 let playerMesh, playerShadowMesh, playerNameTag, slashMesh, reishiGroup, fxManager;
-let activeMap = null;
+let activeMap = null, huecoMundoMap = null, dangaiMap = null;
 let enemyMeshes = [];
 let reishiDrops = [];
 let spriteTextures = {};
@@ -136,9 +139,23 @@ function init() {
 }
 
 function createArena() {
-  // Constrói o mapa 3D do Hueco Mundo (relevo de dunas, solo de quartzo, lua e 99 props canônicos)
-  const textureLoader = new THREE.TextureLoader();
-  activeMap = createHuecoMundoMap(scene, textureLoader);
+  const loader = new THREE.TextureLoader();
+  huecoMundoMap = createHuecoMundoMap(scene, loader);
+  dangaiMap = createDangaiMap(scene, loader);
+  scene.remove(dangaiMap.mapGroup);
+  activeMap = huecoMundoMap;
+}
+
+function switchToDangai() {
+  if (huecoMundoMap) scene.remove(huecoMundoMap.mapGroup);
+  if (dangaiMap) scene.add(dangaiMap.mapGroup);
+  activeMap = dangaiMap;
+}
+
+function switchToHuecoMundo() {
+  if (dangaiMap) scene.remove(dangaiMap.mapGroup);
+  if (huecoMundoMap) scene.add(huecoMundoMap.mapGroup);
+  activeMap = huecoMundoMap;
 }
 
 function buildSprites() {
@@ -492,9 +509,8 @@ function renderMenuBackground(dt) {
   renderer.render(scene, camera);
 }
 
-function updateGame(dt) {
+function updateCombatLoop(dt) {
   state.time += dt;
-  updatePlayer(dt);
   updateWeapons(dt);
   if (fxManager) {
     fxManager.updateAura(dt, player.x, player.z, camera.quaternion);
@@ -505,6 +521,18 @@ function updateGame(dt) {
   updateSpawns(dt);
   updateEnemies(dt);
   updateReishi(dt);
+}
+
+function updateGame(dt) {
+  updatePlayer(dt);
+  if (isPrologueActive()) {
+    updateCamera();
+    updateBillboards();
+    updatePrologue(dt, camera);
+    renderer.render(scene, camera);
+    return;
+  }
+  updateCombatLoop(dt);
   updateCamera();
   updateBillboards();
   renderer.render(scene, camera);
@@ -1187,68 +1215,11 @@ function updateEnemies(dt) {
 }
 
 function updateHUD() {
-  const hpPercent = (player.hp / player.maxHp) * 100;
-  document.getElementById('hp-bar-fill').style.width = hpPercent + '%';
-  document.getElementById('hp-text').innerText = `${Math.ceil(player.hp)} / ${player.maxHp}`;
-
-  const xpPercent = (state.xp / state.xpNext) * 100;
-  document.getElementById('xp-bar-fill').style.width = xpPercent + '%';
-  document.getElementById('level-badge').innerText = `Nv. ${state.level}`;
-
-  const mins = String(Math.floor(state.time / 60)).padStart(2, '0');
-  const secs = String(Math.floor(state.time % 60)).padStart(2, '0');
-  document.getElementById('timer-box').innerText = `${mins}:${secs}`;
-  document.getElementById('kills-count').innerText = state.kills;
-
-  if (state.bossSpawned && !state.bossDefeated) {
-    const boss = enemyMeshes.find(e => e.active && e.isBoss);
-    if (boss) {
-      const bossHpPercent = (boss.hp / boss.maxHp) * 100;
-      document.getElementById('boss-hp-fill').style.width = Math.max(0, bossHpPercent) + '%';
-    }
-  }
+  renderHUD(player, state, enemyMeshes);
 }
 
 function showGameOver(victory) {
-  state.active = false;
-  state.gameOver = true;
-  if (document.pointerLockElement) {
-    document.exitPointerLock();
-  }
-
-  const modal = document.getElementById('gameover-modal');
-  const title = document.getElementById('report-title');
-  const subtitle = document.getElementById('report-subtitle');
-
-  if (victory) {
-    title.innerText = 'MISSÃO CUMPRIDA! (VITÓRIA)';
-    title.style.color = '#48bb78';
-    subtitle.innerText = 'O Menos Grande (Gillian) foi purificado e Karakura está a salvo!';
-  } else {
-    title.innerText = 'VOCÊ CAIU EM COMBATE';
-    title.style.color = '#f56565';
-    subtitle.innerText = 'Sua alma foi sobrepujada pela invasão dos Hollows.';
-  }
-
-  const mins = String(Math.floor(state.time / 60)).padStart(2, '0');
-  const secs = String(Math.floor(state.time % 60)).padStart(2, '0');
-  document.getElementById('stat-time').innerText = `${mins}:${secs}`;
-  document.getElementById('stat-level').innerText = `Nv. ${state.level}`;
-  document.getElementById('stat-kills').innerText = state.kills;
-  document.getElementById('stat-damage').innerText = Math.round(state.damageDealt).toLocaleString('pt-BR');
-
-  const censusList = document.getElementById('enemies-census');
-  censusList.innerHTML = `<li><span>Hollow (Fishbone D):</span> <b>${state.census.fishbone || 0}</b></li><li><span>Hollow Mutante (Elite):</span> <b>${state.census.elite || 0}</b></li><li><span>Menos Grande (Gillian):</span> <b>${state.census.menos > 0 ? '1 (PURIFICADO)' : '0'}</b></li>`;
-
-  const weaponsList = document.getElementById('weapons-census');
-  weaponsList.innerHTML = Object.values(state.weapons)
-    .filter(w => w.level > 0)
-    .map(w => `<li><span>${w.name} (Nv. ${w.level}):</span> <b>${Math.round(w.totalDamage).toLocaleString('pt-BR')} dano</b></li>`)
-    .join('');
-
-  submitMatchScore({ nickname: state.playerName, kills: state.kills, timeSeconds: state.time, damageDealt: state.damageDealt, level: state.level });
-  hideVirtualJoystick();
-  modal.classList.remove('hidden');
+  displayGameOver(victory, state, submitMatchScore, hideVirtualJoystick);
 }
 
 function resetPlayerState() {
@@ -1316,42 +1287,50 @@ function resetMatch() {
   updateHUD();
 }
 
+function launchGameSession() {
+  state.inMenu = false;
+  state.active = true;
+  hideLoginMenu();
+  showVirtualJoystick();
+  const canvas = renderer.domElement;
+  if (!isTouchDevice() && canvas?.requestPointerLock) {
+    canvas.requestPointerLock().catch(() => {});
+  }
+}
+
 function startGame(name) {
   if (name) state.playerName = name;
   updatePlayerNameTag(playerNameTag, state.playerName);
   const nameEl = document.getElementById('player-name-display');
   if (nameEl) nameEl.textContent = state.playerName;
   resetMatch();
-  state.inMenu = false;
-  state.active = true;
-  hideLoginMenu();
-  showVirtualJoystick();
-  const canvas = renderer.domElement;
-  if (!isTouchDevice() && canvas && canvas.requestPointerLock) {
-    canvas.requestPointerLock().catch(() => {});
-  }
+  launchGameSession();
+  switchToDangai();
+  player.x = 0; player.z = 0;
+  startPrologue({
+    scene,
+    loader: new THREE.TextureLoader(),
+    getHeightFn: (x, z) => (activeMap?.getTerrainHeight ? activeMap.getTerrainHeight(x, z) : 0),
+    onComplete: () => {
+      switchToHuecoMundo();
+      player.x = 0; player.z = 0;
+    }
+  });
 }
 
 function returnToMenu() {
+  cancelPrologue();
+  switchToHuecoMundo();
   state.active = false;
   state.paused = false;
   state.inMenu = true;
   hideVirtualJoystick();
-  if (document.pointerLockElement) {
-    document.exitPointerLock();
-  }
+  if (document.pointerLockElement) document.exitPointerLock();
   showLoginMenu();
 }
 
 function restartGame() {
   const gameoverModal = document.getElementById('gameover-modal');
   if (gameoverModal) gameoverModal.classList.add('hidden');
-  resetMatch();
-  state.inMenu = false;
-  state.active = true;
-  showVirtualJoystick();
-  const canvas = renderer.domElement;
-  if (!isTouchDevice() && canvas && canvas.requestPointerLock) {
-    canvas.requestPointerLock().catch(() => {});
-  }
+  startGame();
 }
