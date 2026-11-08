@@ -8,6 +8,7 @@ import { initLoginMenu, showLoginMenu, hideLoginMenu, updateMenuCamera } from '.
 import { initVirtualJoystick, getJoystickVector, showVirtualJoystick, hideVirtualJoystick, isTouchDevice } from './joystick.js';
 import { initTelemetry, logTelemetry, syncMultiplayerSession } from './telemetry.js';
 import { submitMatchScore } from './leaderboard.js';
+import { createPlayerNameTag, updatePlayerNameTag } from './nametag.js';
 // Constantes da Arena e Câmera (Hueco Mundo - Bioma Ativo da Entrega 1)
 const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 88.0;
 const MAX_ENEMIES = 400;
@@ -84,7 +85,7 @@ let lastMouseY = 0;
 
 // Three.js Globais
 let scene, camera, renderer, clock;
-let playerMesh, playerShadowMesh, slashMesh, reishiGroup, fxManager;
+let playerMesh, playerShadowMesh, playerNameTag, slashMesh, reishiGroup, fxManager;
 let activeMap = null;
 let enemyMeshes = [];
 let reishiDrops = [];
@@ -252,33 +253,31 @@ function loadMonsterTextures(loader) {
   }
 }
 
-function createPlayerMesh() {
-  const pGeo = new THREE.PlaneGeometry(2.0, 2.0);
-  pGeo.translate(0, 1.0, 0);
-
-  const pMat = new THREE.MeshBasicMaterial({
-    map: spriteTextures.player_back, // Visão em 3ª pessoa padrão (costas)
-    transparent: true,
-    depthWrite: false,
-    side: THREE.DoubleSide
-  });
-
-  playerMesh = new THREE.Mesh(pGeo, pMat);
-  playerMesh.position.set(0, 0, 0);
-  scene.add(playerMesh);
-
-  // Sombra suave sob os pés
+function attachPlayerShadowAndTag() {
+  playerNameTag = createPlayerNameTag(state.playerName);
+  playerMesh.add(playerNameTag);
   const shadowGeo = new THREE.CircleGeometry(0.7, 16);
   shadowGeo.rotateX(-Math.PI / 2);
-  const shadowMat = new THREE.MeshBasicMaterial({
-    color: 0x000000,
-    transparent: true,
-    opacity: 0.45
-  });
+  const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45 });
   const shadow = new THREE.Mesh(shadowGeo, shadowMat);
   shadow.position.y = 0.02;
   playerShadowMesh = shadow;
   playerMesh.add(shadow);
+}
+
+function createPlayerMesh() {
+  const pGeo = new THREE.PlaneGeometry(2.0, 2.0);
+  pGeo.translate(0, 1.0, 0);
+  const pMat = new THREE.MeshBasicMaterial({
+    map: spriteTextures.player_back,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
+  playerMesh = new THREE.Mesh(pGeo, pMat);
+  playerMesh.position.set(0, 0, 0);
+  scene.add(playerMesh);
+  attachPlayerShadowAndTag();
 }
 
 function createSlashMesh() {
@@ -1319,6 +1318,7 @@ function resetMatch() {
 
 function startGame(name) {
   if (name) state.playerName = name;
+  updatePlayerNameTag(playerNameTag, state.playerName);
   const nameEl = document.getElementById('player-name-display');
   if (nameEl) nameEl.textContent = state.playerName;
   resetMatch();

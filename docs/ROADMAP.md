@@ -22,6 +22,7 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 - [x] Visual canônico e unificado dos Hollows da V1: horda composta por Fishbone D e Chefão Menos Grande Gillian com ciclo walk8 de 8 frames em 4 direções, eliminando placeholders provisórios (`src/assets/monsters/`, [direcionamento/14](direcionamento/14-normalizacao-hollows-v1-fishbone-e-gillian.md))
 - [x] Hollow elite (contorno carmesim, 200 HP, escala 2.2x, drop de 6 Reishi e censo) como entidade ativa em campo (`src/main.js`, [direcionamento/15](direcionamento/15-joystick-virtual-mobile-e-hollow-elite.md))
 - [x] Joystick virtual no mobile com stick analógico flutuante, arrasto de câmera touch e botão de salto dedicado (`src/joystick.js`, [direcionamento/15](direcionamento/15-joystick-virtual-mobile-e-hollow-elite.md))
+- [ ] Prólogo e briefing de missão no Dangai (DG): criar no gerador `arts/walk8/rukia_sheet.png` a Rukia, o jogador ao clicar em Jogar entra no cenário DG (`arts/56_dg_ground.png` e `arts/57_dg_props.png`) onde a Rukia aparece conversando de forma animada e bem controlada, explicando a missão de ir até o Hueco Mundo, derrotar a invasão Hollow, aniquilar o Menos Grande (boss Gillian) e retornar ao Seireitei vivo
 
 ## Frente 2 — versão 2
 
@@ -45,4 +46,5 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 
 Pedido novo que passou pela skill `triagem-pedido` entra aqui numa linha: data, veredicto (`aceito`, `adiado` ou `recusado`) e motivo.
 - 2026-11-08: aceito — ranking global e Hall da Fama no menu principal para exibir maiores abates, tempo de sobrevivência e dano acumulado.
+- 2026-11-08: aceito — prólogo no Dangai (DG) com Rukia e briefing animado da missão antes da travessia para o Hueco Mundo.
 
