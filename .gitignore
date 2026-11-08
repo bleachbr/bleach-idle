@@ -18,5 +18,6 @@ acoplum-37d98af765d7.json
 e2e/test-results/
 e2e/playwright-report/
 scratch/
+.worktrees/
 .DS_Store
 
