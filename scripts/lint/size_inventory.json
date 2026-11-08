@@ -1,12 +1,11 @@
 {
   "files": {
-    "src/main.js": 1383,
+    "src/main.js": 1359,
     "src/spritesheet.js": 505
   },
   "functions": {
     "src/main.js::createPlayerMesh": 24,
     "src/main.js::executeAsauchiSlash": 39,
-    "src/main.js::executeByakurai": 30,
     "src/main.js::findSmartTargetDirection": 53,
     "src/main.js::initEnemyPool": 37,
     "src/main.js::selectBannerOption": 24,

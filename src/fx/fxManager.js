@@ -104,42 +104,40 @@ export class FXManager {
   }
 
   // -------------------------------------------------------------------
-  // 3. SPAWN DE PROJÉTIL GETSUGA TENSHŌ (VIAJA PELO MAPA)
+  // 3. SPAWN DE PROJÉTEIS (GETSUGA TENSHŌ, BYAKURAI, SHAKKAHŌ)
   // -------------------------------------------------------------------
-  spawnGetsuga(startX, startZ, dirX, dirZ, damage, customConfig = {}) {
-    const cfg = { ...FX_BEHAVIORS.skill_getsuga, ...customConfig };
-
-    // Material com Blending Aditivo (brilho da energia espiritual)
+  spawnSkillProjectile(fxKey, weaponType, startX, startZ, dirX, dirZ, damage, customConfig = {}) {
+    const baseCfg = FX_BEHAVIORS[fxKey] || FX_BEHAVIORS.skill_getsuga;
+    const cfg = { ...baseCfg, ...customConfig };
     const mat = new THREE.MeshBasicMaterial({
-      map: this.spriteTextures['fx_skill_getsuga_0'] || null,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      opacity: 0.95,
-      side: THREE.DoubleSide
+      map: this.spriteTextures[`fx_${fxKey}_0`] || null,
+      transparent: true, blending: THREE.AdditiveBlending,
+      depthWrite: false, opacity: 0.95, side: THREE.DoubleSide
     });
-
     const mesh = new THREE.Mesh(this.projectileGeo.clone(), mat);
     mesh.position.set(startX, 0.4, startZ);
     mesh.scale.set(cfg.startScale, cfg.startScale, 1.0);
     this.scene.add(mesh);
-
     const proj = {
-      mesh,
-      config: cfg,
-      x: startX,
-      z: startZ,
-      dirX,
-      dirZ,
-      damage,
-      distanceTraveled: 0,
-      lifetime: 0,
-      hitEnemies: new Set(), // Evita dano múltiplo no mesmo monstro
-      active: true
+      mesh, config: cfg, fxKey, weaponType,
+      x: startX, z: startZ, dirX, dirZ, damage,
+      distanceTraveled: 0, lifetime: 0,
+      hitEnemies: new Set(), active: true
     };
-
     this.projectiles.push(proj);
     return proj;
+  }
+
+  spawnGetsuga(startX, startZ, dirX, dirZ, damage, customConfig = {}) {
+    return this.spawnSkillProjectile('skill_getsuga', 'getsuga', startX, startZ, dirX, dirZ, damage, customConfig);
+  }
+
+  spawnByakurai(startX, startZ, dirX, dirZ, damage, customConfig = {}) {
+    return this.spawnSkillProjectile('skill_byakurai', 'byakurai', startX, startZ, dirX, dirZ, damage, customConfig);
+  }
+
+  spawnShakkaho(startX, startZ, dirX, dirZ, damage, customConfig = {}) {
+    return this.spawnSkillProjectile('skill_shakkaho', 'shakkaho', startX, startZ, dirX, dirZ, damage, customConfig);
   }
 
   // -------------------------------------------------------------------
@@ -166,9 +164,10 @@ export class FXManager {
       const currentScale = p.config.startScale + travelRatio * (p.config.endScale - p.config.startScale);
       p.mesh.scale.set(currentScale, currentScale, 1.0);
 
-      // 3. Animação dos quadros do efeito (Getsuga em movimento)
+      // 3. Animação dos quadros do efeito (dinâmico por skill)
       const frameIdx = Math.floor(p.lifetime * p.config.fps) % 4;
-      const tex = this.spriteTextures[`fx_skill_getsuga_${frameIdx}`];
+      const fxName = p.fxKey || 'skill_getsuga';
+      const tex = this.spriteTextures[`fx_${fxName}_${frameIdx}`];
       if (tex && p.mesh.material.map !== tex) {
         p.mesh.material.map = tex;
         p.mesh.material.needsUpdate = true;
@@ -188,7 +187,7 @@ export class FXManager {
         const dist = Math.hypot(en.x - p.x, en.z - p.z);
         if (dist <= p.config.hitRadius + (en.radius || 0.8)) {
           p.hitEnemies.add(enemyKey);
-          onHitCallback && onHitCallback(en, p.damage, 'getsuga', p.x, p.z);
+          onHitCallback && onHitCallback(en, p.damage, p.weaponType || 'getsuga', p.x, p.z);
 
           // Se não perfura, encerra o projétil no primeiro impacto
           if (!p.config.pierce) {

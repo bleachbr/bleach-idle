@@ -815,51 +815,27 @@ function executeAsauchiSlash(dmg) {
 }
 
 function executeByakurai(dmg) {
-  let target = null;
-  let minDist = 999;
+  if (!fxManager) return;
+  let target = null, minDist = 999;
   for (const en of enemyMeshes) {
     if (!en.active) continue;
     const d = Math.hypot(en.x - player.x, en.z - player.z);
-    if (d < minDist) {
-      minDist = d;
-      target = en;
-    }
+    if (d < minDist) { minDist = d; target = en; }
   }
-
-  if (target) {
-    const tx = target.x - player.x;
-    const tz = target.z - player.z;
-    const len = Math.hypot(tx, tz) || 1;
-    const nx = tx / len;
-    const nz = tz / len;
-
-    for (const en of enemyMeshes) {
-      if (!en.active) continue;
-      const ex = en.x - player.x;
-      const ez = en.z - player.z;
-      const proj = ex * nx + ez * nz;
-      if (proj > 0 && proj < 25) {
-        const perp = Math.abs(ex * nz - ez * nx);
-        if (perp < 1.6) {
-          damageEnemy(en, dmg, 'byakurai');
-        }
-      }
-    }
-  }
+  if (!target) return;
+  const tx = target.x - player.x, tz = target.z - player.z;
+  const len = Math.hypot(tx, tz) || 1;
+  fxManager.spawnByakurai(player.x, player.z, tx / len, tz / len, dmg, {
+    speed: 28.0, maxDistance: 30.0, hitRadius: 1.6
+  });
 }
 
 function executeShakkaho(dmg) {
-  const targetX = player.x + player.dirX * 7;
-  const targetZ = player.z + player.dirZ * 7;
-  const radius = 5.0;
-
-  for (const en of enemyMeshes) {
-    if (!en.active) continue;
-    const d = Math.hypot(en.x - targetX, en.z - targetZ);
-    if (d <= radius) {
-      damageEnemy(en, dmg, 'shakkaho');
-    }
-  }
+  if (!fxManager) return;
+  const target = findSmartTargetDirection(player.x, player.z, 25.0, 2.8);
+  fxManager.spawnShakkaho(player.x, player.z, target.dirX, target.dirZ, dmg, {
+    speed: 16.0, maxDistance: 25.0, hitRadius: 2.8
+  });
 }
 
 function damageEnemy(en, dmg, weaponKey, attackerId = state.localPlayerId) {

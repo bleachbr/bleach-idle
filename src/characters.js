@@ -199,5 +199,53 @@ export const FX_REGISTRY = {
       2.0,
       2.0
     ]
+  },
+  "skill_byakurai": {
+    "id": "skill_byakurai",
+    "name": "Skill Byakurai",
+    "category": "fx",
+    "type": "skill",
+    "source": "arts/codex/fx_kido_sheet.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 12,
+    "blendMode": "additive",
+    "worldScale": [2.0, 2.0]
+  },
+  "hit_byakurai": {
+    "id": "hit_byakurai",
+    "name": "Hit Byakurai",
+    "category": "fx",
+    "type": "hit",
+    "source": "arts/codex/fx_kido_sheet.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 12,
+    "blendMode": "additive",
+    "worldScale": [2.2, 2.2]
+  },
+  "skill_shakkaho": {
+    "id": "skill_shakkaho",
+    "name": "Skill Shakkaho",
+    "category": "fx",
+    "type": "skill",
+    "source": "arts/codex/fx_kido_sheet.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 10,
+    "blendMode": "additive",
+    "worldScale": [2.4, 2.4]
+  },
+  "hit_shakkaho": {
+    "id": "hit_shakkaho",
+    "name": "Hit Shakkaho",
+    "category": "fx",
+    "type": "hit",
+    "source": "arts/codex/fx_kido_sheet.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 12,
+    "blendMode": "additive",
+    "worldScale": [3.2, 3.2]
   }
 };

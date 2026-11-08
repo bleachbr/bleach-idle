@@ -25,6 +25,7 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 
 ## Frente 2 — versão 2
 
+- [x] Integração de Kidō com projéteis e sprites canônicos: Hadō #4 Byakurai (raio elétrico perfurante veloz) e Hadō #31 Shakkahō vinculados ao FXManager (`src/fx/`, [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [ ] Variedade adicional de hollows (Shrieker com aproximação em zigue-zague, Acidwire com projéteis ácidos)
 - [ ] Mapas Soul Society, Karakura Town e Dangai
 - [ ] Shikai no nível 15 e Bankai no nível 35, com troca de sprite
