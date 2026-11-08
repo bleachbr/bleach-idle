@@ -19,8 +19,8 @@ const MAX_ENEMIES = 400;
 const cameraState = {
   yaw: 0,            // Rotação horizontal em radianos (360° livre)
   pitch: 0.50,       // Inclinação vertical (~28° para o chão)
-  dist: 13.0,        // Distância do personagem
-  target: new THREE.Vector3(0, 1.0, 0)
+  dist: 10.0,        // Distância inicial mais próxima do personagem
+  target: new THREE.Vector3(0, 1.25, 0)
 };
 let requestGamePointerLock = () => {};
 // Estado do Jogo
@@ -271,9 +271,9 @@ function loadMonsterTextures(loader) {
 }
 
 function attachPlayerShadowAndTag() {
-  playerNameTag = createPlayerNameTag(state.playerName);
+  playerNameTag = createPlayerNameTag(state.playerName, 2.50);
   playerMesh.add(playerNameTag);
-  const shadowGeo = new THREE.CircleGeometry(0.7, 16);
+  const shadowGeo = new THREE.CircleGeometry(0.78, 16);
   shadowGeo.rotateX(-Math.PI / 2);
   const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45 });
   const shadow = new THREE.Mesh(shadowGeo, shadowMat);
@@ -283,8 +283,8 @@ function attachPlayerShadowAndTag() {
 }
 
 function createPlayerMesh() {
-  const pGeo = new THREE.PlaneGeometry(2.0, 2.0);
-  pGeo.translate(0, 1.0, 0);
+  const pGeo = new THREE.PlaneGeometry(2.35, 2.35);
+  pGeo.translate(0, 1.175, 0);
   const pMat = new THREE.MeshBasicMaterial({
     map: spriteTextures.player_back,
     transparent: true,
@@ -459,7 +459,7 @@ function setupMouseLook(canvas) {
   canvas.addEventListener('mousedown', (e) => { isDraggingMouse = true; lastMouseX = e.clientX; lastMouseY = e.clientY; });
   window.addEventListener('mouseup', () => { isDraggingMouse = false; });
   window.addEventListener('wheel', (e) => {
-    cameraState.dist = Math.max(9.5, Math.min(15.5, cameraState.dist + Math.sign(e.deltaY) * 1.0));
+    cameraState.dist = Math.max(8.0, Math.min(14.0, cameraState.dist + Math.sign(e.deltaY) * 0.8));
   }, { passive: true });
 }
 
@@ -485,7 +485,7 @@ function updateCamera() {
   const camZ = player.z + Math.cos(cameraState.yaw) * h * dist;
 
   camera.position.set(camX, camY, camZ);
-  camera.lookAt(player.x, 1.2, player.z);
+  camera.lookAt(player.x, 1.25, player.z);
 }
 
 // =======================================================================
@@ -1288,8 +1288,8 @@ function resetMatch() {
 }
 
 function launchGameSession() {
-  state.inMenu = false;
-  state.active = true;
+  state.inMenu = false; state.active = true;
+  cameraState.dist = 10.0;
   hideLoginMenu();
   showVirtualJoystick();
   const canvas = renderer.domElement;

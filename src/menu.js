@@ -51,7 +51,7 @@ export function updateMenuCamera(cameraState, dt) {
   // Rotação suave contínua em torno do Hueco Mundo enquanto no menu
   cameraState.yaw += dt * 0.12;
   cameraState.pitch = 0.42;
-  cameraState.dist = 14.5;
+  cameraState.dist = 12.5;
 }
 
 function handleStartTrigger(inputEl, onStartGame) {

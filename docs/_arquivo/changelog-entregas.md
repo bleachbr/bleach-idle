@@ -1,5 +1,16 @@
 # Changelog de entregas
 
+## 2026-11-08 — Calibração de Câmera (Zoom Inicial Próximo) e Proporção Heroica do Personagem
+
+- **Ajuste de Distância de Câmera (`src/main.js`, `src/menu.js`):**
+  - Distância de início de partida rebaixada de `13.0` (e travada em `14.5` pela rotação do menu) para `10.0`, iniciando a gameplay com enquadramento mais próximo e imersivo estilo PokéBonk.
+  - Faixa de clamping dinâmico no scroll do mouse reajustada para `[8.0, 14.0]`, impedindo afastamento excessivo e permitindo zoom-in detalhado.
+  - Centro do alvo de foco da câmera elevado para $Y = 1.25$ para manter o personagem perfeitamente enquadrado.
+- **Aumento na Proporção do Personagem (`src/main.js`, `src/nametag.js`):**
+  - Geometria do plano do jogador redimensionada de `2.0 x 2.0` para `2.35 x 2.35` (+17.5%), harmonizando a presença visual do Shinigami com os Hollows e o cenário.
+  - Offset vertical da placa 3D de identificação (`nametag`) ajustado dinamicamente para $Y = 2.50$, preservando o espaçamento aéreo sobre a cabeça do personagem.
+  - Todos os quality gates validados: `make test` (46/46), `make size-check`, `make docs-check`, `npm run build` e validação Playwright.
+
 ## 2026-11-08 — Prólogo e Briefing da Missão no Dangai com Rukia Kuchiki
 
 - **Pipeline do Gerador de Sprites da Rukia (`geradores/sprite_processor.py`, `src/assets/characters/rukia/`, `src/characters.js`):**

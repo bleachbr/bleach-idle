@@ -35,7 +35,7 @@ function renderNameToCanvas(canvas, name) {
   drawNicknameText(ctx, name, CANVAS_WIDTH, CANVAS_HEIGHT);
 }
 
-export function createPlayerNameTag(initialName = 'Shinigami') {
+export function createPlayerNameTag(initialName = 'Shinigami', yOffset = 2.50) {
   const canvas = document.createElement('canvas');
   canvas.width = CANVAS_WIDTH;
   canvas.height = CANVAS_HEIGHT;
@@ -53,7 +53,7 @@ export function createPlayerNameTag(initialName = 'Shinigami') {
 
   const geo = new THREE.PlaneGeometry(1.6, 0.4);
   const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(0, 2.25, 0);
+  mesh.position.set(0, yOffset, 0);
   mesh.userData.canvas = canvas;
   mesh.userData.texture = texture;
   return mesh;
