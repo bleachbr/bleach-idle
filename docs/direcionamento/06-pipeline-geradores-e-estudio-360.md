@@ -34,6 +34,33 @@ Este documento registra o funcionamento e o guia de uso das ferramentas internas
 
 ---
 
+## 1.1. Passo 0: Gerar as Folhas Brutas com o Codex (`geradores/gen_codex.py`)
+
+As folhas brutas (fundo magenta) que faltam ao jogo saem do Codex CLI, pela ferramenta interna `image_gen`. Para cada asset, o script chama `codex exec -s workspace-write -C <raiz> -i <referências>`. A referência de estilo é sempre `src/assets/characters/ichigo_shikai/front.png`. Os Hollows e os efeitos também recebem a arte equivalente do Bleach Idle, que fica em `arts/ref/` e precisa ser copiada de `bleach-idle/art/raw/`. Os prompts exatos ficam em `geradores/prompts/<id>.txt`, e as imagens saem em `arts/codex/<id>_sheet.png`, fora do git. Os prompts descrevem os seres só pela aparência, sem citar nomes da obra.
+
+```bash
+python -I geradores/gen_codex.py            # gera tudo o que falta (pula o que já existe)
+python -I geradores/gen_codex.py shrieker   # só um
+
+# Hollows: folha 4x4 de caminhada
+python -I -X utf8 geradores/sprite_processor.py -i arts/codex/fishbone_sheet.png -n fishbone -c monsters -t walk4x4
+# Kidō: uma folha 4x4 com 4 animações, uma por linha
+python -I -X utf8 geradores/sprite_processor.py -i arts/codex/fx_kido_sheet.png -n skill_byakurai -c fx -r 0 --fx-type skill
+```
+
+No Windows, use `-X utf8`: os `print` com emoji do processador quebram no console `cp1252`.
+
+**Caminhada de 8 quadros (walk8, igual ao Ichigo).** A folha 4x4 tem só 4 quadros por direção, e dois deles são o mesmo neutro, então a passada fica dura. O comando `python -I geradores/gen_codex.py --walk8` pede ao Codex uma imagem 4x2 por direção (frente, esquerda e costas), com 8 poses diferentes num ciclo que fecha. A folha 4x4 do próprio monstro vai junto como referência de design. Depois o script monta `arts/codex/<id>_walk8_sheet.png` (8x4) e faz três correções:
+- **Direita espelhada:** a direita é o espelho da esquerda.
+- **Perfil desvirado:** o Codex às vezes vira o perfil numa linha da grade. Cada quadro é comparado com o 1º e com o espelho dele, e o que vier virado é desvirado (na rodada de 07/11 isso aconteceu com a 2ª linha do `shrieker`).
+- **Ciclo girado:** o processador usa o 2º quadro como pose parada, e o validador mede a altura dela. O ciclo de cada direção é girado para que o quadro mais ereto fique em 2º; caso contrário, a pose parada pode cair no ponto mais baixo da passada e reprovar na uniformidade de altura. O loop não muda.
+
+Montada a folha, o processamento é `sprite_processor.py -t walk8`.
+
+Rodada de 07/11/2026 (Codex CLI 0.160.1): as 5 folhas saíram na 1ª tentativa, sem recusas e em cerca de 3 min no total, com os 5 jobs em paralelo. Foram os Hollows `fishbone`, `shrieker`, `acidwire` e `menos`, mais `fx_kido`. A `fx_kido` se divide em `skill_byakurai` (linha 0), `hit_byakurai` (1), `skill_shakkaho` (2) e `hit_shakkaho` (3). Depois vieram as 12 imagens de 8 quadros (4 Hollows x 3 direções), também na 1ª tentativa, e os 4 Hollows passaram a usar `walk8` a 10 fps. Os quatro passam no `validate_sprites.py`: altura 360° com variação de até 0,93%, jitter dos pés de 0 px e nenhum vazamento de magenta. Tudo está em `geradores/staging/`, aguardando aprovação no Estúdio 360°.
+
+---
+
 ## 2. Passo 1: O Motor de Processamento (`geradores/sprite_processor.py`)
 
 O script Python CLI processa qualquer folha de sprites ou imagem única:

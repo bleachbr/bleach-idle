@@ -1,0 +1,15 @@
+{
+  "id": "hit_byakurai",
+  "name": "Hit Byakurai",
+  "category": "fx",
+  "type": "combat",
+  "source": "arts/codex/fx_kido_sheet.png",
+  "targetSize": 128,
+  "frameCount": 4,
+  "fps": 10,
+  "blendMode": "additive",
+  "worldScale": [
+    2.0,
+    2.0
+  ]
+}
