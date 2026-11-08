@@ -62,4 +62,5 @@ O job `deploy` do `.github/workflows/ci.yml` ainda é o do bleach-idle (pendênc
 
 | Data | SHA | Quem | Observação |
 |---|---|---|---|
+| 2026-11-08 | `39e80ac97284d8f4699d2854214f6d938ded3636` | wjunior (via agente) | Atualização com Prólogo no Dangai (DG), briefing animado com Rukia Kuchiki, transição Senkaimon, Hollows V1 (Fishbone e Elite), joystick virtual mobile, Hall da Fama / Leaderboard global e clamping de câmera PokéBonk. Validado via Playwright em produção (`https://bleach.acoplum.com`). |
 | 2026-11-07 | `7c0e4c8a5601e83d42a56ec65abd21c7d79f0298` | wjunior (via agente) | Primeiro corte. Substituiu o bleach-idle `02f4c97302bb80f6a37200121b2350c89f7df22f`, que segue na VPS (imagem e volume `bleach-dados`) para rollback. Imagem buildada da árvore de trabalho com mudanças não commitadas, então o SHA não reproduz a imagem. Esse primeiro build saiu sem sprites (aprendizado 10); corrigido no mesmo dia e republicado com o mesmo SHA. Texturas conferidas pelo domínio (`image/png`). Jogo ainda não jogado em navegador |
