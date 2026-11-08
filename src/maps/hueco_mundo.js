@@ -71,10 +71,12 @@ function createBleachMoon(atmos) {
   ctx.beginPath(); ctx.arc(172, 104, 82, 0, Math.PI * 2); ctx.fill();
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
-  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(atmos.moon_size || 34.0, atmos.moon_size || 34.0), mat);
-  mesh.position.fromArray(atmos.moon_pos || [110, 180, -210]);
-  mesh.lookAt(0, 0, 0);
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, fog: false, depthWrite: false });
+  const size = atmos.moon_size || 46.0;
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(size, size), mat);
+  mesh.name = 'bleach_moon';
+  mesh.position.fromArray(atmos.moon_pos || [0, 38, -175]);
+  mesh.lookAt(0, 12, 0);
   return mesh;
 }
 

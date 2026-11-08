@@ -54,4 +54,7 @@ movement-test: ## Testes unitários de movimentação, walk cycle e direções d
 evolution-test: ## Testes unitários de ciclo infinito, reiatsu e level-up timer
 	python3 scripts/test_endless_evolution.py
 
-test: movement-test evolution-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, ciclo, governança, catraca de tamanho)
+safety-test: ## Testes de proteção: Lua ao norte/baixa, transição do prólogo e segurança em runtime
+	python3 scripts/test_runtime_safety.py
+
+test: movement-test evolution-test safety-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, governança, catraca de tamanho)

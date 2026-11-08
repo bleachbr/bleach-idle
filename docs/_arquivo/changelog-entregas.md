@@ -1,5 +1,27 @@
 # Changelog de entregas
 
+## 2026-11-08 — Reposicionamento da Lua ao Norte no Horizonte e Transição Cinemática com Portal Senkaimon no Prólogo
+
+- **Reposicionamento Canônico e Visibilidade da Lua no Hueco Mundo (`geradores/map_specs/hueco_mundo.md`, `geradores/map_generator.py`, `src/maps/hueco_mundo.js`):**
+  - Reposicionamento da Lua Crescente do Bleach diretamente ao Norte ($X = 0, Z = -175\text{ m}$) e em baixa altitude sobre as dunas do horizonte ($Y = 38\text{ m}$ em vez de 180m na estratosfera), ficando imediatamente visível no enquadramento natural da câmera ao iniciar o combate.
+  - Imunidade à neblina procedural (`fog: false` e `depthWrite: false` em `MeshBasicMaterial`), garantindo que a lua nunca seja ofuscada ou ocultada pela névoa volumétrica do deserto.
+  - Escala ampliada para $46 \times 46\text{ m}$ e orientação `lookAt(0, 12, 0)` voltada para o centro da arena.
+- **Transição Cinemática no Prólogo com Portal Senkaimon (`src/prologue.js`):**
+  - Ao concluir o 4º diálogo com a Rukia (ou acionar o botão de atravessar o Senkaimon), inicia-se uma sequência cinemática dramática de 1.4s:
+  - O portal do Senkaimon (`senkaimon_portal_group`) surge à frente no Dangai em $Z = -8.5\text{ m}$ com textura espiritual e aura brilhante azul-celeste, escalando suavemente de 0.2 a 1.0.
+  - Rukia Kuchiki recua para trás ($Z = 0 \to +4.5\text{ m}$) e abre espaço para a investida.
+  - O Shinigami do jogador toma a frente, centraliza seu percurso ($X = +0.85 \to 0.0$) e avança em corrida veloz diretamente para dentro do portal ($Z = 0 \to -8.5\text{ m}$).
+  - A esteira de corrida acelera para 11 m/s e a câmera segue o mergulho do personagem no portal antes do flash branco dimensional do Senkaimon que conduz ao Hueco Mundo.
+- **Suíte de Testes de Proteção contra Regressões (`scripts/test_runtime_safety.py`):**
+  - Adição de 4 novos testes automatizados integrados ao `make test` (`make safety-test`), totalizando 57 testes unitários verdes:
+    1. Proteção de coordenadas e altitude da Lua ao Norte ($Z < -120$, $|X| \le 20$, $25 \le Y \le 55$, tamanho $\ge 40$).
+    2. Proteção de material da Lua (nome `bleach_moon`, `fog: false`, `depthWrite: false`).
+    3. Proteção da transição cinemática do prólogo (recuo da Rukia, avanço do jogador para $Z < -2.0$ e criação do portal).
+    4. Proteção contra referências não vinculadas em `src/main.js` (`exposeDebugInterface`, `handleEscapeKey`).
+- **Evidências Visuais E2E Playwright:**
+  - `hueco_mundo_moon_north_low_horizon.png` (749 KB): vista em primeira/terceira pessoa da Lua ao Norte no horizonte desértico.
+  - `prologue_portal_cinematic_dash.png` (752 KB): Rukia recuando e jogador correndo em direção ao portal Senkaimon.
+
 ## 2026-11-08 — Sobrevivência Infinita (Endless Survivor), Level-Up 10s, Mapa Hueco Mundo 4x, Modo AFK e Reiatsu Dinâmica
 
 - **Ciclo Infinito de Sobrevivência (Endless Survivor Loop) (`src/cycle.js`, `src/main.js`, `src/hud.js`):**

@@ -38,6 +38,10 @@ const DIALOGUE_PAGES = [
 ];
 
 let prologueActive = false;
+let isCinematicTransition = false;
+let cinematicClock = 0;
+let portalMesh = null;
+const CINEMATIC_DURATION = 1.4;
 let currentStep = 0;
 let typewriterTimer = null;
 let rukiaNPC = null;
@@ -194,17 +198,63 @@ function triggerSenkaimonTransition(onFinish) {
   }, 400);
 }
 
-function completePrologue() {
+function buildPortalCanvas() {
+  const c = document.createElement('canvas');
+  c.width = 128; c.height = 160;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, 128, 160);
+  ctx.fillStyle = '#38bdf8'; ctx.shadowColor = '#67e8f9'; ctx.shadowBlur = 12;
+  ctx.fillRect(8, 8, 112, 144);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(24, 24, 80, 112);
+  return c;
+}
+
+function createSenkaimonPortal(scene, baseY) {
+  const group = new THREE.Group();
+  group.name = 'senkaimon_portal_group';
+  const geo = new THREE.PlaneGeometry(3.6, 4.8);
+  geo.translate(0, 2.4, 0);
+  const tex = new THREE.CanvasTexture(buildPortalCanvas());
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.95, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(geo, mat);
+  group.add(mesh);
+  group.position.set(0, baseY, -8.5);
+  scene.add(group);
+  return group;
+}
+
+function cleanupPrologueEntities() {
   prologueActive = false;
-  const overlay = document.getElementById('prologue-overlay');
-  if (overlay) overlay.classList.add('hidden');
-  restoreDangaiConveyor(dangaiMapRef);
+  isCinematicTransition = false;
+  if (portalMesh && sceneRef) {
+    sceneRef.remove(portalMesh);
+    portalMesh = null;
+  }
   if (rukiaNPC && sceneRef) {
     sceneRef.remove(rukiaNPC);
     rukiaNPC = null;
   }
+}
+
+function completePrologue() {
+  cleanupPrologueEntities();
+  const overlay = document.getElementById('prologue-overlay');
+  if (overlay) overlay.classList.add('hidden');
+  restoreDangaiConveyor(dangaiMapRef);
   document.removeEventListener('keydown', handlePrologueKeys);
   triggerSenkaimonTransition(onCompleteCb);
+}
+
+export function startCinematicTransition() {
+  if (isCinematicTransition) return;
+  isCinematicTransition = true;
+  cinematicClock = 0;
+  const overlay = document.getElementById('prologue-overlay');
+  if (overlay) overlay.classList.add('hidden');
+  document.removeEventListener('keydown', handlePrologueKeys);
+  const baseY = rukiaNPC?.userData?.baseY || 0;
+  if (sceneRef && !portalMesh) portalMesh = createSenkaimonPortal(sceneRef, baseY);
 }
 
 function handleNextClick() {
@@ -214,7 +264,7 @@ function handleNextClick() {
   }
   currentStep++;
   if (currentStep >= DIALOGUE_PAGES.length) {
-    completePrologue();
+    startCinematicTransition();
   } else {
     renderDialogueStep(currentStep);
   }
@@ -326,35 +376,82 @@ export function startPrologue({ scene, loader, dangaiMap, getHeightFn, onComplet
   document.addEventListener('keydown', handlePrologueKeys);
 }
 
-export function updatePrologue(delta, { camera, player, playerMesh, dangaiMap, spriteTextures }) {
-  if (!prologueActive || !rukiaNPC) return;
-  animClock += delta;
+function updateRukiaCinematic(mesh, shadow, tag, baseY, t, bob, camera) {
+  const rZ = 4.5 * t;
+  const rX = -0.85 - 0.35 * t;
+  mesh.position.set(rX, baseY + bob, rZ);
+  shadow.position.set(rX, baseY + 0.03, rZ);
+  tag.position.set(rX, baseY + 2.35 + bob, rZ);
+  mesh.quaternion.copy(camera.quaternion);
+  tag.quaternion.copy(camera.quaternion);
+}
+
+function updatePlayerCinematic(player, playerMesh, baseY, t, bob, camera) {
+  player.x = 0.85 * (1.0 - t);
+  player.z = -8.5 * t;
+  player.y = baseY + bob;
+  playerMesh.position.set(player.x, player.y, player.z);
+  playerMesh.quaternion.copy(camera.quaternion);
+}
+
+function updatePortalCinematic(t) {
+  if (!portalMesh) return;
+  const s = Math.min(1.0, 0.2 + 0.8 * (t / 0.5));
+  portalMesh.scale.set(s, s, s);
+}
+
+function tickPrologueCinematic(delta, { camera, player, playerMesh, dangaiMap }) {
+  cinematicClock += delta;
+  const t = Math.min(1.0, cinematicClock / CINEMATIC_DURATION);
+  const bobRukia = Math.sin(animClock * 16.0) * 0.035;
+  const bobPlayer = Math.sin((animClock + 0.12) * 18.0) * 0.04;
+  const { mesh, shadow, tag, baseY } = rukiaNPC.userData;
+
+  updateRukiaCinematic(mesh, shadow, tag, baseY, t, bobRukia, camera);
+  updatePlayerCinematic(player, playerMesh, baseY, t, bobPlayer, camera);
+  updatePortalCinematic(t);
+  camera.position.set(0, baseY + 2.35, 6.2 - 2.5 * t);
+  camera.lookAt(0, baseY + 1.25, -12.0);
+  updateConveyor(delta, dangaiMap, 11.0);
+
+  if (t >= 1.0) completePrologue();
+}
+
+function tickPrologueNormal(delta, { camera, player, playerMesh, dangaiMap, spriteTextures }) {
   const frame = Math.floor(animClock * 10) % 8;
   const bobRukia = Math.sin(animClock * 16.0) * 0.035;
   const bobPlayer = Math.sin((animClock + 0.12) * 16.0) * 0.035;
-
   const { mesh, tag, baseY } = rukiaNPC.userData;
   updateRukiaRunner(mesh, tag, baseY, frame, bobRukia, camera);
   updatePlayerRunner(player, playerMesh, baseY, frame, bobPlayer, camera, spriteTextures);
-
   camera.position.set(0, baseY + 2.35, 6.2);
   camera.lookAt(0, baseY + 1.25, -12.0);
   updateConveyor(delta, dangaiMap);
 }
 
+export function updatePrologue(delta, ctx) {
+  if (!prologueActive || !rukiaNPC) return;
+  animClock += delta;
+  if (isCinematicTransition) {
+    tickPrologueCinematic(delta, ctx);
+  } else {
+    tickPrologueNormal(delta, ctx);
+  }
+}
+
 export function cancelPrologue() {
-  prologueActive = false;
+  cleanupPrologueEntities();
   if (typewriterTimer) clearInterval(typewriterTimer);
   const overlay = document.getElementById('prologue-overlay');
   if (overlay) overlay.classList.add('hidden');
   restoreDangaiConveyor(dangaiMapRef);
-  if (rukiaNPC && sceneRef) {
-    sceneRef.remove(rukiaNPC);
-    rukiaNPC = null;
-  }
   document.removeEventListener('keydown', handlePrologueKeys);
 }
 
 export function isPrologueActive() {
   return prologueActive;
+}
+
+export function isPrologueCinematicTransition() {
+  return isCinematicTransition;
 }

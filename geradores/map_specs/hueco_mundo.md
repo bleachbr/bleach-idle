@@ -41,8 +41,8 @@ atmosphere:
   has_moon: true
   has_stars: true
   moon_color: "#f0f6ff"
-  moon_pos: [110, 180, -210]
-  moon_size: 36.0
+  moon_pos: [0, 38, -175]
+  moon_size: 46.0
 
 props:
   - id: prop_hm_0
