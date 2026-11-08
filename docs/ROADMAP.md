@@ -2,7 +2,7 @@
 
 Fonte única do que está aberto. Caixa entregue fica numa linha; o relato vai para [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md). Estado de hoje: [STATUS.md](STATUS.md).
 
-**Última atualização:** 2026-11-07
+**Última atualização:** 2026-11-08
 
 A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele arquivo só aponta para este.
 
@@ -26,7 +26,9 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 ## Frente 2 — versão 2
 
 - [x] Integração de Kidō com projéteis e sprites canônicos: Hadō #4 Byakurai (raio elétrico perfurante veloz) e Hadō #31 Shakkahō vinculados ao FXManager (`src/fx/`, [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
+- [x] Ranking global e Hall da Fama no menu principal com abates, tempo de sobrevivência e dano (`src/leaderboard.js`, [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [ ] Variedade adicional de hollows (Shrieker com aproximação em zigue-zague, Acidwire com projéteis ácidos)
+
 - [ ] Mapas Soul Society, Karakura Town e Dangai
 - [ ] Shikai no nível 15 e Bankai no nível 35, com troca de sprite
 - [ ] Elenco jogável além do Ichigo shikai em uso
@@ -41,4 +43,6 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 
 ## Radar
 
-Pedido novo que passou pela skill `triagem-pedido` entra aqui numa linha: data, veredicto (`aceito`, `adiado` ou `recusado`) e motivo. Sem pedido triado nesta data.
+Pedido novo que passou pela skill `triagem-pedido` entra aqui numa linha: data, veredicto (`aceito`, `adiado` ou `recusado`) e motivo.
+- 2026-11-08: aceito — ranking global e Hall da Fama no menu principal para exibir maiores abates, tempo de sobrevivência e dano acumulado.
+

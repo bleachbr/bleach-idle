@@ -7,6 +7,7 @@ import { computePlayerDisplacement, getSpriteDirection, updateWalkCycle, resetWa
 import { initLoginMenu, showLoginMenu, hideLoginMenu, updateMenuCamera } from './menu.js';
 import { initVirtualJoystick, getJoystickVector, showVirtualJoystick, hideVirtualJoystick, isTouchDevice } from './joystick.js';
 import { initTelemetry, logTelemetry, syncMultiplayerSession } from './telemetry.js';
+import { submitMatchScore } from './leaderboard.js';
 // Constantes da Arena e Câmera (Hueco Mundo - Bioma Ativo da Entrega 1)
 const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 88.0;
 const MAX_ENEMIES = 400;
@@ -1238,11 +1239,7 @@ function showGameOver(victory) {
   document.getElementById('stat-damage').innerText = Math.round(state.damageDealt).toLocaleString('pt-BR');
 
   const censusList = document.getElementById('enemies-census');
-  censusList.innerHTML = `
-    <li><span>Hollow (Fishbone D):</span> <b>${state.census.fishbone || 0}</b></li>
-    <li><span>Hollow Mutante (Elite):</span> <b>${state.census.elite || 0}</b></li>
-    <li><span>Menos Grande (Gillian):</span> <b>${state.census.menos > 0 ? '1 (PURIFICADO)' : '0'}</b></li>
-  `;
+  censusList.innerHTML = `<li><span>Hollow (Fishbone D):</span> <b>${state.census.fishbone || 0}</b></li><li><span>Hollow Mutante (Elite):</span> <b>${state.census.elite || 0}</b></li><li><span>Menos Grande (Gillian):</span> <b>${state.census.menos > 0 ? '1 (PURIFICADO)' : '0'}</b></li>`;
 
   const weaponsList = document.getElementById('weapons-census');
   weaponsList.innerHTML = Object.values(state.weapons)
@@ -1250,6 +1247,7 @@ function showGameOver(victory) {
     .map(w => `<li><span>${w.name} (Nv. ${w.level}):</span> <b>${Math.round(w.totalDamage).toLocaleString('pt-BR')} dano</b></li>`)
     .join('');
 
+  submitMatchScore({ nickname: state.playerName, kills: state.kills, timeSeconds: state.time, damageDealt: state.damageDealt, level: state.level });
   hideVirtualJoystick();
   modal.classList.remove('hidden');
 }

@@ -1,6 +1,23 @@
 # Changelog de entregas
 
+## 2026-11-08 — Ranking Global e Hall da Fama no Menu Principal
+
+- **Ranking Global e Hall da Fama (`src/leaderboard.js`, `index.html`, `src/style.css`):**
+  - Implementação de card interativo integrado ao menu principal com glassmorphism no padrão PokéBonk, exibindo tabela de melhores combatentes com medalhas dinâmicas (🥇 1º, 🥈 2º, 🥉 3º), nível, abates, tempo de sobrevivência (`mm:ss`) e dano acumulado formatado.
+  - Abas de ordenação reativa sem recarregamento de página: **⚔️ Abates**, **⏱️ Tempo** e **💥 Dano**.
+  - Destaque visual automático da linha do jogador ativo (`leaderboard-row-me`) combinando com o nickname do Shinigami informado no login.
+- **Backend e Persistência Confiável (`server/telemetry_orchestrator.js`):**
+  - Endpoints `/api/leaderboard` (GET com query `sort=kills|time|damage` e POST para gravação de runs finalizadas) com persistência estruturada em `logs/leaderboard.json` e fallback resiliente em `localStorage` (`bleach_leaderboard_records`).
+  - Lendas canônicas pré-semeadas (Kenpachi Zaraki, Ichigo Kurosaki, Kisuke Urahara, Byakuya Kuchiki, Rukia Kuchiki).
+- **Integração com Encerramento de Partida (`src/main.js`):**
+  - Submissão automática dos resultados de fim de jogo (`showGameOver`) para o backend e cache local, atualizando imediatamente o Hall da Fama ao retornar ao menu.
+- **Responsividade e Qualidade:**
+  - Layout em grid 2 colunas no desktop e empilhamento adaptável no mobile (`@media (max-width: 860px)`).
+  - Testes e validação visual automatizada via Playwright em `scratch/test_leaderboard_validation.py` com 5 screenshots capturados.
+  - Catraca de tamanho de código respeitada: `src/main.js` reduzido para 1357 linhas, funções em `src/leaderboard.js` $\le 20$ linhas (`make size-check` e `make test` verdes).
+
 ## 2026-11-08
+
 
 ### Kidō canônicos Byakurai e Shakkahō integrados ao FXManager
 

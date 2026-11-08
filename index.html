@@ -21,68 +21,112 @@
           <p class="tagline">Sobreviva às hordas espirituais no Deserto Infinito do Hueco Mundo</p>
         </div>
 
-        <!-- Card de Login do Shinigami -->
-        <div class="login-card">
-          <div class="card-glow-border"></div>
+        <!-- Grid de Cards do Menu: Login e Hall da Fama / Leaderboard -->
+        <div class="menu-cards-row">
+          <!-- Card de Login do Shinigami -->
+          <div class="login-card">
+            <div class="card-glow-border"></div>
 
-          <!-- Seleção de Nickname -->
-          <div class="form-group">
-            <label for="player-nickname">
-              <span class="label-icon">⚔️</span> IDENTIFICAÇÃO DO SHINIGAMI:
-            </label>
-            <div class="input-wrapper">
-              <input
-                type="text"
-                id="player-nickname"
-                placeholder="Digite seu nome de guerra..."
-                maxlength="16"
-                autocomplete="off"
-                spellcheck="false"
-              />
-              <span class="input-focus-line"></span>
+            <!-- Seleção de Nickname -->
+            <div class="form-group">
+              <label for="player-nickname">
+                <span class="label-icon">⚔️</span> IDENTIFICAÇÃO DO SHINIGAMI:
+              </label>
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  id="player-nickname"
+                  placeholder="Digite seu nome de guerra..."
+                  maxlength="16"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <span class="input-focus-line"></span>
+              </div>
+            </div>
+
+            <!-- Informações do Personagem e Bioma Ativo -->
+            <div class="character-preview-chip">
+              <div class="chip-avatar">🗡️</div>
+              <div class="chip-info">
+                <div class="chip-name">Ichigo Kurosaki <span class="chip-stage">(Shikai Ativa)</span></div>
+                <div class="chip-meta">Bioma Oficial: <b>Hueco Mundo</b> · Dunas 3D & Noite Eterna</div>
+              </div>
+              <div class="chip-status">PRONTO</div>
+            </div>
+
+            <!-- Botão Primário PokéBonk Pulsante de Jogar -->
+            <button id="btn-play-game" class="btn-pokebonk-play">
+              <span class="play-flare"></span>
+              <span class="play-content">
+                <span class="play-icon">▶</span>
+                <span class="play-text">ENTRAR NO HUECO MUNDO</span>
+              </span>
+              <span class="play-subtext">Pressione [ENTER] para iniciar</span>
+            </button>
+
+            <!-- Botões dos Estúdios 360° -->
+            <div class="studio-access-row">
+              <div class="studio-divider">
+                <span>FERRAMENTAS & ESTÚDIOS 360°</span>
+              </div>
+              <div class="studio-buttons-grid">
+                <a href="/preview_map.html" id="btn-map-studio" class="btn-studio map-studio" target="_blank" rel="noopener">
+                  <span class="studio-icon">🗺️</span>
+                  <div class="studio-text-col">
+                    <span class="studio-title">360° MAP STUDIO</span>
+                    <span class="studio-desc">Relevo, Dunas & Props</span>
+                  </div>
+                </a>
+                <a href="/preview.html" id="btn-sprite-studio" class="btn-studio sprite-studio" target="_blank" rel="noopener">
+                  <span class="studio-icon">🎨</span>
+                  <div class="studio-text-col">
+                    <span class="studio-title">360° SPRITE STUDIO</span>
+                    <span class="studio-desc">Inspeção 360° & Passadas</span>
+                  </div>
+                </a>
+              </div>
             </div>
           </div>
 
-          <!-- Informações do Personagem e Bioma Ativo -->
-          <div class="character-preview-chip">
-            <div class="chip-avatar">🗡️</div>
-            <div class="chip-info">
-              <div class="chip-name">Ichigo Kurosaki <span class="chip-stage">(Shikai Ativa)</span></div>
-              <div class="chip-meta">Bioma Oficial: <b>Hueco Mundo</b> · Dunas 3D & Noite Eterna</div>
-            </div>
-            <div class="chip-status">PRONTO</div>
-          </div>
-
-          <!-- Botão Primário PokéBonk Pulsante de Jogar -->
-          <button id="btn-play-game" class="btn-pokebonk-play">
-            <span class="play-flare"></span>
-            <span class="play-content">
-              <span class="play-icon">▶</span>
-              <span class="play-text">ENTRAR NO HUECO MUNDO</span>
-            </span>
-            <span class="play-subtext">Pressione [ENTER] para iniciar</span>
-          </button>
-
-          <!-- Botões dos Estúdios 360° -->
-          <div class="studio-access-row">
-            <div class="studio-divider">
-              <span>FERRAMENTAS & ESTÚDIOS 360°</span>
-            </div>
-            <div class="studio-buttons-grid">
-              <a href="/preview_map.html" id="btn-map-studio" class="btn-studio map-studio" target="_blank" rel="noopener">
-                <span class="studio-icon">🗺️</span>
-                <div class="studio-text-col">
-                  <span class="studio-title">360° MAP STUDIO</span>
-                  <span class="studio-desc">Relevo, Dunas & Props</span>
+          <!-- Card do Ranking Global / Hall da Fama das Almas -->
+          <div class="leaderboard-card">
+            <div class="card-glow-border"></div>
+            <div class="leaderboard-header">
+              <div class="leaderboard-title-row">
+                <span class="leaderboard-icon">🏆</span>
+                <div class="leaderboard-title-col">
+                  <h2 class="leaderboard-title">HALL DA FAMA DAS ALMAS</h2>
+                  <span class="leaderboard-subtitle">RANKING GLOBAL DOS SHINIGAMIS</span>
                 </div>
-              </a>
-              <a href="/preview.html" id="btn-sprite-studio" class="btn-studio sprite-studio" target="_blank" rel="noopener">
-                <span class="studio-icon">🎨</span>
-                <div class="studio-text-col">
-                  <span class="studio-title">360° SPRITE STUDIO</span>
-                  <span class="studio-desc">Inspeção 360° & Passadas</span>
-                </div>
-              </a>
+              </div>
+              <div class="leaderboard-tabs">
+                <button type="button" class="leaderboard-tab active" data-sort="kills">⚔️ Abates</button>
+                <button type="button" class="leaderboard-tab" data-sort="time">⏱️ Tempo</button>
+                <button type="button" class="leaderboard-tab" data-sort="damage">💥 Dano</button>
+              </div>
+            </div>
+
+            <div class="leaderboard-table-container">
+              <table class="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th class="th-rank">Rank</th>
+                    <th class="th-name">Shinigami</th>
+                    <th class="th-kills">Abates</th>
+                    <th class="th-time">Tempo</th>
+                    <th class="th-dmg">Dano</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboard-tbody">
+                  <!-- Alimentado dinamicamente -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="leaderboard-footer">
+              <span class="leaderboard-live-pulse"></span>
+              <span class="leaderboard-live-text">Sincronizado com Orquestrador Hueco Mundo</span>
             </div>
           </div>
         </div>

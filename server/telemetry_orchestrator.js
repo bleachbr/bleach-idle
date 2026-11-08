@@ -9,6 +9,15 @@ import path from 'path';
 const LOGS_DIR = path.resolve(process.cwd(), 'logs');
 const TELEMETRY_FILE = path.join(LOGS_DIR, 'telemetry.log');
 const MULTIPLAYER_FILE = path.join(LOGS_DIR, 'multiplayer.log');
+const LEADERBOARD_FILE = path.join(LOGS_DIR, 'leaderboard.json');
+
+const SEED_LEADERBOARD = [
+  { id: 'seed_zaraki', nickname: 'Kenpachi Zaraki', kills: 95, timeSeconds: 115, damageDealt: 51200, level: 11, character: 'Ichigo (Shikai)', date: '2026-11-07T14:15:00Z' },
+  { id: 'seed_ichigo', nickname: 'Ichigo Kurosaki', kills: 84, timeSeconds: 138, damageDealt: 42500, level: 12, character: 'Ichigo (Shikai)', date: '2026-11-07T12:00:00Z' },
+  { id: 'seed_urahara', nickname: 'Kisuke Urahara', kills: 72, timeSeconds: 125, damageDealt: 38900, level: 10, character: 'Ichigo (Shikai)', date: '2026-11-07T13:30:00Z' },
+  { id: 'seed_byakuya', nickname: 'Byakuya Kuchiki', kills: 65, timeSeconds: 130, damageDealt: 36400, level: 9, character: 'Ichigo (Shikai)', date: '2026-11-07T15:00:00Z' },
+  { id: 'seed_rukia', nickname: 'Rukia Kuchiki', kills: 48, timeSeconds: 105, damageDealt: 27800, level: 8, character: 'Ichigo (Shikai)', date: '2026-11-07T16:20:00Z' }
+];
 
 if (!fs.existsSync(LOGS_DIR)) {
   fs.mkdirSync(LOGS_DIR, { recursive: true });
@@ -183,11 +192,105 @@ function handleMultiplayerRoom(req, res) {
   });
 }
 
+// Helpers de Persistência do Leaderboard Global
+function loadLeaderboard() {
+  try {
+    if (fs.existsSync(LEADERBOARD_FILE)) {
+      const content = fs.readFileSync(LEADERBOARD_FILE, 'utf-8');
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (err) {
+    console.error('[LEADERBOARD READ ERROR]', err);
+  }
+  saveLeaderboard(SEED_LEADERBOARD);
+  return [...SEED_LEADERBOARD];
+}
+
+function saveLeaderboard(records) {
+  try {
+    fs.writeFileSync(LEADERBOARD_FILE, JSON.stringify(records, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[LEADERBOARD WRITE ERROR]', err);
+  }
+}
+
+function sortLeaderboard(records, sortBy = 'kills') {
+  return [...records].sort((a, b) => {
+    if (sortBy === 'time') return (b.timeSeconds || 0) - (a.timeSeconds || 0);
+    if (sortBy === 'damage') return (b.damageDealt || 0) - (a.damageDealt || 0);
+    return (b.kills || 0) - (a.kills || 0);
+  });
+}
+
+// Manipulador do Leaderboard (GET e POST)
+function handleLeaderboard(req, res) {
+  if (req.method === 'GET') {
+    const urlObj = new URL(req.url, 'http://localhost');
+    const sortBy = urlObj.searchParams.get('sort') || 'kills';
+    const records = loadLeaderboard();
+    const sorted = sortLeaderboard(records, sortBy);
+    return sendJson(res, 200, {
+      success: true,
+      sortBy,
+      totalEntries: sorted.length,
+      records: sorted.slice(0, 25)
+    });
+  }
+
+  if (req.method === 'POST') {
+    parseBody(req, (err, data) => {
+      if (err) return sendJson(res, 400, { error: 'Invalid JSON payload' });
+
+      const nickname = (data.nickname || 'Shinigami').toString().trim().slice(0, 16) || 'Shinigami';
+      const kills = Math.max(0, parseInt(data.kills, 10) || 0);
+      const timeSeconds = Math.max(0, parseFloat(data.timeSeconds) || 0);
+      const damageDealt = Math.max(0, Math.round(parseFloat(data.damageDealt) || 0));
+      const level = Math.max(1, parseInt(data.level, 10) || 1);
+      const character = (data.character || 'Ichigo (Shikai)').toString().slice(0, 32);
+
+      const newRecord = {
+        id: `rec_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        nickname,
+        kills,
+        timeSeconds: Math.round(timeSeconds),
+        damageDealt,
+        level,
+        character,
+        date: new Date().toISOString()
+      };
+
+      const records = loadLeaderboard();
+      records.push(newRecord);
+      const sortedByKills = sortLeaderboard(records, 'kills');
+      const trimmed = sortedByKills.slice(0, 100);
+      saveLeaderboard(trimmed);
+
+      const rank = trimmed.findIndex(r => r.id === newRecord.id) + 1;
+      const logLine = `[${newRecord.date}] [LEADERBOARD] Novo recorde: ${nickname} | Nv.${level} | ${kills} abates | ${damageDealt} dano | ${timeSeconds}s (Rank #${rank})`;
+      appendLog(TELEMETRY_FILE, logLine);
+      console.log(`\x1b[33m[GLOBAL LEADERBOARD]\x1b[0m ${logLine}`);
+
+      return sendJson(res, 200, {
+        success: true,
+        rank,
+        entry: newRecord,
+        records: trimmed.slice(0, 25)
+      });
+    });
+    return;
+  }
+
+  sendJson(res, 405, { error: 'Method not allowed' });
+}
+
 // Registrador Principal dos Middlewares
+
 export function registerTelemetryAndMultiplayerRoutes(server) {
   server.middlewares.use('/api/telemetry/log', handleTelemetryLog);
   server.middlewares.use('/api/multiplayer/join', handleMultiplayerJoin);
   server.middlewares.use('/api/multiplayer/sync', handleMultiplayerSync);
   server.middlewares.use('/api/multiplayer/room', handleMultiplayerRoom);
-  console.log('\u26a1 [BACKEND] Rotas /api/telemetry e /api/multiplayer registradas com sucesso.');
+  server.middlewares.use('/api/leaderboard', handleLeaderboard);
+  console.log('\u26a1 [BACKEND] Rotas /api/telemetry, /api/multiplayer e /api/leaderboard registradas com sucesso.');
 }

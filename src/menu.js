@@ -3,6 +3,8 @@
 // Gerenciamento da tela de entrada estilo PokéBonk, nickname e câmera cinemática
 // =======================================================================
 
+import { initLeaderboard, refreshLeaderboard } from './leaderboard.js';
+
 const STORAGE_KEY = 'bleach_shinigami_name';
 const DEFAULT_NAME = 'Ichigo Kurosaki';
 
@@ -50,6 +52,7 @@ export function showLoginMenu() {
 
   const inputEl = document.getElementById('player-nickname');
   if (inputEl) inputEl.value = getSavedPlayerName();
+  refreshLeaderboard();
 }
 
 export function hideLoginMenu() {
@@ -59,12 +62,18 @@ export function hideLoginMenu() {
   if (hudEl) hudEl.classList.remove('hidden');
 }
 
-export function initLoginMenu({ onStartGame, onReturnToMenu, onRestartGame }) {
-  const inputEl = document.getElementById('player-nickname');
-  const playBtn = document.getElementById('btn-play-game');
+function bindModalButtons(onReturnToMenu, onRestartGame) {
   const pauseMenuBtn = document.getElementById('btn-menu-pause');
   const gameoverMenuBtn = document.getElementById('btn-menu-gameover');
   const restartBtn = document.getElementById('btn-restart');
+  if (pauseMenuBtn && onReturnToMenu) pauseMenuBtn.onclick = onReturnToMenu;
+  if (gameoverMenuBtn && onReturnToMenu) gameoverMenuBtn.onclick = onReturnToMenu;
+  if (restartBtn && onRestartGame) restartBtn.onclick = onRestartGame;
+}
+
+export function initLoginMenu({ onStartGame, onReturnToMenu, onRestartGame }) {
+  const inputEl = document.getElementById('player-nickname');
+  const playBtn = document.getElementById('btn-play-game');
 
   if (inputEl) {
     inputEl.value = getSavedPlayerName();
@@ -73,11 +82,8 @@ export function initLoginMenu({ onStartGame, onReturnToMenu, onRestartGame }) {
     });
   }
 
-  if (playBtn) {
-    playBtn.onclick = () => handleStartTrigger(inputEl, onStartGame);
-  }
-
-  if (pauseMenuBtn && onReturnToMenu) pauseMenuBtn.onclick = onReturnToMenu;
-  if (gameoverMenuBtn && onReturnToMenu) gameoverMenuBtn.onclick = onReturnToMenu;
-  if (restartBtn && onRestartGame) restartBtn.onclick = onRestartGame;
+  if (playBtn) playBtn.onclick = () => handleStartTrigger(inputEl, onStartGame);
+  bindModalButtons(onReturnToMenu, onRestartGame);
+  initLeaderboard();
 }
+
