@@ -12,8 +12,11 @@ import { initTelemetry, logTelemetry, syncMultiplayerSession } from './telemetry
 import { submitMatchScore } from './leaderboard.js';
 import { createPlayerNameTag, updatePlayerNameTag } from './nametag.js';
 import { updateHUD as renderHUD, showGameOver as displayGameOver } from './hud.js';
+import { createCycleState, getCycleMultipliers, shouldSpawnCycleBoss, markBossSpawned, advanceToNextCycle, updateCycleProgress, registerKillInCycle, resetCycleState } from './cycle.js';
+import { openLevelUpDialog, closeLevelUpDialog, handleLevelUpKeyInput } from './levelup.js';
+import { calculateReiatsuScore, getReiatsuAgroRadius, getReiatsuSpawnBonus, setPlayerCamouflage, updateEnemyWandering } from './reiatsu.js';
 // Constantes da Arena e Câmera (Hueco Mundo - Bioma Ativo da Entrega 1)
-const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 88.0;
+const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 176.0;
 const MAX_ENEMIES = 400;
 // Configurações de Câmera estilo PokéBonk
 const cameraState = {
@@ -28,6 +31,10 @@ export const state = {
   inMenu: true,
   active: false,
   paused: false,
+  isAFK: false,
+  cycleState: createCycleState(),
+  reiatsuScore: 0,
+  peakReiatsu: 0,
   levelUpOpen: false,
   gameOver: false,
   playerName: 'Ichigo Kurosaki',
@@ -42,6 +49,7 @@ export const state = {
   bossDefeated: false,
   census: {
     fishbone: 0,
+    elite: 0,
     menos: 0
   },
   localPlayerId: 'shinigami_' + Math.random().toString(36).substring(2, 6),
@@ -98,7 +106,7 @@ let spriteTextures = {};
 window.addEventListener('DOMContentLoaded', init);
 
 function setupRenderer(canvas) {
-  camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 300);
+  camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 480);
   updateCamera();
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -369,20 +377,13 @@ function handleMovementKeys(k, down) {
 }
 
 function handleLevelUpKeys(k) {
-  if (!state.levelUpOpen) return false;
-  if (k === '1' || k === '2' || k === '3') {
-    selectBannerOption(parseInt(k, 10) - 1);
-    return true;
-  }
-  if (k === '0' || k === 'p') {
-    skipLevelUp();
-    return true;
-  }
-  return false;
+  return handleLevelUpKeyInput(k);
 }
 
 function pauseGame(canvas) {
   state.paused = true;
+  state.isAFK = true;
+  setPlayerCamouflage(player, playerMesh, true);
   if (document.pointerLockElement === canvas) document.exitPointerLock();
   document.getElementById('pause-modal')?.classList.remove('hidden');
 }
@@ -395,6 +396,8 @@ function pauseOnFocusLoss(canvas) {
 function resumeGame(canvas) {
   if (state.inMenu) return;
   state.paused = false;
+  state.isAFK = false;
+  setPlayerCamouflage(player, playerMesh, false);
   document.getElementById('pause-modal')?.classList.add('hidden');
   if (!isTouchDevice() && state.active && !state.levelUpOpen && !state.gameOver && document.pointerLockElement !== canvas) {
     canvas.requestPointerLock().catch(() => {});
@@ -529,8 +532,11 @@ function updateGame(dt) {
     renderer.render(scene, camera);
     return;
   }
-  updatePlayer(dt);
-  updateCombatLoop(dt);
+  if (!state.isAFK) {
+    updatePlayer(dt);
+    updateCombatLoop(dt);
+  }
+  updateEnemies(dt);
   updateCamera();
   updateBillboards();
   renderer.render(scene, camera);
@@ -544,7 +550,7 @@ function loop() {
     renderMenuBackground(dt);
     return;
   }
-  if (!state.active || state.paused) return;
+  if (!state.active) return;
   updateGame(dt);
 }
 
@@ -897,15 +903,16 @@ function killEnemy(en) {
   en.mesh.visible = false;
   en.mesh.position.set(0, -999, 0);
   state.kills++;
+  registerKillInCycle(state.cycleState);
   state.census[en.type] = (state.census[en.type] || 0) + 1;
 
   const topPlayerId = getTopDamagePlayer(en.damageContributions, state.localPlayerId);
-  const dropAmount = en.isBoss ? 20 : (en.isElite ? 6 : 1);
+  const dropAmount = en.isBoss ? 26 : (en.isElite ? 6 : 1);
   spawnReishi(en.x, en.z, dropAmount, topPlayerId);
 
   if (en.isBoss) {
-    state.bossDefeated = true;
-    showGameOver(true);
+    document.getElementById('boss-bar-container')?.classList.add('hidden');
+    advanceToNextCycle(state.cycleState, en.x, en.z, spawnReishi);
   }
 }
 
@@ -975,135 +982,51 @@ function checkLevelUp() {
 // Atalhos [1], [2], [3] ou Pular [0 / P]
 // A nova escolha SOBRESCREVE o poder anterior (mecânica de substituição)
 // =======================================================================
-let currentBannerOptions = [];
+function applyWeaponChoice(key) {
+  const specialKeys = ['getsuga', 'byakurai', 'shakkaho'];
+  for (const k of specialKeys) {
+    if (k !== key && state.weapons[k]) state.weapons[k].level = 0;
+  }
+  if (state.weapons[key]) {
+    state.weapons[key].level = 1;
+    state.weapons[key].timer = 0;
+  }
+}
+
+function applyPassiveChoice(key) {
+  for (const k of Object.keys(state.passives)) state.passives[k] = 0;
+  state.passives[key] = 1;
+}
+
+function applyPowerSelection(opt) {
+  if (opt.type === 'weapon') applyWeaponChoice(opt.key);
+  if (opt.type === 'passive') applyPassiveChoice(opt.key);
+  finishLevelUp();
+}
 
 function openLevelUpBanner() {
   state.levelUpOpen = true;
-  // NÃO CONGELA O JOGO: state.paused permanece false!
-  const banner = document.getElementById('levelup-banner');
-  const container = document.getElementById('banner-cards-container');
-  if (!banner || !container) return;
-
-  container.innerHTML = '';
-
-  const allOptions = [
-    { key: 'getsuga', type: 'weapon', name: 'Getsuga Tenshō', icon: '🌙', desc: 'Rajada espiritual perfurante devastadora (180 Dano).' },
-    { key: 'byakurai', type: 'weapon', name: 'Hadō #4 Byakurai', icon: '⚡', desc: 'Raio elétrico perfurante veloz em linha reta (45 Dano).' },
-    { key: 'shakkaho', type: 'weapon', name: 'Hadō #31 Shakkahō', icon: '🔥', desc: 'Esfera ígnea de Reiatsu com explosão em área (70 Dano).' },
-    { key: 'shunpo', type: 'passive', name: 'Especialista Shunpo', icon: '👟', desc: '+30% velocidade de movimento e pulo ágil.' },
-    { key: 'reiatsu', type: 'passive', name: 'Pressão Espiritual', icon: '💎', desc: '+35% de dano espiritual em todos os ataques.' },
-    { key: 'magnet', type: 'passive', name: 'Vórtice de Reishi', icon: '🧲', desc: '+80% de alcance para atrair Reishi caído.' }
-  ];
-
-  // Sorteia até 3 opções distintas
-  currentBannerOptions = allOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
-  state.activeBannerOptions = currentBannerOptions;
-
-  currentBannerOptions.forEach((opt, idx) => {
-    const card = document.createElement('div');
-    card.className = 'banner-card';
-    const isWeapon = opt.type === 'weapon';
-    const typeLabel = isWeapon ? 'Poder Ativo' : 'Passiva Ativa';
-    const typeClass = isWeapon ? 'weapon' : 'passive';
-    const num = idx + 1;
-
-    card.innerHTML = `
-      <div class="banner-card-top">
-        <span class="card-num-badge">[${num}]</span>
-        <span class="card-type-tag ${typeClass}">${typeLabel}</span>
-      </div>
-      <div class="banner-card-body">
-        <div class="banner-card-icon">${opt.icon}</div>
-        <div>
-          <div class="banner-card-title">${opt.name}</div>
-          <div class="banner-card-desc">${opt.desc}</div>
-          <div class="banner-card-subtag">⚠️ Substitui poder anterior</div>
-        </div>
-      </div>
-    `;
-
-    card.onclick = (e) => {
-      e.stopPropagation();
-      selectBannerOption(idx);
-    };
-    container.appendChild(card);
+  openLevelUpDialog({
+    onSelect: (_idx, opt) => applyPowerSelection(opt),
+    onSkip: () => finishLevelUp()
   });
-
-  const skipBtn = document.getElementById('btn-skip-levelup');
-  if (skipBtn) {
-    skipBtn.onclick = (e) => {
-      e.stopPropagation();
-      skipLevelUp();
-    };
-  }
-
-  banner.classList.remove('hidden');
-}
-
-function selectBannerOption(index) {
-  if (!state.levelUpOpen || !currentBannerOptions[index]) return;
-  const opt = currentBannerOptions[index];
-
-  if (opt.type === 'weapon') {
-    // SOBRESCRITA: Outras armas especiais são desativadas (perde poderes anteriores)
-    const specialKeys = ['getsuga', 'byakurai', 'shakkaho'];
-    for (const k of specialKeys) {
-      if (k !== opt.key && state.weapons[k]) {
-        state.weapons[k].level = 0;
-      }
-    }
-    // Ativa a nova arma escolhida
-    if (state.weapons[opt.key]) {
-      state.weapons[opt.key].level = 1;
-      state.weapons[opt.key].timer = 0; // pronta para disparar
-    }
-  } else if (opt.type === 'passive') {
-    // SOBRESCRITA: Passiva anterior é substituída pela nova
-    for (const k of Object.keys(state.passives)) {
-      state.passives[k] = 0;
-    }
-    state.passives[opt.key] = 1;
-  }
-
-  finishLevelUp();
-}
-
-function skipLevelUp() {
-  // Pula a escolha mantendo a build atual intacta sem sobrescrever nada
-  finishLevelUp();
 }
 
 function finishLevelUp() {
-  closeLevelUpBanner();
+  closeLevelUpDialog();
+  state.levelUpOpen = false;
   if (state.pendingLevelUps && state.pendingLevelUps > 0) {
     state.pendingLevelUps--;
     setTimeout(() => {
-      if (state.active && !state.gameOver) {
-        openLevelUpBanner();
-      }
+      if (state.active && !state.gameOver) openLevelUpBanner();
     }, 120);
-  }
-}
-
-function closeLevelUpBanner() {
-  state.levelUpOpen = false;
-  currentBannerOptions = [];
-  state.activeBannerOptions = [];
-  const banner = document.getElementById('levelup-banner');
-  if (banner) {
-    banner.classList.add('hidden');
   }
 }
 
 let eliteSpawnTimer = 35.0;
 
 // Spawns
-function updateSpawns(dt) {
-  if (!state.bossSpawned && (state.time >= 120 || state.kills >= 60)) {
-    spawnBossMenosGrande();
-    state.bossSpawned = true;
-    return;
-  }
+function updateHollowTimers(dt) {
   eliteSpawnTimer -= dt;
   if (eliteSpawnTimer <= 0) {
     eliteSpawnTimer = 35.0;
@@ -1112,9 +1035,22 @@ function updateSpawns(dt) {
   spawnTimer -= dt;
   if (spawnTimer <= 0) {
     spawnTimer = Math.max(0.3, 1.0 - (state.time / 180) * 0.7);
-    const count = 1 + Math.floor(state.time / 30);
+    const count = 1 + Math.floor(state.time / 30) + getReiatsuSpawnBonus(state.reiatsuScore);
     for (let i = 0; i < count; i++) spawnHollow(false);
   }
+}
+
+function updateSpawns(dt) {
+  if (state.isAFK) return;
+  updateCycleProgress(state.cycleState, state.time, state.kills);
+  state.reiatsuScore = calculateReiatsuScore(player, state);
+  if (state.reiatsuScore > state.peakReiatsu) state.peakReiatsu = state.reiatsuScore;
+  if (shouldSpawnCycleBoss(state.cycleState)) {
+    spawnBossMenosGrande();
+    markBossSpawned(state.cycleState);
+    return;
+  }
+  updateHollowTimers(dt);
 }
 
 function setupHollowMesh(en) {
@@ -1131,6 +1067,7 @@ function spawnHollow(isElite = false) {
   const en = enemyMeshes.find(e => !e.active);
   if (!en) return;
 
+  const mult = getCycleMultipliers(state.cycleState);
   const angle = Math.random() * Math.PI * 2;
   const dist = 16.0 + Math.random() * 8.0;
   en.x = player.x + Math.cos(angle) * dist;
@@ -1138,9 +1075,9 @@ function spawnHollow(isElite = false) {
   en.active = true;
   en.type = isElite ? 'elite' : 'fishbone';
   en.isElite = isElite;
-  en.hp = isElite ? 200 : 45;
+  en.hp = Math.round((isElite ? 200 : 45) * mult.hpMult);
   en.maxHp = en.hp;
-  en.speed = isElite ? 3.4 : 3.2;
+  en.speed = (isElite ? 3.4 : 3.2) * mult.speedMult;
   en.isBoss = false;
   en.targetPlayerId = null;
   en.damageContributions = {};
@@ -1159,21 +1096,21 @@ function spawnBossMenosGrande(targetPlayerId = state.localPlayerId) {
   const en = enemyMeshes.find(e => !e.active);
   if (!en) return;
 
+  const mult = getCycleMultipliers(state.cycleState);
   const angle = Math.random() * Math.PI * 2;
-  const dist = 30.0;
-  en.x = Math.cos(angle) * dist;
-  en.z = Math.sin(angle) * dist;
+  en.x = Math.cos(angle) * 30.0;
+  en.z = Math.sin(angle) * 30.0;
 
   en.active = true;
   en.type = 'menos';
-  en.hp = 2000;
-  en.maxHp = 2000;
-  en.speed = 2.0;
+  en.hp = Math.round(2000 * mult.bossHpMult);
+  en.maxHp = en.hp;
+  en.speed = 2.0 * mult.speedMult;
   en.isBoss = true;
   en.targetPlayerId = targetPlayerId;
   en.damageContributions = {};
   setupBossMesh(en);
-  logTelemetry('WARN', 'BOSS_SPAWNED', 'Menos Grande Gillian surgiu na arena', { kills: state.kills });
+  logTelemetry('WARN', 'BOSS_SPAWNED', `Gillian surgiu no Ciclo ${state.cycleState.currentCycle}`, { cycle: state.cycleState.currentCycle });
   document.getElementById('boss-bar-container').classList.remove('hidden');
 }
 
@@ -1187,28 +1124,35 @@ function applyContactDamage(en, dist) {
   }
 }
 
+function moveEnemyTowardsPlayer(en, dx, dz, dist, dt) {
+  en.dirX = dx / dist;
+  en.dirZ = dz / dist;
+  en.x += en.dirX * en.speed * dt;
+  en.z += en.dirZ * en.speed * dt;
+  en.mesh.position.set(en.x, getTerrainHeight(en.x, en.z), en.z);
+}
+
+function tickEnemyBehavior(en, dt) {
+  const dx = player.x - en.x;
+  const dz = player.z - en.z;
+  const dist = Math.hypot(dx, dz);
+  const agroRadius = getReiatsuAgroRadius(state.reiatsuScore);
+
+  if (state.isAFK || dist > agroRadius) {
+    updateEnemyWandering(en, dt);
+  } else {
+    if (dist > 0.6) moveEnemyTowardsPlayer(en, dx, dz, dist, dt);
+    applyContactDamage(en, dist);
+  }
+  if (en.flashTimer > 0) {
+    en.flashTimer -= dt;
+    if (en.flashTimer <= 0) en.mesh.material.color.setHex(en.isElite ? 0xff3355 : 0xffffff);
+  }
+}
+
 function updateEnemies(dt) {
   for (const en of enemyMeshes) {
-    if (!en.active) continue;
-
-    const dx = player.x - en.x;
-    const dz = player.z - en.z;
-    const dist = Math.hypot(dx, dz);
-
-    if (dist > 0.6) {
-      en.dirX = dx / dist;
-      en.dirZ = dz / dist;
-      en.x += en.dirX * en.speed * dt;
-      en.z += en.dirZ * en.speed * dt;
-      en.mesh.position.set(en.x, getTerrainHeight(en.x, en.z), en.z);
-    }
-
-    applyContactDamage(en, dist);
-
-    if (en.flashTimer > 0) {
-      en.flashTimer -= dt;
-      if (en.flashTimer <= 0) en.mesh.material.color.setHex(en.isElite ? 0xff3355 : 0xffffff);
-    }
+    if (en.active) tickEnemyBehavior(en, dt);
   }
 }
 
@@ -1265,7 +1209,7 @@ function clearActiveEntities() {
   }
 }
 
-function resetMatch() {
+function resetMatchStats() {
   state.time = 0;
   state.kills = 0;
   state.damageDealt = 0;
@@ -1276,9 +1220,18 @@ function resetMatch() {
   state.bossDefeated = false;
   state.gameOver = false;
   state.paused = false;
+  state.isAFK = false;
+  state.reiatsuScore = 0;
+  state.peakReiatsu = 0;
+  resetCycleState(state.cycleState);
   state.levelUpOpen = false;
   state.census = { fishbone: 0, elite: 0, menos: 0 };
+}
+
+function resetMatch() {
+  resetMatchStats();
   eliteSpawnTimer = 35.0;
+  setPlayerCamouflage(player, false);
   resetPlayerState();
   resetWeaponsAndPassives();
   clearActiveEntities();

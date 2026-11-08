@@ -1526,3 +1526,58 @@ body, html {
     min-height: 64px;
   }
 }
+
+.cycle-announcement {
+  position: fixed;
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: linear-gradient(135deg, rgba(20, 10, 35, 0.95), rgba(70, 20, 95, 0.95));
+  border: 2px solid #a855f7;
+  box-shadow: 0 0 35px rgba(168, 85, 247, 0.6);
+  border-radius: 14px;
+  padding: 16px 36px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 100;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cycle-announcement.active {
+  opacity: 1;
+  transform: translateX(-50%) scale(1.0);
+}
+
+.cycle-title {
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #f3e8ff;
+  text-shadow: 0 0 16px rgba(168, 85, 247, 0.8);
+  letter-spacing: 2px;
+}
+
+.cycle-subtitle {
+  font-size: 0.85rem;
+  color: #d8b4fe;
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
+.levelup-timer-badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fde047;
+  background: rgba(234, 179, 8, 0.2);
+  border: 1px solid rgba(234, 179, 8, 0.5);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-left: 12px;
+  animation: pulseTimer 1s infinite alternate;
+}
+
+@keyframes pulseTimer {
+  0% { opacity: 0.85; transform: scale(1.0); }
+  100% { opacity: 1.0; transform: scale(1.05); }
+}

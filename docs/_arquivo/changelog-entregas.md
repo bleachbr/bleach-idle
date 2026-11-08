@@ -1,5 +1,37 @@
 # Changelog de entregas
 
+## 2026-11-08 — Sobrevivência Infinita (Endless Survivor), Level-Up 10s, Mapa Hueco Mundo 4x, Modo AFK e Reiatsu Dinâmica
+
+- **Ciclo Infinito de Sobrevivência (Endless Survivor Loop) (`src/cycle.js`, `src/main.js`, `src/hud.js`):**
+  - Remoção definitiva da tela prematura de vitória ao derrotar o Menos Grande (Gillian). O jogador permanece no Hueco Mundo até a exaustão total de sua vida (`player.hp <= 0`).
+  - Ao purificar o Menos Grande, uma chuva massiva de Reishi é dispersada na arena e um banner dinâmico anuncia o avanço de ciclo (`⚔️ CICLO 2 INICIADO! A NOITE DO HUECO MUNDO SE INTENSIFICA — HORDA ESCALONADA`).
+  - Escalonamento contínuo por ciclo: aumento progressivo de HP dos inimigos (+35% por ciclo), HP do Boss (+45% por ciclo), velocidade (+8% por ciclo) e dano (+20% por ciclo), além de bônus de Reishi.
+  - Indicador de ciclo ativo no HUD superior (`Nv. X · C1`, `C2`...) e censo de Gillians purificados.
+  - Justificativa arquitetural: retenção prolongada do jogador enquanto os novos biomas (Seireitei, Karakura) e progressão de classe estão no pipeline.
+- **Auto-Escolha de Poderes no Level-Up com Timer de 10s (`src/levelup.js`, `src/style.css`):**
+  - Adição de contador visual e regressivo de tempo no banner flutuante de Level Up (`[ ⏱ Auto-escolha em 10.0s ]` com animação de pulso `@keyframes pulseTimer`).
+  - Se o jogador não escolher uma carta ativa ou passiva em 10 segundos, o sistema sorteia automaticamente uma das cartas oferecidas e fecha o banner sem travar o jogo.
+  - Teclas de atalho `[1, 2, 3]` e `[0 / P]` (pular) respeitadas com cancelamento imediato do timer regressivo.
+- **Expansão do Mapa do Hueco Mundo em 4x com Relevo Procedural, Floresta e Lua Canônica (`geradores/map_specs/hueco_mundo.md`, `geradores/map_generator.py`, `src/maps/hueco_mundo.js`):**
+  - Dimensão do mundo expandida para 440m x 440m (4x maior) com raio de arena jogável de 176m (grid de 96x96 com 9216 vértices).
+  - Setorização ambiental canônica: dunas abertas elevadas (dunas de até 13m) e aglomerados de Floresta dos Menos (árvores de quartzo petrificadas e ruínas de Las Noches).
+  - Céu estrelado com 550 estrelas cintilantes procedurais em `BufferGeometry` e Lua Crescente canônica do Bleach (textura procedural de lua fria com halo espectral em plano billboard inclinado a 180m de altitude).
+  - Plano de corte de câmera estendido para 480m para visualização panorâmica de todo o horizonte desértico.
+- **Modo AFK com Camuflagem Espiritual e Horda em Patrulha (`src/reiatsu.js`, `src/main.js`):**
+  - Pausar o jogo (tecla Esc) não congela o loop WebGL (online/multiplayer-friendly).
+  - O Shinigami entra em estado de camuflagem espiritual (`setPlayerCamouflage`), ficando semitransparente (opacidade 0.35) e saindo do campo de percepção dos Hollows.
+  - Hollows ativos perdem o alvo e entram em estado de vagueação/patrulha livre (`updateEnemyWandering`), mantendo o ecossistema vivo sem causar dano de contato ao jogador ausente.
+- **Pressão Espiritual (Reiatsu) Dinâmica e Agro Escalonado (`src/reiatsu.js`, `src/main.js`):**
+  - Pontuação de Pressão Espiritual (`calculateReiatsuScore`) baseada dinamicamente no nível, passivas de Reiatsu, abates e ciclo atual.
+  - Raio de atração/agro dos Hollows escala proporcionalmente de 16m até 65m: jogadores novatos têm área segura ampla; veteranos de alta Reiatsu atraem Hollows de distâncias massivas.
+  - Spawns adicionais por pacote de horda (+0 a +4 Hollows) baseados na Reiatsu acumulada.
+  - Integração com o Hall da Fama e Telemetria: registro de Ciclo Máximo atingido e Pico de Reiatsu em cada partida.
+- **Governança, Catraca de Linhas e Testes Automatizados:**
+  - Desacoplamento estrito em 3 módulos especializados (`src/cycle.js`, `src/levelup.js`, `src/reiatsu.js`), todas as funções $\le 20$ linhas.
+  - Catraca de JS rebaixada: `src/main.js` encolheu de 1335 para 1288 linhas (atualizado em `scripts/lint/size_inventory.json`).
+  - Suíte de 7 novos testes unitários automatizados em `scripts/test_endless_evolution.py` integrada a `make test` (53/53 testes verdes).
+  - 5 capturas E2E Playwright registradas: `hueco_mundo_4x_moon_and_stars.png`, `endless_01_gameplay_arena_4x.png`, `endless_02_afk_pause_camouflage.png`, `endless_03_cycle2_announcement.png`, `endless_04_levelup_auto_timer_badge.png`.
+
 ## 2026-11-08 — Início da Jornada no Dangai com Corrida Infinita em Linha Reta e Diálogo com Rukia
 
 - **Mecânica de Corrida Infinita em Esteira (Treadmill Runner) (`src/prologue.js`, `src/maps/dangai.js`):**

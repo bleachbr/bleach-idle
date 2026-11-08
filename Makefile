@@ -51,4 +51,7 @@ size-test: ## Testes da catraca de tamanho do JS
 movement-test: ## Testes unitários de movimentação, walk cycle e direções da câmera
 	python3 scripts/test_player_movement.py
 
-test: movement-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, governança, catraca de tamanho)
+evolution-test: ## Testes unitários de ciclo infinito, reiatsu e level-up timer
+	python3 scripts/test_endless_evolution.py
+
+test: movement-test evolution-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, ciclo, governança, catraca de tamanho)

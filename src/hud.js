@@ -19,7 +19,8 @@ export function updateHUD(player, state, enemyMeshes = []) {
 
   const xpPercent = (state.xp / state.xpNext) * 100;
   document.getElementById('xp-bar-fill').style.width = xpPercent + '%';
-  document.getElementById('level-badge').innerText = `Nv. ${state.level}`;
+  const cNum = state.cycleState?.currentCycle || 1;
+  document.getElementById('level-badge').innerText = `Nv. ${state.level} · C${cNum}`;
 
   const mins = String(Math.floor(state.time / 60)).padStart(2, '0');
   const secs = String(Math.floor(state.time % 60)).padStart(2, '0');
@@ -32,7 +33,7 @@ export function updateHUD(player, state, enemyMeshes = []) {
 function renderGameOverCensus(state) {
   const censusList = document.getElementById('enemies-census');
   if (censusList) {
-    const menosText = state.census.menos > 0 ? '1 (PURIFICADO)' : '0';
+    const menosText = `${state.census.menos || 0} (PURIFICADOS)`;
     censusList.innerHTML = `<li><span>Hollow (Fishbone D):</span> <b>${state.census.fishbone || 0}</b></li>` +
       `<li><span>Hollow Mutante (Elite):</span> <b>${state.census.elite || 0}</b></li>` +
       `<li><span>Menos Grande (Gillian):</span> <b>${menosText}</b></li>`;
@@ -50,12 +51,12 @@ function populateGameOverStats(victory, state) {
   const title = document.getElementById('report-title');
   const subtitle = document.getElementById('report-subtitle');
   if (title) {
-    title.innerText = victory ? 'MISSÃO CUMPRIDA! (VITÓRIA)' : 'VOCÊ CAIU EM COMBATE';
+    title.innerText = victory ? 'MISSÃO CUMPRIDA!' : 'VOCÊ CAIU EM COMBATE';
     title.style.color = victory ? '#48bb78' : '#f56565';
   }
   if (subtitle) {
-    subtitle.innerText = victory ? 'O Menos Grande (Gillian) foi purificado e o Dangai/Karakura está a salvo!' :
-      'Sua alma foi sobrepujada pela invasão dos Hollows.';
+    const c = state.cycleState?.currentCycle || 1;
+    subtitle.innerText = `Sua alma sucumbiu às hordas do Hueco Mundo após alcançar o Ciclo ${c}.`;
   }
   const mins = String(Math.floor(state.time / 60)).padStart(2, '0');
   const secs = String(Math.floor(state.time % 60)).padStart(2, '0');
@@ -80,7 +81,9 @@ export function showGameOver(victory, state, submitMatchScore, hideVirtualJoysti
       kills: state.kills,
       timeSeconds: state.time,
       damageDealt: state.damageDealt,
-      level: state.level
+      level: state.level,
+      cycle: state.cycleState?.currentCycle || 1,
+      reiatsu: state.peakReiatsu || 0
     });
   }
   if (hideVirtualJoystick) hideVirtualJoystick();

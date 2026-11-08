@@ -28,13 +28,14 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 
 - [x] Integração de Kidō com projéteis e sprites canônicos: Hadō #4 Byakurai (raio elétrico perfurante veloz) e Hadō #31 Shakkahō vinculados ao FXManager (`src/fx/`, [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [x] Ranking global e Hall da Fama no menu principal com abates, tempo de sobrevivência e dano (`src/leaderboard.js`, [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
+- [x] Modo sobrevivência infinito (Endless Survivor Loop) no Hueco Mundo: escalonamento contínuo por ciclos, eliminação de vitória prematura no Menos Grande com chuva de Reishi e hordas exponenciais, auto-escolha de poderes em 10s com badge regressivo, mapa 4x maior com relevo dunas/floresta, Lua canônica e céu estelar, modo AFK com camuflagem espiritual e agro dinâmico por Pressão Espiritual (Reiatsu) (`src/cycle.js`, `src/levelup.js`, `src/reiatsu.js`, [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [ ] Variedade adicional de hollows (Shrieker com aproximação em zigue-zague, Acidwire com projéteis ácidos)
 
 - [ ] Mapas Soul Society, Karakura Town e Dangai
 - [ ] Shikai no nível 15 e Bankai no nível 35, com troca de sprite
 - [ ] Elenco jogável além do Ichigo shikai em uso
 - [ ] Metaprogressão na loja do Urahara
-- [ ] Modo infinito e boss rush
+- [ ] Boss rush competitivo
 
 ## Frente 3 — engenharia do protótipo
 
@@ -47,4 +48,5 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 Pedido novo que passou pela skill `triagem-pedido` entra aqui numa linha: data, veredicto (`aceito`, `adiado` ou `recusado`) e motivo.
 - 2026-11-08: aceito — ranking global e Hall da Fama no menu principal para exibir maiores abates, tempo de sobrevivência e dano acumulado.
 - 2026-11-08: aceito — prólogo no Dangai (DG) com Rukia e briefing animado da missão antes da travessia para o Hueco Mundo.
+- 2026-11-08: aceito — sobrevivência infinita (endless loop), auto-escolha level-up em 10s, mapa 4x com lua/estrelas, pausa AFK com camuflagem e Reiatsu dinâmica.
 
