@@ -34,7 +34,7 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 
 ## Frente 3 — engenharia do protótipo
 
-- [ ] CI diz a verdade sobre este `package.json`, ou o workflow do bleach-idle sai do caminho (pendência 1)
+- [x] CI diz a verdade sobre este `package.json`: gitleaks, quality e build; jobs do bleach-idle removidos ([_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [ ] `make docker-build` gera imagem (pendência 2)
 - [ ] Um alvo de teste do jogo, versionado, para câmera, sprite e FX. Os scripts em `scratch/` não entram no git
 

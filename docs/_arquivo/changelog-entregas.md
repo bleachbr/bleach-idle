@@ -2,6 +2,12 @@
 
 Passado. A entrada nova fica no topo. Número de pendência ou de aprendizado que aparecer aqui já saiu do arquivo aberto, ou ainda está aberto e o texto diz isso.
 
+## 2026-11-08 — CI alinhado ao protótipo (pendência 1 resolvida)
+
+- **Workflow (`.github/workflows/ci.yml`):** removidos os jobs legados do bleach-idle (`test` com typecheck, `e2e` e `deploy` em VPS). Ficam `gitleaks`, `quality` (`test_governanca.py`, `docs_check.py`, `test_js_size.py`, `js_size.py`, `test_player_movement.py`) e `build` (`npm ci && npm run build`).
+- **Makefile:** novo alvo `make test` = `movement-test docs-test size-test`.
+- **Evidência:** `make test`, `make docs-sync`, `make docs-check` e `make size-check` rodados localmente. O workflow em si não foi executado no GitHub nesta sessão.
+
 ## 2026-11-07 — Correção do Travamento de Chefe, Coleta de Logs Backend e Orquestrador Multiplayer
 
 Diagnóstico, resolução definitiva de congelamento no spawn de chefe e implantação da infraestrutura de backend para telemetria e sessões multiplayer:

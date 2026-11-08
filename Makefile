@@ -1,4 +1,4 @@
-.PHONY: help install dev build preview clean docker-build docker-run
+.PHONY: help install dev build preview clean docker-build docker-run test
 
 help: ## Exibe a lista de comandos disponíveis
 	@echo "=================================================="
@@ -50,3 +50,5 @@ size-test: ## Testes da catraca de tamanho do JS
 
 movement-test: ## Testes unitários de movimentação, walk cycle e direções da câmera
 	python3 scripts/test_player_movement.py
+
+test: movement-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, governança, catraca de tamanho)
