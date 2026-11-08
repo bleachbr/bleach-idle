@@ -13,7 +13,7 @@ import { submitMatchScore } from './leaderboard.js';
 import { createPlayerNameTag, updatePlayerNameTag } from './nametag.js';
 import { updateHUD as renderHUD, showGameOver as displayGameOver } from './hud.js';
 import { createCycleState, getCycleMultipliers, shouldSpawnCycleBoss, markBossSpawned, advanceToNextCycle, updateCycleProgress, registerKillInCycle, resetCycleState } from './cycle.js';
-import { openLevelUpDialog, closeLevelUpDialog, handleLevelUpKeyInput } from './levelup.js';
+import { openLevelUpDialog, closeLevelUpDialog, handleLevelUpKeyInput, selectOptionIndex } from './levelup.js';
 import { calculateReiatsuScore, getReiatsuAgroRadius, getReiatsuSpawnBonus, setPlayerCamouflage, updateEnemyWandering } from './reiatsu.js';
 // Constantes da Arena e Câmera (Hueco Mundo - Bioma Ativo da Entrega 1)
 const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 176.0;
@@ -117,7 +117,7 @@ function exposeDebugInterface() {
   window.debugGame = {
     scene, camera, cameraState, player, playerMesh, keys, state,
     enemyMeshes, fxManager, jumpPlayer, openLevelUpBanner,
-    selectBannerOption, skipLevelUp, checkLevelUp, spawnReishi, activeMap, getTerrainHeight,
+    selectBannerOption: selectOptionIndex, skipLevelUp: finishLevelUp, checkLevelUp, spawnReishi, activeMap, getTerrainHeight,
     getSpriteDirection, computePlayerDisplacement, updateWalkCycle, resetWalkCycle,
     resetMatch, startGame, returnToMenu, showLoginMenu, hideLoginMenu,
     getJoystickVector, showVirtualJoystick, hideVirtualJoystick, spawnHollow, logTelemetry
@@ -406,7 +406,7 @@ function resumeGame(canvas) {
 
 function handleEscapeKey(canvas) {
   if (isPrologueActive() || state.gameOver) return;
-  if (state.levelUpOpen) { skipLevelUp(); return; }
+  if (state.levelUpOpen) { finishLevelUp(); return; }
   if (!state.paused) { pauseGame(canvas); } else { resumeGame(canvas); }
 }
 
