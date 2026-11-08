@@ -43,42 +43,54 @@ let typewriterTimer = null;
 let rukiaNPC = null;
 let sceneRef = null;
 let onCompleteCb = null;
+let dangaiMapRef = null;
 let animClock = 0;
 let isTyping = false;
+const RUKIA_FRAMES = [];
+
+function preloadRukiaTextures(loader) {
+  if (RUKIA_FRAMES.length === 8) return;
+  for (let i = 0; i < 8; i++) {
+    const tex = loader.load(`/src/assets/characters/rukia/back_${i}.png`);
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestFilter;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    RUKIA_FRAMES.push(tex);
+  }
+}
 
 function buildRukiaMesh(loader, baseY) {
-  const tex = loader.load('/src/assets/characters/rukia/front_0.png');
-  tex.colorSpace = THREE.SRGBColorSpace;
+  preloadRukiaTextures(loader);
   const mat = new THREE.MeshStandardMaterial({
-    map: tex,
+    map: RUKIA_FRAMES[0] || loader.load('/src/assets/characters/rukia/back_0.png'),
     transparent: true,
     alphaTest: 0.1,
     side: THREE.DoubleSide
   });
-  const geo = new THREE.PlaneGeometry(2.2, 2.2);
-  geo.translate(0, 1.1, 0);
+  const geo = new THREE.PlaneGeometry(2.35, 2.35);
+  geo.translate(0, 1.175, 0);
   const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(0, baseY, -3.2);
+  mesh.position.set(-0.85, baseY, 0);
   return mesh;
 }
 
 function buildRukiaShadow(baseY) {
-  const sGeo = new THREE.CircleGeometry(0.7, 16);
+  const sGeo = new THREE.CircleGeometry(0.75, 16);
   sGeo.rotateX(-Math.PI / 2);
   const sMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45 });
   const shadow = new THREE.Mesh(sGeo, sMat);
-  shadow.position.set(0, baseY + 0.03, -3.2);
+  shadow.position.set(-0.85, baseY + 0.03, 0);
   return shadow;
 }
 
 function spawnRukia(scene, loader, getHeightFn) {
   const group = new THREE.Group();
   group.name = 'rukia_npc_group';
-  const baseY = getHeightFn ? getHeightFn(0, -3.2) : 0;
+  const baseY = getHeightFn ? getHeightFn(-0.85, 0) : 0;
   const mesh = buildRukiaMesh(loader, baseY);
   const shadow = buildRukiaShadow(baseY);
-  const tag = createPlayerNameTag('Kuchiki Rukia (Tenente)');
-  tag.position.set(0, baseY + 2.25, -3.2);
+  const tag = createPlayerNameTag('Kuchiki Rukia (Tenente)', 2.50);
+  tag.position.set(-0.85, baseY + 2.35, 0);
 
   group.add(shadow);
   group.add(mesh);
@@ -186,6 +198,7 @@ function completePrologue() {
   prologueActive = false;
   const overlay = document.getElementById('prologue-overlay');
   if (overlay) overlay.classList.add('hidden');
+  restoreDangaiConveyor(dangaiMapRef);
   if (rukiaNPC && sceneRef) {
     sceneRef.remove(rukiaNPC);
     rukiaNPC = null;
@@ -230,12 +243,81 @@ function bindDialogueButtons() {
   }
 }
 
-export function startPrologue({ scene, loader, getHeightFn, onComplete }) {
+function prepareDangaiConveyor(dangaiMap) {
+  if (!dangaiMap?.propGroup) return;
+  for (const child of dangaiMap.propGroup.children) {
+    if (child.userData.origZ === undefined) child.userData.origZ = child.position.z;
+    if (child.userData.origX === undefined) child.userData.origX = child.position.x;
+    if (Math.abs(child.position.x) < 2.5) {
+      child.position.x = child.position.x >= 0 ? 3.8 : -3.8;
+    }
+  }
+  if (dangaiMap.terrainMesh?.material?.map) {
+    dangaiMap.terrainMesh.material.map.offset.set(0, 0);
+  }
+}
+
+function restoreDangaiConveyor(dangaiMap) {
+  if (!dangaiMap?.propGroup) return;
+  for (const child of dangaiMap.propGroup.children) {
+    if (child.userData.origZ !== undefined) child.position.z = child.userData.origZ;
+    if (child.userData.origX !== undefined) child.position.x = child.userData.origX;
+  }
+  if (dangaiMap.terrainMesh?.material?.map) {
+    dangaiMap.terrainMesh.material.map.offset.set(0, 0);
+  }
+}
+
+function updateConveyor(delta, dangaiMap, runSpeed = 7.5) {
+  if (!dangaiMap) return;
+  const mapTex = dangaiMap.terrainMesh?.material?.map;
+  if (mapTex) {
+    mapTex.offset.y = (mapTex.offset.y + runSpeed * 0.267 * delta) % 1.0;
+  }
+  if (!dangaiMap.propGroup) return;
+  for (const child of dangaiMap.propGroup.children) {
+    child.position.z += runSpeed * delta;
+    if (child.position.z > 16.0) child.position.z -= 65.0;
+  }
+}
+
+function updateRukiaRunner(mesh, tag, baseY, frame, bob, camera) {
+  if (RUKIA_FRAMES[frame] && mesh.material.map !== RUKIA_FRAMES[frame]) {
+    mesh.material.map = RUKIA_FRAMES[frame];
+    mesh.material.needsUpdate = true;
+  }
+  mesh.position.y = baseY + bob;
+  tag.position.y = baseY + 2.35 + bob;
+  mesh.quaternion.copy(camera.quaternion);
+  tag.quaternion.copy(camera.quaternion);
+}
+
+function updatePlayerRunner(player, playerMesh, baseY, frame, bob, camera, spriteTextures) {
+  if (!player || !playerMesh) return;
+  player.isMoving = true;
+  player.dirX = 0;
+  player.dirZ = -1;
+  player.animFrame = frame;
+  player.x = 0.85;
+  player.z = 0;
+  player.y = baseY + bob;
+  playerMesh.position.set(0.85, player.y, 0);
+  playerMesh.quaternion.copy(camera.quaternion);
+  const pTex = spriteTextures ? spriteTextures[`player_back_${frame}`] : null;
+  if (pTex && playerMesh.material.map !== pTex) {
+    playerMesh.material.map = pTex;
+    playerMesh.material.needsUpdate = true;
+  }
+}
+
+export function startPrologue({ scene, loader, dangaiMap, getHeightFn, onComplete }) {
   prologueActive = true;
   currentStep = 0;
   animClock = 0;
   sceneRef = scene;
   onCompleteCb = onComplete;
+  dangaiMapRef = dangaiMap;
+  prepareDangaiConveyor(dangaiMap);
   rukiaNPC = spawnRukia(scene, loader, getHeightFn);
 
   setupDialogueDOM();
@@ -244,15 +326,20 @@ export function startPrologue({ scene, loader, getHeightFn, onComplete }) {
   document.addEventListener('keydown', handlePrologueKeys);
 }
 
-export function updatePrologue(delta, camera) {
+export function updatePrologue(delta, { camera, player, playerMesh, dangaiMap, spriteTextures }) {
   if (!prologueActive || !rukiaNPC) return;
   animClock += delta;
+  const frame = Math.floor(animClock * 10) % 8;
+  const bobRukia = Math.sin(animClock * 16.0) * 0.035;
+  const bobPlayer = Math.sin((animClock + 0.12) * 16.0) * 0.035;
+
   const { mesh, tag, baseY } = rukiaNPC.userData;
-  const bob = Math.sin(animClock * 3.2) * 0.04;
-  mesh.position.y = baseY + bob;
-  tag.position.y = baseY + 2.25 + bob;
-  mesh.quaternion.copy(camera.quaternion);
-  tag.quaternion.copy(camera.quaternion);
+  updateRukiaRunner(mesh, tag, baseY, frame, bobRukia, camera);
+  updatePlayerRunner(player, playerMesh, baseY, frame, bobPlayer, camera, spriteTextures);
+
+  camera.position.set(0, baseY + 2.35, 6.2);
+  camera.lookAt(0, baseY + 1.25, -12.0);
+  updateConveyor(delta, dangaiMap);
 }
 
 export function cancelPrologue() {
@@ -260,6 +347,7 @@ export function cancelPrologue() {
   if (typewriterTimer) clearInterval(typewriterTimer);
   const overlay = document.getElementById('prologue-overlay');
   if (overlay) overlay.classList.add('hidden');
+  restoreDangaiConveyor(dangaiMapRef);
   if (rukiaNPC && sceneRef) {
     sceneRef.remove(rukiaNPC);
     rukiaNPC = null;

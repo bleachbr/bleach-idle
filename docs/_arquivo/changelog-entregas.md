@@ -1,5 +1,23 @@
 # Changelog de entregas
 
+## 2026-11-08 — Início da Jornada no Dangai com Corrida Infinita em Linha Reta e Diálogo com Rukia
+
+- **Mecânica de Corrida Infinita em Esteira (Treadmill Runner) (`src/prologue.js`, `src/maps/dangai.js`):**
+  - Implementação do efeito de corrida infinita através de esteira procedural: Rukia Kuchiki ($X = -0.85$) e o Shinigami do jogador ($X = +0.85$) correm lado a lado em linha reta contínua ($Z = 0$), virados para a frente em direção ao horizonte do Dangai.
+  - Animação sincronizada de passadas em 8 quadros (`walk8`: `back_0` a `back_7` a 10 FPS) com bobbing vertical dinâmico de corrida humana ($\Delta Y = \pm 0.035$ m).
+  - Deslocamento contínuo da textura de solo rochoso espiritual (`arts/56_dg_ground.png`) via scroll de offset UV (`offset.y += speed * dt`) com `RepeatWrapping`.
+  - Deslocamento dinâmico e reciclagem modular dos 9 props canônicos do Dangai (`arts/57_dg_props.png`): props deslizam em direção à câmera ao longo do eixo $+Z$ e são reposicionados no horizonte ao ultrapassar o campo de visão ($Z > 16 \to Z - 65$), garantindo um corredor infinito sem risco de colisão ou fuga da arena. Desobstrução automática da faixa central ($|X| < 2.5$).
+- **Bloqueio Total de Controles do Jogador (`src/main.js`):**
+  - Durante o prólogo (`isPrologueActive()`), as entradas de movimentação (WASD, setas, analógico virtual mobile) e pulo (Espaço) são completamente travadas para impedir deslocamento ou giro do personagem, mantendo o jogador como espectador imersivo da corrida da dupla.
+  - Câmera em terceira pessoa travada em perseguição heroica atrás dos corredores em $(0, Y + 2.35, 6.2)$ olhando adiante para $(0, Y + 1.25, -12.0)$.
+- **Diálogo Interativo e Transição Dimensional:**
+  - Sistema de diálogo visual novel mantido no ritmo do jogador: typewriter acelerado, suporte a pular digitação no primeiro clique e avançar no segundo clique, avanço por Enter / Espaço ou clique em `[ ❯ Próximo ]`, e atalho `[ ⏭ Pular Briefing ]`.
+  - Ao confirmar a 4ª mensagem (ou pular), dispara o flash de Reiatsu do Senkaimon, troca o mapa para as dunas brancas do Hueco Mundo, destrava instantaneamente os controles do jogador e inicia a partida normal.
+- **Validação Automatizada de Ponta a Ponta (`scratch/test_infinite_runner_prologue.py`):**
+  - Telemetria rigorosa via Playwright comprovando: (1) bloqueio estrito de posição do jogador em $(0.85, 0)$ mesmo com WASD pressionados, (2) progressão íntegra dos 4 diálogos (1/4 a 4/4), (3) transição sem congelamentos após o Senkaimon, (4) desbloqueio de controles comprovado com deslocamento em Hueco Mundo ($Z = -4.83$).
+  - Catraca de tamanho de JS rebaixada para 1335 linhas (`size_inventory.json`).
+  - 4 capturas registradas como artefatos: `prologue_runner_01_side_by_side.png`, `prologue_runner_02_dialogue_step2.png`, `prologue_runner_03_dialogue_step4.png`, `prologue_runner_04_hueco_mundo_start.png`.
+
 ## 2026-11-08 — Calibração de Câmera (Zoom Inicial Próximo) e Proporção Heroica do Personagem
 
 - **Ajuste de Distância de Câmera (`src/main.js`, `src/menu.js`):**

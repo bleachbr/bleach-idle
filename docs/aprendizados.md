@@ -102,4 +102,12 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 
 **Evidência:** O teste automatizado `scratch/test_telemetry_and_boss_spawn.py` reproduzindo 59 para 60 hollows, a correção de `enemyPool` para `enemyMeshes` em `src/main.js`, e o registro de eventos no backend em `logs/telemetry.log`.
 
+## 13. Chamada de `requestPointerLock` em callbacks assíncronos (`setTimeout`) falha por falta de gesto do usuário
+
+**Causa raiz:** Navegadores modernos exigem um gesto explícito e síncrono do usuário (como `click` ou `keydown`) para autorizar o bloqueio do cursor do mouse via `requestPointerLock()`. Invocar `requestPointerLock()` dentro de um timer assíncrono (como a transição dimensional do Senkaimon com `setTimeout`) dispara uma rejeição de segurança (`pointerlockerror`). Se esse evento disparar um listener que pausa o jogo (`pauseGame`), o jogador entra na nova fase congelado na tela de pause modal.
+
+**O que fazer:** Nunca invocar `requestPointerLock()` dentro de fluxos assíncronos sem interação direta do usuário. Permitir que o jogador jogue com movimentação de mouse / teclado livre e capture o ponteiro naturalmente ao clicar no canvas (`canvas.onclick`), e nunca mapear erros genéricos de `pointerlockerror` para pausar a partida.
+
+**Evidência:** Teste `test_infinite_runner_prologue.py` acusava `state.paused = true` após o Senkaimon devido à chamada assíncrona; remoção do trigger forçado de pause em `src/main.js` permitiu transição fluida para o combate no Hueco Mundo com deslocamento livre comprovado ($Z = -4.83$).
+
 

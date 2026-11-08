@@ -402,8 +402,8 @@ function resumeGame(canvas) {
 }
 
 function handleEscapeKey(canvas) {
+  if (isPrologueActive() || state.gameOver) return;
   if (state.levelUpOpen) { skipLevelUp(); return; }
-  if (state.gameOver) return;
   if (!state.paused) { pauseGame(canvas); } else { resumeGame(canvas); }
 }
 
@@ -412,7 +412,7 @@ function setupKeyboardListeners(canvas) {
     if (state.inMenu) return;
     const k = e.key.toLowerCase();
     handleMovementKeys(k, true);
-    if (e.code === 'Space' || k === ' ') { e.preventDefault(); jumpPlayer(); }
+    if (e.code === 'Space' || k === ' ') { e.preventDefault(); if (!isPrologueActive()) jumpPlayer(); }
     if (handleLevelUpKeys(k)) return;
     if (k === 'q') cameraState.yaw -= 0.15;
     if (k === 'e') cameraState.yaw += 0.15;
@@ -426,11 +426,10 @@ function setupKeyboardListeners(canvas) {
 function setupPointerLockListeners(canvas) {
   window.addEventListener('blur', () => pauseOnFocusLoss(canvas));
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseOnFocusLoss(canvas); });
-  canvas.addEventListener('click', () => { if (!state.inMenu && !state.levelUpOpen && !state.gameOver) resumeGame(canvas); });
+  canvas.addEventListener('click', () => { if (!state.inMenu && !state.levelUpOpen && !state.gameOver && !isPrologueActive()) resumeGame(canvas); });
   document.getElementById('pause-modal')?.addEventListener('click', () => { if (!state.gameOver) resumeGame(canvas); });
-  document.addEventListener('pointerlockerror', () => { if (!isTouchDevice() && state.active && !state.levelUpOpen && !state.gameOver) pauseGame(canvas); });
   document.addEventListener('pointerlockchange', () => {
-    if (isTouchDevice()) return; const isLocked = (document.pointerLockElement === canvas);
+    if (isTouchDevice() || isPrologueActive()) return; const isLocked = (document.pointerLockElement === canvas);
     if (!isLocked) {
       if (!state.inMenu && state.active && !state.levelUpOpen && !state.gameOver) pauseGame(canvas);
     } else if (!state.inMenu) {
@@ -444,6 +443,7 @@ function setupPointerLockListeners(canvas) {
 
 function setupMouseLook(canvas) {
   window.addEventListener('mousemove', (e) => {
+    if (isPrologueActive()) return;
     if (document.pointerLockElement === canvas) {
       cameraState.yaw -= e.movementX * 0.0035;
       cameraState.pitch = Math.max(0.15, Math.min(1.15, cameraState.pitch + e.movementY * 0.0035));
@@ -524,14 +524,12 @@ function updateCombatLoop(dt) {
 }
 
 function updateGame(dt) {
-  updatePlayer(dt);
   if (isPrologueActive()) {
-    updateCamera();
-    updateBillboards();
-    updatePrologue(dt, camera);
+    updatePrologue(dt, { camera, player, playerMesh, dangaiMap: activeMap, spriteTextures });
     renderer.render(scene, camera);
     return;
   }
+  updatePlayer(dt);
   updateCombatLoop(dt);
   updateCamera();
   updateBillboards();
@@ -1292,10 +1290,13 @@ function launchGameSession() {
   cameraState.dist = 10.0;
   hideLoginMenu();
   showVirtualJoystick();
-  const canvas = renderer.domElement;
-  if (!isTouchDevice() && canvas?.requestPointerLock) {
-    canvas.requestPointerLock().catch(() => {});
-  }
+}
+
+function onPrologueCompleted() {
+  switchToHuecoMundo();
+  player.x = 0; player.z = 0; player.isMoving = false;
+  state.paused = false;
+  document.getElementById('pause-modal')?.classList.add('hidden');
 }
 
 function startGame(name) {
@@ -1310,11 +1311,9 @@ function startGame(name) {
   startPrologue({
     scene,
     loader: new THREE.TextureLoader(),
+    dangaiMap: activeMap,
     getHeightFn: (x, z) => (activeMap?.getTerrainHeight ? activeMap.getTerrainHeight(x, z) : 0),
-    onComplete: () => {
-      switchToHuecoMundo();
-      player.x = 0; player.z = 0;
-    }
+    onComplete: onPrologueCompleted
   });
 }
 
