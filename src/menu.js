@@ -8,6 +8,27 @@ import { initLeaderboard, refreshLeaderboard } from './leaderboard.js';
 const STORAGE_KEY = 'bleach_shinigami_name';
 const DEFAULT_NAME = 'Ichigo Kurosaki';
 
+const BLEACH_NAMES = [
+  'Ichigo Kurosaki',
+  'Kisuke Urahara',
+  'Rukia Kuchiki',
+  'Renji Abarai',
+  'Byakuya Kuchiki',
+  'Kenpachi Zaraki',
+  'Tōshirō Hitsugaya',
+  'Yoruichi Shihōin',
+  'Shunsui Kyōraku',
+  'Yasutora Sado',
+  'Uryū Ishida',
+  'Nelliel Tu',
+  'Shinji Hirako',
+];
+
+export function getRandomPlayerName() {
+  const index = Math.floor(Math.random() * BLEACH_NAMES.length);
+  return BLEACH_NAMES[index];
+}
+
 export function getSavedPlayerName() {
   try {
     return localStorage.getItem(STORAGE_KEY) || DEFAULT_NAME;
@@ -71,6 +92,15 @@ function bindModalButtons(onReturnToMenu, onRestartGame) {
   if (restartBtn && onRestartGame) restartBtn.onclick = onRestartGame;
 }
 
+function bindRandomNameButton(inputEl) {
+  const randomBtn = document.getElementById('btn-random-name');
+  if (!randomBtn || !inputEl) return;
+  randomBtn.onclick = () => {
+    inputEl.value = getRandomPlayerName();
+    inputEl.focus();
+  };
+}
+
 export function initLoginMenu({ onStartGame, onReturnToMenu, onRestartGame }) {
   const inputEl = document.getElementById('player-nickname');
   const playBtn = document.getElementById('btn-play-game');
@@ -83,6 +113,7 @@ export function initLoginMenu({ onStartGame, onReturnToMenu, onRestartGame }) {
   }
 
   if (playBtn) playBtn.onclick = () => handleStartTrigger(inputEl, onStartGame);
+  bindRandomNameButton(inputEl);
   bindModalButtons(onReturnToMenu, onRestartGame);
   initLeaderboard();
 }

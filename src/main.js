@@ -443,7 +443,7 @@ function setupMouseLook(canvas) {
   canvas.addEventListener('mousedown', (e) => { isDraggingMouse = true; lastMouseX = e.clientX; lastMouseY = e.clientY; });
   window.addEventListener('mouseup', () => { isDraggingMouse = false; });
   window.addEventListener('wheel', (e) => {
-    cameraState.dist = Math.max(7.0, Math.min(24.0, cameraState.dist + Math.sign(e.deltaY) * 1.0));
+    cameraState.dist = Math.max(9.5, Math.min(15.5, cameraState.dist + Math.sign(e.deltaY) * 1.0));
   }, { passive: true });
 }
 
