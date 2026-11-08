@@ -44,5 +44,35 @@ export const FX_BEHAVIORS = {
     fadeOutDist: 6.0,     // Começa a dissipar suavemente no final do trajeto
     fps: 12,
     blendMode: 'additive'
+  },
+
+  // 4. HADŌ #4 BYAKURAI (Raio Perfurante de alta velocidade)
+  skill_byakurai: {
+    type: 'traveling_projectile',
+    speed: 28.0,
+    maxDistance: 30.0,
+    hitRadius: 1.6,
+    pierce: true,
+    startScale: 1.8,
+    endScale: 2.2,
+    fadeInDist: 1.0,
+    fadeOutDist: 4.0,
+    fps: 12,
+    blendMode: 'additive'
+  },
+
+  // 5. HADŌ #31 SHAKKAHŌ (Esfera Explosiva de Fogo)
+  skill_shakkaho: {
+    type: 'traveling_projectile',
+    speed: 16.0,
+    maxDistance: 25.0,
+    hitRadius: 2.8,
+    pierce: false,
+    startScale: 2.0,
+    endScale: 3.2,
+    fadeInDist: 1.0,
+    fadeOutDist: 5.0,
+    fps: 10,
+    blendMode: 'additive'
   }
 };

@@ -1,5 +1,13 @@
 # Changelog de entregas
 
+## 2026-11-08
+
+### Kidō canônicos Byakurai e Shakkahō integrados ao FXManager
+
+- **Hadō #4 Byakurai:** Conexão dos sprites canônicos `walk8`/quadros gerados (`src/assets/fx/skill_byakurai/` e `src/assets/fx/hit_byakurai/`) com velocidade balística de 28.0 m/s, perfuração de linha e colisão real contra hollows via FXManager.
+- **Hadō #31 Shakkahō:** Registro comportamental e visual em `src/fx/fxConfig.js` e `src/characters.js` para projétil explosivo de impacto.
+- **Desacoplamento e Tamanho:** Funções mantidas abaixo de 20 linhas e arquivos dentro do ratchet de código (`make size-check`).
+
 Passado. A entrada nova fica no topo. Número de pendência ou de aprendizado que aparecer aqui já saiu do arquivo aberto, ou ainda está aberto e o texto diz isso.
 
 ## 2026-11-07 — Correção do Travamento de Chefe, Coleta de Logs Backend e Orquestrador Multiplayer
