@@ -110,4 +110,10 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 
 **Evidência:** Teste `test_infinite_runner_prologue.py` acusava `state.paused = true` após o Senkaimon devido à chamada assíncrona; remoção do trigger forçado de pause em `src/main.js` permitiu transição fluida para o combate no Hueco Mundo com deslocamento livre comprovado ($Z = -4.83$).
 
+## 14. Normalizar sprite de ataque pela caixa encolhe o corpo, e a grade fixa corta a espada
 
+**Causa raiz:** o `sprite_processor` calcula a escala pela maior caixa da direção. Num golpe, a caixa inclui a espada, então o corpo sai menor justo no ataque. E a IA nem sempre respeita a célula: a ponta da lâmina cruza a linha da grade e aparece como um caco no quadro vizinho.
+
+**O que fazer:** em clipes de ação, usar como régua a raiz da área da maior mancha de cabelo, ajustada por vista a partir do `idle`, e separar os quadros por mancha conexa, levando a mancha inteira para a célula do seu centro. A altura das linhas com laranja não serve: a pele tem tom parecido e infla a medida. Ver [direcionamento/17](direcionamento/17-kit-animacoes-personagem.md).
+
+**Evidência:** antes do ajuste, `walk` saía com menos da metade do tamanho de `run` na folha de conferência, e `slash_b_front` tinha um pedaço de lâmina solto no quadro 4. Depois, `python geradores/validate_player_kit.py` passa nos 22 clipes e nas 3 vistas.

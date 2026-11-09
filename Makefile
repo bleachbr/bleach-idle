@@ -29,6 +29,7 @@ docker-run: ## Executa o container Docker na porta 2567
 
 validate-sprites: ## Executa testes de qualidade estática nos sprites gerados (alturas, baseline, despill)
 	python3 geradores/validate_sprites.py --name ichigo_shikai
+	python3 geradores/validate_player_kit.py
 
 test-sprites-e2e: ## Executa testes visuais E2E em navegador (Playwright 360 e viewport)
 	python3 scratch/test_sprite_consistency_e2e.py
@@ -51,6 +52,9 @@ size-test: ## Testes da catraca de tamanho do JS
 movement-test: ## Testes unitários de movimentação, walk cycle e direções da câmera
 	python3 scripts/test_player_movement.py
 
+player-anim-test: ## Testes da máquina de estados de animação do jogador
+	python3 scripts/test_player_animation.py
+
 evolution-test: ## Testes unitários de ciclo infinito, reiatsu e level-up timer
 	python3 scripts/test_endless_evolution.py
 
@@ -60,4 +64,4 @@ safety-test: ## Testes de proteção: Lua ao norte/baixa, transição do prólog
 rpg-stats-test: ## Testes unitários do sistema de atributos RPG, caps matemáticos (CDR 65%, Hierro 75%) e sinergias
 	python3 scripts/test_rpg_stats.py
 
-test: movement-test evolution-test safety-test rpg-stats-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, rpg stats, governança, catraca de tamanho)
+test: movement-test player-anim-test evolution-test safety-test rpg-stats-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, rpg stats, governança, catraca de tamanho)

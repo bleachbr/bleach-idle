@@ -11,10 +11,10 @@ Gerado por `make docs-sync` a partir das caixas de `docs/ROADMAP.md`. Não edite
 |---|---:|---:|
 | Frente 0 — já está no código | 0 | 6 |
 | Frente 1 — aceite da versão 1 | 0 | 6 |
-| Frente 2 — versão 2 | 6 | 4 |
+| Frente 2 — versão 2 | 6 | 5 |
 | Frente 3 — engenharia do protótipo | 2 | 1 |
 | Radar | 0 | 0 |
-| **Total** | **8** | **17** |
+| **Total** | **8** | **18** |
 <!-- docs:progress:end -->
 
 ## Agora

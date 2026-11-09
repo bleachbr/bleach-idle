@@ -76,3 +76,20 @@ export function resetWalkCycle(animState) {
   animState.animFrame = 1;
   animState.animTimer = 0;
 }
+
+/**
+ * Integra a gravidade do pulo até o jogador tocar o terreno.
+ */
+export function updatePlayerJump(player, terrainY, dt) {
+  if (!player.isGrounded) {
+    player.vy -= player.gravity * dt;
+    player.y += player.vy * dt;
+    if (player.y <= terrainY) {
+      player.y = terrainY;
+      player.vy = 0;
+      player.isGrounded = true;
+    }
+  } else {
+    player.y = terrainY;
+  }
+}
