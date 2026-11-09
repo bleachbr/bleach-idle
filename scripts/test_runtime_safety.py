@@ -264,9 +264,9 @@ const loop2 = a2.loop;
 const src2 = a2.src;
 
 console.log(JSON.stringify({
-  t1, loop1, src1,
+  t1, loop1, src1, vol1: a1.volume,
   t2,
-  t3, loop2, src2
+  t3, loop2, src2, vol2: a2.volume
 }));
 """
         proc = subprocess.run(
@@ -280,12 +280,14 @@ console.log(JSON.stringify({
         self.assertEqual(res["t1"], "login")
         self.assertTrue(res["loop1"], "Música de login deve tocar em loop")
         self.assertIn("All Bleach Openings", res["src1"])
+        self.assertAlmostEqual(res["vol1"], 0.20, places=2, msg="Volume de login deve ser 0.20")
 
         self.assertIsNone(res["t2"], "stopMusic deve anular a faixa atual")
 
         self.assertEqual(res["t3"], "huecoMundo")
         self.assertFalse(res["loop2"], "Música do Hueco Mundo não deve ficar em loop (tocar 1 vez)")
         self.assertIn("Number One", res["src2"])
+        self.assertAlmostEqual(res["vol2"], 0.20, places=2, msg="Volume do Hueco Mundo deve ser 0.20")
 
     def test_audio_lifecycle_hooks_in_game(self):
         root = repo_root()

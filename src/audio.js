@@ -8,7 +8,7 @@ const TRACKS = {
   huecoMundo: '/arts/music/Number One (Vocal Version).mp3'
 };
 
-const DEFAULT_VOLUME = 0.45;
+const DEFAULT_VOLUME = 0.20;
 
 let currentAudio = null;
 let currentTrack = null;
