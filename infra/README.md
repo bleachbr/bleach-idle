@@ -9,7 +9,7 @@ Este repo assume o lugar do `bleach-idle` em `https://bleach.acoplum.com`. Nada 
 | Imagem | `bleach-idle:<sha>`, Node + Colyseus + SQLite | `bleach-soul-survivor:<sha>`, nginx servindo o `dist` do Vite |
 | Porta no host | `127.0.0.1:2567` | `127.0.0.1:2567` (igual) |
 | Estado | volume `bleach-dados` | nenhum: o jogo não tem servidor |
-| Diretório na VPS | `/opt/bleach-idle` (o usuário `bleach-deploy` não cria nada direto em `/opt`) | `/opt/bleach-idle/soul-survivor` |
+| Diretório na VPS | `/opt/bleach-idle` (raiz do serviço do jogo na VPS) | `/opt/bleach-idle` |
 | Projeto compose, serviço, rede | `bleach`, `jogo`, `bleach-interna` | iguais: o `up` troca o container |
 | Lock | `/var/lock/bleach-deploy.lock` | o mesmo, para os dois nunca subirem juntos |
 | nginx do host + certbot | `deploy/nginx.conf` | sem mudança (`nginx.host.conf` é só referência) |
@@ -27,36 +27,29 @@ Como a porta, o domínio e o certificado não mudam, o corte é trocar o contain
 | `deploy.sh` | VPS | Trava, valida a imagem, `compose up --wait`, grava `deployed-revision` |
 | `nginx.host.conf` | referência | Cópia do nginx do host, igual ao do bleach-idle |
 
-## Primeiro corte (bleach-idle → soul-survivor)
+## Deploy na VPS
 
-Feito em 2026-11-07, veja o registro abaixo. Acesso: `bleach-deploy@69.62.95.136` com a chave `~/.ssh/bleach_github_deploy_ed25519`. Em Mac arm64 use `--platform linux/amd64`; o estágio de build do Dockerfile é nativo de propósito (esbuild quebra sob qemu).
+Acesso: `bleach-deploy@69.62.95.136` com a chave `~/.ssh/bleach_github_deploy_ed25519`. Em Mac arm64 use `--platform linux/amd64`; o estágio de build do Dockerfile é nativo de propósito (esbuild quebra sob qemu).
 
-1. Na VPS, guarde o que roda hoje para poder voltar:
-   ```bash
-   cat /opt/bleach-idle/deployed-revision        # anote o SHA
-   docker image ls bleach-idle                   # a imagem tem que estar na VPS
-   docker run --rm -v bleach-dados:/data -v /opt/backup:/out alpine tar -czf /out/bleach-dados.tgz -C /data .
-   ```
-2. Crie o diretório: `mkdir -p /opt/bleach-idle/soul-survivor` (dentro do que o `bleach-deploy` já possui).
-3. Da sua máquina, na raiz deste repo, com o SHA do commit a publicar:
-   ```bash
-   SHA=$(git rev-parse HEAD)
-   docker build --platform linux/amd64 -t "bleach-soul-survivor:$SHA" .
-   docker save "bleach-soul-survivor:$SHA" | gzip | ssh USER@HOST 'gunzip | docker load'
-   tar -C infra -czf - compose.vps.yml deploy.sh | ssh USER@HOST 'tar -xzf - -C /opt/bleach-idle/soul-survivor'
-   ssh USER@HOST "bash /opt/bleach-idle/soul-survivor/deploy.sh $SHA"
-   curl --fail https://bleach.acoplum.com/healthz
-   ```
-4. Abra o domínio e jogue: o menu, o movimento e o combate têm que responder. `healthz` verde não prova isso.
+Da raiz do repositório (`/Users/wjunior/projetos/outros/cursos-online-treinamento/v3/bleach-idle`), com o SHA do commit a publicar:
+```bash
+SHA=$(git rev-parse HEAD)
+docker build --platform linux/amd64 -t "bleach-soul-survivor:$SHA" .
+docker save "bleach-soul-survivor:$SHA" | gzip | ssh bleach-deploy@69.62.95.136 'gunzip | docker load'
+tar -C infra -czf - compose.vps.yml deploy.sh | ssh bleach-deploy@69.62.95.136 'tar -xzf - -C /opt/bleach-idle'
+ssh bleach-deploy@69.62.95.136 "bash /opt/bleach-idle/deploy.sh $SHA"
+curl --fail https://bleach.acoplum.com/healthz
+```
+
+Abra o domínio `https://bleach.acoplum.com` e jogue: o menu, o movimento, áudio e o combate têm que responder. `healthz` verde não prova isso por si só.
 
 ## Rollback
 
-- Entre revisões deste jogo: `bash /opt/bleach-idle/soul-survivor/deploy.sh <sha anterior>`. A imagem antiga continua na VPS.
-- Para o bleach-idle: `bash /opt/bleach-idle/deploy.sh <sha anotado no passo 1>`. Mesmo projeto, serviço e porta: o container volta. O volume `bleach-dados` não é tocado por este deploy. Não rode `docker volume rm bleach-dados` até decidir aposentar o bleach-idle.
+- Entre revisões deste jogo: `bash /opt/bleach-idle/deploy.sh <sha anterior>`. A imagem antiga continua na VPS.
 
 ## CI
 
-O job `deploy` do `.github/workflows/ci.yml` ainda é o do bleach-idle (pendência 1 em [`../docs/pendencias.md`](../docs/pendencias.md)). Quando for reescrito, troque a imagem para `bleach-soul-survivor`, o diretório para `/opt/bleach-idle/soul-survivor` e envie `infra/compose.vps.yml` e `infra/deploy.sh`. Os secrets `VPS_*` são os mesmos.
+O job `deploy` do `.github/workflows/ci.yml` aponta para `/opt/bleach-idle` e envia `infra/compose.vps.yml` e `infra/deploy.sh`. Os secrets `VPS_*` são os mesmos.
 
 ## Registro de deploys
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Roda na VPS, em /opt/bleach-soul-survivor. Uso: bash deploy.sh <sha de 40 caracteres>
+# Roda na VPS, em /opt/bleach-idle. Uso: bash deploy.sh <sha de 40 caracteres>
 # Serve também de rollback entre revisões deste jogo: a imagem anterior continua na VPS.
 set -euo pipefail
 
