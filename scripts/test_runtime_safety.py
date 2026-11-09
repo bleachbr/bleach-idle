@@ -159,7 +159,7 @@ class TestPrologueCinematicTransition(unittest.TestCase):
             const cinematicActive = isPrologueCinematicTransition();
 
             // Executa meio ciclo cinemático
-            updatePrologue(0.7, { camera, player, playerMesh, dangaiMap, spriteTextures: {} });
+            updatePrologue(0.7, { camera, player, playerMesh, dangaiMap, showRunFrame: () => {} });
 
             const playerX_half = player.x;
             const playerZ_half = player.z;

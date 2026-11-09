@@ -42,6 +42,8 @@ let isCinematicTransition = false;
 let cinematicClock = 0;
 let portalMesh = null;
 const CINEMATIC_DURATION = 1.4;
+const RUN_FPS = 18;
+const RUN_FRAMES = 12;
 let currentStep = 0;
 let typewriterTimer = null;
 let rukiaNPC = null;
@@ -342,22 +344,17 @@ function updateRukiaRunner(mesh, tag, baseY, frame, bob, camera) {
   tag.quaternion.copy(camera.quaternion);
 }
 
-function updatePlayerRunner(player, playerMesh, baseY, frame, bob, camera, spriteTextures) {
+function updatePlayerRunner(player, playerMesh, baseY, frame, bob, camera, showRunFrame) {
   if (!player || !playerMesh) return;
   player.isMoving = true;
   player.dirX = 0;
   player.dirZ = -1;
-  player.animFrame = frame;
   player.x = 0.85;
   player.z = 0;
   player.y = baseY + bob;
   playerMesh.position.set(0.85, player.y, 0);
   playerMesh.quaternion.copy(camera.quaternion);
-  const pTex = spriteTextures ? spriteTextures[`player_back_${frame}`] : null;
-  if (pTex && playerMesh.material.map !== pTex) {
-    playerMesh.material.map = pTex;
-    playerMesh.material.needsUpdate = true;
-  }
+  showRunFrame(frame);
 }
 
 export function startPrologue({ scene, loader, dangaiMap, getHeightFn, onComplete }) {
@@ -400,8 +397,13 @@ function updatePortalCinematic(t) {
   portalMesh.scale.set(s, s, s);
 }
 
-function tickPrologueCinematic(delta, { camera, player, playerMesh, dangaiMap }) {
+function runFrame() {
+  return Math.floor(animClock * RUN_FPS) % RUN_FRAMES;
+}
+
+function tickPrologueCinematic(delta, { camera, player, playerMesh, dangaiMap, showRunFrame }) {
   cinematicClock += delta;
+  showRunFrame(runFrame());
   const t = Math.min(1.0, cinematicClock / CINEMATIC_DURATION);
   const bobRukia = Math.sin(animClock * 16.0) * 0.035;
   const bobPlayer = Math.sin((animClock + 0.12) * 18.0) * 0.04;
@@ -417,13 +419,13 @@ function tickPrologueCinematic(delta, { camera, player, playerMesh, dangaiMap })
   if (t >= 1.0) completePrologue();
 }
 
-function tickPrologueNormal(delta, { camera, player, playerMesh, dangaiMap, spriteTextures }) {
+function tickPrologueNormal(delta, { camera, player, playerMesh, dangaiMap, showRunFrame }) {
   const frame = Math.floor(animClock * 10) % 8;
   const bobRukia = Math.sin(animClock * 16.0) * 0.035;
   const bobPlayer = Math.sin((animClock + 0.12) * 16.0) * 0.035;
   const { mesh, tag, baseY } = rukiaNPC.userData;
   updateRukiaRunner(mesh, tag, baseY, frame, bobRukia, camera);
-  updatePlayerRunner(player, playerMesh, baseY, frame, bobPlayer, camera, spriteTextures);
+  updatePlayerRunner(player, playerMesh, baseY, runFrame(), bobPlayer, camera, showRunFrame);
   camera.position.set(0, baseY + 2.35, 6.2);
   camera.lookAt(0, baseY + 1.25, -12.0);
   updateConveyor(delta, dangaiMap);

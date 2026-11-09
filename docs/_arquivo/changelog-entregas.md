@@ -289,3 +289,9 @@ O `Dockerfile` deixou de ser vazio: build do Vite e nginx sem root na porta 2567
 Primeiro corte na VPS em 2026-11-07: `bleach-jogo-1` passou de `bleach-idle:02f4c97` para `bleach-soul-survivor:7c0e4c8`, `healthy`, sem tocar no nginx do host nem em outros serviços da VPS. Arquivos em `/opt/bleach-idle/soul-survivor/`. `/`, `/healthz`, `/preview.html`, o bundle JS e o redirect do `www` responderam pelo domínio. O Dockerfile fixa o estágio de build em `$BUILDPLATFORM` porque o esbuild quebra sob qemu. Detalhes e rollback em `infra/README.md`.
 
 Correção no mesmo dia: o primeiro deploy subiu sem sprites e texturas, porque o jogo as carrega por `/src/assets/...` em runtime e o `vite build` não as copia. O `Dockerfile` passou a copiar `src/assets` e o nginx do container devolve 404 real nesse caminho. Evidência: `image/png` pelo domínio e `404` para arquivo inexistente. Aprendizado 10.
+
+## 2026-11-09 — Kit de animações do personagem principal
+
+O Codex gerou 66 folhas: 22 clipes de 12 quadros em 3 vistas, cobrindo tudo o que acontece com o jogador (lista em [direcionamento/17](../direcionamento/17-kit-animacoes-personagem.md)). `src/playerAnimation.js` escolhe o clipe e `src/playerSprite.js` desenha. A morte agora toca a queda antes da tela de fim.
+
+Conferido no navegador, registrando o clipe tocado quadro a quadro: andar, pulo, pouso, os três cortes, Getsuga, Byakurai, kidō em movimento, dano leve, dano pesado (forçado num hollow marcado como chefe), morte, level-up e pausa, sem erro no console. `scripts/test_player_animation.py` passa com 15 testes. `victory` e `shakkaho` parado não apareceram nessa sessão.

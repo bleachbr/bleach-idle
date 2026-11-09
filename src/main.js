@@ -4,8 +4,10 @@ import { PLAYABLE_CHARACTERS, MONSTERS_REGISTRY, FX_REGISTRY } from './character
 import { FXManager } from './fx/fxManager.js';
 import { createHuecoMundoMap, getTerrainHeight, MAP_CONFIG, clampPlayerToMap, updateMapPropsBillboard } from './maps/hueco_mundo.js';
 import { createDangaiMap } from './maps/dangai.js';
+import { createPlayerAnimator, triggerPlayerAction, updatePlayerAnimator, nearestEnemyDirection } from './playerAnimation.js';
+import { loadPlayerKit, showPlayerFrame, updatePlayerShadow, playerAnimCatalog } from './playerSprite.js';
 import { startPrologue, updatePrologue, isPrologueActive, cancelPrologue } from './prologue.js';
-import { computePlayerDisplacement, getSpriteDirection, updateWalkCycle, resetWalkCycle } from './movement.js';
+import { computePlayerDisplacement, getSpriteDirection, updateWalkCycle, resetWalkCycle, updatePlayerJump } from './movement.js';
 import { initLoginMenu, showLoginMenu, hideLoginMenu, updateMenuCamera } from './menu.js';
 import { initVirtualJoystick, getJoystickVector, showVirtualJoystick, hideVirtualJoystick, isTouchDevice } from './joystick.js';
 import { initTelemetry, logTelemetry, syncMultiplayerSession } from './telemetry.js';
@@ -107,6 +109,10 @@ let activeMap = null, huecoMundoMap = null, dangaiMap = null;
 let enemyMeshes = [];
 let reishiDrops = [];
 let spriteTextures = {};
+let playerKit = null;
+const playerAnimator = createPlayerAnimator(playerAnimCatalog);
+const DEATH_ANIM_SECONDS = 1.6; // A animação de queda inteira (1 s) mais uma pausa antes da tela de fim
+let deathTimer = 0;
 
 // Iniciar após DOM carregado
 window.addEventListener('DOMContentLoaded', init);
@@ -203,30 +209,13 @@ function buildSprites() {
       tex.minFilter = THREE.NearestFilter;
       tex.colorSpace = THREE.SRGBColorSpace;
       spriteTextures[`player_${dirKey}`] = tex;
-
-      // Se for formato walk4x4 ou walk8, carregar os quadros do ciclo de caminhada
-      const frameCount = dirInfo.frames || (approvedChar.format === 'walk8' ? 8 : (approvedChar.format === 'walk4x4' ? 4 : 1));
-      if (frameCount > 1) {
-        for (let f = 0; f < frameCount; f++) {
-          const fPath = `/src/assets/characters/${approvedChar.id}/${dirKey}_${f}.png`;
-          const fTex = loader.load(fPath);
-          fTex.magFilter = THREE.NearestFilter;
-          fTex.minFilter = THREE.NearestFilter;
-          fTex.colorSpace = THREE.SRGBColorSpace;
-          spriteTextures[`player_${dirKey}_${f}`] = fTex;
-        }
-      }
     }
+    playerKit = loadPlayerKit(loader);
 
     // Configurar escala e FPS
     if (approvedChar.worldScale) {
       playerMesh && playerMesh.scale.set(approvedChar.worldScale[0], approvedChar.worldScale[1], 1.0);
     }
-    if (approvedChar.fps) {
-      player.walkFps = approvedChar.fps;
-    }
-    player.frameCount = approvedChar.frameCount || (approvedChar.format === 'walk8' ? 8 : (approvedChar.format === 'walk4x4' ? 4 : 1));
-
     // Atualizar HUD com informações oficiais do personagem
     const titleEl = document.getElementById('player-title');
     if (titleEl) titleEl.innerText = approvedChar.name || 'Ichigo Kurosaki (Shikai)';
@@ -515,6 +504,7 @@ let spawnTimer = 0;
 function renderMenuBackground(dt) {
   updateMenuCamera(cameraState, dt);
   updateCamera();
+  updatePlayerSprite(dt);
   updateBillboards();
   renderer.render(scene, camera);
 }
@@ -535,8 +525,12 @@ function updateCombatLoop(dt) {
 
 function updateGame(dt) {
   if (isPrologueActive()) {
-    updatePrologue(dt, { camera, player, playerMesh, dangaiMap: activeMap, spriteTextures });
+    updatePrologue(dt, { camera, player, playerMesh, dangaiMap: activeMap, showRunFrame });
     renderer.render(scene, camera);
+    return;
+  }
+  if (deathTimer > 0) {
+    tickPlayerDeath(dt);
     return;
   }
   if (!state.isAFK) {
@@ -545,6 +539,7 @@ function updateGame(dt) {
   }
   updateEnemies(dt);
   updateCamera();
+  updatePlayerSprite(dt);
   updateBillboards();
   renderer.render(scene, camera);
   updateHUD();
@@ -578,7 +573,6 @@ function applyPlayerMovement(player, dir, dt) {
   player.z += dir.dz * speed * dt;
   clampPlayerToMap(player, activeMap?.colliders, ARENA_RADIUS);
   player.isMoving = true;
-  updateWalkCycle(player, dt, player.walkFps, 4);
 }
 
 function updatePlayerTimers(player, dt) {
@@ -588,31 +582,6 @@ function updatePlayerTimers(player, dt) {
   if (state.passives?.kaido > 0 && player.hp < player.maxHp) {
     const regen = Math.min(state.passives.kaido * 1.5, player.maxHp * 0.04);
     player.hp = Math.min(player.maxHp, player.hp + regen * dt);
-  }
-}
-
-function updatePlayerJump(player, terrainY, dt) {
-  if (!player.isGrounded) {
-    player.vy -= player.gravity * dt;
-    player.y += player.vy * dt;
-    if (player.y <= terrainY) {
-      player.y = terrainY;
-      player.vy = 0;
-      player.isGrounded = true;
-    }
-  } else {
-    player.y = terrainY;
-  }
-}
-
-function updatePlayerShadowMesh(shadowMesh, playerY, terrainY) {
-  if (!shadowMesh) return;
-  const jumpOffset = playerY - terrainY;
-  shadowMesh.position.set(0, -jumpOffset + 0.02, 0);
-  const factor = Math.max(0.35, 1.0 - (jumpOffset / 2.5) * 0.5);
-  shadowMesh.scale.set(factor, factor, 1.0);
-  if (shadowMesh.material) {
-    shadowMesh.material.opacity = Math.max(0.12, 0.45 - (jumpOffset / 2.5) * 0.3);
   }
 }
 
@@ -627,7 +596,7 @@ function updatePlayer(dt) {
   const terrainY = getTerrainHeight ? getTerrainHeight(player.x, player.z) : 0;
   updatePlayerJump(player, terrainY, dt);
   playerMesh.position.set(player.x, player.y, player.z);
-  updatePlayerShadowMesh(playerShadowMesh, player.y, terrainY);
+  updatePlayerShadow(playerShadowMesh, player.y, terrainY);
   updatePlayerTimers(player, dt);
 }
 
@@ -651,18 +620,25 @@ function updateEnemyBillboard(en, walkFrame) {
   }
 }
 
+function updatePlayerSprite(dt) {
+  const clip = updatePlayerAnimator(playerAnimator, dt, {
+    isGrounded: player.isGrounded,
+    isMoving: player.isMoving,
+    isAFK: state.isAFK,
+    running: (state.passives?.shunpo || 0) > 0,
+    vy: player.vy,
+    jumpStrength: player.jumpStrength
+  });
+  const face = (!player.isMoving && playerAnimator.faceDir) || { dirX: player.dirX, dirZ: player.dirZ };
+  showPlayerFrame(playerMesh, playerKit, clip, getSpriteDirection(face.dirX, face.dirZ, cameraState.yaw));
+}
+
+function showRunFrame(frame) {
+  showPlayerFrame(playerMesh, playerKit, { anim: 'run', frame }, 'back');
+}
+
 function updateBillboards() {
   playerMesh.quaternion.copy(camera.quaternion);
-  const pDir = getSpriteDirection(player.dirX, player.dirZ, cameraState.yaw);
-  const animKey = 'player_' + pDir + '_' + player.animFrame;
-  const idleKey = 'player_' + pDir + '_1';
-  const pTex = player.isMoving ? (spriteTextures[animKey] || spriteTextures['player_' + pDir]) : (spriteTextures[idleKey] || spriteTextures['player_' + pDir]);
-
-  if (pTex && playerMesh.material.map !== pTex) {
-    playerMesh.material.map = pTex;
-    playerMesh.material.needsUpdate = true;
-  }
-
   const enemyWalkFrame = Math.floor(state.time * 8) % 8;
   for (const en of enemyMeshes) {
     if (en.active) updateEnemyBillboard(en, enemyWalkFrame);
@@ -684,11 +660,12 @@ function updateSlashVisual(dt) {
   slashMesh.material.opacity = Math.max(0, slashAlpha);
 }
 
-function tickWeapon(w, dt, cd, onFire) {
+function tickWeapon(w, dt, cd, action, onFire) {
   if (!w || w.level <= 0) return;
   w.timer -= dt;
   if (w.timer <= 0) {
     w.timer = cd;
+    triggerPlayerAction(playerAnimator, action, nearestEnemyDirection(enemyMeshes, player.x, player.z));
     onFire();
   }
 }
@@ -697,14 +674,14 @@ function updateWeapons(dt) {
   const stats = calculateEffectiveStats(player, state.passives);
   const w = state.weapons;
   const asauchiCd = getEffectiveCooldown(1.0 - (w.asauchi.level - 1) * 0.05, stats.haste);
-  tickWeapon(w.asauchi, dt, asauchiCd, () => executeAsauchiSlash((35 + (w.asauchi.level - 1) * 15) * stats.atkMult));
+  tickWeapon(w.asauchi, dt, asauchiCd, 'slash', () => executeAsauchiSlash((35 + (w.asauchi.level - 1) * 15) * stats.atkMult));
   const getsugaCd = getEffectiveCooldown(2.8 - (w.getsuga.level - 1) * 0.15, stats.haste);
-  tickWeapon(w.getsuga, dt, getsugaCd, () => executeGetsugaTensho((180 + (w.getsuga.level - 1) * 45) * stats.atkMult));
+  tickWeapon(w.getsuga, dt, getsugaCd, 'getsuga', () => executeGetsugaTensho((180 + (w.getsuga.level - 1) * 45) * stats.atkMult));
   updateSlashVisual(dt);
   const byakuraiCd = getEffectiveCooldown(2.2 - (w.byakurai.level - 1) * 0.12, stats.haste);
-  tickWeapon(w.byakurai, dt, byakuraiCd, () => executeByakurai((45 + (w.byakurai.level - 1) * 20) * stats.atkMult));
+  tickWeapon(w.byakurai, dt, byakuraiCd, 'byakurai', () => executeByakurai((45 + (w.byakurai.level - 1) * 20) * stats.atkMult));
   const shakkahoCd = getEffectiveCooldown(3.5 - (w.shakkaho.level - 1) * 0.18, stats.haste);
-  tickWeapon(w.shakkaho, dt, shakkahoCd, () => executeShakkaho((70 + (w.shakkaho.level - 1) * 25) * stats.atkMult));
+  tickWeapon(w.shakkaho, dt, shakkahoCd, 'shakkaho', () => executeShakkaho((70 + (w.shakkaho.level - 1) * 25) * stats.atkMult));
 }
 
 // =======================================================================
@@ -905,6 +882,7 @@ function killEnemy(en) {
   if (en.isBoss) {
     document.getElementById('boss-bar-container')?.classList.add('hidden');
     advanceToNextCycle(state.cycleState, en.x, en.z, spawnReishi);
+    triggerPlayerAction(playerAnimator, 'victory');
   }
 }
 
@@ -1004,6 +982,7 @@ function openLevelUpBanner() {
 
 function finishLevelUp() {
   closeLevelUpDialog();
+  triggerPlayerAction(playerAnimator, 'level_up');
   state.levelUpOpen = false;
   if (state.pendingLevelUps && state.pendingLevelUps > 0) {
     state.pendingLevelUps--;
@@ -1110,10 +1089,23 @@ function applyContactDamage(en, dist) {
   const hierroPts = (state.passives.hierro || 0) * 25;
   player.hp -= applyHierroDamageMitigation(rawDmg, hierroPts);
   player.invulnerableTime = 0.6;
+  triggerPlayerAction(playerAnimator, en.isBoss ? 'hurt_heavy' : 'hurt');
   if (player.hp <= 0) {
     player.hp = 0;
-    showGameOver(false);
+    triggerPlayerAction(playerAnimator, 'death');
+    deathTimer = DEATH_ANIM_SECONDS;
   }
+}
+
+function tickPlayerDeath(dt) {
+  deathTimer -= dt;
+  updatePlayerJump(player, getTerrainHeight(player.x, player.z), dt);
+  playerMesh.position.y = player.y;
+  updateCamera();
+  updatePlayerSprite(dt);
+  updateBillboards();
+  renderer.render(scene, camera);
+  if (deathTimer <= 0) showGameOver(false);
 }
 
 function moveEnemyTowardsPlayer(en, dx, dz, dist, dt) {
@@ -1165,6 +1157,8 @@ function resetPlayerState() {
   player.isGrounded = true;
   player.hp = player.maxHp;
   player.invulnerableTime = 0;
+  deathTimer = 0;
+  Object.assign(playerAnimator, createPlayerAnimator(playerAnimCatalog));
   player.animTimer = 0;
   player.animFrame = 1;
   player.isMoving = false;
