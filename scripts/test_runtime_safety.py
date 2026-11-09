@@ -207,5 +207,95 @@ class TestRuntimeReferenceSafety(unittest.TestCase):
         self.assertIn("skipLevelUp: finishLevelUp", content)
 
 
+class TestAudioSystemProtection(unittest.TestCase):
+    def test_audio_files_exist_and_non_empty(self):
+        root = repo_root()
+        login_bgm = root / "arts/music/All Bleach Openings (1-16).mp3"
+        hueco_bgm = root / "arts/music/Number One (Vocal Version).mp3"
+
+        self.assertTrue(login_bgm.exists(), "All Bleach Openings (1-16).mp3 deve existir")
+        self.assertGreater(login_bgm.stat().st_size, 1_000_000, "All Bleach Openings deve ser maior que 1MB")
+
+        self.assertTrue(hueco_bgm.exists(), "Number One (Vocal Version).mp3 deve existir")
+        self.assertGreater(hueco_bgm.stat().st_size, 1_000_000, "Number One deve ser maior que 1MB")
+
+    def test_audio_module_logic_and_lifecycle(self):
+        root = repo_root()
+        script = """
+let created = [];
+class MockAudio {
+  constructor(src) {
+    this.src = src;
+    this.loop = false;
+    this.volume = 1;
+    this.paused = true;
+    this.currentTime = 0;
+    created.push(this);
+  }
+  play() {
+    this.paused = false;
+    return Promise.resolve();
+  }
+  pause() {
+    this.paused = true;
+  }
+}
+global.Audio = MockAudio;
+global.window = {
+  addEventListener: () => {},
+  removeEventListener: () => {}
+};
+
+import { playLoginBGM, stopMusic, playHuecoMundoBGM, getCurrentTrack } from './src/audio.js';
+
+playLoginBGM();
+const t1 = getCurrentTrack();
+const a1 = created[created.length - 1];
+const loop1 = a1.loop;
+const src1 = a1.src;
+
+stopMusic();
+const t2 = getCurrentTrack();
+
+playHuecoMundoBGM();
+const t3 = getCurrentTrack();
+const a2 = created[created.length - 1];
+const loop2 = a2.loop;
+const src2 = a2.src;
+
+console.log(JSON.stringify({
+  t1, loop1, src1,
+  t2,
+  t3, loop2, src2
+}));
+"""
+        proc = subprocess.run(
+            ["node", "--input-type=module", "-e", script],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        res = json.loads(proc.stdout.strip())
+        self.assertEqual(res["t1"], "login")
+        self.assertTrue(res["loop1"], "Música de login deve tocar em loop")
+        self.assertIn("All Bleach Openings", res["src1"])
+
+        self.assertIsNone(res["t2"], "stopMusic deve anular a faixa atual")
+
+        self.assertEqual(res["t3"], "huecoMundo")
+        self.assertFalse(res["loop2"], "Música do Hueco Mundo não deve ficar em loop (tocar 1 vez)")
+        self.assertIn("Number One", res["src2"])
+
+    def test_audio_lifecycle_hooks_in_game(self):
+        root = repo_root()
+        main_content = (root / "src/main.js").read_text(encoding="utf-8")
+        menu_content = (root / "src/menu.js").read_text(encoding="utf-8")
+
+        self.assertIn("playLoginBGM", menu_content, "showLoginMenu deve chamar playLoginBGM")
+        self.assertIn("stopMusic", main_content, "startGame deve chamar stopMusic")
+        self.assertIn("playHuecoMundoBGM", main_content, "onPrologueCompleted deve chamar playHuecoMundoBGM")
+
+
 if __name__ == "__main__":
     unittest.main()

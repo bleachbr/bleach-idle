@@ -4,6 +4,7 @@
 // =======================================================================
 
 import { initLeaderboard, refreshLeaderboard } from './leaderboard.js';
+import { playLoginBGM } from './audio.js';
 
 const STORAGE_KEY = 'bleach_shinigami_name';
 const DEFAULT_NAME = 'Ichigo Kurosaki';
@@ -74,6 +75,7 @@ export function showLoginMenu() {
   const inputEl = document.getElementById('player-nickname');
   if (inputEl) inputEl.value = getSavedPlayerName();
   refreshLeaderboard();
+  playLoginBGM();
 }
 
 export function hideLoginMenu() {

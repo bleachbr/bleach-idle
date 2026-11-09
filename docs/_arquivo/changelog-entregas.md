@@ -1,5 +1,23 @@
 # Changelog de entregas
 
+## 2026-11-08 — Trilha Sonora Oficial (Aberturas no Login, Silêncio no Prólogo e Number One no Hueco Mundo)
+
+- **Módulo Centralizado de Áudio (`src/audio.js`):**
+  - Gerenciamento de trilhas em HTML5 `Audio` com desbloqueio automático de política de autoplay (`NotAllowedError`) acionado no primeiro clique ou tecla do jogador.
+  - Música da Tela de Login: `arts/music/All Bleach Openings (1-16).mp3` em loop contínuo (`loop = true`) com volume balanceado (`0.45`).
+  - Música de Batalha no Hueco Mundo: `arts/music/Number One (Vocal Version).mp3` com execução única (`loop = false`), sem repetição contínua.
+  - Função `stopMusic()` para silenciamento imediato e reset de playback.
+- **Integração no Ciclo de Vida do Jogo (`src/menu.js`, `src/main.js`):**
+  - Na inicialização e no retorno ao menu (`showLoginMenu` / `returnToMenu`): disparo de `playLoginBGM()`.
+  - Ao iniciar o jogo no Prólogo do Dangai (`startGame`): parada imediata da música (`stopMusic()`), garantindo silêncio no briefing com a Rukia.
+  - Na travessia do Senkaimon para o Hueco Mundo (`onPrologueCompleted`): disparo de `playHuecoMundoBGM()`.
+- **Infraestrutura e Nginx (`Dockerfile`, `infra/nginx.container.conf`):**
+  - Cópia do diretório `arts/music` para `/usr/share/nginx/html/arts/music` na imagem de produção.
+  - Bloco dedicado `location /arts/music/` no container Nginx com cache de 24h e resposta 404 em caso de ausência de arquivo.
+- **Testes Unitários Automatizados (`scripts/test_runtime_safety.py`):**
+  - 3 novos testes adicionados em `TestAudioSystemProtection` validando presença física dos arquivos de áudio, lógica de execução/loop do módulo e gatilhos nos arquivos de jogo.
+  - Total de 66 testes unitários verdes em `make test`.
+
 ## 2026-11-08 — Sistema de Atributos RPG, Miniaturas no HUD, Ficha do Shinigami e Parecer ORCA (KIRO)
 
 - **Auditoria e Veredito Formal de Arquitetura Multi-Agente ORCA (Juiz KIRO):**

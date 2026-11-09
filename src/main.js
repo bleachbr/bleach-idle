@@ -18,6 +18,7 @@ import { calculateReiatsuScore, getReiatsuAgroRadius, getReiatsuSpawnBonus, setP
 import { calculateEffectiveStats, getEffectiveCooldown, applyHierroDamageMitigation } from './stats.js';
 import { updateBuildHUD } from './build_hud.js';
 import { updatePauseDetails } from './pause_modal.js';
+import { stopMusic, playHuecoMundoBGM } from './audio.js';
 // Constantes da Arena e Câmera (Hueco Mundo - Bioma Ativo da Entrega 1)
 const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 176.0;
 const MAX_ENEMIES = 400;
@@ -1242,12 +1243,14 @@ function launchGameSession() {
 
 function onPrologueCompleted() {
   switchToHuecoMundo();
+  playHuecoMundoBGM();
   player.x = 0; player.z = 0; player.isMoving = false;
   state.paused = false;
   document.getElementById('pause-modal')?.classList.add('hidden');
 }
 
 function startGame(name) {
+  stopMusic();
   if (name) state.playerName = name;
   updatePlayerNameTag(playerNameTag, state.playerName);
   const nameEl = document.getElementById('player-name-display');
@@ -1257,11 +1260,8 @@ function startGame(name) {
   switchToDangai();
   player.x = 0; player.z = 0;
   startPrologue({
-    scene,
-    loader: new THREE.TextureLoader(),
-    dangaiMap: activeMap,
-    getHeightFn: (x, z) => (activeMap?.getTerrainHeight ? activeMap.getTerrainHeight(x, z) : 0),
-    onComplete: onPrologueCompleted
+    scene, loader: new THREE.TextureLoader(), dangaiMap: activeMap, onComplete: onPrologueCompleted,
+    getHeightFn: (x, z) => (activeMap?.getTerrainHeight ? activeMap.getTerrainHeight(x, z) : 0)
   });
 }
 
