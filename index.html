@@ -183,6 +183,22 @@
         <div id="kills-box">💀 <span id="kills-count">0</span> Hollows</div>
       </div>
 
+      <!-- Painel de Miniaturas de Build no Canto Superior Direito -->
+      <div id="build-hud-panel">
+        <div class="build-hud-header">
+          <span class="build-hud-title">BUILD DO SHINIGAMI</span>
+          <span id="build-strategy-badge" class="build-strategy-badge balanced">⚖️ EQUILIBRADO</span>
+        </div>
+        <div class="build-hud-section">
+          <div class="build-hud-sublabel">ARMAS ATIVAS (MÁX 3)</div>
+          <div id="build-weapons-row" class="build-slots-row"></div>
+        </div>
+        <div class="build-hud-section">
+          <div class="build-hud-sublabel">ITENS PASSIVOS (MÁX 4)</div>
+          <div id="build-passives-row" class="build-slots-row"></div>
+        </div>
+      </div>
+
       <!-- Barra de Vida do Chefe Menos Grande (Gillian) -->
       <div id="boss-bar-container" class="hidden">
         <div id="boss-title">⚠️ MENOS GRANDE (GILLIAN) - CLASSE MENOS</div>
@@ -193,14 +209,14 @@
 
       <!-- Instruções de Controle -->
       <div id="bottom-instructions">
-        <span><b>WASD / Setas</b>: Mover Recruta · <b>Espaço</b>: Pular · <b>Mouse Livre</b>: Olhar 360° · <b>ESC</b>: Pausar</span>
+        <span><b>WASD / Setas</b>: Mover Recruta · <b>Espaço</b>: Pular · <b>Mouse Livre</b>: Olhar 360° · <b>ESC</b>: Ficha / Pausar</span>
       </div>
 
       <!-- Banner Flutuante de Level Up (Não congela o jogo, atalhos [1, 2, 3] ou [0 / P] para Pular) -->
       <div id="levelup-banner" class="hidden">
         <div class="banner-top-row">
           <div class="banner-badge">⚡ NOVO NÍVEL</div>
-          <div class="banner-title">ESCOLHA SEU PODER (SOBRESCREVE O ANTERIOR)</div>
+          <div class="banner-title">EVOLUÇÃO DO SHINIGAMI (PODERES & ITENS)</div>
           <button id="btn-skip-levelup" class="btn-skip-pill" title="Manter os poderes e itens atuais sem trocar">[0 / P] PULAR ESCOLHA</button>
         </div>
         <div id="banner-cards-container"></div>
@@ -226,10 +242,13 @@
 
     <!-- Modal de Pausa: Exibido ao pressionar ESC ou liberar o Pointer Lock -->
     <div id="pause-modal" class="modal hidden">
-      <div class="modal-card">
-        <h2>MISSÃO EM PAUSA</h2>
-        <p class="subtitle">O cursor do mouse está liberado. Clique abaixo ou na tela para retomar.</p>
-        <div class="modal-actions">
+      <div class="modal-card pause-modal-card">
+        <div class="pause-top-bar">
+          <h2>FICHA DO SHINIGAMI & MISSÃO EM PAUSA</h2>
+          <p class="subtitle">O recruta está em camuflagem espiritual. Hollows continuam rondando no Hueco Mundo.</p>
+        </div>
+        <div id="pause-details-container"></div>
+        <div class="modal-actions pause-actions">
           <button id="btn-resume" class="btn primary">RETOMAR MISSÃO (TRAVAR MOUSE)</button>
           <button id="btn-menu-pause" class="btn secondary">VOLTAR AO MENU</button>
         </div>

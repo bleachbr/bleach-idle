@@ -15,6 +15,9 @@ import { updateHUD as renderHUD, showGameOver as displayGameOver } from './hud.j
 import { createCycleState, getCycleMultipliers, shouldSpawnCycleBoss, markBossSpawned, advanceToNextCycle, updateCycleProgress, registerKillInCycle, resetCycleState } from './cycle.js';
 import { openLevelUpDialog, closeLevelUpDialog, handleLevelUpKeyInput, selectOptionIndex } from './levelup.js';
 import { calculateReiatsuScore, getReiatsuAgroRadius, getReiatsuSpawnBonus, setPlayerCamouflage, updateEnemyWandering } from './reiatsu.js';
+import { calculateEffectiveStats, getEffectiveCooldown, applyHierroDamageMitigation } from './stats.js';
+import { updateBuildHUD } from './build_hud.js';
+import { updatePauseDetails } from './pause_modal.js';
 // Constantes da Arena e Câmera (Hueco Mundo - Bioma Ativo da Entrega 1)
 const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 176.0;
 const MAX_ENEMIES = 400;
@@ -61,9 +64,11 @@ export const state = {
     shakkaho: { name: 'Hadō #31 Shakkahō', level: 0, cooldown: 3.5, timer: 0, damage: 70, totalDamage: 0 }
   },
   passives: {
-    shunpo: 0,   // Velocidade +15% por nível
-    reiatsu: 0,  // Dano +20% por nível
-    magnet: 0    // Raio de coleta +30% por nível
+    reiatsu: 0,
+    shunpo: 0,
+    hierro: 0,
+    kaido: 0,
+    magnet: 0
   }
 };
 
@@ -385,6 +390,7 @@ function pauseGame(canvas) {
   state.isAFK = true;
   setPlayerCamouflage(player, playerMesh, true);
   if (document.pointerLockElement === canvas) document.exitPointerLock();
+  updatePauseDetails(player, state);
   document.getElementById('pause-modal')?.classList.remove('hidden');
 }
 
@@ -566,7 +572,7 @@ function loop() {
 function applyPlayerMovement(player, dir, dt) {
   player.dirX = dir.dx;
   player.dirZ = dir.dz;
-  const speed = player.speed * (1 + (state.passives?.shunpo || 0) * 0.15);
+  const speed = player.speed * (1 + (state.passives?.shunpo || 0) * 0.12);
   player.x += dir.dx * speed * dt;
   player.z += dir.dz * speed * dt;
   clampPlayerToMap(player, activeMap?.colliders, ARENA_RADIUS);
@@ -578,6 +584,10 @@ function updatePlayerTimers(player, dt) {
   if (player.invulnerableTime > 0) player.invulnerableTime -= dt;
   if (player.katanaCooldown > 0) player.katanaCooldown -= dt;
   if (player.shikaiActive && player.byakuraiCooldown > 0) player.byakuraiCooldown -= dt;
+  if (state.passives?.kaido > 0 && player.hp < player.maxHp) {
+    const regen = Math.min(state.passives.kaido * 1.5, player.maxHp * 0.04);
+    player.hp = Math.min(player.maxHp, player.hp + regen * dt);
+  }
 }
 
 function updatePlayerJump(player, terrainY, dt) {
@@ -660,59 +670,40 @@ function updateBillboards() {
   updateMapPropsBillboard(activeMap?.propGroup, camera);
 }
 
+function updateSlashVisual(dt) {
+  if (slashAlpha <= 0) return;
+  slashAlpha -= dt * 4.0;
+  const progress = Math.max(0, Math.min(1.0, 1.0 - (slashAlpha / 0.8)));
+  const frame = Math.min(3, Math.floor(progress * 4));
+  const slashTex = spriteTextures[`fx_slash_combat_${frame}`];
+  if (slashTex && slashMesh.material.map !== slashTex) {
+    slashMesh.material.map = slashTex;
+    slashMesh.material.needsUpdate = true;
+  }
+  slashMesh.material.opacity = Math.max(0, slashAlpha);
+}
+
+function tickWeapon(w, dt, cd, onFire) {
+  if (!w || w.level <= 0) return;
+  w.timer -= dt;
+  if (w.timer <= 0) {
+    w.timer = cd;
+    onFire();
+  }
+}
+
 function updateWeapons(dt) {
-  const dmgBonus = 1 + state.passives.reiatsu * 0.2;
-
-  // 1. Asauchi Slash / Corte da Katana (com efeito animado de lâmina)
-  const asauchi = state.weapons.asauchi;
-  asauchi.timer -= dt;
-  if (asauchi.timer <= 0) {
-    asauchi.timer = asauchi.cooldown;
-    executeAsauchiSlash(asauchi.damage * dmgBonus);
-  }
-
-  // 1.1 Getsuga Tenshō (Projétil cortante que avança pelo mapa rasgando o solo)
-  const getsuga = state.weapons.getsuga;
-  if (getsuga && getsuga.level > 0) {
-    getsuga.timer -= dt;
-    if (getsuga.timer <= 0) {
-      getsuga.timer = getsuga.cooldown;
-      executeGetsugaTensho(getsuga.damage * dmgBonus);
-    }
-  }
-
-  // Animação do Slash (avança os 4 quadros da lâmina com base no tempo de vida)
-  if (slashAlpha > 0) {
-    slashAlpha -= dt * 4.0;
-    const progress = Math.max(0, Math.min(1.0, 1.0 - (slashAlpha / 0.8)));
-    const frame = Math.min(3, Math.floor(progress * 4));
-    const slashTex = spriteTextures[`fx_slash_combat_${frame}`];
-    if (slashTex && slashMesh.material.map !== slashTex) {
-      slashMesh.material.map = slashTex;
-      slashMesh.material.needsUpdate = true;
-    }
-    slashMesh.material.opacity = Math.max(0, slashAlpha);
-  }
-
-  // 2. Hadō #4 Byakurai (Raio Perfurante no mais próximo)
-  const byakurai = state.weapons.byakurai;
-  if (byakurai.level > 0) {
-    byakurai.timer -= dt;
-    if (byakurai.timer <= 0) {
-      byakurai.timer = byakurai.cooldown;
-      executeByakurai(byakurai.damage * dmgBonus);
-    }
-  }
-
-  // 3. Hadō #31 Shakkahō (Explosão em Área)
-  const shakkaho = state.weapons.shakkaho;
-  if (shakkaho.level > 0) {
-    shakkaho.timer -= dt;
-    if (shakkaho.timer <= 0) {
-      shakkaho.timer = shakkaho.cooldown;
-      executeShakkaho(shakkaho.damage * dmgBonus);
-    }
-  }
+  const stats = calculateEffectiveStats(player, state.passives);
+  const w = state.weapons;
+  const asauchiCd = getEffectiveCooldown(1.0 - (w.asauchi.level - 1) * 0.05, stats.haste);
+  tickWeapon(w.asauchi, dt, asauchiCd, () => executeAsauchiSlash((35 + (w.asauchi.level - 1) * 15) * stats.atkMult));
+  const getsugaCd = getEffectiveCooldown(2.8 - (w.getsuga.level - 1) * 0.15, stats.haste);
+  tickWeapon(w.getsuga, dt, getsugaCd, () => executeGetsugaTensho((180 + (w.getsuga.level - 1) * 45) * stats.atkMult));
+  updateSlashVisual(dt);
+  const byakuraiCd = getEffectiveCooldown(2.2 - (w.byakurai.level - 1) * 0.12, stats.haste);
+  tickWeapon(w.byakurai, dt, byakuraiCd, () => executeByakurai((45 + (w.byakurai.level - 1) * 20) * stats.atkMult));
+  const shakkahoCd = getEffectiveCooldown(3.5 - (w.shakkaho.level - 1) * 0.18, stats.haste);
+  tickWeapon(w.shakkaho, dt, shakkahoCd, () => executeShakkaho((70 + (w.shakkaho.level - 1) * 25) * stats.atkMult));
 }
 
 // =======================================================================
@@ -932,7 +923,7 @@ function spawnReishi(x, z, amount, ownerPlayerId = state.localPlayerId) {
 }
 
 function updateReishi(dt) {
-  const magnetRadius = 4.0 * (1 + state.passives.magnet * 0.3);
+  const magnetRadius = 3.5 + (state.passives.magnet || 0) * 2.5;
 
   for (let i = reishiDrops.length - 1; i >= 0; i--) {
     const r = reishiDrops[i];
@@ -983,30 +974,28 @@ function checkLevelUp() {
 // A nova escolha SOBRESCREVE o poder anterior (mecânica de substituição)
 // =======================================================================
 function applyWeaponChoice(key) {
-  const specialKeys = ['getsuga', 'byakurai', 'shakkaho'];
-  for (const k of specialKeys) {
-    if (k !== key && state.weapons[k]) state.weapons[k].level = 0;
-  }
   if (state.weapons[key]) {
-    state.weapons[key].level = 1;
+    state.weapons[key].level = Math.min(5, (state.weapons[key].level || 0) + 1);
     state.weapons[key].timer = 0;
   }
 }
 
 function applyPassiveChoice(key) {
-  for (const k of Object.keys(state.passives)) state.passives[k] = 0;
-  state.passives[key] = 1;
+  state.passives[key] = Math.min(5, (state.passives[key] || 0) + 1);
 }
 
 function applyPowerSelection(opt) {
   if (opt.type === 'weapon') applyWeaponChoice(opt.key);
   if (opt.type === 'passive') applyPassiveChoice(opt.key);
+  updateBuildHUD(state.weapons, state.passives);
   finishLevelUp();
 }
 
 function openLevelUpBanner() {
   state.levelUpOpen = true;
   openLevelUpDialog({
+    weaponsState: state.weapons,
+    passivesState: state.passives,
     onSelect: (_idx, opt) => applyPowerSelection(opt),
     onSkip: () => finishLevelUp()
   });
@@ -1116,7 +1105,9 @@ function spawnBossMenosGrande(targetPlayerId = state.localPlayerId) {
 
 function applyContactDamage(en, dist) {
   if (dist >= 1.1 || player.y >= 0.9 || player.invulnerableTime > 0) return;
-  player.hp -= en.isBoss ? 35 : (en.isElite ? 22 : 12);
+  const rawDmg = en.isBoss ? 35 : (en.isElite ? 22 : 12);
+  const hierroPts = (state.passives.hierro || 0) * 25;
+  player.hp -= applyHierroDamageMitigation(rawDmg, hierroPts);
   player.invulnerableTime = 0.6;
   if (player.hp <= 0) {
     player.hp = 0;
@@ -1158,6 +1149,7 @@ function updateEnemies(dt) {
 
 function updateHUD() {
   renderHUD(player, state, enemyMeshes);
+  updateBuildHUD(state.weapons, state.passives);
 }
 
 function showGameOver(victory) {
@@ -1187,9 +1179,12 @@ function resetWeaponsAndPassives() {
   state.weapons.getsuga = { name: 'Getsuga Tenshō', level: 1, cooldown: 2.8, timer: 0.8, damage: 180, totalDamage: 0 };
   state.weapons.byakurai = { name: 'Hadō #4 Byakurai', level: 0, cooldown: 2.2, timer: 0, damage: 45, totalDamage: 0 };
   state.weapons.shakkaho = { name: 'Hadō #31 Shakkahō', level: 0, cooldown: 3.5, timer: 0, damage: 70, totalDamage: 0 };
-  state.passives.shunpo = 0;
   state.passives.reiatsu = 0;
+  state.passives.shunpo = 0;
+  state.passives.hierro = 0;
+  state.passives.kaido = 0;
   state.passives.magnet = 0;
+  updateBuildHUD(state.weapons, state.passives);
 }
 
 function clearActiveEntities() {

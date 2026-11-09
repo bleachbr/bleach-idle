@@ -1,16 +1,17 @@
 // =======================================================================
 // BLEACH: SOUL SURVIVOR - SISTEMA DE LEVEL-UP COM AUTO-SELECT EM 10s
-// Escolha dinâmica de poderes e passivas com temporizador automático
+// Escolha dinâmica de 3 armas ativas e 4 passivas com temporizador
 // =======================================================================
 
-const AVAILABLE_POWERS = [
-  { key: 'getsuga', type: 'weapon', name: 'Getsuga Tenshō', icon: '🌙', desc: 'Rajada espiritual perfurante devastadora (180 Dano).' },
-  { key: 'byakurai', type: 'weapon', name: 'Hadō #4 Byakurai', icon: '⚡', desc: 'Raio elétrico perfurante veloz em linha reta (45 Dano).' },
-  { key: 'shakkaho', type: 'weapon', name: 'Hadō #31 Shakkahō', icon: '🔥', desc: 'Esfera ígnea de Reiatsu com explosão em área (70 Dano).' },
-  { key: 'shunpo', type: 'passive', name: 'Especialista Shunpo', icon: '👟', desc: '+30% velocidade de movimento e pulo ágil.' },
-  { key: 'reiatsu', type: 'passive', name: 'Pressão Espiritual', icon: '💎', desc: '+35% de dano espiritual em todos os ataques.' },
-  { key: 'magnet', type: 'passive', name: 'Vórtice de Reishi', icon: '🧲', desc: '+80% de alcance para atrair Reishi caído.' }
-];
+import {
+  MAX_WEAPONS_SLOTS,
+  MAX_PASSIVES_SLOTS,
+  MAX_ITEM_LEVEL,
+  WEAPON_DEFINITIONS,
+  PASSIVE_DEFINITIONS,
+  getEquippedWeaponsCount,
+  getEquippedPassivesCount
+} from './stats.js';
 
 export const LEVELUP_TIMEOUT_SECONDS = 10.0;
 let levelUpOpen = false;
@@ -64,11 +65,57 @@ function startAutoTimer() {
   }, 500);
 }
 
+function buildWeaponOffering(key, w, equippedCount) {
+  const def = WEAPON_DEFINITIONS[key];
+  if (!def) return null;
+  const currentLvl = w?.level || 0;
+  if (currentLvl >= MAX_ITEM_LEVEL) return null;
+  if (currentLvl === 0 && equippedCount >= MAX_WEAPONS_SLOTS) return null;
+  const targetLvl = currentLvl + 1;
+  const isNew = currentLvl === 0;
+  return {
+    key, type: 'weapon', targetLevel: targetLvl, icon: def.icon,
+    name: `${def.name} ${isNew ? '(Novo)' : `Nv. ${targetLvl}`}`,
+    desc: isNew ? `Equipa poder ativo: ${def.baseDamage} dano base, recarga ${def.baseCd}s.` : `Aprimora poder: +${def.dmgPerLevel} dano e ${Math.abs(def.cdPerLevel)}s recarga mais rápida.`,
+    subtag: isNew ? '✨ Ocupa 1 slot de arma (máx 3)' : '⬆️ Aprimora arma existente'
+  };
+}
+
+function buildPassiveOffering(key, currentLvl, equippedCount) {
+  const def = PASSIVE_DEFINITIONS[key];
+  if (!def) return null;
+  if (currentLvl >= MAX_ITEM_LEVEL) return null;
+  if (currentLvl === 0 && equippedCount >= MAX_PASSIVES_SLOTS) return null;
+  const targetLvl = currentLvl + 1;
+  const isNew = currentLvl === 0;
+  return {
+    key, type: 'passive', targetLevel: targetLvl, icon: def.icon,
+    name: `${def.name} ${isNew ? '(Novo)' : `Nv. ${targetLvl}`}`,
+    desc: isNew ? `Item passivo [${def.stat}]: ${def.desc}.` : `Aumenta efeito [${def.stat}]: tier ${targetLvl} de 5.`,
+    subtag: isNew ? '📦 Ocupa 1 slot passivo (máx 4)' : '⬆️ Aprimora atributo acumulável'
+  };
+}
+
+export function generateAvailableOfferings(weaponsState = {}, passivesState = {}) {
+  const pool = [];
+  const wCount = getEquippedWeaponsCount(weaponsState);
+  const pCount = getEquippedPassivesCount(passivesState);
+  for (const k of Object.keys(WEAPON_DEFINITIONS)) {
+    const item = buildWeaponOffering(k, weaponsState[k], wCount);
+    if (item) pool.push(item);
+  }
+  for (const k of Object.keys(PASSIVE_DEFINITIONS)) {
+    const item = buildPassiveOffering(k, passivesState[k] || 0, pCount);
+    if (item) pool.push(item);
+  }
+  return pool;
+}
+
 function createCardNode(opt, idx, onSelect) {
   const card = document.createElement('div');
   card.className = 'banner-card';
   const isWeapon = opt.type === 'weapon';
-  const typeLabel = isWeapon ? 'Poder Ativo' : 'Passiva Ativa';
+  const typeLabel = isWeapon ? 'Arsenal Ativo' : 'Item Passivo';
   const typeClass = isWeapon ? 'weapon' : 'passive';
   card.innerHTML = `
     <div class="banner-card-top">
@@ -80,31 +127,12 @@ function createCardNode(opt, idx, onSelect) {
       <div>
         <div class="banner-card-title">${opt.name}</div>
         <div class="banner-card-desc">${opt.desc}</div>
-        <div class="banner-card-subtag">⚠️ Substitui poder anterior</div>
+        <div class="banner-card-subtag">${opt.subtag}</div>
       </div>
     </div>
   `;
   card.onclick = (e) => { e.stopPropagation(); onSelect(idx); };
   return card;
-}
-
-export function openLevelUpDialog({ onSelect, onSkip }) {
-  levelUpOpen = true;
-  onSelectCallback = onSelect;
-  onSkipCallback = onSkip;
-  const banner = document.getElementById('levelup-banner');
-  const container = document.getElementById('banner-cards-container');
-  if (!banner || !container) return;
-
-  container.innerHTML = '';
-  currentOptions = AVAILABLE_POWERS.slice().sort(() => 0.5 - Math.random()).slice(0, 3);
-  currentOptions.forEach((opt, idx) => {
-    container.appendChild(createCardNode(opt, idx, selectOptionIndex));
-  });
-
-  setupBannerHeaderAndSkip(onSkip);
-  banner.classList.remove('hidden');
-  startAutoTimer();
 }
 
 function setupBannerHeaderAndSkip(onSkip) {
@@ -124,6 +152,26 @@ function setupBannerHeaderAndSkip(onSkip) {
   if (skipBtn) {
     skipBtn.onclick = (e) => { e.stopPropagation(); stopAutoTimer(); closeLevelUpDialog(); onSkip(); };
   }
+}
+
+export function openLevelUpDialog({ weaponsState = {}, passivesState = {}, onSelect, onSkip }) {
+  levelUpOpen = true;
+  onSelectCallback = onSelect;
+  onSkipCallback = onSkip;
+  const banner = document.getElementById('levelup-banner');
+  const container = document.getElementById('banner-cards-container');
+  if (!banner || !container) return;
+
+  container.innerHTML = '';
+  const pool = generateAvailableOfferings(weaponsState, passivesState);
+  currentOptions = pool.slice().sort(() => 0.5 - Math.random()).slice(0, 3);
+  currentOptions.forEach((opt, idx) => {
+    container.appendChild(createCardNode(opt, idx, selectOptionIndex));
+  });
+
+  setupBannerHeaderAndSkip(onSkip);
+  banner.classList.remove('hidden');
+  startAutoTimer();
 }
 
 export function selectOptionIndex(index) {

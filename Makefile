@@ -57,4 +57,7 @@ evolution-test: ## Testes unitários de ciclo infinito, reiatsu e level-up timer
 safety-test: ## Testes de proteção: Lua ao norte/baixa, transição do prólogo e segurança em runtime
 	python3 scripts/test_runtime_safety.py
 
-test: movement-test evolution-test safety-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, governança, catraca de tamanho)
+rpg-stats-test: ## Testes unitários do sistema de atributos RPG, caps matemáticos (CDR 65%, Hierro 75%) e sinergias
+	python3 scripts/test_rpg_stats.py
+
+test: movement-test evolution-test safety-test rpg-stats-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, rpg stats, governança, catraca de tamanho)
