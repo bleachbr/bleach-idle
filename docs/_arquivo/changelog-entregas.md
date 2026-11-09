@@ -1,6 +1,47 @@
 # Changelog de entregas
 
-## 2026-11-08 — Reposicionamento da Lua ao Norte no Horizonte e Transição Cinemática com Portal Senkaimon no Prólogo
+## 2026-11-08 — Sistema de Atributos RPG, Miniaturas no HUD, Ficha do Shinigami e Parecer ORCA (KIRO)
+
+- **Auditoria e Veredito Formal de Arquitetura Multi-Agente ORCA (Juiz KIRO):**
+  - Subagente especializado KIRO (Juiz Sênior de Sistemas de RPG & Gameplay Survivor) convocado via ORCA para avaliar matematicamente a progressão do jogador, balanceamento e interface.
+  - Veredito emitido: **APROVADO COM RESSALVAS TÉCNICAS E DE BALANCEAMENTO** com diretrizes mandatórias:
+    1. Hard cap de CDR em 65% através da fórmula assintótica de Ability Haste (`CooldownBase * max(0.35, 100 / (100 + Haste))`) para prevenir disparo infinito e memory leaks de projéteis.
+    2. Mitigação de dano de Hierro com retornos decrescentes e teto rígido de 75% (`Dano * max(0.25, 100 / (100 + Hierro))`).
+    3. Regeneração contínua de Kaidō limitada a 4% da vida máxima por segundo em combate (ticks a cada 1.0s).
+    4. Limitação estrita de slots: até 3 armas ativas simultâneas e até 4 itens passivos, com 5 níveis por item e filtragem no banner de Level-up (se 3 armas já estiverem equipadas, novos poderes não são ofertados; apenas aprimoramentos das armas atuais).
+- **Motor Matemático Puro de Atributos RPG e Sinergias (`src/stats.js`):**
+  - `calculateEffectiveStats(player, passives)`: calcula atributos consolidados (Dano Espiritual ATK %, Velocidade Shunpo m/s, Haste/CDR %, Hierro DEF mitigação %, Kaidō Regen HP/s, Vórtice de Reishi magnet m).
+  - Matriz de sinergias ativas detectada dinamicamente:
+    - *Getsuga Devastador* (Getsuga Tenshō + Pressão Espiritual): dano crítico e feixe expandido.
+    - *Relâmpago Instantâneo* (Hadō #4 Byakurai + Passo Relâmpago): recarga acelerada e cadência superior.
+    - *Vórtice Incandescente* (Hadō #31 Shakkahō + Vórtice de Reishi): explosões ígneas com sucção de almas e Hollows.
+    - *Muralha Espiritual* (Hierro + Kaidō): sobrevivência máxima para builds tanques.
+  - Avaliação de orientação tática de build (`determineBuildOrientation`): `⚔️ MELEE & SHUNPO`, `🔮 KIDŌ DESTRUIDOR`, `🛡️ HIERRO DEFENSIVO`, `⚖️ SHINIGAMI EQUILIBRADO`.
+- **Miniaturas de Build no Canto Superior Direito do HUD (`src/build_hud.js`, `src/style.css`):**
+  - Painel `#build-hud-panel` no canto superior direito exibindo:
+    - Selo de orientação tática de build em tempo real (`.build-strategy-badge`).
+    - 3 slots de armas ativas (`#build-weapons-row`) com ícone, numeral romano de nível (`I` a `V`), tooltip e indicador tracejado para slots vazios (`[+] Slot`).
+    - 4 slots de itens passivos (`#build-passives-row`) com ícone, tag do atributo (`FOR`, `DES`, `DEF`, `REG`, `MAG`), numeral de nível e tooltip.
+- **Ficha do Shinigami & Sinergias no Modal de Pausa / AFK (`src/pause_modal.js`, `index.html`, `src/style.css`):**
+  - Ao pressionar ESC (ou entrar em modo AFK), o modal `#pause-modal` abre a **Ficha do Shinigami** em layout de 3 colunas detalhadas:
+    1. *Atributos do Shinigami*: HP total, ATK Dano Espiritual %, Velocidade Shunpo, CDR % (Cap 65%), Hierro mitigação % (Cap 75%), Kaidō Regen HP/s e Vórtice Magnético.
+    2. *Arsenal Ativo (X/3)*: detalhamento de cada arma com dano efetivo calculado, tempo de recarga reduzido e dano total acumulado na partida.
+    3. *Itens Passivos (X/4)*: listagem dos itens equipados e seus bônus por nível.
+    4. *Sinergias Ativadas*: grade com badges iluminadas destacando exatamente como os itens buffaram os poderes.
+- **Progressão do Level-Up (`src/levelup.js`, `src/main.js`):**
+  - Geração dinâmica de ofertas (`generateAvailableOfferings`): respeita a regra de 3 armas ativas e 4 itens passivos, oferecendo aprimoramentos até o Nível 5 e eliminando a restrição arcaica de substituição total de poderes.
+- **Suite de Testes Automatizados e Qualidade (`scripts/test_rpg_stats.py`, `Makefile`):**
+  - 6 testes unitários em `scripts/test_rpg_stats.py` validando os hard caps matemáticos de CDR (65%), Hierro (75%), Kaidō regen (4%) e detecção de sinergias.
+  - Alvo `make rpg-stats-test` adicionado ao `make test`, totalizando 63 testes unitários verdes.
+  - Catraca de tamanho de código (`scripts/lint/js_size.py`): todas as novas funções respeitam $\le 20$ linhas de código no corpo. O teto de `src/main.js` foi reduzido de 1288 para 1283 linhas em `scripts/lint/size_inventory.json`.
+- **Deploy em Produção na VPS:**
+  - Build Docker compilada para `linux/amd64` (commit `0d3cbe9`) e enviada para a VPS (`69.62.95.136`).
+  - Container `bleach-jogo-1` reiniciado e saudável (`/healthz` retornando `ok` em `https://bleach.acoplum.com`).
+- **Evidências Visuais E2E Playwright:**
+  - `rpg_01_hud_miniatures_top_right.png` (846 KB): miniaturas de slots de armas e itens no topo à direita com selo de build.
+  - `rpg_02_pause_shinigami_sheet_and_synergies.png` (180 KB): Ficha do Shinigami aberta no ESC com atributos e arsenal.
+  - `rpg_03_pause_synergies_activated.png` (185 KB): Ficha do Shinigami com sinergias ativadas (Relâmpago Instantâneo, Getsuga Devastador, Muralha Espiritual).
+  - `rpg_04_gameplay_action_with_rpg_hud.png` (859 KB): combate no Hueco Mundo com HUD de build sincronizado.
 
 - **Reposicionamento Canônico e Visibilidade da Lua no Hueco Mundo (`geradores/map_specs/hueco_mundo.md`, `geradores/map_generator.py`, `src/maps/hueco_mundo.js`):**
   - Reposicionamento da Lua Crescente do Bleach diretamente ao Norte ($X = 0, Z = -175\text{ m}$) e em baixa altitude sobre as dunas do horizonte ($Y = 38\text{ m}$ em vez de 180m na estratosfera), ficando imediatamente visível no enquadramento natural da câmera ao iniciar o combate.
