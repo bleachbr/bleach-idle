@@ -1931,3 +1931,26 @@ body, html {
   text-align: center;
   padding: 8px;
 }
+
+/* Botão de mute da música: acima do menu (z 1000) e dos modais, no canto inferior esquerdo */
+#music-toggle {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 2000;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(120, 200, 255, 0.45);
+  background: rgba(12, 16, 28, 0.78);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+#music-toggle:hover {
+  border-color: rgba(120, 200, 255, 0.9);
+  background: rgba(24, 32, 52, 0.9);
+}

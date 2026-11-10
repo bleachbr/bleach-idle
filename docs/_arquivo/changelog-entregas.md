@@ -1,5 +1,12 @@
 # Changelog de entregas
 
+## 2026-11-10 — Hollows Shrieker e Acidwire na horda, e botão de mute da música
+
+- **Assets:** walk8 dos dois (já gerado pelo Codex em `geradores/staging/`) promovido para `src/assets/monsters/{shrieker,acidwire}/`, depois de `validate_sprites.py --category monsters` passar (altura 107 px nas 4 vistas, jitter 0, sem magenta). Clipes `attack` e `death` gerados pelo Codex (12 imagens 4x3, 12 quadros, frente, perfil e costas), com piloto `shrieker_attack_front` e `acidwire_attack_left` conferido antes da leva. Pipeline novo: `geradores/hollow_clip_anims.py`, `gen_hollow_clips.py`, `process_hollow_clips.py` e `validate_hollow_clips.py`. A validação passa nos 12 clipes ([direcionamento/18](../direcionamento/18-hollows-shrieker-e-acidwire.md)).
+- **Jogo:** `src/hollowTypes.js` (atributos, sorteio por tempo, zigue-zague, distância do Acidwire e tempo do cuspe), `src/hollowClips.js` (quadro do clipe por hollow, morte com fade), `src/fx/acidSpit.js` (projétil em arco que o pulo evita) e `src/monsterTextures.js` (carregamento do walk8, que saiu do `main.js`). O censo da tela de fim ganhou as linhas Shrieker e Acidwire. `src/main.js` desceu de 1277 para 1266 linhas.
+- **Música:** `src/musicToggle.js` põe um botão 🔇/🔊 no canto inferior esquerdo, também na tecla M. Em produção começa com som e guarda a escolha. No `npm run dev` sempre começa mutada.
+- **Evidência:** `python scripts/test_hollow_types.py` (10 testes), `make size-check`, `npm run build` e uma partida no navegador (`npm run dev`, relógio em 60 s pelo `debugGame`): em 6 s de combate os clipes `shrieker:attack`, `shrieker:death`, `acidwire:attack` e `acidwire:death` tocaram, saíram até 2 cuspes ácidos ao mesmo tempo, um cuspe tirou 14 HP, a tela de fim contou 5 Shrieker e 1 Acidwire, e o reinício deixou zero hollow ativo ou morrendo. O console ficou sem erro. O botão começou 🔇, o clique ligou e a tecla M mutou de novo.
+
 ## 2026-11-08 — Trilha Sonora Oficial (Aberturas no Login, Silêncio no Prólogo e Number One no Hueco Mundo)
 
 - **Módulo Centralizado de Áudio (`src/audio.js`):**

@@ -9,6 +9,20 @@ const TRACKS = {
 };
 
 const DEFAULT_VOLUME = 0.20;
+const MUTE_KEY = 'soulSurvivor.musicMuted';
+
+// No servidor de dev (npm run dev) a música sempre começa mutada, a pedido do dono do jogo.
+// Em produção começa tocando e vale a última escolha do jogador no botão.
+function readMutePreference() {
+  if (import.meta.env?.DEV) return true;
+  try {
+    return localStorage.getItem(MUTE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+let musicMuted = readMutePreference();
 
 let currentAudio = null;
 let currentTrack = null;
@@ -49,6 +63,7 @@ export function playLoginBGM() {
   const audio = new Audio(TRACKS.login);
   audio.loop = true;
   audio.volume = DEFAULT_VOLUME;
+  audio.muted = musicMuted;
   currentAudio = audio;
   currentTrack = 'login';
 
@@ -67,6 +82,7 @@ export function playHuecoMundoBGM() {
   const audio = new Audio(TRACKS.huecoMundo);
   audio.loop = false;
   audio.volume = DEFAULT_VOLUME;
+  audio.muted = musicMuted;
   currentAudio = audio;
   currentTrack = 'huecoMundo';
 
@@ -78,6 +94,24 @@ export function playHuecoMundoBGM() {
       }
     });
   }
+}
+
+export function isMusicMuted() {
+  return musicMuted;
+}
+
+export function toggleMusicMute() {
+  musicMuted = !musicMuted;
+  try {
+    localStorage.setItem(MUTE_KEY, String(musicMuted));
+  } catch {
+    // Sem armazenamento, a escolha vale só nesta sessão.
+  }
+  if (currentAudio) {
+    currentAudio.muted = musicMuted;
+    if (!musicMuted && currentAudio.paused) currentAudio.play().catch(() => {});
+  }
+  return musicMuted;
 }
 
 export function getCurrentTrack() {
