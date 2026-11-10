@@ -30,5 +30,5 @@ Referência técnica. Não é lista de tarefas.
 10. [Mira inteligente auto-battler e balanceamento](direcionamento/10-mira-inteligente-auto-battler-e-balanceamento.md)
 11. [Arquitetura multiplayer e distribuição de reishi](direcionamento/11-arquitetura-multiplayer-e-distribuicao-de-reishi.md)
 12. [Gerador de mapas orientado por IA e bioma Hueco Mundo](direcionamento/12-gerador-de-mapas-orientado-por-ia-e-bioma-hueco-mundo.md)
-17. [Kit de animações do personagem principal](direcionamento/17-kit-animacoes-personagem.md)
+17. [Kit de animações dos personagens jogáveis](direcionamento/17-kit-animacoes-personagem.md)
 18. [Hollows Shrieker e Acidwire](direcionamento/18-hollows-shrieker-e-acidwire.md)

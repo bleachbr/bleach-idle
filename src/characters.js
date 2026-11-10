@@ -57,12 +57,104 @@ export const PLAYABLE_CHARACTERS = {
       "skill": "skill_getsuga"
     }
   },
+  "ishida": {
+    "id": "ishida",
+    "name": "Ishida",
+    "category": "characters",
+    "format": "walk8",
+    "source": "arts/walk8/ishida_sheet.png",
+    "targetSize": 128,
+    "worldScale": [
+      2.2,
+      2.2
+    ],
+    "fps": 10,
+    "frameCount": 8,
+    "directions": {
+      "front": {
+        "row": 0,
+        "frames": 8,
+        "file": "front.png"
+      },
+      "side_l": {
+        "row": 1,
+        "frames": 8,
+        "file": "side_l.png"
+      },
+      "side": {
+        "row": 2,
+        "frames": 8,
+        "file": "side.png"
+      },
+      "back": {
+        "row": 3,
+        "frames": 8,
+        "file": "back.png"
+      }
+    },
+    "diagnostics": {
+      "renderedHeights": {
+        "front": 107,
+        "side_l": 107,
+        "side": 107,
+        "back": 107
+      },
+      "baselineY": 117,
+      "maxHeightVariancePercent": 0.0
+    }
+  },
   "rukia": {
     "id": "rukia",
     "name": "Rukia",
     "category": "characters",
     "format": "walk8",
     "source": "arts/walk8/rukia_sheet.png",
+    "targetSize": 128,
+    "worldScale": [
+      2.2,
+      2.2
+    ],
+    "fps": 10,
+    "frameCount": 8,
+    "directions": {
+      "front": {
+        "row": 0,
+        "frames": 8,
+        "file": "front.png"
+      },
+      "side_l": {
+        "row": 1,
+        "frames": 8,
+        "file": "side_l.png"
+      },
+      "side": {
+        "row": 2,
+        "frames": 8,
+        "file": "side.png"
+      },
+      "back": {
+        "row": 3,
+        "frames": 8,
+        "file": "back.png"
+      }
+    },
+    "diagnostics": {
+      "renderedHeights": {
+        "front": 107,
+        "side_l": 107,
+        "side": 107,
+        "back": 107
+      },
+      "baselineY": 117,
+      "maxHeightVariancePercent": 0.0
+    }
+  },
+  "sado": {
+    "id": "sado",
+    "name": "Sado",
+    "category": "characters",
+    "format": "walk8",
+    "source": "arts/walk8/sado_power_sheet.png",
     "targetSize": 128,
     "worldScale": [
       2.2,
@@ -261,12 +353,72 @@ export const FX_REGISTRY = {
       2.0
     ]
   },
+  "skill_cero": {
+    "id": "skill_cero",
+    "name": "Skill Cero",
+    "category": "fx",
+    "type": "skill",
+    "source": "arts/codex/fx_cast_sheet.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 10,
+    "blendMode": "additive",
+    "worldScale": [
+      2.0,
+      2.0
+    ]
+  },
+  "skill_directo": {
+    "id": "skill_directo",
+    "name": "Skill Directo",
+    "category": "fx",
+    "type": "skill",
+    "source": "arts/codex/fx_cast_sheet.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 10,
+    "blendMode": "additive",
+    "worldScale": [
+      2.0,
+      2.0
+    ]
+  },
   "skill_getsuga": {
     "id": "skill_getsuga",
     "name": "Skill Getsuga",
     "category": "fx",
     "type": "skill",
     "source": "arts/63_fx_skills.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 10,
+    "blendMode": "additive",
+    "worldScale": [
+      2.0,
+      2.0
+    ]
+  },
+  "skill_muerte": {
+    "id": "skill_muerte",
+    "name": "Skill Muerte",
+    "category": "fx",
+    "type": "skill",
+    "source": "arts/codex/fx_cast_sheet.png",
+    "targetSize": 128,
+    "frameCount": 4,
+    "fps": 10,
+    "blendMode": "additive",
+    "worldScale": [
+      2.0,
+      2.0
+    ]
+  },
+  "skill_quincy_arrow": {
+    "id": "skill_quincy_arrow",
+    "name": "Skill Quincy Arrow",
+    "category": "fx",
+    "type": "skill",
+    "source": "arts/codex/fx_cast_sheet.png",
     "targetSize": 128,
     "frameCount": 4,
     "fps": 10,

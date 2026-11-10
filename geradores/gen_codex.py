@@ -75,6 +75,22 @@ JOBS = {
         "Row 4: the explosion of that fireball: a round red-orange blast with a white-hot center, flame tongues and dark red "
         "embers, expanding then breaking into embers and smoke puffs.",
         ["arts/ref/63_fx_skills.png"], "fx"),
+    # Projéteis próprios do elenco jogável (src/arsenal.js): flecha espiritual, esfera azul,
+    # rajada em forma de punho e explosão em forma de caveira.
+    "fx_cast": (
+        "Make the image SQUARE. A 4x4 sprite sheet (4 rows, 4 columns, 16 equal square cells, no visible grid lines) of "
+        "magic attack visual effects for a top-down action game. Each row is ONE 4-frame animation read left to right "
+        "(appear, grow, peak, pulse), centered in each cell, fully inside the central 80% of the cell with magenta "
+        "padding, nothing crosses a cell edge.\n"
+        "Row 1: a slim arrow made of glowing light-blue spirit energy flying horizontally to the right, a bright white core, "
+        "a sharp arrowhead and a short trail of light-blue feather-like light streaks behind it; it flickers brighter.\n"
+        "Row 2: a crackling sphere of blue energy flying to the right, a white-hot center inside an electric cyan and deep "
+        "blue orb with short jagged sparks around it and a short trail; it pulses bigger over the frames.\n"
+        "Row 3: a heavy shockwave of crimson and black energy shaped like a giant clenched fist flying to the right, "
+        "a dark red glow and black streaks trailing behind; it surges forward over the frames.\n"
+        "Row 4: an expanding blast of white and pale violet energy shaped like a grinning horned skull, with wispy white "
+        "flames around it, growing bigger over the frames.",
+        ["arts/ref/63_fx_skills.png"], "fx"),
 }
 
 

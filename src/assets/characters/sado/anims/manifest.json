@@ -1,0 +1,139 @@
+{
+  "id": "sado",
+  "baselineRatio": 0.9140625,
+  "baseFrameSize": 128,
+  "anims": {
+    "idle": {
+      "fps": 8,
+      "loop": true,
+      "frames": 12,
+      "frameSize": 128
+    },
+    "walk": {
+      "fps": 14,
+      "loop": true,
+      "frames": 12,
+      "frameSize": 128
+    },
+    "run": {
+      "fps": 18,
+      "loop": true,
+      "frames": 12,
+      "frameSize": 160
+    },
+    "jump": {
+      "fps": 16,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 128
+    },
+    "land": {
+      "fps": 22,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    },
+    "hurt": {
+      "fps": 24,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    },
+    "hurt_heavy": {
+      "fps": 20,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 128
+    },
+    "hurt_air": {
+      "fps": 22,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    },
+    "death": {
+      "fps": 12,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    },
+    "level_up": {
+      "fps": 16,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    },
+    "afk": {
+      "fps": 6,
+      "loop": true,
+      "frames": 12,
+      "frameSize": 128
+    },
+    "slash_a": {
+      "fps": 24,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 128
+    },
+    "slash_b": {
+      "fps": 24,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 128
+    },
+    "slash_c": {
+      "fps": 24,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    },
+    "air_slash": {
+      "fps": 24,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    },
+    "move_slash": {
+      "fps": 24,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 128
+    },
+    "getsuga": {
+      "fps": 20,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    },
+    "move_getsuga": {
+      "fps": 22,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 128
+    },
+    "byakurai": {
+      "fps": 20,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 128
+    },
+    "shakkaho": {
+      "fps": 20,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 128
+    },
+    "move_kido": {
+      "fps": 22,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 128
+    },
+    "victory": {
+      "fps": 14,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    }
+  }
+}

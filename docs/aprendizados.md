@@ -125,3 +125,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** em arte com roxo, rosa ou lilás, aplicar o despill só no contorno da silhueta (2 px para dentro da máscara), como faz `edge_despill` em `geradores/process_hollow_clips.py`.
 
 **Evidência:** a primeira tira de `shrieker_attack_front` saiu cinza-chumbo ao lado do walk8 roxo. Com o despill só no contorno, a cor bate e `python geradores/validate_hollow_clips.py` continua sem pixel magenta.
+
+## 16. Cabelo só é régua de escala quando a mancha dele é a mesma em toda pose
+
+**Causa raiz:** `hair_size` mede a maior mancha conexa da cor do cabelo. Com o laranja do Ichigo, a mancha é só o cabelo. O preto-azulado do Ishida encosta no contorno `#1a1822`, o castanho do Sado tem o tom da pele morena, e o cabelo espetado do Grimmjow, embora tenha cor única, muda de área quando ele se curva, cai ou é atingido. Nos três, a "maior mancha" muda de pedaço do corpo conforme a pose, e a escala pula sem o personagem ter mudado de tamanho.
+
+**O que fazer:** nesses casos, régua `fixed` em `geradores/kit_cast.py`: a escala por vista sai do `idle` e vale para todos os clipes. Funciona porque o Codex mantém o tamanho absoluto do personagem entre imagens da mesma grade 4x3.
+
+**Evidência:** no piloto, a mancha castanha do Sado mediu 35 px no `idle_left` e 21–27 px nos primeiros quadros do `getsuga_left`, embora o quadro neutro do golpe tivesse 262 px de altura contra 257 do `idle`. A mancha preto-azulada do Ishida oscilou entre 8 e 19 px dentro do próprio `idle_left`. No Grimmjow, a mancha azul ficou estável dentro do `idle` (41 a 50 px), mas entre clipes a escala calculada por ela foi de 0,34 a 0,48, enquanto o quadro neutro de cada clipe media de 256 a 278 px, quase o mesmo que o `idle` (262 a 269). No `hurt_heavy_back` a régua aumentava o corpo em 19% sem motivo.
