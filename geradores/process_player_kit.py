@@ -5,10 +5,11 @@ Saída: <out>/<anim>_<front|side_l|back>.png (uma tira horizontal de 12 quadros)
 A vista `side` não existe em disco: o jogo espelha `side_l` pela UV, como a caminhada faz na folha.
 
 Por que não reutiliza o sprite_processor: lá a escala vem da maior caixa da direção. Num ataque, a
-caixa inclui a espada, então o corpo encolheria justo no golpe. Aqui a régua é o cabelo laranja, que
+caixa inclui a arma, então o corpo encolheria justo no golpe. Aqui a régua é a mancha de cabelo, que
 tem o mesmo tamanho em qualquer pose. Assim o corpo mantém a escala da caminhada em todas as animações.
+A cor do cabelo de cada personagem está em `RULERS`; qual ele usa, em kit_cast.py.
 
-Uso: python geradores/process_player_kit.py [--out DIR]
+Uso: python geradores/process_player_kit.py [--char ID] [--out DIR]
 """
 import argparse
 import json
@@ -17,11 +18,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from player_kit_anims import ANIMS
-
 ROOT = Path(__file__).resolve().parent.parent
-RAW = ROOT / "arts" / "codex" / "kit"
-DEFAULT_OUT = ROOT / "geradores" / "staging" / "ichigo_shikai_kit"
+KIT_ROOT = ROOT / "arts" / "codex" / "kit"
 
 COLS, ROWS = 4, 3
 BODY_HEIGHT = 107  # altura do corpo parado num quadro de 128, a mesma da caminhada (direcionamento/07)
@@ -94,15 +92,26 @@ def cell_from_blobs(rgb: np.ndarray, blobs: list[np.ndarray]) -> np.ndarray:
     return cell
 
 
-def hair_mask(rgb: np.ndarray) -> np.ndarray:
-    r, g, b = (rgb[..., i].astype(int) for i in range(3))
+def channels(rgb: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    return tuple(rgb[..., i].astype(int) for i in range(3))
+
+
+def orange_hair(rgb: np.ndarray) -> np.ndarray:
+    r, g, b = channels(rgb)
     return (r > 190) & (g > 80) & (g < 170) & (b < 70) & (r - b > 130)
 
 
-def hair_size(cell: np.ndarray) -> float:
-    """Raiz da área da maior mancha laranja. A pele tem tons parecidos, mas nunca forma a maior mancha,
-    e a área varia menos que a altura quando a cabeça inclina."""
-    return float(np.sqrt(largest_blob_area(hair_mask(cell))))
+# "fixed": sem mancha de cor confiável (cabelo preto como o contorno, castanho como a pele,
+# espetado que muda de área com o movimento).
+# A escala de cada vista sai do idle e vale para todos os clipes, porque o Codex mantém o
+# tamanho absoluto do personagem entre imagens (o quadro neutro de um golpe mede o mesmo que o idle).
+RULERS = {"orange": orange_hair, "fixed": None}
+
+
+def hair_size(cell: np.ndarray, mask) -> float:
+    """Raiz da área da maior mancha de cabelo. A pele pode ter tom parecido, mas não forma a maior
+    mancha, e a área varia menos que a altura quando a cabeça inclina."""
+    return float(np.sqrt(largest_blob_area(mask(cell))))
 
 
 def largest_blob_area(mask: np.ndarray) -> int:
@@ -138,8 +147,8 @@ def feet_row(mask: np.ndarray, x0: int, x1: int) -> int:
     return int(rows[-1])
 
 
-def sheet_cell_limit(view: str, anim_id: str) -> int:
-    return int(Image.open(RAW / f"{anim_id}_{view}.png").width / COLS * 1.5)
+def sheet_cell_limit(raw: Path, view: str, anim_id: str) -> int:
+    return int(Image.open(raw / f"{anim_id}_{view}.png").width / COLS * 1.5)
 
 
 def render_frame(cell: np.ndarray, scale: float) -> tuple[Image.Image, float, float]:
@@ -169,17 +178,26 @@ def unpremultiply(rgba: np.ndarray) -> np.ndarray:
     return out.astype(np.uint8)
 
 
-def direction_rulers() -> dict[str, float]:
-    """px de cabelo a alcançar por vista: o cabelo do idle quando o corpo parado mede BODY_HEIGHT."""
+def direction_rulers(raw: Path, mask) -> dict[str, float]:
+    """Por vista: px de cabelo a alcançar (o cabelo do idle quando o corpo parado mede BODY_HEIGHT),
+    ou, na régua fixa, a própria escala que leva o idle a BODY_HEIGHT."""
     rulers = {}
     for view in VIEWS:
-        cells = slice_cells(Image.open(RAW / f"idle_{view}.png"))
-        ratios = []
-        for cell in cells:
-            rows = np.where(key_out_magenta(cell).any(axis=1))[0]
-            ratios.append(hair_size(cell) / (rows[-1] - rows[0] + 1))
+        cells = slice_cells(Image.open(raw / f"idle_{view}.png"))
+        heights = [np.ptp(np.where(key_out_magenta(c).any(axis=1))[0]) + 1 for c in cells]
+        if mask is None:
+            rulers[view] = BODY_HEIGHT / float(np.median(heights))
+            continue
+        ratios = [hair_size(c, mask) / h for c, h in zip(cells, heights)]
         rulers[view] = float(np.median(ratios)) * BODY_HEIGHT
     return rulers
+
+
+def clip_scale(kit: dict, ruler: float, cells: list[np.ndarray]) -> float:
+    if kit["mask"] is None:
+        return ruler
+    sizes = [h for h in (hair_size(c, kit["mask"]) for c in cells) if h]
+    return ruler / float(np.median(sizes))
 
 
 def fit_frame_size(frames: list[tuple[Image.Image, float, float]]) -> int:
@@ -212,39 +230,47 @@ def compress(strip: Image.Image) -> Image.Image:
     return strip.quantize(colors=128, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE)
 
 
-def process_anim(anim_id: str, rulers: dict[str, float], out: Path, report: list[str]) -> dict:
+def process_anim(kit: dict, anim_id: str, rulers: dict[str, float], out: Path, report: list[str]) -> dict:
     per_view = {}
     for view in VIEWS:
-        cells = slice_cells(Image.open(RAW / f"{anim_id}_{view}.png"))
-        merged = [i + 1 for i, c in enumerate(cells) if c.shape[1] > sheet_cell_limit(view, anim_id)]
+        cells = slice_cells(Image.open(kit["raw"] / f"{anim_id}_{view}.png"))
+        merged = [i + 1 for i, c in enumerate(cells) if c.shape[1] > sheet_cell_limit(kit["raw"], view, anim_id)]
         if merged:
             report.append(f"FUNDIDO {anim_id}_{view}: quadros {merged} largos demais, dois personagens encostados?")
-        sizes = [h for h in map(hair_size, cells) if h]
-        scale = rulers[view] / float(np.median(sizes))
+        scale = clip_scale(kit, rulers[view], cells)
         per_view[view] = [render_frame(c, scale) for c in cells]
         report.append(f"{anim_id}_{view}: escala {scale:.3f}")
     size = max(fit_frame_size(frames) for frames in per_view.values())
     for view, frames in per_view.items():
         compress(compose_strip(frames, size)).save(out / f"{anim_id}_{VIEWS[view]}.png", optimize=True)
-    spec = ANIMS[anim_id]
+    spec = kit["anims"][anim_id]
     return {"fps": spec["fps"], "loop": spec["loop"], "frames": COLS * ROWS, "frameSize": size}
+
+
+def load_kit(char: str) -> dict:
+    from kit_cast import CAST
+    cast = CAST[char]
+    return {"raw": KIT_ROOT / char, "mask": RULERS[cast["ruler"]], "anims": cast["anims"]}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--char", default="ichigo_shikai")
+    parser.add_argument("--out", type=Path)
     args = parser.parse_args()
-    args.out.mkdir(parents=True, exist_ok=True)
-    rulers = direction_rulers()
+    out = args.out or ROOT / "geradores" / "staging" / f"{args.char}_kit"
+    out.mkdir(parents=True, exist_ok=True)
+    kit = load_kit(args.char)
+    rulers = direction_rulers(kit["raw"], kit["mask"])
     report: list[str] = [f"régua de cabelo por vista: {rulers}"]
     catalog = {}
-    for anim_id in ANIMS:
-        if all((RAW / f"{anim_id}_{view}.png").exists() for view in VIEWS):
-            catalog[anim_id] = process_anim(anim_id, rulers, args.out, report)
+    for anim_id in kit["anims"]:
+        if all((kit["raw"] / f"{anim_id}_{view}.png").exists() for view in VIEWS):
+            catalog[anim_id] = process_anim(kit, anim_id, rulers, out, report)
         else:
             report.append(f"FALTA {anim_id}")
-    manifest = {"id": "ichigo_shikai", "baselineRatio": BASELINE_RATIO, "baseFrameSize": 128, "anims": catalog}
-    (args.out / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    manifest = {"id": args.char, "baselineRatio": BASELINE_RATIO, "baseFrameSize": 128, "anims": catalog}
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     print("\n".join(report))
 
 

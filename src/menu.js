@@ -5,6 +5,8 @@
 
 import { initLeaderboard, refreshLeaderboard } from './leaderboard.js';
 import { playLoginBGM } from './audio.js';
+import { initMusicToggle } from './musicToggle.js';
+import { initCharacterSelect, getSelectedCharacter } from './characterSelect.js';
 
 const STORAGE_KEY = 'bleach_shinigami_name';
 const DEFAULT_NAME = 'Ichigo Kurosaki';
@@ -58,7 +60,7 @@ export function updateMenuCamera(cameraState, dt) {
 function handleStartTrigger(inputEl, onStartGame) {
   const name = savePlayerName(inputEl.value);
   hideLoginMenu();
-  if (onStartGame) onStartGame(name);
+  if (onStartGame) onStartGame(name, getSelectedCharacter());
 }
 
 export function showLoginMenu() {
@@ -118,5 +120,7 @@ export function initLoginMenu({ onStartGame, onReturnToMenu, onRestartGame }) {
   bindRandomNameButton(inputEl);
   bindModalButtons(onReturnToMenu, onRestartGame);
   initLeaderboard();
+  initCharacterSelect();
+  initMusicToggle();
 }
 

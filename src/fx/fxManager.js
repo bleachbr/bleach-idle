@@ -114,6 +114,7 @@ export class FXManager {
       transparent: true, blending: THREE.AdditiveBlending,
       depthWrite: false, opacity: 0.95, side: THREE.DoubleSide
     });
+    if (cfg.tint) mat.color.setHex(cfg.tint); // Cor do arsenal do personagem (src/arsenal.js)
     const mesh = new THREE.Mesh(this.projectileGeo.clone(), mat);
     mesh.position.set(startX, 0.4, startZ);
     mesh.scale.set(cfg.startScale, cfg.startScale, 1.0);
