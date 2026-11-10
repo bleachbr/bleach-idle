@@ -2,17 +2,27 @@
 // DESENHO DO KIT DE ANIMAÇÕES DO JOGADOR
 // Cada clipe é uma tira horizontal por vista. A vista `side` espelha `side_l` pela UV,
 // e o quadro é escolhido pelo offset da textura, sem trocar de arquivo a cada passo.
+// Cada personagem jogável tem o seu kit em src/assets/characters/<id>/anims.
 // =======================================================================
 import * as THREE from 'three';
-import manifest from './assets/characters/ichigo_shikai/anims/manifest.json';
 
-const BASE_DIR = '/src/assets/characters/ichigo_shikai/anims/';
+const MANIFESTS = Object.fromEntries(
+  Object.entries(import.meta.glob('./assets/characters/*/anims/manifest.json', { eager: true, import: 'default' }))
+    .map(([path, manifest]) => [path.split('/')[3], manifest])
+);
 const BASE_PLANE_SIZE = 2.35; // Tamanho do plano de um quadro de 128 px, o mesmo da caminhada original
+const loadedKits = {};
 
-export const playerAnimCatalog = manifest.anims;
+// Os 22 clipes têm o mesmo ritmo em todo o elenco (geradores/kit_cast.py), então a máquina de
+// estados usa um catálogo só. O tamanho de quadro, que varia, fica no kit de cada personagem.
+export const playerAnimCatalog = MANIFESTS.ichigo_shikai.anims;
 
-function loadStrip(loader, name) {
-  const tex = loader.load(`${BASE_DIR}${name}.png`);
+export function hasPlayerKit(charId) {
+  return Boolean(MANIFESTS[charId]);
+}
+
+function loadStrip(loader, charId, name) {
+  const tex = loader.load(`/src/assets/characters/${charId}/anims/${name}.png`);
   tex.magFilter = THREE.NearestFilter;
   tex.minFilter = THREE.NearestFilter;
   tex.generateMipmaps = false;
@@ -20,32 +30,40 @@ function loadStrip(loader, name) {
   return tex;
 }
 
-function createFramePlane(frameSize) {
+function createFramePlane(manifest, frameSize) {
   const size = BASE_PLANE_SIZE * (frameSize / manifest.baseFrameSize);
   const geo = new THREE.PlaneGeometry(size, size);
   geo.translate(0, size / 2, 0);
   return geo;
 }
 
-// Golpes têm quadro maior para caber a espada. Como a baseline é proporcional ao quadro,
+// Golpes têm quadro maior para caber a arma. Como a baseline é proporcional ao quadro,
 // um plano proporcional mantém os pés e a escala do corpo no mesmo lugar em todos os clipes.
-function buildPlanes() {
+function buildPlanes(manifest) {
   const planes = {};
   for (const { frameSize } of Object.values(manifest.anims)) {
-    if (!planes[frameSize]) planes[frameSize] = createFramePlane(frameSize);
+    if (!planes[frameSize]) planes[frameSize] = createFramePlane(manifest, frameSize);
   }
   return planes;
 }
 
-export function loadPlayerKit(loader) {
+function buildKit(loader, charId) {
+  const manifest = MANIFESTS[charId];
   const strips = {};
   for (const anim of Object.keys(manifest.anims)) {
     for (const view of ['front', 'side_l', 'back']) {
-      strips[`${anim}_${view}`] = loadStrip(loader, `${anim}_${view}`);
+      strips[`${anim}_${view}`] = loadStrip(loader, charId, `${anim}_${view}`);
     }
     strips[`${anim}_side`] = strips[`${anim}_side_l`].clone();
   }
-  return { strips, planes: buildPlanes() };
+  return { manifest, strips, planes: buildPlanes(manifest) };
+}
+
+// Personagem sem kit cai no Ichigo, para a partida nunca começar sem sprite.
+export function loadPlayerKit(loader, charId = 'ichigo_shikai') {
+  const id = hasPlayerKit(charId) ? charId : 'ichigo_shikai';
+  if (!loadedKits[id]) loadedKits[id] = buildKit(loader, id);
+  return loadedKits[id];
 }
 
 function selectFrame(tex, frame, frames, mirrored) {
@@ -54,8 +72,8 @@ function selectFrame(tex, frame, frames, mirrored) {
 }
 
 export function showPlayerFrame(mesh, kit, { anim, frame }, view) {
-  const clip = manifest.anims[anim];
-  const tex = kit.strips[`${anim}_${view}`];
+  const clip = kit?.manifest.anims[anim];
+  const tex = kit?.strips[`${anim}_${view}`];
   if (!clip || !tex) return;
   selectFrame(tex, frame, clip.frames, view === 'side');
   if (mesh.material.map !== tex) {

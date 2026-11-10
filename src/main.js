@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { createSpritesheet } from './spritesheet.js';
-import { PLAYABLE_CHARACTERS, MONSTERS_REGISTRY, FX_REGISTRY } from './characters.js';
+import { MONSTERS_REGISTRY, FX_REGISTRY } from './characters.js';
 import { FXManager } from './fx/fxManager.js';
 import { createHuecoMundoMap, getTerrainHeight, MAP_CONFIG, clampPlayerToMap, updateMapPropsBillboard } from './maps/hueco_mundo.js';
 import { createDangaiMap } from './maps/dangai.js';
@@ -17,10 +17,12 @@ import { updateHUD as renderHUD, showGameOver as displayGameOver } from './hud.j
 import { createCycleState, getCycleMultipliers, shouldSpawnCycleBoss, markBossSpawned, advanceToNextCycle, updateCycleProgress, registerKillInCycle, resetCycleState } from './cycle.js';
 import { openLevelUpDialog, closeLevelUpDialog, handleLevelUpKeyInput, selectOptionIndex } from './levelup.js';
 import { calculateReiatsuScore, getReiatsuAgroRadius, getReiatsuSpawnBonus, setPlayerCamouflage, updateEnemyWandering } from './reiatsu.js';
-import { calculateEffectiveStats, getEffectiveCooldown, applyHierroDamageMitigation } from './stats.js';
+import { calculateEffectiveStats, getEffectiveCooldown, applyHierroDamageMitigation, applyWeaponLabels, WEAPON_DEFINITIONS } from './stats.js';
+import { arsenalLabels, arsenalSlashTint, arsenalShot, volleyDirections } from './arsenal.js';
 import { updateBuildHUD } from './build_hud.js';
 import { updatePauseDetails } from './pause_modal.js';
 import { stopMusic, playHuecoMundoBGM } from './audio.js';
+import { showCharacterInHud } from './characterSelect.js';
 // Constantes da Arena e Câmera (Hueco Mundo - Bioma Ativo da Entrega 1)
 const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 176.0;
 const MAX_ENEMIES = 400;
@@ -197,31 +199,8 @@ function buildSprites() {
     spriteTextures[key] = tex;
   }
 
-  // 2. Se houver um personagem oficial aprovado em PLAYABLE_CHARACTERS (ex: Ichigo Shikai)
-  const approvedChar = PLAYABLE_CHARACTERS[state.selectedCharacter];
-  if (approvedChar && approvedChar.directions) {
-    const loader = new THREE.TextureLoader();
-    for (const [dirKey, dirInfo] of Object.entries(approvedChar.directions)) {
-      // Quadro neutro/idle padrão
-      const texPath = `/src/assets/characters/${approvedChar.id}/${dirInfo.file}`;
-      const tex = loader.load(texPath);
-      tex.magFilter = THREE.NearestFilter;
-      tex.minFilter = THREE.NearestFilter;
-      tex.colorSpace = THREE.SRGBColorSpace;
-      spriteTextures[`player_${dirKey}`] = tex;
-    }
-    playerKit = loadPlayerKit(loader);
-
-    // Configurar escala e FPS
-    if (approvedChar.worldScale) {
-      playerMesh && playerMesh.scale.set(approvedChar.worldScale[0], approvedChar.worldScale[1], 1.0);
-    }
-    // Atualizar HUD com informações oficiais do personagem
-    const titleEl = document.getElementById('player-title');
-    if (titleEl) titleEl.innerText = approvedChar.name || 'Ichigo Kurosaki (Shikai)';
-    const avatarEl = document.getElementById('avatar-box');
-    if (avatarEl) avatarEl.innerText = '⚔️';
-  }
+  // 2. Kit de animações do personagem escolhido no menu (trocado em startGame)
+  playerKit = loadPlayerKit(new THREE.TextureLoader(), state.selectedCharacter);
 
   // 3. Carregar efeitos visuais (FX) registrados no FX_REGISTRY (Auras, Cortes, Habilidades)
   if (typeof FX_REGISTRY !== 'undefined') {
@@ -289,7 +268,6 @@ function createPlayerMesh() {
   const pGeo = new THREE.PlaneGeometry(2.35, 2.35);
   pGeo.translate(0, 1.175, 0);
   const pMat = new THREE.MeshBasicMaterial({
-    map: spriteTextures.player_back,
     transparent: true,
     depthWrite: false,
     side: THREE.DoubleSide
@@ -578,7 +556,6 @@ function applyPlayerMovement(player, dir, dt) {
 function updatePlayerTimers(player, dt) {
   if (player.invulnerableTime > 0) player.invulnerableTime -= dt;
   if (player.katanaCooldown > 0) player.katanaCooldown -= dt;
-  if (player.shikaiActive && player.byakuraiCooldown > 0) player.byakuraiCooldown -= dt;
   if (state.passives?.kaido > 0 && player.hp < player.maxHp) {
     const regen = Math.min(state.passives.kaido * 1.5, player.maxHp * 0.04);
     player.hp = Math.min(player.maxHp, player.hp + regen * dt);
@@ -758,13 +735,15 @@ function executeGetsugaTensho(dmg) {
   // Mira inteligente: Encontra a direção com maior densidade de Hollows ou boss
   const target = findSmartTargetDirection(player.x, player.z, 32.0, 2.4);
 
-  fxManager.spawnGetsuga(player.x, player.z, target.dirX, target.dirZ, dmg, {
-    speed: 19.5,
-    maxDistance: 32.0,
-    hitRadius: 2.4,
-    startScale: 2.2,
-    endScale: 4.2
-  });
+  fireSkill('getsuga', target, dmg);
+}
+
+// Uma salva do arsenal do personagem: um projétil ou vários (leque, fileira).
+function fireSkill(key, target, dmg) {
+  const shot = arsenalShot(state.selectedCharacter, key);
+  for (const v of volleyDirections(target.dirX, target.dirZ, shot)) {
+    fxManager.spawnSkillProjectile(shot.fx, key, player.x + v.offX, player.z + v.offZ, v.x, v.z, dmg * shot.damageScale, shot);
+  }
 }
 
 function executeAsauchiSlash(dmg) {
@@ -826,17 +805,13 @@ function executeByakurai(dmg) {
   if (!target) return;
   const tx = target.x - player.x, tz = target.z - player.z;
   const len = Math.hypot(tx, tz) || 1;
-  fxManager.spawnByakurai(player.x, player.z, tx / len, tz / len, dmg, {
-    speed: 28.0, maxDistance: 30.0, hitRadius: 1.6
-  });
+  fireSkill('byakurai', { dirX: tx / len, dirZ: tz / len }, dmg);
 }
 
 function executeShakkaho(dmg) {
   if (!fxManager) return;
   const target = findSmartTargetDirection(player.x, player.z, 25.0, 2.8);
-  fxManager.spawnShakkaho(player.x, player.z, target.dirX, target.dirZ, dmg, {
-    speed: 16.0, maxDistance: 25.0, hitRadius: 2.8
-  });
+  fireSkill('shakkaho', target, dmg);
 }
 
 function damageEnemy(en, dmg, weaponKey, attackerId = state.localPlayerId) {
@@ -1170,10 +1145,10 @@ function resetPlayerState() {
 }
 
 function resetWeaponsAndPassives() {
-  state.weapons.asauchi = { name: 'Corte de Asauchi', level: 1, cooldown: 1.0, timer: 0, damage: 35, totalDamage: 0 };
-  state.weapons.getsuga = { name: 'Getsuga Tenshō', level: 1, cooldown: 2.8, timer: 0.8, damage: 180, totalDamage: 0 };
-  state.weapons.byakurai = { name: 'Hadō #4 Byakurai', level: 0, cooldown: 2.2, timer: 0, damage: 45, totalDamage: 0 };
-  state.weapons.shakkaho = { name: 'Hadō #31 Shakkahō', level: 0, cooldown: 3.5, timer: 0, damage: 70, totalDamage: 0 };
+  state.weapons.asauchi = { name: WEAPON_DEFINITIONS.asauchi.name, level: 1, cooldown: 1.0, timer: 0, damage: 35, totalDamage: 0 };
+  state.weapons.getsuga = { name: WEAPON_DEFINITIONS.getsuga.name, level: 1, cooldown: 2.8, timer: 0.8, damage: 180, totalDamage: 0 };
+  state.weapons.byakurai = { name: WEAPON_DEFINITIONS.byakurai.name, level: 0, cooldown: 2.2, timer: 0, damage: 45, totalDamage: 0 };
+  state.weapons.shakkaho = { name: WEAPON_DEFINITIONS.shakkaho.name, level: 0, cooldown: 3.5, timer: 0, damage: 70, totalDamage: 0 };
   state.passives.reiatsu = 0;
   state.passives.shunpo = 0;
   state.passives.hierro = 0;
@@ -1243,8 +1218,17 @@ function onPrologueCompleted() {
   document.getElementById('pause-modal')?.classList.add('hidden');
 }
 
-function startGame(name) {
+function selectCharacter(charId) {
+  if (charId) state.selectedCharacter = charId;
+  playerKit = loadPlayerKit(new THREE.TextureLoader(), state.selectedCharacter);
+  showCharacterInHud(state.selectedCharacter);
+  applyWeaponLabels(arsenalLabels(state.selectedCharacter));
+  slashMesh.material.color.setHex(arsenalSlashTint(state.selectedCharacter));
+}
+
+function startGame(name, charId) {
   stopMusic();
+  selectCharacter(charId);
   if (name) state.playerName = name;
   updatePlayerNameTag(playerNameTag, state.playerName);
   const nameEl = document.getElementById('player-name-display');

@@ -24,6 +24,13 @@ export const WEAPON_DEFINITIONS = {
   shakkaho: { id: 'shakkaho', name: 'Hadō #31 Shakkahō', icon: '🔥', type: 'aoe', baseDamage: 70, baseCd: 3.5, dmgPerLevel: 25, cdPerLevel: -0.18 }
 };
 
+// Cada personagem chama as quatro armas por outro nome e ícone (src/arsenal.js).
+export function applyWeaponLabels(labels) {
+  for (const [key, label] of Object.entries(labels)) {
+    if (WEAPON_DEFINITIONS[key]) Object.assign(WEAPON_DEFINITIONS[key], label);
+  }
+}
+
 export const PASSIVE_DEFINITIONS = {
   reiatsu: { id: 'reiatsu', name: 'Pressão Espiritual', icon: '💎', stat: 'FOR', desc: '+20% dano espiritual por nível', valuePerLevel: 0.20 },
   shunpo: { id: 'shunpo', name: 'Passo Relâmpago', icon: '👟', stat: 'DES', desc: '+12% velocidade e +15 Aceleração (CDR)', valuePerLevel: 0.12, hastePerLevel: 15 },

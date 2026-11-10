@@ -3,7 +3,7 @@
 
 Confere, em cada tira: se está completa, se os pés estão na baseline, se sobrou magenta e se a arte
 não encosta na borda do quadro (seria um pedaço cortado na tela).
-Uso: python geradores/validate_player_kit.py [--dir CAMINHO]
+Uso: python geradores/validate_player_kit.py [--char ID] [--dir CAMINHO]
 """
 import argparse
 import json
@@ -13,10 +13,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from player_kit_anims import ANIMS
-
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DIR = ROOT / "src" / "assets" / "characters" / "ichigo_shikai" / "anims"
 VIEWS = ("front", "side_l", "back")
 BASELINE_TOLERANCE_PX = 2
 MAGENTA_LIMIT = 8
@@ -64,13 +61,17 @@ def check_anim(kit: Path, anim: str, clip: dict, baseline_ratio: float) -> list[
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dir", type=Path, default=DEFAULT_DIR)
+    parser.add_argument("--char", default="ichigo_shikai")
+    parser.add_argument("--dir", type=Path)
     args = parser.parse_args()
-    manifest = json.loads((args.dir / "manifest.json").read_text(encoding="utf-8"))
-    errors = [f"{a}: fora do manifesto" for a in ANIMS if a not in manifest["anims"]]
+    from kit_cast import CAST
+    kit_dir = args.dir or ROOT / "src" / "assets" / "characters" / args.char / "anims"
+    manifest = json.loads((kit_dir / "manifest.json").read_text(encoding="utf-8"))
+    errors = [f"{a}: fora do manifesto" for a in CAST[args.char]["anims"] if a not in manifest["anims"]]
     for anim, clip in manifest["anims"].items():
-        errors += check_anim(args.dir, anim, clip, manifest["baselineRatio"])
-    print("\n".join(errors) if errors else f"kit ok: {len(manifest['anims'])} clipes, {len(VIEWS)} vistas")
+        errors += check_anim(kit_dir, anim, clip, manifest["baselineRatio"])
+    label = f"{args.char}: {len(manifest['anims'])} clipes, {len(VIEWS)} vistas"
+    print("\n".join(errors) if errors else f"kit ok: {label}")
     return 1 if errors else 0
 
 

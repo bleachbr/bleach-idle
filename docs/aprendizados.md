@@ -117,3 +117,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** em clipes de ação, usar como régua a raiz da área da maior mancha de cabelo, ajustada por vista a partir do `idle`, e separar os quadros por mancha conexa, levando a mancha inteira para a célula do seu centro. A altura das linhas com laranja não serve: a pele tem tom parecido e infla a medida. Ver [direcionamento/17](direcionamento/17-kit-animacoes-personagem.md).
 
 **Evidência:** antes do ajuste, `walk` saía com menos da metade do tamanho de `run` na folha de conferência, e `slash_b_front` tinha um pedaço de lâmina solto no quadro 4. Depois, `python geradores/validate_player_kit.py` passa nos 22 clipes e nas 3 vistas.
+
+## 16. Cabelo só é régua de escala quando a mancha dele é a mesma em toda pose
+
+**Causa raiz:** `hair_size` mede a maior mancha conexa da cor do cabelo. Com o laranja do Ichigo, a mancha é só o cabelo. O preto-azulado do Ishida encosta no contorno `#1a1822`, o castanho do Sado tem o tom da pele morena, e o cabelo espetado do Grimmjow, embora tenha cor única, muda de área quando ele se curva, cai ou é atingido. Nos três, a "maior mancha" muda de pedaço do corpo conforme a pose, e a escala pula sem o personagem ter mudado de tamanho.
+
+**O que fazer:** nesses casos, régua `fixed` em `geradores/kit_cast.py`: a escala por vista sai do `idle` e vale para todos os clipes. Funciona porque o Codex mantém o tamanho absoluto do personagem entre imagens da mesma grade 4x3.
+
+**Evidência:** no piloto, a mancha castanha do Sado mediu 35 px no `idle_left` e 21–27 px nos primeiros quadros do `getsuga_left`, embora o quadro neutro do golpe tivesse 262 px de altura contra 257 do `idle`. A mancha preto-azulada do Ishida oscilou entre 8 e 19 px dentro do próprio `idle_left`. No Grimmjow, a mancha azul ficou estável dentro do `idle` (41 a 50 px), mas entre clipes a escala calculada por ela foi de 0,34 a 0,48, enquanto o quadro neutro de cada clipe media de 256 a 278 px, quase o mesmo que o `idle` (262 a 269). No `hurt_heavy_back` a régua aumentava o corpo em 19% sem motivo.
