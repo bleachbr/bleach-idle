@@ -2,7 +2,7 @@
 
 Causa raiz que custou tempo ou que ia ser redescoberta. Não é plano (isso é o [ROADMAP](ROADMAP.md)) nem dívida aberta (isso é [pendencias.md](pendencias.md)).
 
-**Última atualização:** 2026-11-07
+**Última atualização:** 2026-11-10
 
 O número é da família inteira. Item novo pega `max + 1` e não reusa número que já saiu.
 
@@ -117,6 +117,14 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** em clipes de ação, usar como régua a raiz da área da maior mancha de cabelo, ajustada por vista a partir do `idle`, e separar os quadros por mancha conexa, levando a mancha inteira para a célula do seu centro. A altura das linhas com laranja não serve: a pele tem tom parecido e infla a medida. Ver [direcionamento/17](direcionamento/17-kit-animacoes-personagem.md).
 
 **Evidência:** antes do ajuste, `walk` saía com menos da metade do tamanho de `run` na folha de conferência, e `slash_b_front` tinha um pedaço de lâmina solto no quadro 4. Depois, `python geradores/validate_player_kit.py` passa nos 22 clipes e nas 3 vistas.
+
+## 15. O despill do kit do jogador deixa um monstro roxo cinza
+
+**Causa raiz:** `despill` em `geradores/process_player_kit.py` trata como resíduo de magenta todo pixel com vermelho e azul acima do verde, e corta os dois. No Ichigo isso só pega a borda. O corpo do Shrieker é roxo, que tem essa mesma assinatura, então o despill aplicado à imagem inteira dessatura o monstro todo.
+
+**O que fazer:** em arte com roxo, rosa ou lilás, aplicar o despill só no contorno da silhueta (2 px para dentro da máscara), como faz `edge_despill` em `geradores/process_hollow_clips.py`.
+
+**Evidência:** a primeira tira de `shrieker_attack_front` saiu cinza-chumbo ao lado do walk8 roxo. Com o despill só no contorno, a cor bate e `python geradores/validate_hollow_clips.py` continua sem pixel magenta.
 
 ## 16. Cabelo só é régua de escala quando a mancha dele é a mesma em toda pose
 

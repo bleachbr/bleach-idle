@@ -22,6 +22,10 @@ import { arsenalLabels, arsenalSlashTint, arsenalShot, volleyDirections } from '
 import { updateBuildHUD } from './build_hud.js';
 import { updatePauseDetails } from './pause_modal.js';
 import { stopMusic, playHuecoMundoBGM } from './audio.js';
+import { loadMonsterTextures } from './monsterTextures.js';
+import { pickHollowType, configureHollow, steerHollow, tickHollowAttack, hollowTypeOf } from './hollowTypes.js';
+import { loadHollowClips, applyHollowClip, startHollowDeath, hideHollow, updateDyingHollows } from './hollowClips.js';
+import { createAcidSpitPool, spawnAcidSpit, updateAcidSpit, clearAcidSpit } from './fx/acidSpit.js';
 import { showCharacterInHud } from './characterSelect.js';
 // Constantes da Arena e Câmera (Hueco Mundo - Bioma Ativo da Entrega 1)
 const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 176.0;
@@ -55,11 +59,7 @@ export const state = {
   xpNext: 20,
   bossSpawned: false,
   bossDefeated: false,
-  census: {
-    fishbone: 0,
-    elite: 0,
-    menos: 0
-  },
+  census: { fishbone: 0, shrieker: 0, acidwire: 0, elite: 0, menos: 0 },
   localPlayerId: 'shinigami_' + Math.random().toString(36).substring(2, 6),
   activeBannerOptions: [],
   weapons: {
@@ -111,7 +111,7 @@ let activeMap = null, huecoMundoMap = null, dangaiMap = null;
 let enemyMeshes = [];
 let reishiDrops = [];
 let spriteTextures = {};
-let playerKit = null;
+let playerKit = null, hollowClips = null, acidSpit = null;
 const playerAnimator = createPlayerAnimator(playerAnimCatalog);
 const DEATH_ANIM_SECONDS = 1.6; // A animação de queda inteira (1 s) mais uma pausa antes da tela de fim
 let deathTimer = 0;
@@ -147,9 +147,7 @@ function init() {
   buildSprites();
   createPlayerMesh();
   createSlashMesh();
-  fxManager = new FXManager(scene, spriteTextures);
-  reishiGroup = new THREE.Group();
-  scene.add(reishiGroup);
+  createEffectPools();
   initEnemyPool();
   setupInputListeners(canvas);
   initVirtualJoystick({ cameraState, onJump: jumpPlayer });
@@ -158,6 +156,13 @@ function init() {
   exposeDebugInterface();
   showLoginMenu();
   requestAnimationFrame(loop);
+}
+
+function createEffectPools() {
+  fxManager = new FXManager(scene, spriteTextures);
+  acidSpit = createAcidSpitPool(scene);
+  reishiGroup = new THREE.Group();
+  scene.add(reishiGroup);
 }
 
 function createArena() {
@@ -218,38 +223,9 @@ function buildSprites() {
     }
   }
 
-  // 4. Carregar monstros oficiais aprovados (Fishbone D e Menos Grande Gillian)
-  loadMonsterTextures(new THREE.TextureLoader());
-}
-
-function loadMonsterDirFrames(loader, m, d) {
-  const tex = loader.load('/src/assets/monsters/' + m.id + '/' + d + '.png');
-  tex.magFilter = THREE.NearestFilter;
-  tex.colorSpace = THREE.SRGBColorSpace;
-  spriteTextures[m.alias + '_' + d] = tex;
-  spriteTextures[m.id + '_' + d] = tex;
-
-  for (let f = 0; f < m.dirCount; f++) {
-    const fTex = loader.load('/src/assets/monsters/' + m.id + '/' + d + '_' + f + '.png');
-    fTex.magFilter = THREE.NearestFilter;
-    fTex.colorSpace = THREE.SRGBColorSpace;
-    spriteTextures[m.alias + '_' + d + '_' + f] = fTex;
-    spriteTextures[m.id + '_' + d + '_' + f] = fTex;
-  }
-}
-
-function loadMonsterTextures(loader) {
-  const monsters = [
-    { id: 'fishbone', alias: 'fishbone', dirCount: 8 },
-    { id: 'menos_grande', alias: 'menos', dirCount: 8 }
-  ];
-  for (const m of monsters) {
-    for (const d of ['front', 'side_l', 'side', 'back']) {
-      loadMonsterDirFrames(loader, m, d);
-    }
-    spriteTextures[m.alias] = spriteTextures[m.alias + '_front'];
-    spriteTextures[m.id] = spriteTextures[m.alias + '_front'];
-  }
+  // 4. Monstros aprovados (walk8) e os clipes de ataque e morte dos hollows
+  loadMonsterTextures(new THREE.TextureLoader(), spriteTextures);
+  hollowClips = loadHollowClips(new THREE.TextureLoader());
 }
 
 function attachPlayerShadowAndTag() {
@@ -498,6 +474,7 @@ function updateCombatLoop(dt) {
   }
   updateSpawns(dt);
   updateEnemies(dt);
+  updateHollowAttacks(dt);
   updateReishi(dt);
 }
 
@@ -587,6 +564,7 @@ function jumpPlayer() {
 function updateEnemyBillboard(en, walkFrame) {
   en.mesh.quaternion.copy(camera.quaternion);
   const eDir = getSpriteDirection(en.dirX, en.dirZ, cameraState.yaw);
+  if (applyHollowClip(en, eDir, hollowClips)) return;
   const baseType = en.type === 'elite' ? 'fishbone' : en.type;
   const frameKey = baseType + '_' + eDir + '_' + walkFrame;
   const texKey = baseType + '_' + eDir;
@@ -618,7 +596,7 @@ function updateBillboards() {
   playerMesh.quaternion.copy(camera.quaternion);
   const enemyWalkFrame = Math.floor(state.time * 8) % 8;
   for (const en of enemyMeshes) {
-    if (en.active) updateEnemyBillboard(en, enemyWalkFrame);
+    if (en.active || en.dying) updateEnemyBillboard(en, enemyWalkFrame);
   }
 
   updateMapPropsBillboard(activeMap?.propGroup, camera);
@@ -843,9 +821,7 @@ function getTopDamagePlayer(contribs, fallbackId) {
 }
 
 function killEnemy(en) {
-  en.active = false;
-  en.mesh.visible = false;
-  en.mesh.position.set(0, -999, 0);
+  startHollowDeath(en);
   state.kills++;
   registerKillInCycle(state.cycleState);
   state.census[en.type] = (state.census[en.type] || 0) + 1;
@@ -998,9 +974,8 @@ function updateSpawns(dt) {
 }
 
 function setupHollowMesh(en) {
-  const s = en.isElite ? 2.2 : 1.4;
-  en.mesh.scale.set(s, s, s);
-  en.mesh.material.map = spriteTextures.fishbone_front || spriteTextures.fishbone;
+  en.mesh.scale.set(en.scale, en.scale, en.scale);
+  en.mesh.material.map = spriteTextures[(en.isElite ? 'fishbone' : en.type) + '_front'];
   en.mesh.material.color.setHex(en.isElite ? 0xff3355 : 0xffffff);
   const spawnY = getTerrainHeight ? getTerrainHeight(en.x, en.z) : 0;
   en.mesh.position.set(en.x, spawnY, en.z);
@@ -1008,7 +983,7 @@ function setupHollowMesh(en) {
 }
 
 function spawnHollow(isElite = false) {
-  const en = enemyMeshes.find(e => !e.active);
+  const en = enemyMeshes.find(e => !e.active && !e.dying);
   if (!en) return;
 
   const mult = getCycleMultipliers(state.cycleState);
@@ -1017,11 +992,7 @@ function spawnHollow(isElite = false) {
   en.x = player.x + Math.cos(angle) * dist;
   en.z = player.z + Math.sin(angle) * dist;
   en.active = true;
-  en.type = isElite ? 'elite' : 'fishbone';
-  en.isElite = isElite;
-  en.hp = Math.round((isElite ? 200 : 45) * mult.hpMult);
-  en.maxHp = en.hp;
-  en.speed = (isElite ? 3.4 : 3.2) * mult.speedMult;
+  configureHollow(en, pickHollowType(state.time), isElite, mult);
   en.isBoss = false;
   en.targetPlayerId = null;
   en.damageContributions = {};
@@ -1037,7 +1008,7 @@ function setupBossMesh(en) {
 }
 
 function spawnBossMenosGrande(targetPlayerId = state.localPlayerId) {
-  const en = enemyMeshes.find(e => !e.active);
+  const en = enemyMeshes.find(e => !e.active && !e.dying);
   if (!en) return;
 
   const mult = getCycleMultipliers(state.cycleState);
@@ -1059,12 +1030,16 @@ function spawnBossMenosGrande(targetPlayerId = state.localPlayerId) {
 }
 
 function applyContactDamage(en, dist) {
-  if (dist >= 1.1 || player.y >= 0.9 || player.invulnerableTime > 0) return;
-  const rawDmg = en.isBoss ? 35 : (en.isElite ? 22 : 12);
+  if (dist >= 1.1 || player.y >= 0.9) return;
+  hurtPlayer(en.isBoss ? 35 : en.contactDamage, en.isBoss);
+}
+
+function hurtPlayer(rawDmg, heavy) {
+  if (player.invulnerableTime > 0) return;
   const hierroPts = (state.passives.hierro || 0) * 25;
   player.hp -= applyHierroDamageMitigation(rawDmg, hierroPts);
   player.invulnerableTime = 0.6;
-  triggerPlayerAction(playerAnimator, en.isBoss ? 'hurt_heavy' : 'hurt');
+  triggerPlayerAction(playerAnimator, heavy ? 'hurt_heavy' : 'hurt');
   if (player.hp <= 0) {
     player.hp = 0;
     triggerPlayerAction(playerAnimator, 'death');
@@ -1084,10 +1059,11 @@ function tickPlayerDeath(dt) {
 }
 
 function moveEnemyTowardsPlayer(en, dx, dz, dist, dt) {
-  en.dirX = dx / dist;
-  en.dirZ = dz / dist;
-  en.x += en.dirX * en.speed * dt;
-  en.z += en.dirZ * en.speed * dt;
+  const steer = steerHollow(en, dx, dz, dist, state.time);
+  en.dirX = steer.x;
+  en.dirZ = steer.z;
+  en.x += steer.x * en.speed * steer.pace * dt;
+  en.z += steer.z * en.speed * steer.pace * dt;
   en.mesh.position.set(en.x, getTerrainHeight(en.x, en.z), en.z);
 }
 
@@ -1107,6 +1083,18 @@ function tickEnemyBehavior(en, dt) {
     en.flashTimer -= dt;
     if (en.flashTimer <= 0) en.mesh.material.color.setHex(en.isElite ? 0xff3355 : 0xffffff);
   }
+}
+
+// Fora do laço de movimento: updateEnemies roda duas vezes por quadro em combate.
+function updateHollowAttacks(dt) {
+  for (const en of enemyMeshes) {
+    if (!en.active) continue;
+    const dist = Math.hypot(player.x - en.x, player.z - en.z);
+    if (tickHollowAttack(en, dist, dt) === 'spit') spawnAcidSpit(acidSpit, en, player, hollowTypeOf(en).attack.spitDamage);
+  }
+  updateDyingHollows(enemyMeshes, dt);
+  const acidDamage = updateAcidSpit(acidSpit, dt, player, camera.quaternion, getTerrainHeight);
+  if (acidDamage > 0) hurtPlayer(acidDamage, false);
 }
 
 function updateEnemies(dt) {
@@ -1160,8 +1148,9 @@ function resetWeaponsAndPassives() {
 function clearActiveEntities() {
   for (const en of enemyMeshes) {
     en.active = false;
-    en.mesh.visible = false;
+    hideHollow(en);
   }
+  clearAcidSpit(acidSpit);
   for (const drop of reishiDrops) {
     drop.active = false;
     drop.mesh.visible = false;
@@ -1190,7 +1179,7 @@ function resetMatchStats() {
   state.peakReiatsu = 0;
   resetCycleState(state.cycleState);
   state.levelUpOpen = false;
-  state.census = { fishbone: 0, elite: 0, menos: 0 };
+  state.census = { fishbone: 0, shrieker: 0, acidwire: 0, elite: 0, menos: 0 };
 }
 
 function resetMatch() {

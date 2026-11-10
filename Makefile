@@ -30,6 +30,9 @@ docker-run: ## Executa o container Docker na porta 2567
 validate-sprites: ## Executa testes de qualidade estática nos sprites gerados (alturas, baseline, despill)
 	python3 geradores/validate_sprites.py --name ichigo_shikai
 	python3 geradores/validate_player_kit.py
+	python3 geradores/validate_sprites.py --name shrieker --category monsters
+	python3 geradores/validate_sprites.py --name acidwire --category monsters
+	python3 geradores/validate_hollow_clips.py
 	python3 geradores/validate_sprites.py --name ishida
 	python3 geradores/validate_sprites.py --name sado
 	for c in ishida sado grimmjow; do python3 geradores/validate_player_kit.py --char $$c || exit 1; done
@@ -58,6 +61,8 @@ movement-test: ## Testes unitários de movimentação, walk cycle e direções d
 player-anim-test: ## Testes da máquina de estados de animação do jogador
 	python3 scripts/test_player_animation.py
 
+hollow-test: ## Testes de sorteio, rota e ataque dos tipos de hollow
+	python3 scripts/test_hollow_types.py
 arsenal-test: ## Testes do arsenal de cada personagem jogável
 	python3 scripts/test_arsenal.py
 

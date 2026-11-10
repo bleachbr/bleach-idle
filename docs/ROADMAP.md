@@ -31,7 +31,7 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 - [x] Modo sobrevivência infinito (Endless Survivor Loop) no Hueco Mundo: escalonamento contínuo por ciclos, eliminação de vitória prematura no Menos Grande com chuva de Reishi e hordas exponenciais, auto-escolha de poderes em 10s com badge regressivo, mapa 4x maior com relevo dunas/floresta, Lua canônica e céu estelar, modo AFK com camuflagem espiritual e agro dinâmico por Pressão Espiritual (Reiatsu) (`src/cycle.js`, `src/levelup.js`, `src/reiatsu.js`, [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [x] Sistema de Atributos RPG e Inspeção de Build: motor de atributos do Shinigami (Força/ATK, Destreza/Shunpo/CDR cap 65%, Hierro/DEF cap 75%, Kaidō/Regen cap 4%/s, Vórtice de Reishi), limite estrito de até 3 armas ativas e até 4 passivas com 5 níveis por item, miniaturas de slots no HUD superior direito com selo de orientação tática (Melee, Kidō, Defensivo, Equilibrado), Ficha do Shinigami e sinergias em destaque no modal de pausa AFK (ESC) e suite de testes de caps matemáticos (`src/stats.js`, `src/build_hud.js`, `src/pause_modal.js`, `scripts/test_rpg_stats.py`, [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [x] Kit de animações do personagem principal: 22 clipes em 3 vistas, com máquina de estados ([direcionamento/17](direcionamento/17-kit-animacoes-personagem.md), [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
-- [ ] Variedade adicional de hollows (Shrieker com aproximação em zigue-zague, Acidwire com projéteis ácidos)
+- [x] Variedade adicional de hollows: Shrieker em zigue-zague e Acidwire com cuspe ácido, com clipes de ataque e morte ([direcionamento/18](direcionamento/18-hollows-shrieker-e-acidwire.md), [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 
 - [ ] Mapas Soul Society, Karakura Town e Dangai
 - [ ] Shikai no nível 15 e Bankai no nível 35, com troca de sprite
@@ -52,4 +52,5 @@ Pedido novo que passou pela skill `triagem-pedido` entra aqui numa linha: data, 
 - 2026-11-08: aceito — prólogo no Dangai (DG) com Rukia e briefing animado da missão antes da travessia para o Hueco Mundo.
 - 2026-11-08: aceito — sobrevivência infinita (endless loop), auto-escolha level-up em 10s, mapa 4x com lua/estrelas, pausa AFK com camuflagem e Reiatsu dinâmica.
 - 2026-11-08: aceito — sistema de atributos RPG, limite de 3 armas e 4 passivas com tiers 1-5, miniaturas no HUD superior direito e Ficha do Shinigami com sinergias na pausa (avaliado e aprovado via ORCA pelo juiz KIRO).
+- 2026-11-10: aceito — botão de mute da música (canto inferior esquerdo e tecla M). Em produção começa com som e guarda a escolha. No `npm run dev` sempre começa mutada, a pedido do dono.
 - 2026-11-10: aceito — elenco jogável fechado em Ichigo, Ishida, Sado e Grimmjow por decisão do dono, cada um com sprites completos e poderes próprios nas quatro posições de arma.

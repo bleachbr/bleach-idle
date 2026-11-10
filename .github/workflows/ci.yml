@@ -42,6 +42,7 @@ jobs:
           python3 scripts/lint/test_js_size.py
           python3 scripts/lint/js_size.py
           python3 scripts/test_player_movement.py
+          python3 scripts/test_hollow_types.py
           python3 scripts/test_arsenal.py
 
   build:

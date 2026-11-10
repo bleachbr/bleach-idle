@@ -74,5 +74,19 @@ export const FX_BEHAVIORS = {
     fadeOutDist: 5.0,
     fps: 10,
     blendMode: 'additive'
+  },
+
+  // 6. CUSPE ÁCIDO DO ACIDWIRE (projétil inimigo em arco, mira onde o jogador estava)
+  hollow_acid_spit: {
+    type: 'enemy_projectile',
+    speed: 10.0,
+    maxDistance: 16.0,
+    hitRadius: 0.8,
+    startHeight: 1.4,     // Sai da boca, não do chão
+    arcHeight: 1.1,       // Altura extra no meio do trajeto
+    scale: 0.9,
+    popDuration: 0.25,    // Estouro ao bater ou ao fim do alcance
+    popScale: 2.2,
+    blendMode: 'additive'
   }
 };

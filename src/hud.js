@@ -35,6 +35,8 @@ function renderGameOverCensus(state) {
   if (censusList) {
     const menosText = `${state.census.menos || 0} (PURIFICADOS)`;
     censusList.innerHTML = `<li><span>Hollow (Fishbone D):</span> <b>${state.census.fishbone || 0}</b></li>` +
+      `<li><span>Hollow Alado (Shrieker):</span> <b>${state.census.shrieker || 0}</b></li>` +
+      `<li><span>Hollow Ácido (Acidwire):</span> <b>${state.census.acidwire || 0}</b></li>` +
       `<li><span>Hollow Mutante (Elite):</span> <b>${state.census.elite || 0}</b></li>` +
       `<li><span>Menos Grande (Gillian):</span> <b>${menosText}</b></li>`;
   }
