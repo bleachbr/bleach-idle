@@ -68,13 +68,14 @@ global.document = {
                     remove(c) { this.classes.delete(c); },
                     contains(c) { return this.classes.has(c); }
                 },
-                src: '', textContent: ''
+                src: '', textContent: '', tagName: 'DIV', onclick: null
             };
         }
         return __domStore[id];
     },
-    addEventListener: () => {},
-    removeEventListener: () => {}
+    __listeners: {},
+    addEventListener: (type, fn) => { document.__listeners[type] = fn; },
+    removeEventListener: (type) => { delete document.__listeners[type]; }
 };
 """
 
@@ -204,6 +205,76 @@ class TestPrologueWiring(unittest.TestCase):
         self.assertTrue(res["onCompleteCalled"], "Callback onComplete deve ser chamado ao concluir o prólogo")
         self.assertFalse(res["portalRemaining"], "Portal Senkaimon deve ser removido da cena após conclusão")
         self.assertFalse(res["rukiaRemaining"], "Rukia NPC deve ser removida da cena após conclusão")
+
+    def test_prologue_advance_input_starts_cinematic(self):
+        """Avanço do briefing via botão/tecla deve iniciar e concluir a cinemática."""
+        res = run_node(f"""
+            {DOM_MOCK_SNIPPET}
+            import * as THREE from 'three';
+            import {{
+                startPrologue,
+                updatePrologue,
+                isPrologueActive,
+                isPrologueCinematicTransition
+            }} from './src/prologue.js';
+
+            // Typewriter: esgota o texto no mesmo tick para o Next avançar de página.
+            global.setInterval = (fn) => {{ for (let i = 0; i < 2000; i++) fn(); return 1; }};
+            global.clearInterval = () => {{}};
+            global.setTimeout = (fn) => {{ fn(); return 1; }};
+
+            const scene = new THREE.Scene();
+            const loader = {{
+                load: () => ({{ colorSpace: '', magFilter: '', minFilter: '' }})
+            }};
+            const dangaiMap = {{
+                terrainMesh: {{ material: {{ map: {{ offset: {{ set: () => {{}}, y: 0 }} }} }} }},
+                propGroup: {{ children: [] }}
+            }};
+            const player = {{ x: 0.85, y: 0, z: 0, isMoving: true }};
+            const playerMesh = {{
+                position: {{ set(x, y, z) {{ this.x = x; this.y = y; this.z = z; }} }},
+                quaternion: {{ copy: () => {{}} }}
+            }};
+            const camera = {{
+                position: {{ set(x, y, z) {{ this.x = x; this.y = y; this.z = z; }} }},
+                quaternion: {{ copy: () => {{}} }},
+                lookAt: () => {{}}
+            }};
+
+            let onCompleteCalled = false;
+            startPrologue({{
+                scene,
+                loader,
+                dangaiMap,
+                getHeightFn: () => 0,
+                onComplete: () => {{ onCompleteCalled = true; }}
+            }});
+
+            const nextBtn = document.getElementById('btn-briefing-next');
+            const boundBeforeAdvance = typeof nextBtn.onclick === 'function';
+            // 4 páginas: 3× próximo + 1× atravessar Senkaimon (onclick do bindDialogueButtons).
+            for (let i = 0; i < 4; i++) nextBtn.onclick({{ target: nextBtn }});
+            const cinematicAfterClicks = isPrologueCinematicTransition();
+            const keyUnboundAfterCinematic = typeof document.__listeners.keydown !== 'function';
+
+            updatePrologue(1.5, {{ camera, player, playerMesh, dangaiMap, showRunFrame: () => {{}} }});
+
+            console.log(JSON.stringify({{
+                boundBeforeAdvance,
+                cinematicAfterClicks,
+                keyUnboundAfterCinematic,
+                activeAfter: isPrologueActive(),
+                cinematicAfter: isPrologueCinematicTransition(),
+                onCompleteCalled
+            }}));
+        """)
+        self.assertTrue(res["boundBeforeAdvance"], "Botão Próximo deve receber o handler do briefing")
+        self.assertTrue(res["cinematicAfterClicks"], "Clique em Próximo nas 4 páginas deve iniciar a cinemática")
+        self.assertTrue(res["keyUnboundAfterCinematic"], "Listener de teclado do prólogo deve sair ao entrar na cinemática")
+        self.assertFalse(res["activeAfter"], "Prólogo deve encerrar após a cinemática iniciada pelo input")
+        self.assertFalse(res["cinematicAfter"], "Cinemática deve desligar após updatePrologue além da duração")
+        self.assertTrue(res["onCompleteCalled"], "onComplete deve rodar ao concluir a cinemática iniciada pelo input")
 
     def test_prologue_cancel_path(self):
         res = run_node(f"""
