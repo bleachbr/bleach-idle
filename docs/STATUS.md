@@ -27,4 +27,6 @@ A partida completa de ponta a ponta foi executada, validada e documentada com ev
 
 ## Fora deste status
 
+O pacote `test/` (Jogador-IA / regressão Playwright) está de volta no git, mas ainda é do Bleach Idle — não cobre o Soul Survivor ([pendência 14](pendencias.md)). Artefatos locais ficam em `test/runs/` (ignorados).
+
 Direção de câmera, sprite e FX: [direcionamento/](direcionamento/01-engenharia-reversa-pokebonk.md). Dívidas: [pendencias.md](pendencias.md). Pegadinhas: [aprendizados.md](aprendizados.md).

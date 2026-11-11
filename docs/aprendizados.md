@@ -173,3 +173,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** o `Dockerfile` Node e o cliente de presença precisam estar na `main` antes do próximo deploy automático. Validar pós-deploy com `curl -s https://bleach.acoplum.com/api/multiplayer/room` (JSON, não HTML).
 
 **Evidência:** em 2026-11-11 o domínio voltou a 405 no POST `/join` após o deploy `31ae87e` (#364), enquanto a imagem `066e92a` (Node) ainda existia na VPS e restaurou a sala.
+
+## 22. `test/runs/` no disco não prova que o harness ainda está no git
+
+**Causa raiz:** `test/runs/` está no `.gitignore`. O commit `cdb05222` (`novo projeto`) apagou o código versionado em `test/` (README, `src/`, regressão, package.json), mas os artefatos locais de playtest (relatórios, memórias, SQLite) ficaram no working tree. Quem abre a pasta vê runs e acha que o harness sumiu "por dentro" dela; o que sumiu foi a árvore irmã versionada.
+
+**O que fazer:** recuperar com `git checkout 02f4c973 -- test/` (ou o commit pai do wipe). Não procurar specs dentro de `runs/`.
+
+**Evidência:** `git check-ignore -v test/runs/` aponta `.gitignore:13`; `git log --diff-filter=D -- test/` mostra o wipe em `cdb05222`; `git ls-tree -r 02f4c973 -- test/` lista o harness completo.
