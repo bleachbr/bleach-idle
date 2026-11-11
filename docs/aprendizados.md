@@ -2,7 +2,7 @@
 
 Causa raiz que custou tempo ou que ia ser redescoberta. Não é plano (isso é o [ROADMAP](ROADMAP.md)) nem dívida aberta (isso é [pendencias.md](pendencias.md)).
 
-**Última atualização:** 2026-11-10
+**Última atualização:** 2026-11-11
 
 O número é da família inteira. Item novo pega `max + 1` e não reusa número que já saiu.
 
@@ -133,3 +133,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** nesses casos, régua `fixed` em `geradores/kit_cast.py`: a escala por vista sai do `idle` e vale para todos os clipes. Funciona porque o Codex mantém o tamanho absoluto do personagem entre imagens da mesma grade 4x3.
 
 **Evidência:** no piloto, a mancha castanha do Sado mediu 35 px no `idle_left` e 21–27 px nos primeiros quadros do `getsuga_left`, embora o quadro neutro do golpe tivesse 262 px de altura contra 257 do `idle`. A mancha preto-azulada do Ishida oscilou entre 8 e 19 px dentro do próprio `idle_left`. No Grimmjow, a mancha azul ficou estável dentro do `idle` (41 a 50 px), mas entre clipes a escala calculada por ela foi de 0,34 a 0,48, enquanto o quadro neutro de cada clipe media de 256 a 278 px, quase o mesmo que o `idle` (262 a 269). No `hurt_heavy_back` a régua aumentava o corpo em 19% sem motivo.
+
+## 17. Com `main.js` no teto do inventário, feature nova não pode nascer como bloco nele
+
+**Causa raiz:** `scripts/lint/size_inventory.json` trava o tamanho medido de `src/main.js`. Qualquer linha líquida a mais (import + chamada) reprova o `make size-check`, mesmo com o comportamento correto. Funções já acima de 20 linhas (ex.: `executeAsauchiSlash`) também não podem crescer.
+
+**O que fazer:** comportamento novo em módulo próprio (`src/sfx.js`, `src/combatAudio.js`, …); o main só chama. Se precisar de orçamento, encolher comentário/bloco morto no mesmo diff e gravar o número menor no inventário.
+
+**Evidência:** nesta branch o arquivo estava em 1250/1250; SFX entrou via `combatAudio.js` e o inventário desceu para 1235 após liberar linhas de comentário.

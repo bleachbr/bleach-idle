@@ -66,6 +66,9 @@ hollow-test: ## Testes de sorteio, rota e ataque dos tipos de hollow
 arsenal-test: ## Testes do arsenal de cada personagem jogável
 	python3 scripts/test_arsenal.py
 
+sfx-test: ## Catraca: todo FX de disparo do arsenal tem SFX e o main liga os gatilhos
+	python3 scripts/test_sfx.py
+
 evolution-test: ## Testes unitários de ciclo infinito, reiatsu e level-up timer
 	python3 scripts/test_endless_evolution.py
 
@@ -75,4 +78,4 @@ safety-test: ## Testes de proteção: Lua ao norte/baixa, transição do prólog
 rpg-stats-test: ## Testes unitários do sistema de atributos RPG, caps matemáticos (CDR 65%, Hierro 75%) e sinergias
 	python3 scripts/test_rpg_stats.py
 
-test: movement-test player-anim-test evolution-test safety-test rpg-stats-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, rpg stats, governança, catraca de tamanho)
+test: movement-test player-anim-test evolution-test safety-test rpg-stats-test arsenal-test sfx-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, rpg, arsenal, sfx, governança, catraca de tamanho)

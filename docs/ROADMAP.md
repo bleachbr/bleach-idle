@@ -2,7 +2,7 @@
 
 Fonte única do que está aberto. Caixa entregue fica numa linha; o relato vai para [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md). Estado de hoje: [STATUS.md](STATUS.md).
 
-**Última atualização:** 2026-11-10
+**Última atualização:** 2026-11-11
 
 A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele arquivo só aponta para este.
 
@@ -42,6 +42,7 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 ## Frente 3 — engenharia do protótipo
 
 - [x] CI diz a verdade sobre este `package.json`: gitleaks, quality e build; jobs do bleach-idle removidos ([_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
+- [x] BGM em 0.08 e SFX de combate no Hueco Mundo (slash, skills, hit, morte, dano no jogador), com catraca `make sfx-test` + `arsenal-test` no `make test` ([direcionamento/19](direcionamento/19-audio-sfx-combate-e-catraca.md), [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [ ] `make docker-build` gera imagem (pendência 2)
 - [ ] Um alvo de teste do jogo, versionado, para câmera, sprite e FX. Os scripts em `scratch/` não entram no git
 
@@ -54,3 +55,4 @@ Pedido novo que passou pela skill `triagem-pedido` entra aqui numa linha: data, 
 - 2026-11-08: aceito — sistema de atributos RPG, limite de 3 armas e 4 passivas com tiers 1-5, miniaturas no HUD superior direito e Ficha do Shinigami com sinergias na pausa (avaliado e aprovado via ORCA pelo juiz KIRO).
 - 2026-11-10: aceito — botão de mute da música (canto inferior esquerdo e tecla M). Em produção começa com som e guarda a escolha. No `npm run dev` sempre começa mutada, a pedido do dono.
 - 2026-11-10: aceito — elenco jogável fechado em Ichigo, Ishida, Sado e Grimmjow por decisão do dono, cada um com sprites completos e poderes próprios nas quatro posições de arma.
+- 2026-11-11: aceito — BGM mais baixo (0.08) e SFX de batalha no Hueco Mundo (híbrido: procedural agora, sample depois), com teste que obriga FX novo a declarar SFX.

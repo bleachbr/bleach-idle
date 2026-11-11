@@ -22,15 +22,14 @@ import { arsenalLabels, arsenalSlashTint, arsenalShot, volleyDirections } from '
 import { updateBuildHUD } from './build_hud.js';
 import { updatePauseDetails } from './pause_modal.js';
 import { stopMusic, playHuecoMundoBGM } from './audio.js';
+import { onSlashFire, onSkillFire, onEnemyHit, onEnemyDeath, onPlayerHurtSfx } from './combatAudio.js';
 import { loadMonsterTextures } from './monsterTextures.js';
 import { pickHollowType, configureHollow, steerHollow, tickHollowAttack, hollowTypeOf } from './hollowTypes.js';
 import { loadHollowClips, applyHollowClip, startHollowDeath, hideHollow, updateDyingHollows } from './hollowClips.js';
 import { createAcidSpitPool, spawnAcidSpit, updateAcidSpit, clearAcidSpit } from './fx/acidSpit.js';
 import { showCharacterInHud } from './characterSelect.js';
-// Constantes da Arena e Câmera (Hueco Mundo - Bioma Ativo da Entrega 1)
 const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 176.0;
 const MAX_ENEMIES = 400;
-// Configurações de Câmera estilo PokéBonk
 const cameraState = {
   yaw: 0,            // Rotação horizontal em radianos (360° livre)
   pitch: 0.50,       // Inclinação vertical (~28° para o chão)
@@ -629,7 +628,7 @@ function updateWeapons(dt) {
   const stats = calculateEffectiveStats(player, state.passives);
   const w = state.weapons;
   const asauchiCd = getEffectiveCooldown(1.0 - (w.asauchi.level - 1) * 0.05, stats.haste);
-  tickWeapon(w.asauchi, dt, asauchiCd, 'slash', () => executeAsauchiSlash((35 + (w.asauchi.level - 1) * 15) * stats.atkMult));
+  tickWeapon(w.asauchi, dt, asauchiCd, 'slash', () => { onSlashFire(); executeAsauchiSlash((35 + (w.asauchi.level - 1) * 15) * stats.atkMult); });
   const getsugaCd = getEffectiveCooldown(2.8 - (w.getsuga.level - 1) * 0.15, stats.haste);
   tickWeapon(w.getsuga, dt, getsugaCd, 'getsuga', () => executeGetsugaTensho((180 + (w.getsuga.level - 1) * 45) * stats.atkMult));
   updateSlashVisual(dt);
@@ -639,13 +638,6 @@ function updateWeapons(dt) {
   tickWeapon(w.shakkaho, dt, shakkahoCd, 'shakkaho', () => executeShakkaho((70 + (w.shakkaho.level - 1) * 25) * stats.atkMult));
 }
 
-// =======================================================================
-// MIRA INTELIGENTE DE AUTO-ATAQUE (ESTILO POKÉBONK / SURVIVOR)
-// =======================================================================
-// O jogador foca em esquivar e se posicionar no mapa.
-// As habilidades avaliam a geometria da arena e disparam nos melhores alvos:
-// - Getsuga Tenshō: Avalia qual feixe direcional perfurará o maior número de Hollows
-// - Asauchi Slash: Corta na direção da ameaça mais próxima no corpo a corpo
 function findSmartTargetDirection(playerX, playerZ, maxRange = 32.0, beamRadius = 2.4) {
   const candidates = [];
   for (const en of enemyMeshes) {
@@ -719,6 +711,7 @@ function executeGetsugaTensho(dmg) {
 // Uma salva do arsenal do personagem: um projétil ou vários (leque, fileira).
 function fireSkill(key, target, dmg) {
   const shot = arsenalShot(state.selectedCharacter, key);
+  onSkillFire(shot.fx);
   for (const v of volleyDirections(target.dirX, target.dirZ, shot)) {
     fxManager.spawnSkillProjectile(shot.fx, key, player.x + v.offX, player.z + v.offZ, v.x, v.z, dmg * shot.damageScale, shot);
   }
@@ -796,20 +789,13 @@ function damageEnemy(en, dmg, weaponKey, attackerId = state.localPlayerId) {
   en.hp -= dmg;
   en.flashTimer = 0.12;
   en.mesh.material.color.setHex(0xffffff);
-
-  // Registro de dano multiplayer (quem mais causar dano ganha a bolinha de Reishi)
+  onEnemyHit();
   if (!en.damageContributions) en.damageContributions = {};
   en.damageContributions[attackerId] = (en.damageContributions[attackerId] || 0) + dmg;
-
   state.damageDealt += dmg;
   const key = weaponKey === 'getsuga_tenshou' ? 'getsuga' : weaponKey;
-  if (state.weapons[key]) {
-    state.weapons[key].totalDamage += dmg;
-  }
-
-  if (en.hp <= 0) {
-    killEnemy(en);
-  }
+  if (state.weapons[key]) state.weapons[key].totalDamage += dmg;
+  if (en.hp <= 0) killEnemy(en);
 }
 
 function getTopDamagePlayer(contribs, fallbackId) {
@@ -821,15 +807,13 @@ function getTopDamagePlayer(contribs, fallbackId) {
 }
 
 function killEnemy(en) {
+  onEnemyDeath();
   startHollowDeath(en);
   state.kills++;
   registerKillInCycle(state.cycleState);
   state.census[en.type] = (state.census[en.type] || 0) + 1;
-
   const topPlayerId = getTopDamagePlayer(en.damageContributions, state.localPlayerId);
-  const dropAmount = en.isBoss ? 26 : (en.isElite ? 6 : 1);
-  spawnReishi(en.x, en.z, dropAmount, topPlayerId);
-
+  spawnReishi(en.x, en.z, en.isBoss ? 26 : (en.isElite ? 6 : 1), topPlayerId);
   if (en.isBoss) {
     document.getElementById('boss-bar-container')?.classList.add('hidden');
     advanceToNextCycle(state.cycleState, en.x, en.z, spawnReishi);
@@ -1039,6 +1023,7 @@ function hurtPlayer(rawDmg, heavy) {
   const hierroPts = (state.passives.hierro || 0) * 25;
   player.hp -= applyHierroDamageMitigation(rawDmg, hierroPts);
   player.invulnerableTime = 0.6;
+  onPlayerHurtSfx();
   triggerPlayerAction(playerAnimator, heavy ? 'hurt_heavy' : 'hurt');
   if (player.hp <= 0) {
     player.hp = 0;

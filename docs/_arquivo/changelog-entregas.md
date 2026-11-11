@@ -1,5 +1,14 @@
 # Changelog de entregas
 
+## 2026-11-11 — BGM mais baixo e SFX de combate no Hueco Mundo
+
+- **BGM:** volume padrão em `src/audio.js` de `0.20` para `0.08` (menu e Hueco Mundo). Mute (botão / tecla M) continua valendo; no `npm run dev` ainda começa mutado.
+- **SFX:** `src/sfxConfig.js` (presets + `SFX_BY_FX`), `src/sfx.js` (Web Audio procedural, pronto para `sample`), `src/combatAudio.js` (gatilhos). Ligado no Hueco Mundo: slash, disparo de skill (uma vez por salva), hit (com throttle), morte e dano no jogador. Mute da música silencia SFX também.
+- **Catraca:** `scripts/test_sfx.py` + `make sfx-test`. Todo `arsenalShot(...).fx` precisa de entrada em `SFX_BY_FX`. `make test` agora inclui `arsenal-test` e `sfx-test`. Direcionamento: [19](../direcionamento/19-audio-sfx-combate-e-catraca.md).
+- **Unlock:** desmutar (M / botão) chama `unlockSfx()` no gesto do usuário; se o `AudioContext` ficar suspenso, o próximo clique/tecla também retoma (mesmo padrão da BGM).
+- **CI:** job `quality` roda `scripts/test_sfx.py` junto com o arsenal.
+- **Evidência:** `make sfx-test` (5), `make arsenal-test` (7), `make safety-test` (volume 0.08), `make size-check`, `make docs-check` verdes. `src/main.js` 1250 → 1235 no inventário. Validação auditiva no browser fica com o dono (`make dev`, tecla M para desmutar).
+
 ## 2026-11-10 — Elenco jogável: Ishida, Sado e Grimmjow com kit completo e poderes próprios
 
 - **Referências:** Ishida e Sado (versão de braços blindados) saíram dos walk8 antigos do LFS pelo `sprite_processor` e passam no `validate_sprites` (variação de altura de 1,9% e 2,9%). O Grimmjow não tinha arte no repositório: frente, perfil e costas foram gerados pelo Codex com `geradores/gen_cast_ref.py`.
