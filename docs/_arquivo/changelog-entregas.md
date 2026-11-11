@@ -1,5 +1,11 @@
 # Changelog de entregas
 
+## 2026-11-11 — Correções do elenco: Ishida correndo, personagem translúcido e projétil sem direção
+
+- **Ishida com outro desenho ao correr:** `run_front` e `run_left`, assim como `idle_front` e `idle_left`, eram do piloto, gerados antes da correção do texto do personagem. Na corrida de frente a cabeça ficava maior e o corpo mais baixo; parado, ele segurava uma lâmina que sumia ao andar. As cinco folhas foram regeneradas pelo Codex com o texto atual, e o kit foi reprocessado. As antigas estão em `arts/codex/kit/_rejeitado/`. `validate_player_kit.py --char ishida` passa, e a folha de conferência mostra idle, walk e run com as mesmas proporções nas 3 vistas.
+- **Personagem translúcido (visto no Grimmjow):** a pausa deixa o jogador com opacidade 0,35, e o `resetMatch` não devolvia, porque chamava `setPlayerCamouflage(player, false)` sem a malha ([aprendizados](../aprendizados.md) item 17). Antes: 0,35 depois de pausar, voltar ao menu e jogar de novo. Depois: 1.
+- **Projétil sempre apontando para o mesmo lado:** o desenho de todo projétil aponta para a direita, e o billboard nunca girava. `orientToFlight` em `src/fx/fxManager.js` gira o plano para a direção do voo na tela e espelha quando ele vai para a esquerda; a caveira da La Muerte só espelha. Medido na página com a câmera real: 72 projéteis, em 3 ângulos e 8 direções, desvio máximo de 1,5°, nenhum de cabeça para baixo. Teste em `scripts/test_projectile_orientation.py`.
+
 ## 2026-11-10 — Elenco jogável: Ishida, Sado e Grimmjow com kit completo e poderes próprios
 
 - **Referências:** Ishida e Sado (versão de braços blindados) saíram dos walk8 antigos do LFS pelo `sprite_processor` e passam no `validate_sprites` (variação de altura de 1,9% e 2,9%). O Grimmjow não tinha arte no repositório: frente, perfil e costas foram gerados pelo Codex com `geradores/gen_cast_ref.py`.

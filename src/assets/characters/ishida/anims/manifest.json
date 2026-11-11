@@ -7,7 +7,7 @@
       "fps": 8,
       "loop": true,
       "frames": 12,
-      "frameSize": 128
+      "frameSize": 160
     },
     "walk": {
       "fps": 14,
@@ -85,7 +85,7 @@
       "fps": 24,
       "loop": false,
       "frames": 12,
-      "frameSize": 160
+      "frameSize": 192
     },
     "air_slash": {
       "fps": 24,

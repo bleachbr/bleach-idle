@@ -65,6 +65,7 @@ hollow-test: ## Testes de sorteio, rota e ataque dos tipos de hollow
 	python3 scripts/test_hollow_types.py
 arsenal-test: ## Testes do arsenal de cada personagem jogável
 	python3 scripts/test_arsenal.py
+	python3 scripts/test_projectile_orientation.py
 
 evolution-test: ## Testes unitários de ciclo infinito, reiatsu e level-up timer
 	python3 scripts/test_endless_evolution.py

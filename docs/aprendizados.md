@@ -133,3 +133,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** nesses casos, régua `fixed` em `geradores/kit_cast.py`: a escala por vista sai do `idle` e vale para todos os clipes. Funciona porque o Codex mantém o tamanho absoluto do personagem entre imagens da mesma grade 4x3.
 
 **Evidência:** no piloto, a mancha castanha do Sado mediu 35 px no `idle_left` e 21–27 px nos primeiros quadros do `getsuga_left`, embora o quadro neutro do golpe tivesse 262 px de altura contra 257 do `idle`. A mancha preto-azulada do Ishida oscilou entre 8 e 19 px dentro do próprio `idle_left`. No Grimmjow, a mancha azul ficou estável dentro do `idle` (41 a 50 px), mas entre clipes a escala calculada por ela foi de 0,34 a 0,48, enquanto o quadro neutro de cada clipe media de 256 a 278 px, quase o mesmo que o `idle` (262 a 269). No `hurt_heavy_back` a régua aumentava o corpo em 19% sem motivo.
+
+## 17. `setPlayerCamouflage(player, false)` não devolve a opacidade do jogador
+
+**Causa raiz:** a função aceita a malha no segundo argumento ou um booleano. Com o booleano, ela procura `player.mesh`, que não existe. O `resetMatch` usava essa forma, então a opacidade de 0,35 da pausa (camuflagem do AFK) sobrevivia ao voltar ao menu e começar outra partida. Todo personagem ficava translúcido; no Grimmjow, quase todo branco, isso salta aos olhos.
+
+**O que fazer:** passar sempre a malha (`setPlayerCamouflage(player, playerMesh, afk)`).
+
+**Evidência:** no navegador, perda de foco com o Sado em campo deixou `playerMesh.material.opacity` em 0,35; depois de "Voltar ao menu" e de uma partida nova, continuava 0,35. Com a malha passada no `resetMatch`, volta a 1.

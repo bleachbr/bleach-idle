@@ -10,6 +10,20 @@
 import * as THREE from 'three';
 import { FX_BEHAVIORS } from './fxConfig.js';
 
+const flightView = new THREE.Vector3();
+const cameraInverse = new THREE.Quaternion();
+
+// Todo desenho de projétil aponta para a direita. Depois do billboard, gira o plano para a
+// direção do voo na tela; voando para a esquerda, espelha em vez de girar 180°, para nada ficar
+// de cabeça para baixo. orient 'flip' só espelha (desenho que não deve inclinar, como a caveira).
+export function orientToFlight(p, cameraQuaternion, scale) {
+  flightView.set(p.dirX, 0, p.dirZ).applyQuaternion(cameraInverse.copy(cameraQuaternion).invert());
+  const backwards = flightView.x < 0;
+  const angle = p.config.orient === 'flip' ? 0 : Math.atan2(flightView.y, Math.abs(flightView.x));
+  p.mesh.rotateZ(backwards ? -angle : angle);
+  p.mesh.scale.set(backwards ? -scale : scale, scale, 1.0);
+}
+
 export class FXManager {
   constructor(scene, spriteTextures) {
     this.scene = scene;
@@ -163,7 +177,7 @@ export class FXManager {
       // 2. Crescimento da onda ao longo da viagem
       const travelRatio = Math.min(1.0, p.distanceTraveled / p.config.maxDistance);
       const currentScale = p.config.startScale + travelRatio * (p.config.endScale - p.config.startScale);
-      p.mesh.scale.set(currentScale, currentScale, 1.0);
+      orientToFlight(p, cameraQuaternion, currentScale);
 
       // 3. Animação dos quadros do efeito (dinâmico por skill)
       const frameIdx = Math.floor(p.lifetime * p.config.fps) % 4;
