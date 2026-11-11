@@ -1,4 +1,9 @@
-"""Testes da orientação do desenho do projétil na tela (`orientToFlight` em `src/fx/fxManager.js`), via Node."""
+"""Testes da pose do desenho do projétil na tela (`src/fx/flightPose.js`), via Node e sem Three.js.
+
+A câmera é montada como a do jogo (orbital, alta, olhando para o centro). O teste calcula a base
+dela (direita, cima, trás), o quatérnio dessa base, e confere se o eixo do desenho, depois do giro
+e do espelho que `flightPose` manda aplicar, aponta para onde o voo aparece na tela.
+"""
 
 from __future__ import annotations
 
@@ -9,64 +14,94 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# Câmera orbital como a do jogo: alta, inclinada para baixo, girando em yaw. Para cada direção de
-# voo, mede o ângulo na tela do voo e o ângulo para onde aponta o eixo +X do desenho.
 SCRIPT = """
-import * as THREE from 'three';
-import { orientToFlight } from './src/fx/fxManager.js';
+import { flightPose } from './src/fx/flightPose.js';
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const norm = (a) => { const l = Math.hypot(...a); return a.map((v) => v / l); };
+
+// Quatérnio de uma matriz de rotação com colunas r (x), u (y), k (z).
+function quatFromBasis(r, u, k) {
+  const [m11, m12, m13] = [r[0], u[0], k[0]];
+  const [m21, m22, m23] = [r[1], u[1], k[1]];
+  const [m31, m32, m33] = [r[2], u[2], k[2]];
+  const tr = m11 + m22 + m33;
+  if (tr > 0) {
+    const s = 0.5 / Math.sqrt(tr + 1);
+    return { w: 0.25 / s, x: (m32 - m23) * s, y: (m13 - m31) * s, z: (m21 - m12) * s };
+  }
+  if (m11 > m22 && m11 > m33) {
+    const s = 2 * Math.sqrt(1 + m11 - m22 - m33);
+    return { w: (m32 - m23) / s, x: 0.25 * s, y: (m12 + m21) / s, z: (m13 + m31) / s };
+  }
+  if (m22 > m33) {
+    const s = 2 * Math.sqrt(1 + m22 - m11 - m33);
+    return { w: (m13 - m31) / s, x: (m12 + m21) / s, y: 0.25 * s, z: (m23 + m32) / s };
+  }
+  const s = 2 * Math.sqrt(1 + m33 - m11 - m22);
+  return { w: (m21 - m12) / s, x: (m13 + m31) / s, y: (m23 + m32) / s, z: 0.25 * s };
+}
+
 const out = [];
 for (const yaw of [0, 1.1, 2.5, -2.0]) {
-  const cam = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 500);
-  cam.position.set(Math.sin(yaw) * 13, 7, Math.cos(yaw) * 13);
-  cam.lookAt(0, 0, 0);
-  cam.updateMatrixWorld();
-  for (let k = 0; k < 8; k++) {
-    const ang = k * Math.PI / 4;
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1));
-    const p = { mesh, dirX: Math.cos(ang), dirZ: Math.sin(ang), config: { orient: __ORIENT__ } };
-    mesh.quaternion.copy(cam.quaternion);
-    orientToFlight(p, cam.quaternion, 2);
-    mesh.updateMatrixWorld();
-    const a = new THREE.Vector3().project(cam);
-    const b = new THREE.Vector3(p.dirX, 0, p.dirZ).multiplyScalar(0.5).project(cam);
-    const axis = new THREE.Vector3(Math.sign(mesh.scale.x) * 0.5, 0, 0).applyQuaternion(mesh.quaternion);
-    const c = axis.project(cam);
-    const flight = Math.atan2(b.y - a.y, b.x - a.x);
-    const art = Math.atan2(c.y - a.y, c.x - a.x);
-    let diff = Math.abs(flight - art) * 180 / Math.PI;
-    if (diff > 180) diff = 360 - diff;
-    out.push({ diff, scaleY: mesh.scale.y, mirrored: mesh.scale.x < 0, artX: c.x - a.x, flightX: b.x - a.x });
+  for (const pitch of [0.35, 0.6]) {
+    const eye = [Math.sin(yaw) * 13 * Math.cos(pitch), 13 * Math.sin(pitch), Math.cos(yaw) * 13 * Math.cos(pitch)];
+    const back = norm(sub(eye, [0, 0, 0]));
+    const right = norm(cross([0, 1, 0], back));
+    const up = cross(back, right);
+    const q = quatFromBasis(right, up, back);
+    for (let k = 0; k < 8; k++) {
+      const ang = k * Math.PI / 4;
+      const d = [Math.cos(ang), 0, Math.sin(ang)];
+      const flight = [dot(d, right), dot(d, up)];
+      for (const orient of ['rotate', 'flip']) {
+        const pose = flightPose(d[0], d[2], q, orient);
+        const sign = pose.mirrored ? -1 : 1;
+        const art = [sign * Math.cos(pose.angle), sign * Math.sin(pose.angle)];
+        let diff = Math.abs(Math.atan2(flight[1], flight[0]) - Math.atan2(art[1], art[0])) * 180 / Math.PI;
+        if (diff > 180) diff = 360 - diff;
+        out.push({ orient, diff, mirrored: pose.mirrored, angle: pose.angle, flightX: flight[0], artX: art[0] });
+      }
+    }
   }
 }
 console.log(JSON.stringify(out));
 """
 
 
-def run(orient: str):
-    script = SCRIPT.replace("__ORIENT__", json.dumps(orient))
-    proc = subprocess.run(["node", "--input-type=module", "-e", script], cwd=ROOT, check=True,
+def run():
+    proc = subprocess.run(["node", "--input-type=module", "-e", SCRIPT], cwd=ROOT, check=True,
                           capture_output=True, text=True)
     return json.loads(proc.stdout.strip())
 
 
 class TestOrientation(unittest.TestCase):
-    def test_art_points_where_the_projectile_flies(self):
-        for r in run("rotate"):
-            self.assertLess(r["diff"], 6.0, r)
+    @classmethod
+    def setUpClass(cls):
+        cls.poses = run()
 
-    def test_never_upside_down(self):
-        for r in run("rotate"):
-            self.assertGreater(r["scaleY"], 0)
+    def by(self, orient):
+        return [p for p in self.poses if p["orient"] == orient]
+
+    def test_art_points_where_the_projectile_flies(self):
+        for p in self.by("rotate"):
+            self.assertLess(p["diff"], 0.5, p)
+
+    def test_never_turns_past_a_quarter(self):
+        for p in self.poses:
+            self.assertLessEqual(abs(p["angle"]), 3.1416 / 2 + 1e-9, p)
 
     def test_flying_left_on_screen_mirrors_the_art(self):
-        for r in run("rotate"):
-            if abs(r["flightX"]) > 1e-3:
-                self.assertEqual(r["mirrored"], r["flightX"] < 0, r)
+        for p in self.by("rotate"):
+            if abs(p["flightX"]) > 1e-6:
+                self.assertEqual(p["mirrored"], p["flightX"] < 0, p)
 
     def test_flip_only_mirrors_and_never_tilts(self):
-        for r in run("flip"):
-            if abs(r["flightX"]) > 1e-3:
-                self.assertEqual(r["artX"] < 0, r["flightX"] < 0, r)
+        for p in self.by("flip"):
+            self.assertEqual(p["angle"] == 0 or p["angle"] == -0.0, True, p)
+            if abs(p["flightX"]) > 1e-6:
+                self.assertEqual(p["artX"] < 0, p["flightX"] < 0, p)
 
 
 if __name__ == "__main__":
