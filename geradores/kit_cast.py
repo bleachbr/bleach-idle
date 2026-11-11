@@ -14,7 +14,7 @@ import cast_grimmjow
 import cast_ishida
 import cast_sado
 from player_kit_anims import ANIMS as ICHIGO_ANIMS
-from player_kit_anims import LOOP_NOTE, anim
+from player_kit_anims import ICHIGO_BACK_NOTE, LOOP_NOTE, anim
 
 BODY_CLIPS = ("idle", "walk", "run", "jump", "land", "hurt", "hurt_heavy", "hurt_air", "death", "level_up", "afk")
 
@@ -61,6 +61,7 @@ def build_cast(module) -> dict:
 
 
 CAST = {
-    "ichigo_shikai": {"character": ICHIGO, "garment": "robe sleeves and hakama", "ruler": "orange", "anims": ICHIGO_ANIMS},
+    "ichigo_shikai": {"character": ICHIGO, "garment": "robe sleeves and hakama", "ruler": "orange", "anims": ICHIGO_ANIMS,
+                      "back_note": ICHIGO_BACK_NOTE},
     **{m.ID: build_cast(m) for m in (cast_ishida, cast_sado, cast_grimmjow)},
 }

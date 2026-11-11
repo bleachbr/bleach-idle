@@ -3,8 +3,8 @@
 ## 2026-11-11 — Harness Jogador-IA restaurado em `test/`
 
 - **O quê:** o commit `cdb05222` (`novo projeto`) tinha apagado o pacote versionado `test/` (README, `src/`, `regressao/`, `package.json`). O código voltou a partir de `02f4c973`, com nota no topo do `test/README.md` de que ainda mira o Bleach Idle. `test/runs/` continua gitignored e intacto no checkout local.
-- **Docs:** aprendizado 19 (runs no disco ≠ harness no git); pendência 13 (adaptar ao Soul Survivor).
-- **Evidência:** `git ls-files test/` lista os 11 arquivos restaurados; `make docs-check` e `make size-check` verdes nesta branch.
+- **Docs:** aprendizado 22 (runs no disco ≠ harness no git); pendência 14 (adaptar ao Soul Survivor; ressalvas do Kiro sobre `npm run play` e `--prod`).
+- **Evidência:** `git ls-files test/` lista os 11 arquivos restaurados; `make docs-check` e `make size-check` verdes nesta branch. Review adversário Kiro: APROVA COM RESSALVAS.
 
 ## 2026-11-11 — Correções do elenco: Ishida correndo, personagem translúcido e projétil sem direção
 
@@ -19,6 +19,12 @@
 - **Unlock:** desmutar (M / botão) chama `unlockSfx()` no gesto do usuário; se o `AudioContext` ficar suspenso, o próximo clique/tecla também retoma (mesmo padrão da BGM).
 - **CI:** job `quality` roda `scripts/test_sfx.py` junto com o arsenal.
 - **Evidência:** `make sfx-test` (5), `make arsenal-test` (7), `make safety-test` (volume 0.08), `make size-check`, `make docs-check` verdes. `src/main.js` 1250 → 1235 no inventário. Validação auditiva no browser fica com o dono (`make dev`, tecla M para desmutar).
+## 2026-11-11 — Presença multiplayer funcional (API em produção + peers visíveis)
+
+- **Causa:** em `bleach.acoplum.com` a imagem era nginx só de estáticos; `/api/multiplayer` não existia. No cliente, `syncMultiplayerSession` nunca era chamado e não havia billboard de outros shinigami. Ver aprendizado 21.
+- **Servidor:** `server/production_server.js` serve `dist`, `/src/assets`, `/arts/music`, `/healthz` e as rotas de telemetria/multiplayer/leaderboard. `Dockerfile` passa a rodar esse processo Node na 2567 (sem nginx no container). Sync grava `x/y/z`, direção, personagem e nick.
+- **Cliente:** `src/multiplayerPresenceLogic.js`, `src/multiplayerPresence.js` e `src/remotePlayers.js` fazem heartbeat ~100 ms, lerp e ciclo de walk; desenham peers com nametag. Ativa ao sair do prólogo; limpa no retorno ao menu.
+- **Evidência:** `make multiplayer-test` e `make size-check` verdes. Duas abas ORCA em local e em `https://bleach.acoplum.com` com `getRemotePlayerCount() === 1`. Redeploy nginx-only da `main` (#364 / `31ae87e`) quebrou `/api` de novo; restaurado com a imagem Node.
 
 ## 2026-11-10 — Elenco jogável: Ishida, Sado e Grimmjow com kit completo e poderes próprios
 

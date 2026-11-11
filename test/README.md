@@ -1,6 +1,6 @@
 # Jogador-IA
 
-> **Restaurado em 2026-11-11** a partir de `02f4c973` (último commit do bleach-idle antes de `novo projeto`). O código em `test/src/` e `test/regressao/` é do **Bleach Idle** (servidor + Vite nas portas 2578/5183, `BI_DEV`, SQLite). Não sobe nem joga o Soul Survivor atual. Os artefatos locais em `test/runs/` (gitignored) continuam no checkout principal e não foram tocados. Adaptar este harness ao protótipo 2.5D é dívida — ver `docs/pendencias.md` item 13.
+> **Restaurado em 2026-11-11** a partir de `02f4c973` (último commit do bleach-idle antes de `novo projeto`). O código em `test/src/` e `test/regressao/` é do **Bleach Idle** (servidor + Vite nas portas 2578/5183, `BI_DEV`, SQLite). Não sobe nem joga o Soul Survivor atual. Os artefatos locais em `test/runs/` (gitignored) continuam no checkout principal e não foram tocados. Adaptar este harness ao protótipo 2.5D é dívida — ver `docs/pendencias.md` item 14.
 
 Quatro instâncias de IA (Gemini com visão) jogando **Bleach Idle** ao mesmo tempo, como jogadores reais, e entregando feedback consolidado. Não é teste de integração, E2E nem regressão: é um playtest avançado que roda na sua máquina local (os testes de regressão de bug ficam à parte, em `regressao/`, descritos no fim).
 

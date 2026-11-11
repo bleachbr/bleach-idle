@@ -6,9 +6,9 @@ Este repo assume o lugar do `bleach-idle` em `https://bleach.acoplum.com`. Nada 
 
 | Peça | bleach-idle (antes) | bleach-soul-survivor (agora) |
 |---|---|---|
-| Imagem | `bleach-idle:<sha>`, Node + Colyseus + SQLite | `bleach-soul-survivor:<sha>`, nginx servindo o `dist` do Vite |
+| Imagem | `bleach-idle:<sha>`, Node + Colyseus + SQLite | `bleach-soul-survivor:<sha>`, Node servindo `dist` + `/api` (telemetria, multiplayer, leaderboard) |
 | Porta no host | `127.0.0.1:2567` | `127.0.0.1:2567` (igual) |
-| Estado | volume `bleach-dados` | nenhum: o jogo não tem servidor |
+| Estado | volume `bleach-dados` | logs em memória/disco do container (`/app/logs`); sala multiplayer é in-memory |
 | Diretório na VPS | `/opt/bleach-idle` (raiz do serviço do jogo na VPS) | `/opt/bleach-idle` |
 | Projeto compose, serviço, rede | `bleach`, `jogo`, `bleach-interna` | iguais: o `up` troca o container |
 | Lock | `/var/lock/bleach-deploy.lock` | o mesmo, para os dois nunca subirem juntos |
@@ -22,7 +22,8 @@ Como a porta, o domínio e o certificado não mudam, o corte é trocar o contain
 | Arquivo | Onde roda | Papel |
 |---|---|---|
 | `../Dockerfile` | CI / sua máquina | Build do Vite + nginx sem root na 2567 |
-| `nginx.container.conf` | dentro da imagem | Estáticos, cache de `/assets/`, `/healthz` |
+| `nginx.container.conf` | referência legada | Antes servia só estáticos; a imagem atual usa `server/production_server.js` |
+| `../server/production_server.js` | dentro da imagem | Estáticos + `/api/multiplayer` + `/api/telemetry` + `/api/leaderboard` + `/healthz` |
 | `compose.vps.yml` | VPS | Sobe o container em `127.0.0.1:2567` |
 | `deploy.sh` | VPS | Trava, valida a imagem, `compose up --wait`, grava `deployed-revision` |
 | `nginx.host.conf` | referência | Cópia do nginx do host, igual ao do bleach-idle |
@@ -55,6 +56,8 @@ O job `deploy` do `.github/workflows/ci.yml` aponta para `/opt/bleach-idle` e en
 
 | Data | SHA | Quem | Observação |
 |---|---|---|---|
+| 2026-11-11 | `d950ba714a6ef2fabffd9f0720422035630b6dac` | wjunior (via agente) | Multiplayer reintegrado na `main` (Node + anim/lerp). Restaurado após regressão do #364 (`31ae87e` nginx-only). `/api/multiplayer/room` JSON e `CMD node server/production_server.js`. |
+| 2026-11-11 | `be95fe689f5d56291f09eff01cb86856d10e7476` | wjunior (via agente) | Multiplayer presence: imagem Node com `/api` + peers visíveis. Validado em produção (`/api/multiplayer/room` JSON; duas abas ORCA com `getRemotePlayerCount()===1`, Alpha em `(10,-6)` e Beta em `(0,0)`). |
 | 2026-11-11 | `33643c683884e94119d691bc3128b9d4e16fb6d4` | wjunior (via agente) | Atualização com elenco jogável (Ishida, Sado, Grimmjow com poderes próprios - #360), novos Hollows (Shrieker e Acidwire com clips de ataque/morte - #359) e correção da espada nas costas (#358). Validado em produção (`https://bleach.acoplum.com`). |
 | 2026-11-09 | `69c5065e07015ebec45e1390a097a369f3612a15` | wjunior (via agente) | Kit completo de animações do personagem principal (Ichigo Shikai): 22 clipes direcionais, sprite sheets dinâmicos, integração com máquina de estados de animação e movimentação (#357). Validado em produção (`https://bleach.acoplum.com`). |
 | 2026-11-08 | `ff80b9f17ab86ddc7866eceec27e1179cce01d0c` | wjunior (via agente) | Calibração de Volume da Trilha Sonora: redução do volume padrão de 0.45 para 0.20 (redução de ~55%), evitando fadiga auditiva e balanceando BGM com efeitos de combate. Testes unitários atualizados com asserções numéricas de volume (66/66 verdes). Validado em produção (`https://bleach.acoplum.com`). |

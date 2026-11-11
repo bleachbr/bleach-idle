@@ -30,10 +30,18 @@ O teste lê a saída do Node sem `encoding="utf-8"`, então no Windows `Capitão
 
 **Por que não resolvido aqui:** fora do escopo — o teste é de reiatsu, e a correção é uma linha que merece commit próprio.
 
-## 13. Jogador-IA em `test/` é do Bleach Idle, não do Soul Survivor
+## 13. Horda e dano multiplayer ainda são locais por cliente
 
-O harness (personas Gemini + Playwright, regressão `issue-22`) voltou ao repositório a partir de `02f4c973`, com aviso no `test/README.md`. Ele sobe servidor/Vite do idle antigo e não joga o protótipo Three.js atual.
+A presença (posição, nick, personagem) sincroniza pela sala `hueco-mundo-arena`, mas cada navegador continua spawando e matando a própria horda. O ranking de dano compartilhado no orquestrador existe, porém o combate autoritativo e o drop de Reishi por maior dano ainda não atravessam a rede.
+
+**Impacto:** médio (dois jogadores se veem, mas não disputam o mesmo hollow)
+
+**Por que não resolvido aqui:** fora do escopo — esta branch fecha a causa raiz de “não funciona no domínio / não se veem”; netcode de combate compartilhado é outra entrega.
+
+## 14. Jogador-IA em `test/` é do Bleach Idle, não do Soul Survivor
+
+O harness (personas Gemini + Playwright, regressão `issue-22`) voltou ao repositório a partir de `02f4c973`, com aviso no `test/README.md`. Ele sobe servidor/Vite do idle antigo e não joga o protótipo Three.js atual. Review adversário (Kiro, PR 365): `npm run play` pode abrir worktree em `/tmp/bleach-ia-main` apontando para a `main` survivor (falha confusa); `--prod` contra `bleach.acoplum.com` com persona `caotico` é carga adversarial em produção e precisa de decisão de quem opera o domínio.
 
 **Impacto:** médio (playtest automatizado e regressão de navegador do idle não cobrem o survivor; quem rodar `npm run play` em `test/` hoje espera um jogo que o checkout não é)
 
-**Por que não resolvido aqui:** fora do escopo — esta branch só restaura o código apagado pelo `novo projeto`; ligar o harness ao Soul Survivor (portas, `make dev`, HUD, combate) é outro pedido.
+**Por que não resolvido aqui:** fora do escopo — esta branch só restaura o código apagado pelo `novo projeto`; ligar o harness ao Soul Survivor (portas, `make dev`, HUD, combate), abortar cedo sem `server/` e endurecer `--prod` são outro pedido.

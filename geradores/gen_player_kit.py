@@ -57,7 +57,10 @@ def build_image_prompt(char: str, anim_id: str, direction: str) -> str:
     anim = cast["anims"][anim_id]
     beats = "\n".join(f"Frame {i}: {beat}" for i, beat in enumerate(anim["beats"], start=1))
     grid = GRID.format(garment=cast["garment"])
-    return (f"{cast['character']}\n\nVIEW: {DIRECTIONS[direction]} Keep this exact view in all 12 frames; the character "
+    view = DIRECTIONS[direction]
+    if direction == "back" and cast.get("back_note"):
+        view = f"{view} {cast['back_note']}"
+    return (f"{cast['character']}\n\nVIEW: {view} Keep this exact view in all 12 frames; the character "
             f"never turns to another direction.\n\nACTION: {anim['summary']}\n{beats}\n"
             f"{anim.get('loop_note', '')}\n\n{grid}\n\n{STYLE}")
 

@@ -150,7 +150,31 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 
 **Evidência:** no navegador, perda de foco com o Sado em campo deixou `playerMesh.material.opacity` em 0,35; depois de "Voltar ao menu" e de uma partida nova, continuava 0,35. Com a malha passada no `resetMatch`, volta a 1.
 
-## 19. `test/runs/` no disco não prova que o harness ainda está no git
+## 19. Texto de vista compartilhado pelo elenco leva a arma de um personagem para o outro
+
+**Causa raiz:** `gen_player_kit.py` monta o prompt de todo o elenco com `DIRECTIONS` de `player_kit_anims.py`. A correção da espada do Ichigo (PR 358) pôs na vista `back` a regra "a lâmina atravessa as costas, presa pela tira marrom". Com isso o Grimmjow ganhou a katana nas costas em parte das tiras de costas, e o Sado uma faixa prateada na corrida. Além disso, o Codex às vezes muda o estilo de uma folha inteira: o `move_slash` de frente do Ishida saiu com outro traço e tingido de azul, e o sprite trocava no meio do golpe.
+
+**O que fazer:** regra de um personagem fica no cadastro dele em `kit_cast.py` (`back_note`), nunca no texto comum da vista. Depois de gerar um kit, compare a cor média de cada tira com a mediana do kit na mesma vista. Uma tira com desvio bem acima dos outros é suspeita e precisa ser conferida na folha.
+
+**Evidência:** a cor média do `move_slash_front` do Ishida ficou 33,9 longe da mediana, contra uma dispersão típica de 6. A folha de costas do Grimmjow mostrava a katana nas costas em `afk`, `hurt_air`, `death` e `move_getsuga`, e o cabelo roxo em `air_slash`. Depois de regenerar, as três folhas ficaram consistentes com o `idle`, e `validate_player_kit.py` passa nos quatro kits.
+
+## 20. Sprite regenerado não aparece para quem já jogou: o cache de `/src/assets/` segura a tira antiga
+
+**Causa raiz:** o nginx do container manda `Cache-Control: public, max-age=3600` em `/src/assets/`, e o jogo pede as texturas sempre pelo mesmo nome. Quando uma tira é regenerada e publicada, o navegador de quem já jogou continua usando a cópia antiga por até 1 hora, mesmo com o servidor entregando o arquivo novo.
+
+**O que fazer:** toda URL de `/src/assets/` sai com `?v=<versão do build>` (`src/assetVersion.js`, registrada no `THREE.DefaultLoadingManager` e usada nas `<img>` do DOM). O Vite troca `__ASSET_VERSION__` a cada build. Antes de dizer que um asset mudou em produção, compare o arquivo servido com o do commit e lembre que o navegador pode estar com outro.
+
+**Evidência:** depois do PR 363, o `move_slash_front.png` servido por `bleach.acoplum.com` tinha o mesmo SHA-1 do commit, mas o jogo do usuário ainda mostrava o Ishida antigo. Com a versão na URL, as 197 PNGs carregadas no dev saem com `?v=`, e `scripts/test_asset_version.py` cobre a regra.
+
+## 21. Multiplayer some quando a main redeploya a imagem nginx-only
+
+**Causa raiz:** a presença multiplayer vive na imagem Node (`server/production_server.js`). O CI empurra para a VPS cada push da `main` com o `Dockerfile` nginx-only ainda na linha principal. O healthz continua `ok`, mas `/api/multiplayer` volta a ser SPA/405.
+
+**O que fazer:** o `Dockerfile` Node e o cliente de presença precisam estar na `main` antes do próximo deploy automático. Validar pós-deploy com `curl -s https://bleach.acoplum.com/api/multiplayer/room` (JSON, não HTML).
+
+**Evidência:** em 2026-11-11 o domínio voltou a 405 no POST `/join` após o deploy `31ae87e` (#364), enquanto a imagem `066e92a` (Node) ainda existia na VPS e restaurou a sala.
+
+## 22. `test/runs/` no disco não prova que o harness ainda está no git
 
 **Causa raiz:** `test/runs/` está no `.gitignore`. O commit `cdb05222` (`novo projeto`) apagou o código versionado em `test/` (README, `src/`, regressão, package.json), mas os artefatos locais de playtest (relatórios, memórias, SQLite) ficaram no working tree. Quem abre a pasta vê runs e acha que o harness sumiu "por dentro" dela; o que sumiu foi a árvore irmã versionada.
 

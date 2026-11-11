@@ -2,6 +2,7 @@
 // ESCOLHA DE PERSONAGEM NO MENU: retratos do elenco jogável acima do botão de jogar
 // A escolha fica guardada no navegador e volta na próxima visita.
 // =======================================================================
+import { versionedAssetUrl } from './assetVersion.js';
 import { DEFAULT_CHARACTER, getPlayableCharacter, listPlayableCharacters } from './playableCast.js';
 
 const STORAGE_KEY = 'soulSurvivor.character';
@@ -43,7 +44,7 @@ function portraitButton(char, onPick) {
   button.title = `${char.name} (${char.stage})`;
   button.setAttribute('aria-label', `Jogar com ${char.name}`);
   const img = document.createElement('img');
-  img.src = `/src/assets/characters/${char.id}/front.png`;
+  img.src = versionedAssetUrl(`/src/assets/characters/${char.id}/front.png`);
   img.alt = '';
   button.append(img);
   button.addEventListener('click', () => onPick(char.id));
