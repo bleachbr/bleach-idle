@@ -15,14 +15,10 @@
 - **Evidência:** `make sfx-test` (5), `make arsenal-test` (7), `make safety-test` (volume 0.08), `make size-check`, `make docs-check` verdes. `src/main.js` 1250 → 1235 no inventário. Validação auditiva no browser fica com o dono (`make dev`, tecla M para desmutar).
 ## 2026-11-11 — Presença multiplayer funcional (API em produção + peers visíveis)
 
-- **Causa:** em `bleach.acoplum.com` a imagem era nginx só de estáticos; `/api/multiplayer` não existia. No cliente, `syncMultiplayerSession` nunca era chamado e não havia billboard de outros shinigami. Ver aprendizado 17.
+- **Causa:** em `bleach.acoplum.com` a imagem era nginx só de estáticos; `/api/multiplayer` não existia. No cliente, `syncMultiplayerSession` nunca era chamado e não havia billboard de outros shinigami. Ver aprendizado 21.
 - **Servidor:** `server/production_server.js` serve `dist`, `/src/assets`, `/arts/music`, `/healthz` e as rotas de telemetria/multiplayer/leaderboard. `Dockerfile` passa a rodar esse processo Node na 2567 (sem nginx no container). Sync grava `x/y/z`, direção, personagem e nick.
-- **Cliente:** `src/multiplayerPresenceLogic.js`, `src/multiplayerPresence.js` e `src/remotePlayers.js` fazem heartbeat ~200 ms e desenham peers com nametag. Ativa ao sair do prólogo; limpa no retorno ao menu.
-<<<<<<< HEAD
-- **Evidência:** `make multiplayer-test` e `make size-check` verdes. Duas abas ORCA em `http://127.0.0.1:2570`: ambas com `getRemotePlayerCount() === 1`; sala com `PlayerOne` em `(18, -11)` e `PlayerTwo` em `(0, 0)`. Depois do deploy Node, `curl /api/multiplayer/room` devolve JSON; redeploy nginx-only da `main` (#364) quebrou de novo até restaurar a imagem Node.
-=======
-- **Evidência:** `make multiplayer-test` e `make size-check` verdes. Duas abas ORCA em `http://127.0.0.1:2570` e, após deploy `be95fe689f5d56291f09eff01cb86856d10e7476`, em `https://bleach.acoplum.com`: `/api/multiplayer/room` JSON; ambas as abas com `getRemotePlayerCount() === 1`; sala com `Alpha` em `(10, -6)` e `Beta` em `(0, 0)`.
->>>>>>> 8dfe15e (docs(infra): record multiplayer presence deploy on VPS)
+- **Cliente:** `src/multiplayerPresenceLogic.js`, `src/multiplayerPresence.js` e `src/remotePlayers.js` fazem heartbeat ~100 ms, lerp e ciclo de walk; desenham peers com nametag. Ativa ao sair do prólogo; limpa no retorno ao menu.
+- **Evidência:** `make multiplayer-test` e `make size-check` verdes. Duas abas ORCA em local e em `https://bleach.acoplum.com` com `getRemotePlayerCount() === 1`. Redeploy nginx-only da `main` (#364 / `31ae87e`) quebrou `/api` de novo; restaurado com a imagem Node.
 
 ## 2026-11-10 — Elenco jogável: Ishida, Sado e Grimmjow com kit completo e poderes próprios
 
