@@ -3,6 +3,12 @@ import * as THREE from 'three';
 import { loadPlayerKit, showPlayerFrame } from './playerSprite.js';
 import { createPlayerNameTag, updatePlayerNameTag } from './nametag.js';
 import { getSpriteDirection } from './movement.js';
+import {
+  advanceAnimClock,
+  lerpAxis,
+  movingFromDelta,
+  remoteAnimName
+} from './multiplayerPresenceLogic.js';
 
 const remotes = new Map();
 let sceneRef = null;
@@ -13,21 +19,29 @@ export function bindRemotePlayersScene(scene, textureLoader) {
   loader = textureLoader;
 }
 
-function createRemoteMesh(peer) {
+function buildRemoteBillboard() {
   const geo = new THREE.PlaneGeometry(2.35, 2.35);
   geo.translate(0, 1.175, 0);
   const mat = new THREE.MeshBasicMaterial({
-    transparent: true,
-    depthWrite: false,
-    side: THREE.DoubleSide
+    transparent: true, depthWrite: false, side: THREE.DoubleSide
   });
-  const mesh = new THREE.Mesh(geo, mat);
+  return new THREE.Mesh(geo, mat);
+}
+
+function createRemoteMesh(peer) {
+  const mesh = buildRemoteBillboard();
   const tag = createPlayerNameTag(peer.nickname || 'Shinigami', 2.50);
   mesh.add(tag);
   const kit = loadPlayerKit(loader, peer.character || 'ichigo_shikai');
   showPlayerFrame(mesh, kit, { anim: 'idle', frame: 0 }, 'back');
   sceneRef.add(mesh);
-  return { mesh, tag, kit, nickname: peer.nickname, character: peer.character };
+  const x = peer.x || 0, y = peer.y || 0, z = peer.z || 0;
+  return {
+    mesh, tag, kit, nickname: peer.nickname, character: peer.character,
+    x, y, z, targetX: x, targetY: y, targetZ: z,
+    dirX: peer.dirX || 0, dirZ: peer.dirZ || -1,
+    isMoving: Boolean(peer.isMoving), animTimer: 0, animFrame: 0
+  };
 }
 
 function ensureRemote(peer) {
@@ -48,12 +62,56 @@ function ensureRemote(peer) {
   return entry;
 }
 
-function updateRemoteVisual(entry, peer, camera, cameraYaw) {
-  entry.mesh.position.set(peer.x || 0, peer.y || 0, peer.z || 0);
+function applyPeerPose(entry, peer) {
+  entry.targetX = Number(peer.x) || 0;
+  entry.targetY = Number(peer.y) || 0;
+  entry.targetZ = Number(peer.z) || 0;
+  entry.dirX = Number(peer.dirX) || 0;
+  entry.dirZ = Number(peer.dirZ) || -1;
+  const dx = entry.targetX - entry.x;
+  const dz = entry.targetZ - entry.z;
+  entry.isMoving = Boolean(peer.isMoving) || movingFromDelta(dx, dz, 0.08);
+}
+
+export function applyRemoteSnapshots(peers) {
+  if (!sceneRef || !loader) return;
+  const ids = new Set();
+  for (const peer of peers) {
+    ids.add(peer.id);
+    applyPeerPose(ensureRemote(peer), peer);
+  }
+  pruneMissing(ids);
+}
+
+function clipMeta(kit, anim) {
+  return kit?.manifest?.anims?.[anim] || { fps: 8, frames: 1 };
+}
+
+function tickEntryVisual(entry, dt, camera, cameraYaw) {
+  const alpha = Math.min(1, dt * 12);
+  entry.x = lerpAxis(entry.x, entry.targetX, alpha);
+  entry.y = lerpAxis(entry.y, entry.targetY, alpha);
+  entry.z = lerpAxis(entry.z, entry.targetZ, alpha);
+  const dx = entry.targetX - entry.x;
+  const dz = entry.targetZ - entry.z;
+  const speed = Math.hypot(dx, dz) / Math.max(dt, 1e-3);
+  const moving = entry.isMoving || movingFromDelta(dx, dz, 0.04);
+  const anim = remoteAnimName(moving, speed);
+  const clip = clipMeta(entry.kit, anim);
+  const clock = advanceAnimClock(entry.animTimer, entry.animFrame, dt, clip.fps, clip.frames);
+  entry.animTimer = clock.animTimer;
+  entry.animFrame = clock.animFrame;
+  entry.mesh.position.set(entry.x, entry.y, entry.z);
   entry.mesh.quaternion.copy(camera.quaternion);
-  const anim = peer.isMoving ? 'run' : 'idle';
-  const view = getSpriteDirection(peer.dirX || 0, peer.dirZ || -1, cameraYaw);
-  showPlayerFrame(entry.mesh, entry.kit, { anim, frame: 0 }, view);
+  const view = getSpriteDirection(entry.dirX, entry.dirZ, cameraYaw);
+  showPlayerFrame(entry.mesh, entry.kit, { anim, frame: entry.animFrame }, view);
+}
+
+export function tickRemotePlayers(dt, camera, cameraYaw) {
+  if (!sceneRef || !camera) return;
+  for (const entry of remotes.values()) {
+    tickEntryVisual(entry, dt, camera, cameraYaw);
+  }
 }
 
 function pruneMissing(activeIds) {
@@ -64,17 +122,6 @@ function pruneMissing(activeIds) {
     entry.mesh.material?.dispose?.();
     remotes.delete(id);
   }
-}
-
-export function syncRemotePlayers(peers, camera, cameraYaw) {
-  if (!sceneRef || !loader || !camera) return;
-  const ids = new Set();
-  for (const peer of peers) {
-    ids.add(peer.id);
-    const entry = ensureRemote(peer);
-    updateRemoteVisual(entry, peer, camera, cameraYaw);
-  }
-  pruneMissing(ids);
 }
 
 export function clearRemotePlayers() {

@@ -17,6 +17,10 @@ import {{
   buildSyncPayload,
   selectRemotePeers,
   shouldSendSync,
+  advanceAnimClock,
+  lerpAxis,
+  movingFromDelta,
+  remoteAnimName,
 }} from '{LOGIC.as_posix()}';
 {expr}
 """
@@ -84,12 +88,33 @@ console.log([
     assert out == "true,false,true"
 
 
+def test_remote_anim_helpers() -> None:
+    out = run_node(
+        """
+const a = advanceAnimClock(0.04, 3, 0.02, 10, 12);
+const b = advanceAnimClock(0.09, 3, 0.02, 10, 12);
+console.log([
+  remoteAnimName(false, 0),
+  remoteAnimName(true, 2),
+  remoteAnimName(true, 7),
+  movingFromDelta(0.2, 0, 0.05),
+  movingFromDelta(0.01, 0, 0.05),
+  +lerpAxis(0, 10, 0.5).toFixed(1),
+  a.animFrame,
+  b.animFrame,
+].join(','));
+"""
+    )
+    assert out == "idle,walk,run,true,false,5,3,4"
+
+
 def main() -> int:
     if not LOGIC.exists():
         raise AssertionError(f"missing {LOGIC}")
     test_build_sync_payload()
     test_select_remote_peers()
     test_sync_throttle()
+    test_remote_anim_helpers()
     print("OK test_multiplayer_presence")
     return 0
 

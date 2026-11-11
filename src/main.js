@@ -459,7 +459,7 @@ function renderMenuBackground(dt) {
   updateMenuCamera(cameraState, dt);
   updateCamera();
   updatePlayerSprite(dt);
-  updateBillboards();
+  updateBillboards(dt);
   renderer.render(scene, camera);
 }
 
@@ -495,7 +495,7 @@ function updateGame(dt) {
   updateEnemies(dt);
   updateCamera();
   updatePlayerSprite(dt);
-  updateBillboards();
+  updateBillboards(dt);
   renderer.render(scene, camera);
   updateHUD();
 }
@@ -584,8 +584,8 @@ function showRunFrame(frame) {
   showPlayerFrame(playerMesh, playerKit, { anim: 'run', frame }, 'back');
 }
 
-function updateBillboards() {
-  tickMultiplayerPresence({ player, state, camera, cameraYaw: cameraState.yaw });
+function updateBillboards(dt = 0) {
+  tickMultiplayerPresence({ player, state, camera, cameraYaw: cameraState.yaw, dt });
   playerMesh.quaternion.copy(camera.quaternion);
   const enemyWalkFrame = Math.floor(state.time * 8) % 8;
   for (const en of enemyMeshes) {
@@ -1032,7 +1032,7 @@ function tickPlayerDeath(dt) {
   playerMesh.position.y = player.y;
   updateCamera();
   updatePlayerSprite(dt);
-  updateBillboards();
+  updateBillboards(dt);
   renderer.render(scene, camera);
   if (deathTimer <= 0) showGameOver(false);
 }

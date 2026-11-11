@@ -7,12 +7,13 @@ import {
 } from './multiplayerPresenceLogic.js';
 import {
   bindRemotePlayersScene,
-  syncRemotePlayers,
+  applyRemoteSnapshots,
+  tickRemotePlayers,
   clearRemotePlayers,
   countRemotePlayers
 } from './remotePlayers.js';
 
-const SYNC_INTERVAL_MS = 200;
+const SYNC_INTERVAL_MS = 100;
 let lastSyncAt = -1;
 let presenceEnabled = false;
 
@@ -30,19 +31,19 @@ export function disableMultiplayerPresence() {
   clearRemotePlayers();
 }
 
-function applyRoomSync(err, data, camera, cameraYaw, localPlayerId) {
+function applyRoomSync(err, data, localPlayerId) {
   if (err || !data?.room?.activePlayers) return;
-  const remotes = selectRemotePeers(data.room.activePlayers, localPlayerId);
-  syncRemotePlayers(remotes, camera, cameraYaw);
+  applyRemoteSnapshots(selectRemotePeers(data.room.activePlayers, localPlayerId));
 }
 
-export function tickMultiplayerPresence({ player, state, camera, cameraYaw, nowMs = Date.now() }) {
+export function tickMultiplayerPresence({ player, state, camera, cameraYaw, dt = 0, nowMs = Date.now() }) {
   if (!presenceEnabled || !state?.active || state.inMenu) return;
+  tickRemotePlayers(dt, camera, cameraYaw);
   if (!shouldSendSync(nowMs, lastSyncAt, SYNC_INTERVAL_MS)) return;
   lastSyncAt = nowMs;
   const payload = buildSyncPayload(player, state);
   syncMultiplayerSession(payload, (err, data) => {
-    applyRoomSync(err, data, camera, cameraYaw, state.localPlayerId);
+    applyRoomSync(err, data, state.localPlayerId);
   });
 }
 
