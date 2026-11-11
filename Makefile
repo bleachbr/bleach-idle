@@ -67,6 +67,9 @@ arsenal-test: ## Testes do arsenal de cada personagem jogável
 	python3 scripts/test_arsenal.py
 	python3 scripts/test_projectile_orientation.py
 
+asset-version-test: ## Versão do build nas URLs de textura, para o cache não segurar sprite antigo
+	python3 scripts/test_asset_version.py
+
 sfx-test: ## Catraca: todo FX de disparo do arsenal tem SFX e o main liga os gatilhos
 	python3 scripts/test_sfx.py
 
@@ -79,4 +82,4 @@ safety-test: ## Testes de proteção: Lua ao norte/baixa, transição do prólog
 rpg-stats-test: ## Testes unitários do sistema de atributos RPG, caps matemáticos (CDR 65%, Hierro 75%) e sinergias
 	python3 scripts/test_rpg_stats.py
 
-test: movement-test player-anim-test evolution-test safety-test rpg-stats-test arsenal-test sfx-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, rpg, arsenal, sfx, governança, catraca de tamanho)
+test: movement-test player-anim-test evolution-test safety-test rpg-stats-test arsenal-test sfx-test asset-version-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, rpg, arsenal, sfx, governança, catraca de tamanho)
