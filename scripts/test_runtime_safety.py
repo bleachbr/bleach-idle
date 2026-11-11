@@ -206,6 +206,13 @@ class TestRuntimeReferenceSafety(unittest.TestCase):
         self.assertIn("selectBannerOption: selectOptionIndex", content)
         self.assertIn("skipLevelUp: finishLevelUp", content)
 
+    def test_jump_player_blocked_during_prologue(self):
+        root = repo_root()
+        main_path = root / "src/main.js"
+        content = main_path.read_text(encoding="utf-8")
+        self.assertIn("function jumpPlayer() {", content)
+        self.assertIn("if (isPrologueActive()) return;", content)
+
 
 class TestAudioSystemProtection(unittest.TestCase):
     def test_audio_files_exist_and_non_empty(self):

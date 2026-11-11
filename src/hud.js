@@ -2,10 +2,16 @@
 // BLEACH: SOUL SURVIVOR - GERENCIADOR DE HUD E TELAS DE RESULTADO
 // =======================================================================
 
-function updateBossBar(state, enemyMeshes) {
-  if (!state.bossSpawned || state.bossDefeated) return;
+export function updateBossBar(state, enemyMeshes = []) {
+  const isSpawned = state?.cycleState ? state.cycleState.bossSpawned : state?.bossSpawned;
+  const isDefeated = state?.cycleState ? !state.cycleState.bossActive : state?.bossDefeated;
+  if (!isSpawned || isDefeated) {
+    const container = typeof document !== 'undefined' ? document.getElementById('boss-bar-container') : null;
+    if (container && !container.classList.contains('hidden')) container.classList.add('hidden');
+    return;
+  }
   const boss = enemyMeshes.find(e => e.active && e.isBoss);
-  if (boss) {
+  if (boss && typeof document !== 'undefined') {
     const bossHpPercent = (boss.hp / boss.maxHp) * 100;
     const bar = document.getElementById('boss-hp-fill');
     if (bar) bar.style.width = Math.max(0, bossHpPercent) + '%';

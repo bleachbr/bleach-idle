@@ -547,10 +547,10 @@ function updatePlayer(dt) {
 }
 
 function jumpPlayer() {
-  if (player.isGrounded && state.active && !state.paused) {
-    player.vy = player.jumpStrength;
-    player.isGrounded = false;
-  }
+  if (isPrologueActive()) return;
+  if (!player.isGrounded || !state.active || state.paused) return;
+  player.vy = player.jumpStrength;
+  player.isGrounded = false;
 }
 
 function updateEnemyBillboard(en, walkFrame) {
