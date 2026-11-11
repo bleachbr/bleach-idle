@@ -157,3 +157,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** regra de um personagem fica no cadastro dele em `kit_cast.py` (`back_note`), nunca no texto comum da vista. Depois de gerar um kit, compare a cor média de cada tira com a mediana do kit na mesma vista. Uma tira com desvio bem acima dos outros é suspeita e precisa ser conferida na folha.
 
 **Evidência:** a cor média do `move_slash_front` do Ishida ficou 33,9 longe da mediana, contra uma dispersão típica de 6. A folha de costas do Grimmjow mostrava a katana nas costas em `afk`, `hurt_air`, `death` e `move_getsuga`, e o cabelo roxo em `air_slash`. Depois de regenerar, as três folhas ficaram consistentes com o `idle`, e `validate_player_kit.py` passa nos quatro kits.
+
+## 20. Sprite regenerado não aparece para quem já jogou: o cache de `/src/assets/` segura a tira antiga
+
+**Causa raiz:** o nginx do container manda `Cache-Control: public, max-age=3600` em `/src/assets/`, e o jogo pede as texturas sempre pelo mesmo nome. Quando uma tira é regenerada e publicada, o navegador de quem já jogou continua usando a cópia antiga por até 1 hora, mesmo com o servidor entregando o arquivo novo.
+
+**O que fazer:** toda URL de `/src/assets/` sai com `?v=<versão do build>` (`src/assetVersion.js`, registrada no `THREE.DefaultLoadingManager` e usada nas `<img>` do DOM). O Vite troca `__ASSET_VERSION__` a cada build. Antes de dizer que um asset mudou em produção, compare o arquivo servido com o do commit e lembre que o navegador pode estar com outro.
+
+**Evidência:** depois do PR 363, o `move_slash_front.png` servido por `bleach.acoplum.com` tinha o mesmo SHA-1 do commit, mas o jogo do usuário ainda mostrava o Ishida antigo. Com a versão na URL, as 197 PNGs carregadas no dev saem com `?v=`, e `scripts/test_asset_version.py` cobre a regra.

@@ -5,6 +5,11 @@ import { execFile } from 'child_process';
 import { registerTelemetryAndMultiplayerRoutes } from './server/telemetry_orchestrator.js';
 
 export default defineConfig({
+  // Versão das texturas em /src/assets: muda a cada build para o cache do navegador não segurar
+  // sprite antigo depois do deploy (src/assetVersion.js).
+  define: {
+    __ASSET_VERSION__: JSON.stringify(Date.now().toString(36))
+  },
   server: {
     host: true,
     port: 5173,

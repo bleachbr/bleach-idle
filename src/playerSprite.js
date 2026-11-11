@@ -5,6 +5,11 @@
 // Cada personagem jogável tem o seu kit em src/assets/characters/<id>/anims.
 // =======================================================================
 import * as THREE from 'three';
+import { versionedAssetUrl } from './assetVersion.js';
+
+// Todo loader do Three que usa o gerenciador padrão passa por aqui: personagens, hollows, FX e mapas.
+// Este módulo é importado pelo main.js antes de qualquer textura ser pedida.
+THREE.DefaultLoadingManager.setURLModifier(versionedAssetUrl);
 
 const MANIFESTS = Object.fromEntries(
   Object.entries(import.meta.glob('./assets/characters/*/anims/manifest.json', { eager: true, import: 'default' }))
