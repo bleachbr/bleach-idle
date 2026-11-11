@@ -181,3 +181,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** recuperar com `git checkout 02f4c973 -- test/` (ou o commit pai do wipe). Não procurar specs dentro de `runs/`.
 
 **Evidência:** `git check-ignore -v test/runs/` aponta `.gitignore:13`; `git log --diff-filter=D -- test/` mostra o wipe em `cdb05222`; `git ls-tree -r 02f4c973 -- test/` lista o harness completo.
+
+## 23. Mapeamento de flags em submódulo (`cycleState`) sem compatibilizar leitores no HUD quebra a exibição da barra de boss
+
+**Causa raiz:** na migração para o loop infinito de sobrevivência (`src/cycle.js`), as flags de ciclo de vida do Menos Grande (`bossSpawned`, `bossActive`) passaram a viver dentro de `state.cycleState`. Porém, `updateBossBar` em `src/hud.js` continuou lendo diretamente `state.bossSpawned` e `state.bossDefeated` no nível raiz. Como `state.bossSpawned` permanecia falsy, a barra de vida do boss nunca era atualizada ou o container `#boss-bar-container` não era ocultado ao purificar o Menos e avançar para o próximo ciclo.
+
+**O que fazer:** em leitores de HUD desacoplados, ler as flags com fallback seguro (`state?.cycleState ? state.cycleState.bossSpawned : state?.bossSpawned` e `isDefeated = state?.cycleState ? !state.cycleState.bossActive : state?.bossDefeated`), garantir que `#boss-bar-container` receba `.classList.add('hidden')` quando inativo, e cobrir o ciclo completo (pré-spawn, ativo com dano, e após `advanceToNextCycle`/`resetCycleState`) em teste unitário.
+
+**Evidência:** `scripts/test_endless_evolution.py` com o teste `test_boss_bar_hud_gates_on_cycle_state` cobrindo antes do spawn (hidden), boss ativo a 75% e 25% de HP, e ocultação garantida após `advanceToNextCycle` e `resetCycleState`.

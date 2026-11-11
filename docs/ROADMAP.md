@@ -17,7 +17,7 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 
 ## Frente 1 — aceite da versão 1
 
-- [x] Partida jogada no browser com evidência no changelog: sobrevivência no Hueco Mundo, 3 cartas de level-up em tempo real, confronto e purificação do Menos Grande Gillian, tela de vitória com estatísticas e reinício em memória sem reload ([_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
+- [x] Partida jogada no browser com evidência no changelog: sobrevivência no Hueco Mundo, 3 cartas de level-up em tempo real, confronto e purificação do Menos Grande Gillian, tela de fim de partida com estatísticas e reinício em memória sem reload (o modo endless da Frente 2 sucedeu a vitória prematura, avançando para o próximo ciclo ao abater o Menos) ([_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [x] Menu de início estilo PokéBonk e volta ao menu com nickname Shinigami, rotação orbital cinemática de fundo, botões de estúdios 360° e retorno ao menu via pausa/fim de jogo (`src/menu.js`, [direcionamento/13](direcionamento/13-menu-login-pokebonk-e-navegacao-de-estudios.md))
 - [x] Visual canônico e unificado dos Hollows da V1: horda composta por Fishbone D e Chefão Menos Grande Gillian com ciclo walk8 de 8 frames em 4 direções, eliminando placeholders provisórios (`src/assets/monsters/`, [direcionamento/14](direcionamento/14-normalizacao-hollows-v1-fishbone-e-gillian.md))
 - [x] Hollow elite (contorno carmesim, 200 HP, escala 2.2x, drop de 6 Reishi e censo) como entidade ativa em campo (`src/main.js`, [direcionamento/15](direcionamento/15-joystick-virtual-mobile-e-hollow-elite.md))

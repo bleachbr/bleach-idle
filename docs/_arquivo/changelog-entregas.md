@@ -1,5 +1,13 @@
 # Changelog de entregas
 
+## 2026-11-11 — Reconciliação dos docs vivos com o modo Endless Survivor e correção da barra de boss
+
+- **Endless survivor como realidade da partida:** alinhamento de `docs/STATUS.md` e `docs/ROADMAP.md` (Frente 1) com o comportamento real do código (`src/main.js` e `src/cycle.js`). A derrota do Menos Grande Gillian não encerra o jogo com tela de vitória prematura ("MISSÃO CUMPRIDA"), mas dispara `advanceToNextCycle(state.cycleState)`, gerando chuva de Reishi e escalonando o combate em ciclos infinitos contínuos até a morte do jogador (`showGameOver(false)` não é mais o fluxo padrão).
+- **HUD da barra de boss (`src/hud.js`):** `updateBossBar` compatibilizado para ler `bossSpawned` e `bossActive` a partir de `state.cycleState` (com fallback para `state`), garantindo que o container `#boss-bar-container` permaneça oculto antes do spawn e seja ocultado após a derrota/avanço de ciclo. Adicionado bloqueio de salto do jogador no Dangai durante o prólogo ativo (`src/main.js`).
+- **Smoke test da Frente 1 no CI (`scripts/test_frente1_smoke.py`):** teste unitário rápido e versionado (sem Playwright ou navegador) que valida e catraca a fiação completa da Frente 1: exports do módulo e caminho completo de conclusão/cleanup do prólogo com callback `onComplete`, estatísticas e integração do Hollow Elite no loop principal (spawn periódico a cada 35s, escala 2.2x, carmesim `0xff3355`, 6 Reishi e censo), flags `bossSpawned`/`bossActive` atualizadas por `markBossSpawned` e lidas pelo HUD `updateBossBar` (prevenção de regressão da Tarefa A), e trava de salto com prólogo ativo. Conectado ao job `quality` do CI (`.github/workflows/ci.yml`), ao alvo `make frente1-smoke` e ao comando agregador `make test`.
+- **Docs:** aprendizado 23 (flags em submódulo `cycleState` x leitores no HUD); reconciliação das caixas e status da V1 com a sobrevivência infinita.
+- **Evidência:** `scripts/test_frente1_smoke.py` (10 testes OK), `scripts/test_endless_evolution.py` (`test_boss_bar_hud_gates_on_cycle_state`), `scripts/test_runtime_safety.py` (`test_jump_player_blocked_during_prologue`), `make frente1-smoke`, `make test`, `make docs-sync` e `make docs-check` verdes.
+
 ## 2026-11-11 — Harness Jogador-IA restaurado em `test/`
 
 - **O quê:** o commit `cdb05222` (`novo projeto`) tinha apagado o pacote versionado `test/` (README, `src/`, `regressao/`, `package.json`). O código voltou a partir de `02f4c973`, com nota no topo do `test/README.md` de que ainda mira o Bleach Idle. `test/runs/` continua gitignored e intacto no checkout local.

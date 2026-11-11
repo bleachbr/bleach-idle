@@ -86,4 +86,7 @@ multiplayer-test: ## Testes da API e da presença multiplayer (join/sync/room + 
 	python3 scripts/test_multiplayer_api.py
 	python3 scripts/test_multiplayer_presence.py
 
-test: movement-test player-anim-test evolution-test safety-test rpg-stats-test arsenal-test sfx-test asset-version-test docs-test size-test multiplayer-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, rpg, arsenal, sfx, multiplayer, governança, catraca de tamanho)
+frente1-smoke: ## Smoke test da fiação da Frente 1 (prólogo, hollow elite, ciclo boss e HUD)
+	python3 scripts/test_frente1_smoke.py
+
+test: movement-test player-anim-test evolution-test safety-test frente1-smoke rpg-stats-test arsenal-test sfx-test asset-version-test docs-test size-test multiplayer-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, rpg, arsenal, sfx, multiplayer, governança, catraca de tamanho)

@@ -42,6 +42,29 @@ import {{
   LEVELUP_TIMEOUT_SECONDS
 }} from './src/levelup.js';
 
+import {{
+  updateBossBar
+}} from './src/hud.js';
+
+global.document = global.document || {{
+  getElementById: (id) => {{
+    if (!global.__domElements) global.__domElements = {{}};
+    if (!global.__domElements[id]) {{
+      global.__domElements[id] = {{
+        id,
+        style: {{ width: '100%' }},
+        classList: {{
+          classes: new Set(id === 'boss-bar-container' ? ['hidden'] : []),
+          add(c) {{ this.classes.add(c); }},
+          remove(c) {{ this.classes.delete(c); }},
+          contains(c) {{ return this.classes.has(c); }}
+        }}
+      }};
+    }}
+    return global.__domElements[id];
+  }}
+}};
+
 const __result = (() => {{
   {expr}
 }})();
@@ -117,6 +140,62 @@ class TestEndlessCycle(unittest.TestCase):
         self.assertFalse(res["bossSpawnedAfterAdvance"])
         self.assertEqual(res["advanceResult"]["newCycle"], 2)
         self.assertEqual(res["advanceResult"]["reishiShowerCount"], 18)
+
+    def test_boss_bar_hud_gates_on_cycle_state(self):
+        res = run_node_eval("""
+            global.__domElements = {};
+            const cycleState = createCycleState();
+            const state = { cycleState };
+            const enemyMeshes = [
+                { active: true, isBoss: true, hp: 1500, maxHp: 2000 }
+            ];
+
+            // 1. Antes do spawn: boss-hp-fill nao atualiza e container e escondido
+            updateBossBar(state, enemyMeshes);
+            const fillBefore = document.getElementById('boss-hp-fill').style.width;
+            const hiddenBefore = document.getElementById('boss-bar-container').classList.contains('hidden');
+
+            // 2. Boss spawna: cycleState.bossSpawned e bossActive ficam true
+            markBossSpawned(cycleState);
+            document.getElementById('boss-bar-container').classList.remove('hidden');
+            updateBossBar(state, enemyMeshes);
+            const fillActive = document.getElementById('boss-hp-fill').style.width;
+            const hiddenActive = document.getElementById('boss-bar-container').classList.contains('hidden');
+
+            // 3. Boss leva mais dano
+            enemyMeshes[0].hp = 500;
+            updateBossBar(state, enemyMeshes);
+            const fillDamaged = document.getElementById('boss-hp-fill').style.width;
+
+            // 4. Boss derrotado: advanceToNextCycle reseta bossSpawned e bossActive
+            advanceToNextCycle(cycleState);
+            updateBossBar(state, enemyMeshes);
+            const hiddenAfterDefeat = document.getElementById('boss-bar-container').classList.contains('hidden');
+
+            // 5. Reset do ciclo
+            markBossSpawned(cycleState);
+            document.getElementById('boss-bar-container').classList.remove('hidden');
+            resetCycleState(cycleState);
+            updateBossBar(state, enemyMeshes);
+            const hiddenAfterReset = document.getElementById('boss-bar-container').classList.contains('hidden');
+
+            return {
+                fillBefore,
+                hiddenBefore,
+                fillActive,
+                hiddenActive,
+                fillDamaged,
+                hiddenAfterDefeat,
+                hiddenAfterReset
+            };
+        """)
+        self.assertEqual(res["fillBefore"], "100%")
+        self.assertTrue(res["hiddenBefore"])
+        self.assertEqual(res["fillActive"], "75%")
+        self.assertFalse(res["hiddenActive"])
+        self.assertEqual(res["fillDamaged"], "25%")
+        self.assertTrue(res["hiddenAfterDefeat"])
+        self.assertTrue(res["hiddenAfterReset"])
 
 
 class TestReiatsuSystem(unittest.TestCase):
