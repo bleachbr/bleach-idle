@@ -61,3 +61,39 @@ jobs:
         run: |
           npm ci
           npm run build
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [quality, gitleaks, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    concurrency:
+      group: bleach-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build production image
+        run: docker build --tag "bleach-soul-survivor:$GITHUB_SHA" .
+
+      - name: Deploy to VPS
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          : "${VPS_HOST:?}" "${VPS_USER:?}" "${VPS_SSH_KEY:?}" "${VPS_KNOWN_HOSTS:?}"
+          install -d -m 700 "$HOME/.ssh"
+          umask 077
+          printf '%s\n' "$VPS_SSH_KEY" > "$HOME/.ssh/bleach_deploy"
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          SSH=(ssh -i "$HOME/.ssh/bleach_deploy" -p "${VPS_PORT:-22}" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 "$VPS_USER@$VPS_HOST")
+          "${SSH[@]}" 'mkdir -p /opt/bleach-idle'
+          docker save "bleach-soul-survivor:$GITHUB_SHA" | gzip | "${SSH[@]}" 'gunzip | docker load'
+          tar -C infra -czf - compose.vps.yml deploy.sh | "${SSH[@]}" 'tar -xzf - -C /opt/bleach-idle'
+          "${SSH[@]}" "bash /opt/bleach-idle/deploy.sh '$GITHUB_SHA'"
+          curl --fail --silent --show-error --retry 3 https://bleach.acoplum.com/healthz
