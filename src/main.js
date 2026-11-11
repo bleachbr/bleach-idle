@@ -1170,7 +1170,7 @@ function resetMatchStats() {
 function resetMatch() {
   resetMatchStats();
   eliteSpawnTimer = 35.0;
-  setPlayerCamouflage(player, false);
+  setPlayerCamouflage(player, playerMesh, false);
   resetPlayerState();
   resetWeaponsAndPassives();
   clearActiveEntities();

@@ -52,7 +52,7 @@ export const ARSENALS = {
       getsuga: { fx: 'skill_directo', speed: 14.0, maxDistance: 28.0, hitRadius: 3.0,
         startScale: 2.6, endScale: 4.6, pierce: true },
       byakurai: { fx: 'skill_directo', speed: 24.0, hitRadius: 1.4, startScale: 1.3, endScale: 1.7 },
-      shakkaho: { fx: 'skill_muerte', speed: 12.0, hitRadius: 3.8, startScale: 3.0, endScale: 4.4 }
+      shakkaho: { fx: 'skill_muerte', orient: 'flip', speed: 12.0, hitRadius: 3.8, startScale: 3.0, endScale: 4.4 }
     }
   },
   grimmjow: {

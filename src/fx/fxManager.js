@@ -9,6 +9,14 @@
 
 import * as THREE from 'three';
 import { FX_BEHAVIORS } from './fxConfig.js';
+import { flightPose } from './flightPose.js';
+
+// O desenho do projétil gira (ou espelha) para a direção do voo na tela; a regra está em flightPose.js.
+function orientToFlight(p, cameraQuaternion, scale) {
+  const pose = flightPose(p.dirX, p.dirZ, cameraQuaternion, p.config.orient);
+  p.mesh.rotateZ(pose.angle);
+  p.mesh.scale.set(pose.mirrored ? -scale : scale, scale, 1.0);
+}
 
 export class FXManager {
   constructor(scene, spriteTextures) {
@@ -163,7 +171,7 @@ export class FXManager {
       // 2. Crescimento da onda ao longo da viagem
       const travelRatio = Math.min(1.0, p.distanceTraveled / p.config.maxDistance);
       const currentScale = p.config.startScale + travelRatio * (p.config.endScale - p.config.startScale);
-      p.mesh.scale.set(currentScale, currentScale, 1.0);
+      orientToFlight(p, cameraQuaternion, currentScale);
 
       // 3. Animação dos quadros do efeito (dinâmico por skill)
       const frameIdx = Math.floor(p.lifetime * p.config.fps) % 4;

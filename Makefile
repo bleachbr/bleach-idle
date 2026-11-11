@@ -65,6 +65,7 @@ hollow-test: ## Testes de sorteio, rota e ataque dos tipos de hollow
 	python3 scripts/test_hollow_types.py
 arsenal-test: ## Testes do arsenal de cada personagem jogável
 	python3 scripts/test_arsenal.py
+	python3 scripts/test_projectile_orientation.py
 
 sfx-test: ## Catraca: todo FX de disparo do arsenal tem SFX e o main liga os gatilhos
 	python3 scripts/test_sfx.py

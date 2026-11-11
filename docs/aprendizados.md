@@ -141,3 +141,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** comportamento novo em módulo próprio (`src/sfx.js`, `src/combatAudio.js`, …); o main só chama. Se precisar de orçamento, encolher comentário/bloco morto no mesmo diff e gravar o número menor no inventário.
 
 **Evidência:** nesta branch o arquivo estava em 1250/1250; SFX entrou via `combatAudio.js` e o inventário desceu para 1235 após liberar linhas de comentário.
+
+## 18. `setPlayerCamouflage(player, false)` não devolve a opacidade do jogador
+
+**Causa raiz:** a função aceita a malha no segundo argumento ou um booleano. Com o booleano, ela procura `player.mesh`, que não existe. O `resetMatch` usava essa forma, então a opacidade de 0,35 da pausa (camuflagem do AFK) sobrevivia ao voltar ao menu e começar outra partida. Todo personagem ficava translúcido; no Grimmjow, quase todo branco, isso salta aos olhos.
+
+**O que fazer:** passar sempre a malha (`setPlayerCamouflage(player, playerMesh, afk)`).
+
+**Evidência:** no navegador, perda de foco com o Sado em campo deixou `playerMesh.material.opacity` em 0,35; depois de "Voltar ao menu" e de uma partida nova, continuava 0,35. Com a malha passada no `resetMatch`, volta a 1.
