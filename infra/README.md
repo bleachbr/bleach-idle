@@ -56,6 +56,7 @@ O job `deploy` do `.github/workflows/ci.yml` aponta para `/opt/bleach-idle` e en
 
 | Data | SHA | Quem | Observação |
 |---|---|---|---|
+| 2026-11-11 | `be95fe689f5d56291f09eff01cb86856d10e7476` | wjunior (via agente) | Multiplayer presence: imagem Node com `/api` + peers visíveis. Validado em produção (`/api/multiplayer/room` JSON; duas abas ORCA com `getRemotePlayerCount()===1`, Alpha em `(10,-6)` e Beta em `(0,0)`). |
 | 2026-11-11 | `33643c683884e94119d691bc3128b9d4e16fb6d4` | wjunior (via agente) | Atualização com elenco jogável (Ishida, Sado, Grimmjow com poderes próprios - #360), novos Hollows (Shrieker e Acidwire com clips de ataque/morte - #359) e correção da espada nas costas (#358). Validado em produção (`https://bleach.acoplum.com`). |
 | 2026-11-09 | `69c5065e07015ebec45e1390a097a369f3612a15` | wjunior (via agente) | Kit completo de animações do personagem principal (Ichigo Shikai): 22 clipes direcionais, sprite sheets dinâmicos, integração com máquina de estados de animação e movimentação (#357). Validado em produção (`https://bleach.acoplum.com`). |
 | 2026-11-08 | `ff80b9f17ab86ddc7866eceec27e1179cce01d0c` | wjunior (via agente) | Calibração de Volume da Trilha Sonora: redução do volume padrão de 0.45 para 0.20 (redução de ~55%), evitando fadiga auditiva e balanceando BGM com efeitos de combate. Testes unitários atualizados com asserções numéricas de volume (66/66 verdes). Validado em produção (`https://bleach.acoplum.com`). |
