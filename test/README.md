@@ -36,12 +36,16 @@ npm install
 npx playwright install chromium   # apenas na primeira vez
 
 # 4 instâncias em paralelo por 30 min (padrão)
+# No Soul Survivor atual isso ABORTA (exit 2) — falta server/+client/ do idle.
 npm run play
 
-# Testar diretamente o ambiente de produção (bleach.acoplum.com)
-npm run play -- --prod
+# Só force se tiver um checkout Bleach Idle de verdade montado neste layout:
+npm run play -- --force-idle-harness
+
+# Produção (bleach.acoplum.com) exige opt-in explícito:
+npm run play -- --prod --allow-prod
 # ou com URL customizada:
-npm run play -- --url https://bleach.acoplum.com --explorar 30
+npm run play -- --url https://bleach.acoplum.com --allow-prod --explorar 30
 
 # Meia hora completa: 15 min explorando + 15 min entrando/saindo e testando novidades da main
 npm run play -- --explorar 15 --retorno 15

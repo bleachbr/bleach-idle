@@ -6,14 +6,14 @@
 // unlockAt em segundos de partida: cada tipo novo aparece depois do anterior,
 // para o jogador aprender um comportamento por vez.
 export const HOLLOW_TYPES = {
-  fishbone: { hp: 45, speed: 3.2, scale: 1.4, contactDamage: 12, unlockAt: 0, weight: 6 },
+  fishbone: { hp: 45, speed: 6.4, scale: 1.4, contactDamage: 12, unlockAt: 0, weight: 6 },
   shrieker: {
-    hp: 30, speed: 4.3, scale: 1.4, contactDamage: 10, unlockAt: 25, weight: 3,
+    hp: 30, speed: 8.6, scale: 1.4, contactDamage: 10, unlockAt: 25, weight: 3,
     zigzag: { amplitude: 0.9, frequency: 3.0 },
     attack: { range: 1.8, cooldown: 1.4, duration: 0.75 }
   },
   acidwire: {
-    hp: 60, speed: 2.5, scale: 1.5, contactDamage: 10, unlockAt: 50, weight: 2,
+    hp: 60, speed: 5.0, scale: 1.5, contactDamage: 10, unlockAt: 50, weight: 2,
     keepAway: { min: 5.0, max: 9.0 },
     attack: { range: 13.0, cooldown: 3.2, duration: 0.86, spitAt: 0.43, spitDamage: 14, rooted: true }
   }
@@ -41,7 +41,7 @@ export function configureHollow(en, typeId, isElite, mult) {
   en.isElite = isElite;
   en.hp = Math.round((isElite ? 200 : t.hp) * mult.hpMult);
   en.maxHp = en.hp;
-  en.speed = (isElite ? 3.4 : t.speed) * mult.speedMult;
+  en.speed = (isElite ? 6.8 : t.speed) * mult.speedMult;
   en.contactDamage = isElite ? 22 : t.contactDamage;
   en.scale = isElite ? 2.2 : t.scale;
   en.attackCooldown = 0;

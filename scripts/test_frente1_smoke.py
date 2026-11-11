@@ -319,7 +319,7 @@ class TestEliteHollowWiring(unittest.TestCase):
         self.assertEqual(res["hp"], 300)  # 200 * 1.5
         self.assertEqual(res["maxHp"], 300)
         self.assertEqual(res["scale"], 2.2)
-        self.assertAlmostEqual(res["speed"], 4.25)  # 3.4 * 1.25
+        self.assertAlmostEqual(res["speed"], 8.5)  # 6.8 * 1.25 (feel pós-remoção do double updateEnemies)
         self.assertEqual(res["contactDamage"], 22)
 
     def test_elite_integration_points_in_game_loop(self):
