@@ -45,6 +45,7 @@ jobs:
           python3 scripts/test_hollow_types.py
           python3 scripts/test_arsenal.py
           python3 scripts/test_projectile_orientation.py
+          python3 scripts/test_sfx.py
 
   build:
     runs-on: ubuntu-24.04

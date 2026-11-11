@@ -8,7 +8,7 @@ const TRACKS = {
   huecoMundo: '/arts/music/Number One (Vocal Version).mp3'
 };
 
-const DEFAULT_VOLUME = 0.20;
+const DEFAULT_VOLUME = 0.08;
 const MUTE_KEY = 'soulSurvivor.musicMuted';
 
 // No servidor de dev (npm run dev) a música sempre começa mutada, a pedido do dono do jogo.

@@ -23,6 +23,8 @@ O histórico git mistura este protótipo com o jogo anterior `bleach-idle` (sete
 | `make size-check` | Falha se função ou arquivo JS passar de 20 / 500 linhas, ou se a dívida crescer |
 | `make size-test` | Testes dessa catraca |
 | `make movement-test` | Testes unitários da física de movimento, walk cycle e direções de câmera |
+| `make arsenal-test` | Arsenal por personagem (labels, FX de shot, salvas) |
+| `make sfx-test` | Catraca: todo FX de disparo tem SFX; main liga os gatilhos de combate |
 
 Não existe `npm test` nem `make check` de jogo. O workflow em `.github/workflows/ci.yml` ainda descreve o bleach-idle. Isso é a pendência 1, não um comando seu.
 

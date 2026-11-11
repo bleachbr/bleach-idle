@@ -3,8 +3,16 @@
 ## 2026-11-11 — Correções do elenco: Ishida correndo, personagem translúcido e projétil sem direção
 
 - **Ishida com outro desenho ao correr:** `run_front` e `run_left`, assim como `idle_front` e `idle_left`, eram do piloto, gerados antes da correção do texto do personagem. Na corrida de frente a cabeça ficava maior e o corpo mais baixo; parado, ele segurava uma lâmina que sumia ao andar. As cinco folhas foram regeneradas pelo Codex com o texto atual, e o kit foi reprocessado. As antigas estão em `arts/codex/kit/_rejeitado/`. `validate_player_kit.py --char ishida` passa, e a folha de conferência mostra idle, walk e run com as mesmas proporções nas 3 vistas.
-- **Personagem translúcido (visto no Grimmjow):** a pausa deixa o jogador com opacidade 0,35, e o `resetMatch` não devolvia, porque chamava `setPlayerCamouflage(player, false)` sem a malha ([aprendizados](../aprendizados.md) item 17). Antes: 0,35 depois de pausar, voltar ao menu e jogar de novo. Depois: 1.
+- **Personagem translúcido (visto no Grimmjow):** a pausa deixa o jogador com opacidade 0,35, e o `resetMatch` não devolvia, porque chamava `setPlayerCamouflage(player, false)` sem a malha ([aprendizados](../aprendizados.md) item 18). Antes: 0,35 depois de pausar, voltar ao menu e jogar de novo. Depois: 1.
 - **Projétil sempre apontando para o mesmo lado:** o desenho de todo projétil aponta para a direita, e o billboard nunca girava. `flightPose` em `src/fx/flightPose.js` (regra pura, aplicada pelo `FXManager`) gira o plano para a direção do voo na tela e espelha quando ele vai para a esquerda; a caveira da La Muerte só espelha. Medido na página com a câmera real: 72 projéteis, em 3 ângulos e 8 direções, desvio máximo de 1,5°, nenhum de cabeça para baixo. Teste em `scripts/test_projectile_orientation.py`.
+## 2026-11-11 — BGM mais baixo e SFX de combate no Hueco Mundo
+
+- **BGM:** volume padrão em `src/audio.js` de `0.20` para `0.08` (menu e Hueco Mundo). Mute (botão / tecla M) continua valendo; no `npm run dev` ainda começa mutado.
+- **SFX:** `src/sfxConfig.js` (presets + `SFX_BY_FX`), `src/sfx.js` (Web Audio procedural, pronto para `sample`), `src/combatAudio.js` (gatilhos). Ligado no Hueco Mundo: slash, disparo de skill (uma vez por salva), hit (com throttle), morte e dano no jogador. Mute da música silencia SFX também.
+- **Catraca:** `scripts/test_sfx.py` + `make sfx-test`. Todo `arsenalShot(...).fx` precisa de entrada em `SFX_BY_FX`. `make test` agora inclui `arsenal-test` e `sfx-test`. Direcionamento: [19](../direcionamento/19-audio-sfx-combate-e-catraca.md).
+- **Unlock:** desmutar (M / botão) chama `unlockSfx()` no gesto do usuário; se o `AudioContext` ficar suspenso, o próximo clique/tecla também retoma (mesmo padrão da BGM).
+- **CI:** job `quality` roda `scripts/test_sfx.py` junto com o arsenal.
+- **Evidência:** `make sfx-test` (5), `make arsenal-test` (7), `make safety-test` (volume 0.08), `make size-check`, `make docs-check` verdes. `src/main.js` 1250 → 1235 no inventário. Validação auditiva no browser fica com o dono (`make dev`, tecla M para desmutar).
 
 ## 2026-11-10 — Elenco jogável: Ishida, Sado e Grimmjow com kit completo e poderes próprios
 
