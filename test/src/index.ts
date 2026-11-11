@@ -24,9 +24,33 @@ const FOCUS = arg("focus", "");
 const TARGET_URL = arg("url", flag("prod") ? "https://bleach.acoplum.com" : "");
 const ENABLE_DEV = flag("dev");
 const COMPRESS_VIDEO = !flag("raw-video");
+const FORCE_IDLE = flag("force-idle-harness");
+const ALLOW_PROD = flag("allow-prod");
 const PERSONAS_RUN = (arg("personas", Object.keys(PERSONAS).join(",")).split(",").map((p) => p.trim()).filter(Boolean));
 const bad = PERSONAS_RUN.filter((p) => !(p in PERSONAS));
 if (bad.length || !PERSONAS_RUN.length) { console.error(`persona inválida (${bad.join(", ")}). Use: ${Object.keys(PERSONAS).join(", ")}`); process.exit(1); }
+
+// Este harness é do Bleach Idle (server/ + client/). A main do Soul Survivor não tem esse layout.
+if (!FORCE_IDLE && !TARGET_URL) {
+  const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+  const idleServer = join(repoRoot, "server", "src", "index.ts");
+  const idleClient = join(repoRoot, "client");
+  if (!existsSync(idleServer) || !existsSync(idleClient)) {
+    console.error([
+      "Jogador-IA abortou: este checkout é Soul Survivor, não Bleach Idle.",
+      "Falta server/src/index.ts + client/ (portas 2578/5183).",
+      "Ver docs/pendencias.md item 14. Para forçar mesmo assim: npm run play -- --force-idle-harness",
+    ].join("\n"));
+    process.exit(2);
+  }
+}
+if (TARGET_URL && /bleach\.acoplum\.com/i.test(TARGET_URL) && !ALLOW_PROD) {
+  console.error([
+    "Jogador-IA abortou: --prod/--url contra bleach.acoplum.com exige --allow-prod",
+    "(carga adversarial em produção — decisão de quem opera o domínio).",
+  ].join("\n"));
+  process.exit(2);
+}
 
 const base = fileURLToPath(new URL("..", import.meta.url));
 const runsDir = join(base, "runs");

@@ -473,7 +473,6 @@ function updateCombatLoop(dt) {
     }, camera.quaternion);
   }
   updateSpawns(dt);
-  updateEnemies(dt);
   updateHollowAttacks(dt);
   updateReishi(dt);
 }
@@ -998,7 +997,7 @@ function spawnBossMenosGrande(targetPlayerId = state.localPlayerId) {
   en.type = 'menos';
   en.hp = Math.round(2000 * mult.bossHpMult);
   en.maxHp = en.hp;
-  en.speed = 2.0 * mult.speedMult;
+  en.speed = 4.0 * mult.speedMult;
   en.isBoss = true;
   en.targetPlayerId = targetPlayerId;
   en.damageContributions = {};
@@ -1064,7 +1063,7 @@ function tickEnemyBehavior(en, dt) {
   }
 }
 
-// Fora do laço de movimento: updateEnemies roda duas vezes por quadro em combate.
+// updateEnemies roda uma vez por quadro (fora do laço de movimento / AFK).
 function updateHollowAttacks(dt) {
   for (const en of enemyMeshes) {
     if (!en.active) continue;

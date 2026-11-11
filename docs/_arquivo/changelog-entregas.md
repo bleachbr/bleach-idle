@@ -1,5 +1,13 @@
 # Changelog de entregas
 
+## 2026-11-11 — Dívidas: encoding Windows, double updateEnemies, abort do Jogador-IA
+
+- **Pendência 12:** `scripts/test_endless_evolution.py` passa `encoding="utf-8"` no `subprocess.run` do Node, para `Capitão` não quebrar no Windows.
+- **Pendência 11:** `updateEnemies` sai do `updateCombatLoop` e fica só em `updateGame` (uma vez por quadro, inclusive AFK). Velocidades de papel dobradas (`hollowTypes` + boss + elite) para preservar o feel que o balanceamento já usava.
+- **Pendência 14 (mitigação):** `test/src/index.ts` aborta (exit 2) sem layout Bleach Idle (`server/src/index.ts` + `client/`), salvo `--force-idle-harness`; `--prod`/`bleach.acoplum.com` exige `--allow-prod`. README do `test/` atualizado. Adaptar o harness ao Soul Survivor continua aberto na pendência 14.
+- **Pendências 3 e 13:** seguem abertas (teste visual completo de câmera/sprite/FX; netcode de combate multiplayer).
+- **Evidência:** `make docs-check`, `make size-check`, `python3 scripts/test_hollow_types.py`, `python3 scripts/test_endless_evolution.py`, `python3 scripts/test_frente1_smoke.py`.
+
 ## 2026-11-11 — Reconciliação dos docs vivos com o modo Endless Survivor e correção da barra de boss
 
 - **Endless survivor como realidade da partida:** alinhamento de `docs/STATUS.md` e `docs/ROADMAP.md` (Frente 1) com o comportamento real do código (`src/main.js` e `src/cycle.js`). A derrota do Menos Grande Gillian não encerra o jogo com tela de vitória prematura ("MISSÃO CUMPRIDA"), mas dispara `advanceToNextCycle(state.cycleState)`, gerando chuva de Reishi e escalonando o combate em ciclos infinitos contínuos até a morte do jogador (`showGameOver(false)` não é mais o fluxo padrão).

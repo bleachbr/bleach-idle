@@ -189,3 +189,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** em leitores de HUD desacoplados, ler as flags com fallback seguro (`state?.cycleState ? state.cycleState.bossSpawned : state?.bossSpawned` e `isDefeated = state?.cycleState ? !state.cycleState.bossActive : state?.bossDefeated`), garantir que `#boss-bar-container` receba `.classList.add('hidden')` quando inativo, e cobrir o ciclo completo (pré-spawn, ativo com dano, e após `advanceToNextCycle`/`resetCycleState`) em teste unitário.
 
 **Evidência:** `scripts/test_endless_evolution.py` com o teste `test_boss_bar_hud_gates_on_cycle_state` cobrindo antes do spawn (hidden), boss ativo a 75% e 25% de HP, e ocultação garantida após `advanceToNextCycle` e `resetCycleState`.
+
+## 24. `updateEnemies` duas vezes por quadro dobra a velocidade efetiva
+
+**Causa raiz:** `updateCombatLoop` e `updateGame` chamavam `updateEnemies(dt)` no mesmo quadro em combate. Os números em `hollowTypes.js` e no boss pareciam "certos" porque o balanceamento foi feito em cima do dobro.
+
+**O que fazer:** uma chamada por quadro (em `updateGame`, para valer também no AFK). Se remover a duplicata, dobre as velocidades de papel para manter o feel, ou rebalanceie de propósito.
+
+**Evidência:** com a duplicata, Fishbone a `speed: 3.2` andava ~6.4 u/s; após uma chamada e `speed: 6.4`, o deslocamento por segundo no mesmo dt bate.
