@@ -1,5 +1,11 @@
 # Changelog de entregas
 
+## 2026-11-11 — Harness Jogador-IA restaurado em `test/`
+
+- **O quê:** o commit `cdb05222` (`novo projeto`) tinha apagado o pacote versionado `test/` (README, `src/`, `regressao/`, `package.json`). O código voltou a partir de `02f4c973`, com nota no topo do `test/README.md` de que ainda mira o Bleach Idle. `test/runs/` continua gitignored e intacto no checkout local.
+- **Docs:** aprendizado 19 (runs no disco ≠ harness no git); pendência 13 (adaptar ao Soul Survivor).
+- **Evidência:** `git ls-files test/` lista os 11 arquivos restaurados; `make docs-check` e `make size-check` verdes nesta branch.
+
 ## 2026-11-11 — Correções do elenco: Ishida correndo, personagem translúcido e projétil sem direção
 
 - **Ishida com outro desenho ao correr:** `run_front` e `run_left`, assim como `idle_front` e `idle_left`, eram do piloto, gerados antes da correção do texto do personagem. Na corrida de frente a cabeça ficava maior e o corpo mais baixo; parado, ele segurava uma lâmina que sumia ao andar. As cinco folhas foram regeneradas pelo Codex com o texto atual, e o kit foi reprocessado. As antigas estão em `arts/codex/kit/_rejeitado/`. `validate_player_kit.py --char ishida` passa, e a folha de conferência mostra idle, walk e run com as mesmas proporções nas 3 vistas.

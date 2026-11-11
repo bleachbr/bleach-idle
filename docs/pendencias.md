@@ -2,7 +2,7 @@
 
 Dívida aberta. Item resolvido sai daqui e vira entrada em [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md). O número não se reusa.
 
-**Última atualização:** 2026-11-10
+**Última atualização:** 2026-11-11
 
 Registrar aqui é a saída, não o default. Antes, tente resolver na branch aberta. O motivo precisa conter uma destas frases: `fora do escopo`, `depende de terceiro`, `decisão de outra pessoa`, `falta evidência medida`.
 
@@ -29,3 +29,11 @@ O teste lê a saída do Node sem `encoding="utf-8"`, então no Windows `Capitão
 **Impacto:** baixo (só quem roda a suíte no Windows vê o vermelho)
 
 **Por que não resolvido aqui:** fora do escopo — o teste é de reiatsu, e a correção é uma linha que merece commit próprio.
+
+## 13. Jogador-IA em `test/` é do Bleach Idle, não do Soul Survivor
+
+O harness (personas Gemini + Playwright, regressão `issue-22`) voltou ao repositório a partir de `02f4c973`, com aviso no `test/README.md`. Ele sobe servidor/Vite do idle antigo e não joga o protótipo Three.js atual.
+
+**Impacto:** médio (playtest automatizado e regressão de navegador do idle não cobrem o survivor; quem rodar `npm run play` em `test/` hoje espera um jogo que o checkout não é)
+
+**Por que não resolvido aqui:** fora do escopo — esta branch só restaura o código apagado pelo `novo projeto`; ligar o harness ao Soul Survivor (portas, `make dev`, HUD, combate) é outro pedido.
