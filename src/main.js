@@ -10,7 +10,7 @@ import { startPrologue, updatePrologue, isPrologueActive, cancelPrologue } from 
 import { computePlayerDisplacement, getSpriteDirection, updateWalkCycle, resetWalkCycle, updatePlayerJump } from './movement.js';
 import { initLoginMenu, showLoginMenu, hideLoginMenu, updateMenuCamera } from './menu.js';
 import { initVirtualJoystick, getJoystickVector, showVirtualJoystick, hideVirtualJoystick, isTouchDevice } from './joystick.js';
-import { initTelemetry, logTelemetry, syncMultiplayerSession } from './telemetry.js';
+import { initTelemetry, logTelemetry } from './telemetry.js';
 import { submitMatchScore } from './leaderboard.js';
 import { createPlayerNameTag, updatePlayerNameTag } from './nametag.js';
 import { updateHUD as renderHUD, showGameOver as displayGameOver } from './hud.js';
@@ -24,6 +24,7 @@ import { updatePauseDetails } from './pause_modal.js';
 import { stopMusic, playHuecoMundoBGM } from './audio.js';
 import { onSlashFire, onSkillFire, onEnemyHit, onEnemyDeath, onPlayerHurtSfx } from './combatAudio.js';
 import { loadMonsterTextures } from './monsterTextures.js';
+import { initMultiplayerPresence, enableMultiplayerPresence, disableMultiplayerPresence, tickMultiplayerPresence, getRemotePlayerCount } from './multiplayerPresence.js';
 import { pickHollowType, configureHollow, steerHollow, tickHollowAttack, hollowTypeOf } from './hollowTypes.js';
 import { loadHollowClips, applyHollowClip, startHollowDeath, hideHollow, updateDyingHollows } from './hollowClips.js';
 import { createAcidSpitPool, spawnAcidSpit, updateAcidSpit, clearAcidSpit } from './fx/acidSpit.js';
@@ -128,12 +129,11 @@ function setupRenderer(canvas) {
 
 function exposeDebugInterface() {
   window.debugGame = {
-    scene, camera, cameraState, player, playerMesh, keys, state,
-    enemyMeshes, fxManager, jumpPlayer, openLevelUpBanner,
-    selectBannerOption: selectOptionIndex, skipLevelUp: finishLevelUp, checkLevelUp, spawnReishi, activeMap, getTerrainHeight,
-    getSpriteDirection, computePlayerDisplacement, updateWalkCycle, resetWalkCycle,
-    resetMatch, startGame, returnToMenu, showLoginMenu, hideLoginMenu,
-    getJoystickVector, showVirtualJoystick, hideVirtualJoystick, spawnHollow, logTelemetry
+    scene, camera, cameraState, player, playerMesh, keys, state, enemyMeshes, fxManager,
+    jumpPlayer, openLevelUpBanner, selectBannerOption: selectOptionIndex, skipLevelUp: finishLevelUp,
+    checkLevelUp, spawnReishi, activeMap, getTerrainHeight, getSpriteDirection, computePlayerDisplacement,
+    updateWalkCycle, resetWalkCycle, resetMatch, startGame, returnToMenu, showLoginMenu, hideLoginMenu,
+    getJoystickVector, showVirtualJoystick, hideVirtualJoystick, spawnHollow, logTelemetry, getRemotePlayerCount
   };
 }
 
@@ -151,6 +151,7 @@ function init() {
   setupInputListeners(canvas);
   initVirtualJoystick({ cameraState, onJump: jumpPlayer });
   initTelemetry(state.localPlayerId, state.playerName);
+  initMultiplayerPresence(scene, new THREE.TextureLoader());
   initLoginMenu({ onStartGame: startGame, onReturnToMenu: returnToMenu, onRestartGame: restartGame });
   exposeDebugInterface();
   showLoginMenu();
@@ -510,15 +511,7 @@ function loop() {
   updateGame(dt);
 }
 
-// =======================================================================
-// MOVIMENTAÇÃO DO JOGADOR RELATIVA AO ÂNGULO DA CÂMERA
-// =======================================================================
-// Quando o jogador gira a câmera (seja 90°, 180° ou qualquer ângulo),
-// o controle de movimentação com o teclado precisa acompanhar a visão:
-// - Pressionar 'W' ou '↑': O personagem SEMPRE avança para o fundo da tela.
-// - Pressionar 'S' ou '↓': O personagem SEMPRE recua em direção à tela.
-// - Pressionar 'D' ou '→': O personagem SEMPRE anda para a direita da tela.
-// - Pressionar 'A' ou '←': O personagem SEMPRE anda para a esquerda da tela.
+// Movimento WASD relativo ao yaw da câmera (W = fundo da tela).
 function applyPlayerMovement(player, dir, dt) {
   player.dirX = dir.dx;
   player.dirZ = dir.dz;
@@ -592,6 +585,7 @@ function showRunFrame(frame) {
 }
 
 function updateBillboards() {
+  tickMultiplayerPresence({ player, state, camera, cameraYaw: cameraState.yaw });
   playerMesh.quaternion.copy(camera.quaternion);
   const enemyWalkFrame = Math.floor(state.time * 8) % 8;
   for (const en of enemyMeshes) {
@@ -1190,6 +1184,8 @@ function onPrologueCompleted() {
   player.x = 0; player.z = 0; player.isMoving = false;
   state.paused = false;
   document.getElementById('pause-modal')?.classList.add('hidden');
+  initTelemetry(state.localPlayerId, state.playerName, state.selectedCharacter);
+  enableMultiplayerPresence();
 }
 
 function selectCharacter(charId) {
@@ -1223,6 +1219,7 @@ function returnToMenu() {
   state.active = false;
   state.paused = false;
   state.inMenu = true;
+  disableMultiplayerPresence();
   hideVirtualJoystick();
   if (document.pointerLockElement) document.exitPointerLock();
   showLoginMenu();

@@ -6,9 +6,9 @@ Este repo assume o lugar do `bleach-idle` em `https://bleach.acoplum.com`. Nada 
 
 | Peça | bleach-idle (antes) | bleach-soul-survivor (agora) |
 |---|---|---|
-| Imagem | `bleach-idle:<sha>`, Node + Colyseus + SQLite | `bleach-soul-survivor:<sha>`, nginx servindo o `dist` do Vite |
+| Imagem | `bleach-idle:<sha>`, Node + Colyseus + SQLite | `bleach-soul-survivor:<sha>`, Node servindo `dist` + `/api` (telemetria, multiplayer, leaderboard) |
 | Porta no host | `127.0.0.1:2567` | `127.0.0.1:2567` (igual) |
-| Estado | volume `bleach-dados` | nenhum: o jogo não tem servidor |
+| Estado | volume `bleach-dados` | logs em memória/disco do container (`/app/logs`); sala multiplayer é in-memory |
 | Diretório na VPS | `/opt/bleach-idle` (raiz do serviço do jogo na VPS) | `/opt/bleach-idle` |
 | Projeto compose, serviço, rede | `bleach`, `jogo`, `bleach-interna` | iguais: o `up` troca o container |
 | Lock | `/var/lock/bleach-deploy.lock` | o mesmo, para os dois nunca subirem juntos |
@@ -22,7 +22,8 @@ Como a porta, o domínio e o certificado não mudam, o corte é trocar o contain
 | Arquivo | Onde roda | Papel |
 |---|---|---|
 | `../Dockerfile` | CI / sua máquina | Build do Vite + nginx sem root na 2567 |
-| `nginx.container.conf` | dentro da imagem | Estáticos, cache de `/assets/`, `/healthz` |
+| `nginx.container.conf` | referência legada | Antes servia só estáticos; a imagem atual usa `server/production_server.js` |
+| `../server/production_server.js` | dentro da imagem | Estáticos + `/api/multiplayer` + `/api/telemetry` + `/api/leaderboard` + `/healthz` |
 | `compose.vps.yml` | VPS | Sobe o container em `127.0.0.1:2567` |
 | `deploy.sh` | VPS | Trava, valida a imagem, `compose up --wait`, grava `deployed-revision` |
 | `nginx.host.conf` | referência | Cópia do nginx do host, igual ao do bleach-idle |

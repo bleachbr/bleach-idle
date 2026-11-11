@@ -6,7 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const LOGS_DIR = path.resolve(process.cwd(), 'logs');
+const LOGS_DIR = path.resolve(process.env.LOGS_DIR || path.join(process.cwd(), 'logs'));
 const TELEMETRY_FILE = path.join(LOGS_DIR, 'telemetry.log');
 const MULTIPLAYER_FILE = path.join(LOGS_DIR, 'multiplayer.log');
 const LEADERBOARD_FILE = path.join(LOGS_DIR, 'leaderboard.json');
@@ -102,12 +102,20 @@ function handleMultiplayerJoin(req, res) {
 
     const playerId = data.playerId || `player_${Date.now()}`;
     const nickname = data.nickname || 'Shinigami';
+    if (roomState.players.size >= roomState.maxPlayers && !roomState.players.has(playerId)) {
+      return sendJson(res, 503, { error: 'room_full', maxPlayers: roomState.maxPlayers });
+    }
 
     const playerRecord = {
       id: playerId,
       nickname,
+      character: data.character || 'ichigo_shikai',
       x: 0,
+      y: 0,
       z: 0,
+      dirX: 0,
+      dirZ: -1,
+      isMoving: false,
       hp: 100,
       maxHp: 100,
       kills: 0,
@@ -139,15 +147,37 @@ function handleMultiplayerSync(req, res) {
   parseBody(req, (err, data) => {
     if (err) return sendJson(res, 400, { error: 'Invalid JSON payload' });
 
-    const { playerId, x = 0, z = 0, hp = 100, kills = 0, damageDealt = 0, damageContribs = {} } = data;
+    const {
+      playerId,
+      nickname,
+      character,
+      x = 0,
+      y = 0,
+      z = 0,
+      dirX = 0,
+      dirZ = -1,
+      isMoving = false,
+      hp = 100,
+      maxHp = 100,
+      kills = 0,
+      damageDealt = 0,
+      damageContribs = {}
+    } = data;
     if (!playerId) return sendJson(res, 400, { error: 'playerId is required' });
 
     const existing = roomState.players.get(playerId) || { id: playerId, nickname: 'Shinigami' };
-    existing.x = x;
-    existing.z = z;
-    existing.hp = hp;
-    existing.kills = kills;
-    existing.damageDealt = damageDealt;
+    if (nickname) existing.nickname = String(nickname).slice(0, 24);
+    if (character) existing.character = String(character).slice(0, 32);
+    existing.x = Number(x) || 0;
+    existing.y = Number(y) || 0;
+    existing.z = Number(z) || 0;
+    existing.dirX = Number(dirX) || 0;
+    existing.dirZ = Number(dirZ) || -1;
+    existing.isMoving = Boolean(isMoving);
+    existing.hp = Number(hp) || 0;
+    existing.maxHp = Number(maxHp) || 100;
+    existing.kills = Number(kills) || 0;
+    existing.damageDealt = Number(damageDealt) || 0;
     existing.lastSeen = Date.now();
     roomState.players.set(playerId, existing);
 

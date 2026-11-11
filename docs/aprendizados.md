@@ -165,3 +165,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** toda URL de `/src/assets/` sai com `?v=<versão do build>` (`src/assetVersion.js`, registrada no `THREE.DefaultLoadingManager` e usada nas `<img>` do DOM). O Vite troca `__ASSET_VERSION__` a cada build. Antes de dizer que um asset mudou em produção, compare o arquivo servido com o do commit e lembre que o navegador pode estar com outro.
 
 **Evidência:** depois do PR 363, o `move_slash_front.png` servido por `bleach.acoplum.com` tinha o mesmo SHA-1 do commit, mas o jogo do usuário ainda mostrava o Ishida antigo. Com a versão na URL, as 197 PNGs carregadas no dev saem com `?v=`, e `scripts/test_asset_version.py` cobre a regra.
+
+## 21. Multiplayer some quando a main redeploya a imagem nginx-only
+
+**Causa raiz:** a presença multiplayer vive na imagem Node (`server/production_server.js`). O CI empurra para a VPS cada push da `main` com o `Dockerfile` nginx-only ainda na linha principal. O healthz continua `ok`, mas `/api/multiplayer` volta a ser SPA/405.
+
+**O que fazer:** o `Dockerfile` Node e o cliente de presença precisam estar na `main` antes do próximo deploy automático. Validar pós-deploy com `curl -s https://bleach.acoplum.com/api/multiplayer/room` (JSON, não HTML).
+
+**Evidência:** em 2026-11-11 o domínio voltou a 405 no POST `/join` após o deploy `31ae87e` (#364), enquanto a imagem `066e92a` (Node) ainda existia na VPS e restaurou a sala.

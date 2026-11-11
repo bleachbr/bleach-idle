@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server/production_server.js",
+    "start:prod": "npm run build && PORT=2567 STATIC_ROOT=dist node server/production_server.js"
   },
   "dependencies": {
     "three": "^0.170.0"

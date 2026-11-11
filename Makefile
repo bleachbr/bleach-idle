@@ -82,4 +82,8 @@ safety-test: ## Testes de proteção: Lua ao norte/baixa, transição do prólog
 rpg-stats-test: ## Testes unitários do sistema de atributos RPG, caps matemáticos (CDR 65%, Hierro 75%) e sinergias
 	python3 scripts/test_rpg_stats.py
 
-test: movement-test player-anim-test evolution-test safety-test rpg-stats-test arsenal-test sfx-test asset-version-test docs-test size-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, rpg, arsenal, sfx, governança, catraca de tamanho)
+multiplayer-test: ## Testes da API e da presença multiplayer (join/sync/room + peers)
+	python3 scripts/test_multiplayer_api.py
+	python3 scripts/test_multiplayer_presence.py
+
+test: movement-test player-anim-test evolution-test safety-test rpg-stats-test arsenal-test sfx-test asset-version-test docs-test size-test multiplayer-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, rpg, arsenal, sfx, multiplayer, governança, catraca de tamanho)

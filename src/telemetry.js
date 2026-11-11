@@ -6,6 +6,7 @@
 const state = {
   playerId: `shinigami_${Math.floor(Math.random() * 899999 + 100000)}`,
   nickname: 'Ichigo Kurosaki',
+  character: 'ichigo_shikai',
   initialized: false
 };
 
@@ -56,15 +57,20 @@ function setupGlobalErrorCapture() {
   window.addEventListener('unhandledrejection', handleUnhandledRejection);
 }
 
-export function initTelemetry(playerId, nickname) {
+export function initTelemetry(playerId, nickname, character) {
   if (playerId) state.playerId = playerId;
   if (nickname) state.nickname = nickname;
+  if (character) state.character = character;
   if (!state.initialized) {
     setupGlobalErrorCapture();
     state.initialized = true;
   }
   logTelemetry('INFO', 'SESSION_START', 'Sessão do combatente iniciada no Hueco Mundo');
-  postJson('/api/multiplayer/join', { playerId: state.playerId, nickname: state.nickname });
+  postJson('/api/multiplayer/join', {
+    playerId: state.playerId,
+    nickname: state.nickname,
+    character: state.character || 'ichigo_shikai'
+  });
 }
 
 export function syncMultiplayerSession(localStats, onRoomSync) {
