@@ -7,13 +7,17 @@ Cada animação cobre uma situação que existe no jogo (ver docs/direcionamento
 DIRECTIONS = {
     "front": "Seen from the FRONT: he faces down toward the camera, in the same 3/4 top-down view as the front reference.",
     "left": "Seen from his LEFT SIDE: he faces and acts toward the LEFT of the image, as in the side reference.",
-    "back": ("Seen from BEHIND: he faces up away from the camera, back of the head visible, as in the back reference. "
-             "WHENEVER THE SWORD IS ON HIS BACK it lies flat ON TOP of the robe, fully visible and never hidden by the body: "
-             "the short black handle sticks up just above his RIGHT shoulder, and the broad blade starts right below it at the "
-             "shoulder blade and crosses his whole back diagonally down to his LEFT hip, held by the brown strap. The blade tip "
-             "ends at the left hip, never lower than the top of the thigh. IGNORE the sword placement of the back reference image, "
-             "which hangs too low; copy only the character design from it."),
+    "back": "Seen from BEHIND: he faces up away from the camera, back of the head visible, as in the back reference.",
 }
+
+# Só o Ichigo leva a espada nas costas. Este aviso vai junto da vista de costas dele e de mais ninguém:
+# no texto comum da vista, ele empurrava a katana do Grimmjow para as costas, com a tira marrom.
+ICHIGO_BACK_NOTE = (
+    "WHENEVER THE SWORD IS ON HIS BACK it lies flat ON TOP of the robe, fully visible and never hidden by the body: "
+    "the short black handle sticks up just above his RIGHT shoulder, and the broad blade starts right below it at the "
+    "shoulder blade and crosses his whole back diagonally down to his LEFT hip, held by the brown strap. The blade tip "
+    "ends at the left hip, never lower than the top of the thigh. IGNORE the sword placement of the back reference image, "
+    "which hangs too low; copy only the character design from it.")
 
 SWORD_BACK = "sword on his back"
 TWO_HANDS = "both hands on the sword handle"

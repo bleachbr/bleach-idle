@@ -149,3 +149,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** passar sempre a malha (`setPlayerCamouflage(player, playerMesh, afk)`).
 
 **Evidência:** no navegador, perda de foco com o Sado em campo deixou `playerMesh.material.opacity` em 0,35; depois de "Voltar ao menu" e de uma partida nova, continuava 0,35. Com a malha passada no `resetMatch`, volta a 1.
+
+## 19. Texto de vista compartilhado pelo elenco leva a arma de um personagem para o outro
+
+**Causa raiz:** `gen_player_kit.py` monta o prompt de todo o elenco com `DIRECTIONS` de `player_kit_anims.py`. A correção da espada do Ichigo (PR 358) pôs na vista `back` a regra "a lâmina atravessa as costas, presa pela tira marrom". Com isso o Grimmjow ganhou a katana nas costas em parte das tiras de costas, e o Sado uma faixa prateada na corrida. Além disso, o Codex às vezes muda o estilo de uma folha inteira: o `move_slash` de frente do Ishida saiu com outro traço e tingido de azul, e o sprite trocava no meio do golpe.
+
+**O que fazer:** regra de um personagem fica no cadastro dele em `kit_cast.py` (`back_note`), nunca no texto comum da vista. Depois de gerar um kit, compare a cor média de cada tira com a mediana do kit na mesma vista. Uma tira com desvio bem acima dos outros é suspeita e precisa ser conferida na folha.
+
+**Evidência:** a cor média do `move_slash_front` do Ishida ficou 33,9 longe da mediana, contra uma dispersão típica de 6. A folha de costas do Grimmjow mostrava a katana nas costas em `afk`, `hurt_air`, `death` e `move_getsuga`, e o cabelo roxo em `air_slash`. Depois de regenerar, as três folhas ficaram consistentes com o `idle`, e `validate_player_kit.py` passa nos quatro kits.
