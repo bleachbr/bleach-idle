@@ -56,6 +56,7 @@ O job `deploy` do `.github/workflows/ci.yml` aponta para `/opt/bleach-idle` e en
 
 | Data | SHA | Quem | Observação |
 |---|---|---|---|
+| 2026-11-11 | `d950ba714a6ef2fabffd9f0720422035630b6dac` | wjunior (via agente) | Multiplayer reintegrado na `main` (Node + anim/lerp). Restaurado após regressão do #364 (`31ae87e` nginx-only). `/api/multiplayer/room` JSON e `CMD node server/production_server.js`. |
 | 2026-11-11 | `be95fe689f5d56291f09eff01cb86856d10e7476` | wjunior (via agente) | Multiplayer presence: imagem Node com `/api` + peers visíveis. Validado em produção (`/api/multiplayer/room` JSON; duas abas ORCA com `getRemotePlayerCount()===1`, Alpha em `(10,-6)` e Beta em `(0,0)`). |
 | 2026-11-11 | `33643c683884e94119d691bc3128b9d4e16fb6d4` | wjunior (via agente) | Atualização com elenco jogável (Ishida, Sado, Grimmjow com poderes próprios - #360), novos Hollows (Shrieker e Acidwire com clips de ataque/morte - #359) e correção da espada nas costas (#358). Validado em produção (`https://bleach.acoplum.com`). |
 | 2026-11-09 | `69c5065e07015ebec45e1390a097a369f3612a15` | wjunior (via agente) | Kit completo de animações do personagem principal (Ichigo Shikai): 22 clipes direcionais, sprite sheets dinâmicos, integração com máquina de estados de animação e movimentação (#357). Validado em produção (`https://bleach.acoplum.com`). |
