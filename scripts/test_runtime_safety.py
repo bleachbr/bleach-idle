@@ -77,8 +77,13 @@ const __result = (() => {{
 
 console.log(JSON.stringify(__result));
 """
+    loader_path = root / "scripts" / "three_loader.mjs"
+    cmd = ["node", "--no-warnings"]
+    if loader_path.exists():
+        cmd.extend(["--loader", loader_path.as_uri()])
+    cmd.extend(["--input-type=module", "-e", script])
     proc = subprocess.run(
-        ["node", "--input-type=module", "-e", script],
+        cmd,
         cwd=root,
         check=True,
         capture_output=True,

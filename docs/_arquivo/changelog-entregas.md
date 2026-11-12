@@ -1,5 +1,15 @@
 # Changelog de entregas
 
+## 2026-11-12 — Alvo de teste do loop de jogo (câmera orbital, billboard/sprite e FX) sem browser
+
+- **Pendência 3 sanada:** criado `scripts/test_game_loop_invariants.py`, suite de testes versionada e rápida que valida as invariantes centrais do loop 2.5D do Soul Survivor sem depender de Playwright, navegador ou `npm ci` (utiliza stub `scripts/three_loader.mjs` / `scripts/mock_three.js` e funções puras dos módulos do jogo).
+- **Três pilares cobertos:**
+  1. **Câmera orbital e deslocamento relativo:** validação da fórmula de coordenadas esféricas (`updateCamera` de `src/main.js`), limites de inclinação pitch `[0.15, 1.15]` rad e zoom dist `[8.0, 14.0]`, lookAt focal `1.25` acima do jogador, e projeção de deslocamento relativo do teclado (W/A/S/D) e joystick virtual (`computePlayerDisplacement` em `src/movement.js`) nos 4 quadrantes angulares (0°, 90°, 180°, 270°).
+  2. **Billboarding e direções de sprite:** projeção angular em 4 perspectivas (`getSpriteDirection` em `src/movement.js`), regra de animação direcional do jogador (em movimento segue vetor das pernas; parado mira no Hollow ativo mais próximo via `nearestEnemyDirection` em `src/playerAnimation.js`), e invariante de cópia de quatérnio da câmera para as malhas em billboard (jogador, hollows, props).
+  3. **FX e projéteis:** cálculo de rotação/espelhamento de pose em tela (`flightPose` em `src/fx/flightPose.js`, sem girar além de 90° e espelhando ao voar para a esquerda), mapeamento integral de todas as armas de cada personagem jogável (`ARSENALS` em `src/arsenal.js`) para comportamentos registrados em `FX_BEHAVIORS`/`FX_REGISTRY` e presets em `src/sfxConfig.js`, parâmetros físicos positivos (speed, maxDistance, hitRadius) e integração da atualização no loop (`updateProjectiles`).
+- **Automação e CI:** adicionado alvo `make game-test` ao `Makefile`, integrado ao target agregador `make test` e conectado ao job `quality` do CI (`.github/workflows/ci.yml`). Documentado na tabela de comandos de `AGENTS.md`. Caixa da Frente 3 do `docs/ROADMAP.md` fechada como entregue.
+- **Evidência:** `make game-test` (37 testes verdes), `make test` (todos os alvos verdes), `make size-check`, `make docs-sync` e `make docs-check` verdes.
+
 ## 2026-11-11 — Dívidas: encoding Windows, double updateEnemies, abort do Jogador-IA
 
 - **Pendência 12:** `scripts/test_endless_evolution.py` passa `encoding="utf-8"` no `subprocess.run` do Node, para `Capitão` não quebrar no Windows.

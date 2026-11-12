@@ -15,6 +15,7 @@ export class Euler {
 
 export class Quaternion {
   constructor(x = 0, y = 0, z = 0, w = 1) { this.x = x; this.y = y; this.z = z; this.w = w; }
+  set(x, y, z, w) { this.x = x; this.y = y; this.z = z; this.w = w; return this; }
   copy(q) { this.x = q.x; this.y = q.y; this.z = q.z; this.w = q.w; return this; }
 }
 
@@ -58,6 +59,11 @@ export class Object3D {
     for (const child of [...this.children]) {
       child.traverse(fn);
     }
+  }
+
+  rotateZ(angle) {
+    this.rotation.z += angle;
+    return this;
   }
 }
 

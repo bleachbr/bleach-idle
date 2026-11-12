@@ -22,6 +22,7 @@ O histórico git mistura este protótipo com o jogo anterior `bleach-idle` (sete
 | `make docs-test` | Testes do checker |
 | `make size-check` | Falha se função ou arquivo JS passar de 20 / 500 linhas, ou se a dívida crescer |
 | `make size-test` | Testes dessa catraca |
+| `make game-test` | Invariantes do loop de jogo: câmera orbital, billboard/sprite e FX |
 | `make movement-test` | Testes unitários da física de movimento, walk cycle e direções de câmera |
 | `make arsenal-test` | Arsenal por personagem (labels, FX de shot, salvas) |
 | `make sfx-test` | Catraca: todo FX de disparo tem SFX; main liga os gatilhos de combate |
