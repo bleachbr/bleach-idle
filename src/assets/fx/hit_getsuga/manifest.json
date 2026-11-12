@@ -1,0 +1,11 @@
+{
+  "id": "hit_getsuga",
+  "name": "Hit Getsuga",
+  "category": "fx",
+  "type": "impact",
+  "source": "arts/codex/impacts/hit_getsuga.png",
+  "targetSize": 128,
+  "frameCount": 8,
+  "fps": 18,
+  "blendMode": "additive"
+}

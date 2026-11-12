@@ -54,6 +54,7 @@ export function configureHollow(en, typeId, isElite, mult) {
   en.contactDamage = isElite ? 22 : t.contactDamage;
   en.scale = isElite ? 2.2 : t.scale;
   en.attackCooldown = 0;
+  en.hurtCooldown = 0;
   en.clip = null;
 }
 
@@ -67,7 +68,7 @@ export function steerHollow(en, dx, dz, dist, time) {
   const t = hollowTypeOf(en);
   const fx = dx / dist;
   const fz = dz / dist;
-  if (en.clip && t.attack?.rooted) return { x: fx, z: fz, pace: 0 };
+  if (en.clip?.id === 'attack' && t.attack?.rooted) return { x: fx, z: fz, pace: 0 };
   if (t.keepAway) return { x: fx, z: fz, pace: keepAwayPace(t.keepAway, dist) };
   if (!t.zigzag) return { x: fx, z: fz, pace: 1 };
   // Desvio lateral senoidal; a fase por id evita que o bando inteiro vire junto.
@@ -84,11 +85,30 @@ function advanceAttack(en, attack, dt) {
   return fires ? 'spit' : null;
 }
 
+// Tranco ao levar golpe (clipe 'hurt', 12 quadros a 22 fps). É só visual: o hollow segue andando,
+// o tranco não corta um golpe em curso e tem recarga para um hollow sob fogo contínuo ainda atacar.
+export const HURT = { duration: 12 / 22, cooldown: 1.0 };
+
+export function startHollowHurt(en, hasClip) {
+  if (!hasClip || !en.active || en.clip || (en.hurtCooldown || 0) > 0) return false;
+  en.clip = { id: 'hurt', t: 0 };
+  en.hurtCooldown = HURT.cooldown;
+  return true;
+}
+
+function advanceHurt(en, dt) {
+  en.clip.t += dt;
+  if (en.clip.t >= HURT.duration) en.clip = null;
+  return null;
+}
+
 // Avança o golpe do hollow. Devolve 'spit' no quadro em que o Acidwire cospe.
 export function tickHollowAttack(en, dist, dt) {
   const attack = hollowTypeOf(en).attack;
   if (!attack) return null;
   en.attackCooldown = Math.max(0, (en.attackCooldown || 0) - dt);
+  en.hurtCooldown = Math.max(0, (en.hurtCooldown || 0) - dt);
+  if (en.clip?.id === 'hurt') return advanceHurt(en, dt);
   if (en.clip) return advanceAttack(en, attack, dt);
   if (dist <= attack.range && en.attackCooldown === 0) {
     en.clip = { id: 'attack', t: 0, fired: false };

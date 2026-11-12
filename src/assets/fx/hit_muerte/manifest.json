@@ -1,0 +1,11 @@
+{
+  "id": "hit_muerte",
+  "name": "Hit Muerte",
+  "category": "fx",
+  "type": "impact",
+  "source": "arts/codex/impacts/hit_muerte.png",
+  "targetSize": 128,
+  "frameCount": 8,
+  "fps": 14,
+  "blendMode": "additive"
+}

@@ -8,7 +8,10 @@ A régua é o quadro 1, que o roteiro fixa como a pose parada da caminhada: ele 
 mesmos 107 px do walk8, e a imagem inteira usa essa escala. O monstro não tem uma mancha de cor
 estável como o cabelo do jogador, e a caixa de um golpe ou de uma queda mediria a pose, não o corpo.
 
-Uso: python geradores/process_hollow_clips.py [hollow ...]
+Com `hollow:clip`, processa só aquele clipe e o acrescenta ao manifesto que já existe, sem tocar
+nas outras tiras (os brutos delas podem nem estar nesta máquina).
+
+Uso: python geradores/process_hollow_clips.py [hollow[:clip] ...]
 """
 import json
 import sys
@@ -76,23 +79,25 @@ def process_clip(hollow: str, clip_id: str, out: Path, report: list[str]) -> dic
     return {"fps": spec["fps"], "loop": spec["loop"], "frames": COLS * ROWS, "frameSize": size}
 
 
-def process_hollow(hollow: str, report: list[str]) -> None:
+def process_hollow(hollow: str, report: list[str], only: str = "") -> None:
     out = ASSETS / hollow / "clips"
     out.mkdir(parents=True, exist_ok=True)
-    catalog = {}
-    for clip_id in HOLLOWS[hollow]["clips"]:
+    manifest_path = out / "manifest.json"
+    catalog = json.loads(manifest_path.read_text(encoding="utf-8"))["anims"] if only and manifest_path.exists() else {}
+    for clip_id in [only] if only else HOLLOWS[hollow]["clips"]:
         if all((RAW / f"{hollow}_{clip_id}_{view}.png").exists() for view in VIEWS):
             catalog[clip_id] = process_clip(hollow, clip_id, out, report)
         else:
             report.append(f"FALTA {hollow}_{clip_id}")
     manifest = {"id": hollow, "baselineRatio": BASELINE_RATIO, "baseFrameSize": 128, "anims": catalog}
-    (out / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
 def main() -> None:
     report: list[str] = []
-    for hollow in sys.argv[1:] or list(HOLLOWS):
-        process_hollow(hollow, report)
+    for arg in sys.argv[1:] or list(HOLLOWS):
+        hollow, _, only = arg.partition(":")
+        process_hollow(hollow, report, only)
     print("\n".join(report))
 
 

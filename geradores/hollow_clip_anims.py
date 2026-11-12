@@ -174,3 +174,32 @@ HOLLOWS = {
         },
     },
 }
+
+
+# Reação ao golpe: um tranco curto que volta à pose parada, para o jogo tocar a cada acerto
+# sem que o hollow pareça parar de andar. `limbs` diz o que chicoteia em cada criatura.
+def hurt(limbs):
+    return clip("Hit reaction: it is struck hard from the front, flinches back sharply and recovers to its standing pose. "
+                "It stays on its feet the whole time and never falls; the feet stay planted in place.", [
+        "struck: the whole body snaps back from the impact, the mask jerks up and back, " + limbs + " fly forward.",
+        "biggest recoil: body leaning far back, mask tilted up, " + limbs + " flung out: the widest flinch.",
+        "holds the recoil, the body trembling.",
+        "starts to straighten, head coming forward again.",
+        "a small second shake, " + limbs + " still swinging.",
+        "body almost upright, slightly hunched.",
+        "head and mask back to their place, " + limbs + " settling.",
+        "a tiny overshoot forward.",
+        "settling back.",
+        "almost back to the pose of frame 1.",
+        "the same pose as frame 1.",
+    ], fps=22)
+
+
+HURT_LIMBS = {
+    "fishbone": "the long clawed arms",
+    "shrieker": "the bat wings and clawed arms",
+    "acidwire": "the clawed arms and tendril hair",
+    "menos_grande": "the tattered cloak hem and the long beak",
+}
+for _hollow, _limbs in HURT_LIMBS.items():
+    HOLLOWS[_hollow]["clips"]["hurt"] = hurt(_limbs)

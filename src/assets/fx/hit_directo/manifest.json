@@ -1,0 +1,11 @@
+{
+  "id": "hit_directo",
+  "name": "Hit Directo",
+  "category": "fx",
+  "type": "impact",
+  "source": "arts/codex/impacts/hit_directo.png",
+  "targetSize": 128,
+  "frameCount": 8,
+  "fps": 18,
+  "blendMode": "additive"
+}
