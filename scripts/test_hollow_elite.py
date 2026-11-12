@@ -26,9 +26,9 @@ class TestEliteAssets(unittest.TestCase):
         missing = [f"{v}_{f}.png" for v in VIEWS for f in range(8) if not (ELITE / f"{v}_{f}.png").exists()]
         self.assertEqual(missing, [])
 
-    def test_attack_and_death_clips_in_three_views(self):
+    def test_attack_hurt_and_death_clips_in_three_views(self):
         manifest = json.loads((ELITE / "clips" / "manifest.json").read_text(encoding="utf-8"))
-        self.assertEqual(sorted(manifest["anims"]), ["attack", "death"])
+        self.assertEqual(sorted(manifest["anims"]), ["attack", "death", "hurt"])
         missing = [f"{c}_{v}.png" for c in manifest["anims"] for v in ("front", "side_l", "back")
                    if not (ELITE / "clips" / f"{c}_{v}.png").exists()]
         self.assertEqual(missing, [])

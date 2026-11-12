@@ -243,3 +243,21 @@ HURT_LIMBS = {
 }
 for _hollow, _limbs in HURT_LIMBS.items():
     HOLLOWS[_hollow]["clips"]["hurt"] = hurt(_limbs)
+
+# O Elite tem roteiro próprio, com palavras neutras: com o texto comum, o image_gen bloqueou a vista de
+# costas dele (aprendizados 26). Vale só para ele; os outros seguem com hurt().
+HOLLOWS["elite"]["clips"]["hurt"] = clip(
+    "Hit reaction: it rocks back from a push to the front of its body and returns to its standing pose. "
+    "It stays on its feet the whole time; the feet stay planted in place.", [
+        "rocks back: the upper body tips backward, the horned mask tilts up, the heavy arms swing forward.",
+        "furthest lean: body tipped back, mask tilted up, arms out to the sides.",
+        "holds the lean for a moment.",
+        "starts to straighten, head coming forward again.",
+        "a small second sway, arms still swinging.",
+        "body almost upright, slightly hunched.",
+        "head and mask back to their place, arms settling.",
+        "a tiny overshoot forward.",
+        "settling back.",
+        "almost back to the pose of frame 1.",
+        "the same pose as frame 1.",
+    ], fps=22)
