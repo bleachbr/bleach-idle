@@ -76,8 +76,11 @@ class TestAttacks(unittest.TestCase):
           return { far, started, after: en.clip, cooldown: en.attackCooldown > 0 };""")
         self.assertEqual(result, {"far": None, "started": "attack", "after": None, "cooldown": True})
 
-    def test_fishbone_has_no_attack_clip(self):
-        self.assertIsNone(run("const en = make('fishbone'); tickHollowAttack(en, 0.5, 0.1); return en.clip;"))
+    def test_fishbone_attack_starts_only_up_close(self):
+        result = run("""const near = make('fishbone'); tickHollowAttack(near, 0.5, 0.1);
+          const far = make('fishbone'); tickHollowAttack(far, 3, 0.1);
+          return { near: near.clip?.id ?? null, far: far.clip?.id ?? null };""")
+        self.assertEqual(result, {"near": "attack", "far": None})
 
 
 if __name__ == "__main__":

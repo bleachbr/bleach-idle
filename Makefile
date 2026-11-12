@@ -63,6 +63,7 @@ player-anim-test: ## Testes da máquina de estados de animação do jogador
 
 hollow-test: ## Testes de sorteio, rota e ataque dos tipos de hollow
 	python3 scripts/test_hollow_types.py
+	python3 scripts/test_hollow_clip_types.py
 arsenal-test: ## Testes do arsenal de cada personagem jogável
 	python3 scripts/test_arsenal.py
 	python3 scripts/test_projectile_orientation.py
