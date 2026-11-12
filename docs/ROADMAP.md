@@ -2,7 +2,7 @@
 
 Fonte única do que está aberto. Caixa entregue fica numa linha; o relato vai para [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md). Estado de hoje: [STATUS.md](STATUS.md).
 
-**Última atualização:** 2026-11-11
+**Última atualização:** 2026-11-12
 
 A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele arquivo só aponta para este.
 
@@ -44,7 +44,7 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 - [x] CI diz a verdade sobre este `package.json`: gitleaks, quality e build; jobs do bleach-idle removidos ([_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [x] BGM em 0.08 e SFX de combate no Hueco Mundo (slash, skills, hit, morte, dano no jogador), com catraca `make sfx-test` + `arsenal-test` no `make test` ([direcionamento/19](direcionamento/19-audio-sfx-combate-e-catraca.md), [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [ ] `make docker-build` gera imagem (pendência 2)
-- [ ] Um alvo de teste do jogo, versionado, para câmera, sprite e FX. Os scripts em `scratch/` não entram no git
+- [x] Um alvo de teste do jogo, versionado, para câmera, sprite e FX (`scripts/test_game_loop_invariants.py`, `make game-test`, [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 
 ## Radar
 
