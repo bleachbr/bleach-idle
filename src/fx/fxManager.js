@@ -10,6 +10,7 @@
 import * as THREE from 'three';
 import { FX_BEHAVIORS } from './fxConfig.js';
 import { flightPose } from './flightPose.js';
+import { ImpactFx } from './impactFx.js';
 
 // O desenho do projétil gira (ou espelha) para a direção do voo na tela; a regra está em flightPose.js.
 function orientToFlight(p, cameraQuaternion, scale) {
@@ -34,7 +35,14 @@ export class FXManager {
     this.projectileGeo = new THREE.PlaneGeometry(1.0, 1.0);
     this.projectileGeo.translate(0, 0.5, 0); // Ancorado na base do efeito
 
+    // Estouros no ponto do acerto (projéteis e corte corpo a corpo)
+    this.impacts = new ImpactFx(scene);
+
     this.initAuraMesh();
+  }
+
+  spawnImpact(fxKey, x, z, tint) {
+    return this.impacts.spawn(fxKey, x, z, tint);
   }
 
   // -------------------------------------------------------------------
@@ -153,6 +161,7 @@ export class FXManager {
   // 4. ATUALIZAÇÃO DA FÍSICA E COLISÃO DOS PROJÉTEIS
   // -------------------------------------------------------------------
   updateProjectiles(dt, enemyMeshes, onHitCallback, cameraQuaternion) {
+    this.impacts.update(dt, cameraQuaternion);
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
       if (!p.active) continue;
@@ -196,6 +205,7 @@ export class FXManager {
         const dist = Math.hypot(en.x - p.x, en.z - p.z);
         if (dist <= p.config.hitRadius + (en.radius || 0.8)) {
           p.hitEnemies.add(enemyKey);
+          this.spawnImpact(p.fxKey, en.x, en.z, p.config.tint);
           onHitCallback && onHitCallback(en, p.damage, p.weaponType || 'getsuga', p.x, p.z);
 
           // Se não perfura, encerra o projétil no primeiro impacto
@@ -226,6 +236,7 @@ export class FXManager {
       p.mesh.material.dispose();
     }
     this.projectiles = [];
+    this.impacts.reset();
     this.auraTimer = 0;
   }
 }

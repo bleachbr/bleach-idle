@@ -1,10 +1,11 @@
 // =======================================================================
-// CLIPES DE ATAQUE E MORTE DOS HOLLOWS (Fishbone, Shrieker, Acidwire e Menos Grande)
+// CLIPES DE ATAQUE, DANO E MORTE DOS HOLLOWS (Fishbone, Shrieker, Acidwire e Menos Grande)
 // Cada clipe é uma tira de 12 quadros por vista; `side` espelha `side_l`.
 // Cada quadro vira uma textura própria (clone com a mesma imagem), porque
 // centenas de hollows dividem a tira e cada um está num quadro diferente.
 // =======================================================================
 import * as THREE from 'three';
+import { startHollowHurt } from './hollowTypes.js';
 
 // Clipes por pasta de src/assets/monsters. Hollow sem pasta clips/ só anda.
 const FOLDER_MANIFESTS = Object.fromEntries(
@@ -93,6 +94,13 @@ export function hideHollow(en) {
   en.mesh.material.opacity = 1;
   en.mesh.visible = false;
   en.mesh.position.set(0, -999, 0);
+}
+
+// Ao levar golpe: o lampejo branco de sempre e, se o tipo tem o clipe 'hurt', o tranco.
+export function flinchHollow(en) {
+  en.flashTimer = 0.12;
+  en.mesh.material.color.setHex(0xffffff);
+  startHollowHurt(en, Boolean(MANIFESTS[en.type]?.anims.hurt));
 }
 
 // Hollow sem clipe de morte some na hora, como antes.

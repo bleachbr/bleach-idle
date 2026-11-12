@@ -1,0 +1,11 @@
+{
+  "id": "hit_slash",
+  "name": "Hit Slash",
+  "category": "fx",
+  "type": "impact",
+  "source": "arts/codex/impacts/hit_slash.png",
+  "targetSize": 128,
+  "frameCount": 8,
+  "fps": 22,
+  "blendMode": "additive"
+}
