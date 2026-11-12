@@ -42,7 +42,7 @@ O Hollow Elite atua como uma ameaça tática intermediária entre o Fishbone D c
 | **Pontos de Vida (HP)** | 45 HP | 200 HP | 2000 HP |
 | **Velocidade de Deslocamento** | $3.2$ | $3.4$ | $2.0$ |
 | **Dano por Contato** | 12 | 22 | 35 |
-| **Aparência Visual** | Branco/Cinza canônico | Tintura Carmesim/Vermelho Reiatsu (`0xff3355`) | Manto Negro & Máscara pontiaguda |
+| **Aparência Visual** | Branco/Cinza canônico | Desenho próprio em `src/assets/monsters/elite` (brutamontes negro com armadura carmesim e máscara de chifres), sem tinta. Até 2026-11-12 era o Fishbone tingido de `0xff3355` | Manto Negro & Máscara pontiaguda |
 | **Recompensa ao Purificar** | 1 Reishi | 6 Reishi (explosão de XP) | 20 Reishi |
 | **Frequência de Spawn** | Onda contínua a cada $0.3\text{s}$–$1.0\text{s}$ | Spawn periódico a cada $35\text{s}$ | Nv. 60 kills ou $120\text{s}$ |
 | **Censo no Fim de Jogo** | Contabilizado | `state.census.elite` | Contabilizado |

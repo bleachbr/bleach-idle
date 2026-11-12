@@ -206,6 +206,14 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 
 **Evidência:** depois de `process_hollow_clips.py fishbone:hurt shrieker:hurt`, `git status` mostra só as três tiras `hurt_*` novas e a entrada nova em cada manifesto; `attack_*` e `death_*` não mudaram.
 
+## 26. O filtro do `image_gen` pode barrar só uma vista de um golpe por causa das palavras do roteiro
+
+**Causa raiz:** o roteiro do ataque do Elite dizia "double-fisted smash", "slams" e "roar". Frente e perfil passaram, mas a vista de costas foi bloqueada pelo sistema de segurança do `image_gen` duas vezes seguidas, com o mesmo texto. O log do Codex só diz que a geração foi bloqueada, sem apontar o motivo.
+
+**O que fazer:** se uma vista falhar por bloqueio, leia `arts/codex/hollows/log_<hollow>_<clip>_<vista>.txt`, troque os verbos violentos por termos neutros ("ground pound", "brings both fists down") e gere as três vistas de novo, para o golpe continuar igual entre elas. Não insista no mesmo texto.
+
+**Evidência:** `elite_attack_back` saiu `FALHOU` duas vezes com "A geração foi bloqueada pelo sistema de segurança do image_gen". Com o texto neutro, `attack_front`, `attack_left` e `attack_back` saíram `ok` na primeira tentativa.
+
 ## 27. Altura do sprite no jogo não se mede dividindo pelo quadro do clipe
 
 **Causa raiz:** os clipes têm quadros de 128 a 256 px, mas `createFramePlane` em `src/playerSprite.js` aumenta o plano na mesma proporção do quadro. A altura do corpo no mundo é a altura em pixels da tira, independente do quadro. Dividir pela razão do quadro faz um clipe de 160 parecer 20% menor que o `idle` de 128 sem estar.
