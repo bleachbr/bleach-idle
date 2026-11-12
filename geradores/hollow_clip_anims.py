@@ -1,4 +1,4 @@
-"""Roteiro quadro a quadro dos clipes de ataque e morte dos hollows (Fishbone, Shrieker, Acidwire e Menos Grande).
+"""Roteiro quadro a quadro dos clipes de ataque, dano e morte dos hollows (Fishbone, Shrieker, Acidwire e Menos Grande).
 
 O quadro 1 de cada clipe é a pose parada da caminhada: o processador mede a altura dele para
 achar a escala da vista, então ele precisa ser a mesma figura das referências.
@@ -17,6 +17,27 @@ FIRST = "neutral standing pose, exactly the same figure, size and pose as the re
 def clip(summary, beats, fps=14, loop=False):
     assert len(beats) == 11, summary
     return {"summary": summary, "beats": [FIRST, *beats], "fps": fps, "loop": loop}
+
+
+# Reação a dano: curta (0,5 s a 24 fps) e terminando na pose parada, porque o jogo volta direto à
+# caminhada. Nada de sangue: o roteiro só move o corpo.
+def hurt(summary, beats):
+    return clip(summary, beats, fps=24)
+
+
+HURT_BEATS = [
+    "the instant of the hit: the whole body jolts backward, head snapping back.",
+    "recoils further, limbs flung out, mask tilted up.",
+    "biggest recoil, leaning far back, one foot lifting off the floor.",
+    "catches its balance, the foot coming back down.",
+    "hunches forward, shaking its head.",
+    "still hunched, shoulders heaving.",
+    "starts straightening up.",
+    "almost upright, limbs settling.",
+    "back in its stance, a small shudder.",
+    "settling into the standing pose.",
+    "almost back to the pose of frame 1.",
+]
 
 
 SHRIEKER = (
@@ -52,6 +73,7 @@ HOLLOWS = {
     "fishbone": {
         "creature": FISHBONE,
         "clips": {
+            "hurt": hurt("Hit reaction: it is struck from the front, flinches backward with its fish-skull mask jerking up, then recovers to its stance.", HURT_BEATS),
             "attack": clip("A pouncing bite: it crouches, lunges forward with its jaw open and claws out, bites and slashes, then recovers.", [
                 "crouches lower, knees bending, claws spreading open.",
                 "jaw starts to open, head pulls back, fin spikes bristle.",
@@ -83,6 +105,7 @@ HOLLOWS = {
     "shrieker": {
         "creature": SHRIEKER,
         "clips": {
+            "hurt": hurt("Hit reaction: it is struck from the front, flinches backward with its wings jerking open, then folds them and recovers to its stance.", HURT_BEATS),
             "attack": clip("A lunging claw swipe: it screams, spreads its wings and slashes forward with both claws, then recovers.", [
                 "crouches slightly, wings start to open, head pulls back.",
                 "wings half spread, mouth opens wider, claws rise.",
@@ -114,6 +137,7 @@ HOLLOWS = {
     "acidwire": {
         "creature": ACIDWIRE,
         "clips": {
+            "hurt": hurt("Hit reaction: it is struck from the front, its coiled body recoils and sways back, then it rises back to its stance.", HURT_BEATS),
             "attack": clip("Acid spit: it rears up on its coiled tail, throws its head back, then snaps it forward and spits; the game draws the acid projectile separately, so no projectile appears in the image.", [
                 "tail coils tighter, body starts to rise.",
                 "rearing up tall on the coiled tail, claws pulled in to the chest.",
@@ -145,6 +169,19 @@ HOLLOWS = {
     "menos_grande": {
         "creature": MENOS,
         "clips": {
+            "hurt": hurt("Hit reaction: having no arms, the giant is struck from the front, its whole cloaked body sways back, then steadies upright.", [
+                "the instant of the hit: the whole cloaked body jolts back, the beak snapping up.",
+                "sways further back, the cloak hem swinging forward.",
+                "biggest sway, leaning back like a tower about to tip, spike collar bristling.",
+                "starts swaying forward again.",
+                "leans slightly forward, the beak dipping.",
+                "steadies, the cloak swinging back.",
+                "almost upright, cloak still moving.",
+                "upright, cloak settling.",
+                "a small shudder runs down the cloak.",
+                "cloak almost still.",
+                "almost back to the pose of frame 1.",
+            ]),
             "attack": clip("A crushing slam: having no arms, it rears its whole cloaked body back, opens the beak of its mask, then bends its huge body forward and down to crush what is in front of it, then straightens up.", [
                 "sways back slightly, the cloak hem lifts, the spike collar bristles.",
                 "rears back, the long beak rising toward the sky.",

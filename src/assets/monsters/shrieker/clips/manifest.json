@@ -3,6 +3,12 @@
   "baselineRatio": 0.9140625,
   "baseFrameSize": 128,
   "anims": {
+    "hurt": {
+      "fps": 24,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 192
+    },
     "attack": {
       "fps": 16,
       "loop": false,
