@@ -34,7 +34,8 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 - [x] Variedade adicional de hollows: Shrieker em zigue-zague e Acidwire com cuspe ácido, com clipes de ataque e morte ([direcionamento/18](direcionamento/18-hollows-shrieker-e-acidwire.md), [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 
 - [ ] Mapas Soul Society, Karakura Town e Dangai
-- [ ] Shikai no nível 15 e Bankai no nível 35, com troca de sprite
+- [x] Bankai do Ichigo no nível 35, com troca de sprite e kit de 22 clipes (`src/playerForm.js`, [direcionamento/17](direcionamento/17-kit-animacoes-personagem.md), [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
+- [ ] Shikai no nível 15 (hoje o Ichigo já começa em shikai; falta a forma base antes dela)
 - [x] Elenco jogável: Ichigo, Ishida, Sado e Grimmjow, escolhidos no menu, cada um com kit de 22 clipes e arsenal próprio ([direcionamento/17](direcionamento/17-kit-animacoes-personagem.md), [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [ ] Metaprogressão na loja do Urahara
 - [ ] Boss rush competitivo

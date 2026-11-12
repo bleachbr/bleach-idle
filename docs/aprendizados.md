@@ -197,3 +197,11 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 **O que fazer:** uma chamada por quadro (em `updateGame`, para valer também no AFK). Se remover a duplicata, dobre as velocidades de papel para manter o feel, ou rebalanceie de propósito.
 
 **Evidência:** com a duplicata, Fishbone a `speed: 3.2` andava ~6.4 u/s; após uma chamada e `speed: 6.4`, o deslocamento por segundo no mesmo dt bate.
+
+## 25. Altura do sprite no jogo não se mede dividindo pelo quadro do clipe
+
+**Causa raiz:** os clipes têm quadros de 128 a 256 px, mas `createFramePlane` em `src/playerSprite.js` aumenta o plano na mesma proporção do quadro. A altura do corpo no mundo é a altura em pixels da tira, independente do quadro. Dividir pela razão do quadro faz um clipe de 160 parecer 20% menor que o `idle` de 128 sem estar.
+
+**O que fazer:** para comparar escala entre clipes, compare a altura em pixels do quadro neutro direto na tira, e confira também a folha bruta (o Codex mantém o tamanho dentro de poucos por cento).
+
+**Evidência:** no kit `ichigo_bankai`, a medida dividida pelo quadro deu `idle` 107 e `walk` 88; sem dividir, `idle` 107, `walk` 110, `hurt` 110, `victory` 115, e as folhas brutas mediram de 252 a 290 px no quadro neutro. Trocar a régua para `fixed` não mudou nada, porque a escala já estava certa.

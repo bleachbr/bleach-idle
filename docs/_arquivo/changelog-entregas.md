@@ -1,5 +1,12 @@
 # Changelog de entregas
 
+## 2026-11-12 — Bankai do Ichigo no nível 35
+
+- **Kit:** `ichigo_bankai` com 22 clipes em 3 vistas (66 folhas do Codex), casaco longo preto com forro vermelho e katana preta na mão direita, nunca nas costas. Roteiro em `geradores/cast_ichigo_bankai.py`, que reaproveita os golpes do shikai trocando a espada; referências em `src/assets/characters/ichigo_bankai/{front,side_l,side,back}.png` via `gen_cast_ref.py`. Régua laranja, como o shikai.
+- **Troca:** `src/playerForm.js` (regra pura) diz qual forma vale para o nível; `loadPlayerKit` em `src/playerSprite.js` resolve a forma e já carrega as texturas do Bankai na escolha do personagem, para a troca não mostrar quadro vazio. O `main.js` só recarrega o kit no fim do level-up, e uma linha morta (`requestGamePointerLock`) saiu para o arquivo não crescer (1231 linhas). O Bankai não aparece como escolha no menu; arsenal e atributos continuam os do Ichigo.
+- **Conferência:** piloto de 2 folhas antes da leva; cor média por tira contra a mediana da vista com desvio máximo de 10,2 (`land_front`) para dispersão típica de 3 a 4, sem tira em outro estilo; folhas de conferência nas 3 vistas sem arma nas costas e com o perfil sempre para a esquerda; altura do corpo entre clipes de 107 a 115 px (aprendizado 25).
+- **Evidência:** `python geradores/validate_player_kit.py --char ichigo_bankai` (`kit ok: 22 clipes, 3 vistas`), `scripts/test_player_form.py` (8 testes; 7 falhavam antes), sessão no navegador com o dev server do worktree: no nível 1 e no 34 o sprite usa `ichigo_shikai/anims/*`; ao fechar o level-up do 35 passa a `ichigo_bankai/anims/*` (andando: `walk`, `move_slash`, `move_getsuga`, `hurt` nas 3 vistas; parado: `idle_side_l`, `slash_b`, `slash_c`, `getsuga`; morte: `death_side_l`), todas com a imagem carregada; reiniciar volta ao `ichigo_shikai/anims/idle_back.png` no nível 1. Console sem erros.
+
 ## 2026-11-12 — Alvo de teste do loop de jogo (câmera orbital, billboard/sprite e FX) sem browser
 
 - **Pendência 3 sanada:** criado `scripts/test_game_loop_invariants.py`, suite de testes versionada e rápida que valida as invariantes centrais do loop 2.5D do Soul Survivor sem depender de Playwright, navegador ou `npm ci` (utiliza stub `scripts/three_loader.mjs` / `scripts/mock_three.js` e funções puras dos módulos do jogo).
