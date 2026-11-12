@@ -55,6 +55,15 @@ JOBS = {
         "drops falling from its jaw, a narrow white bone mask shaped like a snake skull with slit eye holes, and a round hole "
         "through its chest. About as tall as the reference man. Its 'walk' is a slither: the tail coils and sways step by step.",
         [], "walk"),
+    # Elite: desenho próprio. Até aqui era o Fishbone tingido de vermelho (direcionamento/15).
+    "elite": (
+        "A monster: a hulking, heavily armored brute spirit, much broader and more muscular than a man, that walks upright "
+        "on thick digitigrade legs with long heavy arms hanging to its knees. Its body is black with dark charcoal shading, "
+        "covered in jagged crimson-red bone armor plates on the shoulders, forearms, shins and along the spine, long "
+        "crimson claws, a white bone mask shaped like a horned demon skull with two thick curved horns sweeping back, a jaw "
+        "of fangs and glowing red eye holes, and a round hole through the chest rimmed in crimson. About as tall as the "
+        "reference man, but twice as wide.",
+        [], "walk"),
     "menos": (
         "A monster: a gigantic, very tall spirit giant shaped like a long narrow cone wrapped in a floor-length jet-black "
         "cloak, a ring of white spikes around the collar, and a white bone mask with a very long pointed nose and small round "

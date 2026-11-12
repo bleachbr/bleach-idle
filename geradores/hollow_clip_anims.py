@@ -1,4 +1,4 @@
-"""Roteiro quadro a quadro dos clipes de ataque e morte dos hollows (Fishbone, Shrieker, Acidwire e Menos Grande).
+"""Roteiro quadro a quadro dos clipes de ataque e morte dos hollows (Fishbone, Shrieker, Acidwire, Elite e Menos Grande).
 
 O quadro 1 de cada clipe é a pose parada da caminhada: o processador mede a altura dele para
 achar a escala da vista, então ele precisa ser a mesma figura das referências.
@@ -46,6 +46,15 @@ MENOS = (
     "narrow cone wrapped in a floor-length tattered jet-black cloak, a ring of cream-white bone spikes around the collar, "
     "and a cream-white bone mask with a very long pointed beak-like nose and small dark eye holes at the top. It has NO "
     "arms; only two small black feet peek out under the cloak. Same proportions and mask size always."
+)
+
+ELITE = (
+    "THE CREATURE (identical in every frame, copied from the attached reference sprites): a hulking, heavily armored brute "
+    "monster, much broader than a man, standing upright on thick digitigrade legs with long heavy arms hanging to its "
+    "knees. Black body with dark charcoal shading, jagged crimson-red bone armor plates on the shoulders, forearms, shins "
+    "and along the spine, long crimson claws, a white bone mask shaped like a horned demon skull with two thick curved "
+    "horns, a jaw of fangs and glowing red eye holes, and a round hole through the chest rimmed in crimson. Same "
+    "proportions and mask size always."
 )
 
 HOLLOWS = {
@@ -137,6 +146,37 @@ HOLLOWS = {
                 "lying on the floor in loose coils, head down.",
                 "a last twitch of the tail tip.",
                 "the coils relax and flatten on the floor.",
+                "lying still on the floor, mask broken.",
+                "lying completely still on the floor, the same pose as frame 11.",
+            ], fps=12),
+        },
+    },
+    "elite": {
+        "creature": ELITE,
+        "clips": {
+            "attack": clip("A two-handed ground pound: it raises both heavy armored arms over its horned head and brings both fists down to the ground in front of it, then straightens up.", [
+                "shoulders hunch, armor plates bristling, claws flexing.",
+                "both arms start rising, chest puffing out.",
+                "both arms raised high over the horns, claws locked together, body leaning back: biggest anticipation.",
+                "holds the raised pose for a moment, jaw open.",
+                "starts swinging both arms down toward where it faces, torso bending forward.",
+                "pound pose: torso bent far forward, both arms down and forward, fists almost touching the floor in front, widest silhouette.",
+                "holds the pose, knees deeply bent.",
+                "starts lifting back up, arms coming back.",
+                "rising, arms swinging to its sides.",
+                "almost upright, shoulders rolling.",
+                "almost back to the pose of frame 1.",
+            ], fps=14),
+            "death": clip("Death: it is struck, staggers, its horned mask cracks and the armor plates break off as it drops to its knees and crashes face down, ending lying flat and still.", [
+                "violent recoil, head snapped back, arms flung wide.",
+                "staggers back a heavy step, a crack runs across the horned mask.",
+                "mask cracking more, one horn chipping, armor plates loosening.",
+                "knees buckle, its huge weight starts to drop.",
+                "on its knees, arms hanging to the floor, head bowed.",
+                "torso tipping forward, one claw reaching out.",
+                "crashing onto the floor face down, armor plates scattering.",
+                "lying face down on the floor, arms sprawled.",
+                "a last twitch of one claw.",
                 "lying still on the floor, mask broken.",
                 "lying completely still on the floor, the same pose as frame 11.",
             ], fps=12),
