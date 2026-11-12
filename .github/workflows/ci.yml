@@ -49,6 +49,7 @@ jobs:
           python3 scripts/test_projectile_orientation.py
           python3 scripts/test_sfx.py
           python3 scripts/test_asset_version.py
+          python3 scripts/test_player_form.py
 
   build:
     runs-on: ubuntu-24.04
