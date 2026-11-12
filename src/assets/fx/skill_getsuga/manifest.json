@@ -3,10 +3,10 @@
   "name": "Skill Getsuga",
   "category": "fx",
   "type": "skill",
-  "source": "arts/63_fx_skills.png",
+  "source": "arts/codex/impacts/skill_getsuga.png",
   "targetSize": 128,
-  "frameCount": 4,
-  "fps": 10,
+  "frameCount": 8,
+  "fps": 24,
   "blendMode": "additive",
   "worldScale": [
     2.0,

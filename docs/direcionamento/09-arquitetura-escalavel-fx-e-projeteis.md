@@ -122,3 +122,19 @@ O `FXManager` gerencia o projétil no ciclo de atualização da cena (`updatePro
 1. **Object Pool Pré-Alocado**: Criar um pool fixo de 64 malhas de projéteis para evitar *garbage collection* durante combates intensos com centenas de disparos.
 2. **Trilhas no Solo (Decals / Terrain Scorching)**: O Getsuga Tenshō pode deixar uma marca de corte escura/rachada no chão da arena durante sua passagem.
 3. **Áudio Espacial Posicional**: Efeito sonoro do vento cortante se propagando da origem até o ponto de impacto.
+
+## 6. Voo com 8 quadros
+
+Os sete projéteis (Getsuga, Cero, Byakurai, Shakkahō, Flecha Quincy, El Directo e La Muerte) voam em laço de 8 quadros, com o fps dobrado em `FX_BEHAVIORS` para o laço durar o mesmo que com 4. O `FXManager` não fixa mais `% 4`: o número de quadros vem das texturas carregadas a partir do `FX_REGISTRY` (`fxFrameCount` em `src/fx/fxFrames.js`). Quem não tem entrada em `FX_BEHAVIORS` usa o fps do Getsuga.
+
+As folhas saem do Codex com o voo antigo como referência e passam pelo mesmo processador dos impactos:
+
+```bash
+python geradores/gen_impact_fx.py skill_cero
+```
+
+```bash
+python geradores/process_impact_fx.py skill_cero
+```
+
+O roteiro fica em `PROJECTILES` (`geradores/impact_fx.py`). Os 8 quadros são cortados pela caixa que une todos eles e escalados juntos para ocupar os mesmos 115 px do voo antigo, então o tamanho no jogo não muda e o voo não pulsa. O processador atualiza o manifesto da pasta e a entrada no `FX_REGISTRY`. O teste `scripts/test_projectile_frames.py` cobre a contagem, os arquivos e a variação de largura entre quadros.

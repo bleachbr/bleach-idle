@@ -32,6 +32,8 @@ export const FX_BEHAVIORS = {
   },
 
   // 3. GETSUGA TENSHŌ (Projétil que viaja pelo mapa rasgando o solo)
+  // Voo com 8 quadros: o fps dobrou para o laço durar o mesmo que com 4. Quem não tem entrada
+  // aqui (Cero, Directo, Muerte, flecha Quincy) usa o do Getsuga.
   skill_getsuga: {
     type: 'traveling_projectile',
     speed: 18.5,          // Velocidade em unidades/segundo
@@ -42,7 +44,7 @@ export const FX_BEHAVIORS = {
     endScale: 3.8,        // Cresce conforme viaja pelo mapa
     fadeInDist: 1.5,
     fadeOutDist: 6.0,     // Começa a dissipar suavemente no final do trajeto
-    fps: 12,
+    fps: 24,
     blendMode: 'additive'
   },
 
@@ -57,7 +59,7 @@ export const FX_BEHAVIORS = {
     endScale: 2.2,
     fadeInDist: 1.0,
     fadeOutDist: 4.0,
-    fps: 12,
+    fps: 24,
     blendMode: 'additive'
   },
 
@@ -72,7 +74,7 @@ export const FX_BEHAVIORS = {
     endScale: 3.2,
     fadeInDist: 1.0,
     fadeOutDist: 5.0,
-    fps: 10,
+    fps: 20,
     blendMode: 'additive'
   },
 
