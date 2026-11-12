@@ -212,7 +212,9 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 
 **O que fazer:** se uma vista falhar por bloqueio, leia `arts/codex/hollows/log_<hollow>_<clip>_<vista>.txt`, troque os verbos violentos por termos neutros ("ground pound", "brings both fists down") e gere as três vistas de novo, para o golpe continuar igual entre elas. Não insista no mesmo texto.
 
-**Evidência:** `elite_attack_back` saiu `FALHOU` duas vezes com "A geração foi bloqueada pelo sistema de segurança do image_gen". Com o texto neutro, `attack_front`, `attack_left` e `attack_back` saíram `ok` na primeira tentativa.
+Quando o texto é comum a vários hollows (como o `hurt()` de `hollow_clip_anims.py`), o roteiro neutro vale só para quem foi bloqueado, no cadastro dele.
+
+**Evidência:** `elite_attack_back` saiu `FALHOU` duas vezes com "A geração foi bloqueada pelo sistema de segurança do image_gen". Com o texto neutro, `attack_front`, `attack_left` e `attack_back` saíram `ok` na primeira tentativa. O `elite_hurt_back` também foi bloqueado com o texto comum ("struck hard", "flung out") e passou com o roteiro neutro do Elite.
 
 ## 27. Altura do sprite no jogo não se mede dividindo pelo quadro do clipe
 
