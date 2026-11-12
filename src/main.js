@@ -555,10 +555,9 @@ function updateEnemyBillboard(en, walkFrame) {
   en.mesh.quaternion.copy(camera.quaternion);
   const eDir = getSpriteDirection(en.dirX, en.dirZ, cameraState.yaw);
   if (applyHollowClip(en, eDir, hollowClips)) return;
-  const baseType = en.type === 'elite' ? 'fishbone' : en.type;
-  const frameKey = baseType + '_' + eDir + '_' + walkFrame;
-  const texKey = baseType + '_' + eDir;
-  const eTex = spriteTextures[frameKey] || spriteTextures[texKey] || spriteTextures[baseType + '_front'];
+  const frameKey = en.type + '_' + eDir + '_' + walkFrame;
+  const texKey = en.type + '_' + eDir;
+  const eTex = spriteTextures[frameKey] || spriteTextures[texKey] || spriteTextures[en.type + '_front'];
   if (eTex && en.mesh.material.map !== eTex) {
     en.mesh.material.map = eTex;
     en.mesh.material.needsUpdate = true;
@@ -949,8 +948,8 @@ function updateSpawns(dt) {
 
 function setupHollowMesh(en) {
   en.mesh.scale.set(en.scale, en.scale, en.scale);
-  en.mesh.material.map = spriteTextures[(en.isElite ? 'fishbone' : en.type) + '_front'];
-  en.mesh.material.color.setHex(en.isElite ? 0xff3355 : 0xffffff);
+  en.mesh.material.map = spriteTextures[en.type + '_front'];
+  en.mesh.material.color.setHex(0xffffff);
   const spawnY = getTerrainHeight ? getTerrainHeight(en.x, en.z) : 0;
   en.mesh.position.set(en.x, spawnY, en.z);
   en.mesh.visible = true;
@@ -1056,7 +1055,7 @@ function tickEnemyBehavior(en, dt) {
   }
   if (en.flashTimer > 0) {
     en.flashTimer -= dt;
-    if (en.flashTimer <= 0) en.mesh.material.color.setHex(en.isElite ? 0xff3355 : 0xffffff);
+    if (en.flashTimer <= 0) en.mesh.material.color.setHex(0xffffff);
   }
 }
 
