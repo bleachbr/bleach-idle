@@ -1,0 +1,11 @@
+{
+  "id": "hit_quincy_arrow",
+  "name": "Hit Quincy Arrow",
+  "category": "fx",
+  "type": "impact",
+  "source": "arts/codex/impacts/hit_quincy_arrow.png",
+  "targetSize": 128,
+  "frameCount": 8,
+  "fps": 20,
+  "blendMode": "additive"
+}

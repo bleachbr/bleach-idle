@@ -26,7 +26,7 @@ import { onSlashFire, onSkillFire, onEnemyHit, onEnemyDeath, onPlayerHurtSfx } f
 import { loadMonsterTextures } from './monsterTextures.js';
 import { initMultiplayerPresence, enableMultiplayerPresence, disableMultiplayerPresence, tickMultiplayerPresence, getRemotePlayerCount } from './multiplayerPresence.js';
 import { pickHollowType, configureHollow, steerHollow, tickHollowAttack, hollowTypeOf } from './hollowTypes.js';
-import { loadHollowClips, applyHollowClip, startHollowDeath, hideHollow, updateDyingHollows } from './hollowClips.js';
+import { loadHollowClips, applyHollowClip, startHollowDeath, hideHollow, updateDyingHollows, flinchHollow } from './hollowClips.js';
 import { createAcidSpitPool, spawnAcidSpit, updateAcidSpit, clearAcidSpit } from './fx/acidSpit.js';
 import { showCharacterInHud } from './characterSelect.js';
 const ARENA_RADIUS = MAP_CONFIG.arenaRadius || 176.0;
@@ -741,17 +741,15 @@ function executeAsauchiSlash(dmg) {
 
   for (const en of enemyMeshes) {
     if (!en.active) continue;
-    const dx = en.x - player.x;
-    const dz = en.z - player.z;
-    const dist = Math.hypot(dx, dz);
-
-    if (dist <= range) {
+    const dx = en.x - player.x, dz = en.z - player.z;
+    if (Math.hypot(dx, dz) <= range) {
       const angleToEnemy = Math.atan2(dz, dx);
       let diff = Math.abs(angleToEnemy - pAngle);
       if (diff > Math.PI) diff = Math.PI * 2 - diff;
 
       if (diff <= arc / 2) {
         damageEnemy(en, dmg, 'asauchi');
+        fxManager?.spawnImpact('slash_combat', en.x, en.z, slashMesh.material.color.getHex());
       }
     }
   }
@@ -779,8 +777,7 @@ function executeShakkaho(dmg) {
 
 function damageEnemy(en, dmg, weaponKey, attackerId = state.localPlayerId) {
   en.hp -= dmg;
-  en.flashTimer = 0.12;
-  en.mesh.material.color.setHex(0xffffff);
+  flinchHollow(en);
   onEnemyHit();
   if (!en.damageContributions) en.damageContributions = {};
   en.damageContributions[attackerId] = (en.damageContributions[attackerId] || 0) + dmg;

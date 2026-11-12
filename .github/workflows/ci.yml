@@ -44,6 +44,8 @@ jobs:
           python3 scripts/test_game_loop_invariants.py
           python3 scripts/test_player_movement.py
           python3 scripts/test_hollow_types.py
+          python3 scripts/test_hollow_clip_types.py
+          python3 scripts/test_impact_fx.py
           python3 scripts/test_frente1_smoke.py
           python3 scripts/test_arsenal.py
           python3 scripts/test_projectile_orientation.py

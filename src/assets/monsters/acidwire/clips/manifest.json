@@ -14,6 +14,12 @@
       "loop": false,
       "frames": 12,
       "frameSize": 224
+    },
+    "hurt": {
+      "fps": 22,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
     }
   }
 }

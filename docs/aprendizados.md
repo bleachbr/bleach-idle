@@ -198,7 +198,15 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 
 **Evidência:** com a duplicata, Fishbone a `speed: 3.2` andava ~6.4 u/s; após uma chamada e `speed: 6.4`, o deslocamento por segundo no mesmo dt bate.
 
-## 25. Altura do sprite no jogo não se mede dividindo pelo quadro do clipe
+## 25. Processar um hollow inteiro apaga do manifesto os clipes cujo bruto não está na máquina
+
+**Causa raiz:** `process_hollow_clips.py` reescrevia o `manifest.json` só com os clipes cujas imagens brutas existiam em `arts/codex/hollows/`, pasta fora do git. Os brutos de ataque e morte do Shrieker e do Acidwire foram gerados em outra máquina, então processar o hollow inteiro para acrescentar o `hurt` tiraria `attack` e `death` do manifesto e o jogo deixaria de tocá-los.
+
+**O que fazer:** para acrescentar um clipe, processe só ele (`hollow:clip`). O processador então lê o manifesto que existe e acrescenta a entrada, sem tocar nas outras tiras.
+
+**Evidência:** depois de `process_hollow_clips.py fishbone:hurt shrieker:hurt`, `git status` mostra só as três tiras `hurt_*` novas e a entrada nova em cada manifesto; `attack_*` e `death_*` não mudaram.
+
+## 27. Altura do sprite no jogo não se mede dividindo pelo quadro do clipe
 
 **Causa raiz:** os clipes têm quadros de 128 a 256 px, mas `createFramePlane` em `src/playerSprite.js` aumenta o plano na mesma proporção do quadro. A altura do corpo no mundo é a altura em pixels da tira, independente do quadro. Dividir pela razão do quadro faz um clipe de 160 parecer 20% menor que o `idle` de 128 sem estar.
 

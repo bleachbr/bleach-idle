@@ -1,4 +1,4 @@
-"""Roteiro quadro a quadro dos clipes de ataque e morte dos hollows Shrieker e Acidwire.
+"""Roteiro quadro a quadro dos clipes de ataque e morte dos hollows (Fishbone, Shrieker, Acidwire e Menos Grande).
 
 O quadro 1 de cada clipe é a pose parada da caminhada: o processador mede a altura dele para
 achar a escala da vista, então ele precisa ser a mesma figura das referências.
@@ -33,7 +33,53 @@ ACIDWIRE = (
     "green tendril hair, and a round hole through its chest. Same proportions and mask size always."
 )
 
+FISHBONE = (
+    "THE CREATURE (identical in every frame, copied from the attached reference sprites): a tall, thin, hunched fish-like "
+    "humanoid monster with dark blue-gray skin, long arms ending in webbed claws with pink tips, digitigrade legs with "
+    "clawed feet, rows of pale bone fin spikes along its back, shoulders and forearms, a cream-white bone mask shaped like "
+    "a fish skull with a long jaw full of needle teeth and a tall crest spike on top, and a round hole through the chest "
+    "rimmed in dark red. Same proportions and mask size always."
+)
+
+MENOS = (
+    "THE CREATURE (identical in every frame, copied from the attached reference sprites): a giant spirit shaped like a tall "
+    "narrow cone wrapped in a floor-length tattered jet-black cloak, a ring of cream-white bone spikes around the collar, "
+    "and a cream-white bone mask with a very long pointed beak-like nose and small dark eye holes at the top. It has NO "
+    "arms; only two small black feet peek out under the cloak. Same proportions and mask size always."
+)
+
 HOLLOWS = {
+    "fishbone": {
+        "creature": FISHBONE,
+        "clips": {
+            "attack": clip("A pouncing bite: it crouches, lunges forward with its jaw open and claws out, bites and slashes, then recovers.", [
+                "crouches lower, knees bending, claws spreading open.",
+                "jaw starts to open, head pulls back, fin spikes bristle.",
+                "deepest crouch, jaw wide open showing the needle teeth, claws raised: biggest anticipation.",
+                "holds, body coiled like a spring.",
+                "explosive lunge forward toward where it faces, arms reaching ahead.",
+                "impact pose: body stretched forward, jaw snapping shut, both claws slashing across, widest silhouette.",
+                "claws pass through, body leaning far forward on the front foot.",
+                "follow-through: arms low on the far side, head down.",
+                "pulls back, jaw closing.",
+                "steps back to its hunched stance.",
+                "almost back to the pose of frame 1.",
+            ], fps=16),
+            "death": clip("Death: it is struck, recoils, its fish-skull mask cracks and it collapses to the ground, ending lying flat and still.", [
+                "violent recoil, head snapped back, claws jerk open.",
+                "staggers back, a crack appears across the bone mask.",
+                "mask cracking more, arms going limp, fin spikes drooping.",
+                "knees buckle, it starts to fall.",
+                "on its knees, claws hanging to the floor, head bowed.",
+                "torso falling forward, one claw reaching out.",
+                "collapsing onto the floor, arms sprawled.",
+                "lying face down on the floor, legs bent.",
+                "a last twitch of one claw.",
+                "lying still on the floor, mask broken.",
+                "lying completely still on the floor, the same pose as frame 11.",
+            ], fps=12),
+        },
+    },
     "shrieker": {
         "creature": SHRIEKER,
         "clips": {
@@ -96,4 +142,64 @@ HOLLOWS = {
             ], fps=12),
         },
     },
+    "menos_grande": {
+        "creature": MENOS,
+        "clips": {
+            "attack": clip("A crushing slam: having no arms, it rears its whole cloaked body back, opens the beak of its mask, then bends its huge body forward and down to crush what is in front of it, then straightens up.", [
+                "sways back slightly, the cloak hem lifts, the spike collar bristles.",
+                "rears back, the long beak rising toward the sky.",
+                "fully reared back, beak pointing up and slightly open, cloak stretched tight: biggest anticipation.",
+                "holds, the whole body trembling, cloak hem fluttering.",
+                "starts to fall forward toward where it faces, beak swinging down.",
+                "slam pose: the whole tall body bent far forward like a falling tower, beak thrust down and forward, cloak flaring behind.",
+                "holds the slam, the cloak hem billowing out on the ground.",
+                "starts lifting back up, beak closing.",
+                "rising, body halfway back to upright.",
+                "almost upright, cloak settling.",
+                "almost back to the pose of frame 1.",
+            ], fps=12),
+            "death": clip("Death: the giant is struck, its long-nosed mask cracks, the cloak sags and the whole tall body topples and collapses to the ground, ending lying flat and still.", [
+                "violent recoil, the beak snaps upward, the cloak jerks.",
+                "sways back, a crack runs down the long bone mask.",
+                "the crack spreads, pieces of the spike collar chip away, the body leans.",
+                "the tall body starts tilting to one side.",
+                "tilting more, the cloak hem lifting off one foot.",
+                "falling like a cut tree, the beak swinging toward the floor.",
+                "the body hits the floor, the cloak crumpling.",
+                "lying on the floor, the cloak spread out in a pool of black cloth, the cracked mask on its side.",
+                "a last ripple through the cloak.",
+                "lying still on the floor, mask broken.",
+                "lying completely still on the floor, the same pose as frame 11.",
+            ], fps=10),
+        },
+    },
 }
+
+
+# Reação ao golpe: um tranco curto que volta à pose parada, para o jogo tocar a cada acerto
+# sem que o hollow pareça parar de andar. `limbs` diz o que chicoteia em cada criatura.
+def hurt(limbs):
+    return clip("Hit reaction: it is struck hard from the front, flinches back sharply and recovers to its standing pose. "
+                "It stays on its feet the whole time and never falls; the feet stay planted in place.", [
+        "struck: the whole body snaps back from the impact, the mask jerks up and back, " + limbs + " fly forward.",
+        "biggest recoil: body leaning far back, mask tilted up, " + limbs + " flung out: the widest flinch.",
+        "holds the recoil, the body trembling.",
+        "starts to straighten, head coming forward again.",
+        "a small second shake, " + limbs + " still swinging.",
+        "body almost upright, slightly hunched.",
+        "head and mask back to their place, " + limbs + " settling.",
+        "a tiny overshoot forward.",
+        "settling back.",
+        "almost back to the pose of frame 1.",
+        "the same pose as frame 1.",
+    ], fps=22)
+
+
+HURT_LIMBS = {
+    "fishbone": "the long clawed arms",
+    "shrieker": "the bat wings and clawed arms",
+    "acidwire": "the clawed arms and tendril hair",
+    "menos_grande": "the tattered cloak hem and the long beak",
+}
+for _hollow, _limbs in HURT_LIMBS.items():
+    HOLLOWS[_hollow]["clips"]["hurt"] = hurt(_limbs)
