@@ -3,10 +3,10 @@
   "name": "Skill Shakkaho",
   "category": "fx",
   "type": "skill",
-  "source": "arts/codex/fx_kido_sheet.png",
+  "source": "arts/codex/impacts/skill_shakkaho.png",
   "targetSize": 128,
-  "frameCount": 4,
-  "fps": 10,
+  "frameCount": 8,
+  "fps": 20,
   "blendMode": "additive",
   "worldScale": [
     2.0,

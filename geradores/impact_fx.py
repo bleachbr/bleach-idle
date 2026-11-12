@@ -1,4 +1,7 @@
-"""Roteiro dos efeitos de impacto: o estouro que aparece onde um golpe acerta o hollow.
+"""Roteiro dos efeitos de impacto e do voo dos projéteis.
+
+IMPACTS: o estouro que aparece onde um golpe acerta o hollow.
+PROJECTILES: o voo de cada habilidade, em laço de 8 quadros (antes eram 4).
 
 Cada impacto é uma folha 4x2 com 8 quadros, gerada pelo Codex com o projétil da mesma habilidade
 como referência de paleta e traço. Fundo verde puro: o magenta, o fundo das outras folhas, se
@@ -53,3 +56,54 @@ IMPACTS = {
                  "white light and small cyan sparks shoots out from the cut, then the line thins and the sparks fade",
     },
 }
+
+# Voo em laço: o projétil aponta para a DIREITA (o jogo gira o desenho para a direção do voo,
+# src/fx/flightPose.js). A referência é o próprio voo antigo de 4 quadros.
+# `fps` é o do jogo (FX_BEHAVIORS em src/fx/fxConfig.js); sem entrada lá, vale o do Getsuga.
+PROJECTILES = {
+    "skill_getsuga": {
+        "fps": 24,
+        "look": "a large crescent wave of pale cyan and white spiritual energy with deep blue edges, its convex side "
+                "facing RIGHT, with short cyan speed streaks trailing to the left",
+        "motion": "the crescent ripples and its edges flicker like a flame front, the trailing streaks stream and break "
+                  "off to the left",
+    },
+    "skill_cero": {
+        "fps": 24,
+        "look": "a sphere of deep blue and white energy crackling with thin white lightning, flying to the RIGHT with "
+                "short lightning tails trailing to the left",
+        "motion": "the sphere pulses slightly and spins, the lightning arcs jump to new places in every frame",
+    },
+    "skill_byakurai": {
+        "fps": 24,
+        "look": "a thin horizontal zigzag bolt of white and pale cyan lightning pointing to the RIGHT, with tiny white "
+                "star sparks around it",
+        "motion": "the zigzag shape changes every frame like real lightning, sparks blink on and off; the bolt "
+                  "stays complete and equally bright in all 8 frames, it never fades, thins out or breaks apart",
+    },
+    "skill_shakkaho": {
+        "fps": 20,
+        "look": "a red-orange fireball with a bright yellow-white core flying to the RIGHT, flame tongues trailing to "
+                "the left",
+        "motion": "the flames lick and swirl backwards, small embers peel off the tail and the core flickers",
+    },
+    "skill_quincy_arrow": {
+        "fps": 24,
+        "look": "a thin straight arrow of pale blue spirit light pointing to the RIGHT, with cyan speed streaks trailing "
+                "to the left",
+        "motion": "the arrow stays rigid while the trailing streaks flow backwards and shimmer, tiny motes drift off",
+    },
+    "skill_directo": {
+        "fps": 24,
+        "look": "a heavy blast of dark red and crimson spirit energy shaped like a clenched fist punching to the RIGHT, "
+                "with a dark outline and red energy smoke trailing to the left",
+        "motion": "the fist stays solid while the smoky red energy trail churns and flows backwards",
+    },
+    "skill_muerte": {
+        "fps": 24,
+        "look": "a pale violet and white ghostly horned skull spirit with dark purple outlines, facing RIGHT, ghostly "
+                "violet flames streaming behind it to the left",
+        "motion": "the skull's jaw opens and closes, the ghostly flames whip and curl backwards",
+    },
+}
+

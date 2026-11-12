@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { FX_BEHAVIORS } from './fxConfig.js';
 import { flightPose } from './flightPose.js';
 import { ImpactFx } from './impactFx.js';
+import { fxFrameCount, fxFrameIndex } from './fxFrames.js';
 
 // O desenho do projétil gira (ou espelha) para a direção do voo na tela; a regra está em flightPose.js.
 function orientToFlight(p, cameraQuaternion, scale) {
@@ -106,7 +107,7 @@ export class FXManager {
       this.auraMesh.scale.set(pulseScale, pulseScale, 1.0);
 
       // Animação de quadros da aura
-      const frameIdx = Math.floor(cycleTime * cfg.fps) % 4;
+      const frameIdx = fxFrameIndex(cycleTime, cfg.fps, fxFrameCount(this.spriteTextures, 'aura_shikai'));
       const tex = this.spriteTextures[`fx_aura_shikai_${frameIdx}`];
       if (tex && this.auraMesh.material.map !== tex) {
         this.auraMesh.material.map = tex;
@@ -183,8 +184,8 @@ export class FXManager {
       orientToFlight(p, cameraQuaternion, currentScale);
 
       // 3. Animação dos quadros do efeito (dinâmico por skill)
-      const frameIdx = Math.floor(p.lifetime * p.config.fps) % 4;
       const fxName = p.fxKey || 'skill_getsuga';
+      const frameIdx = fxFrameIndex(p.lifetime, p.config.fps, fxFrameCount(this.spriteTextures, fxName));
       const tex = this.spriteTextures[`fx_${fxName}_${frameIdx}`];
       if (tex && p.mesh.material.map !== tex) {
         p.mesh.material.map = tex;
