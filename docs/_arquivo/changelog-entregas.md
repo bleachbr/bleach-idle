@@ -1,5 +1,12 @@
 # Changelog de entregas
 
+## 2026-11-12 — Clipe de dano (`hurt`) dos hollows sem congelar a horda
+
+- **Sprites:** `hurt` em 3 vistas para Fishbone, Shrieker, Acidwire e Menos Grande (12 folhas do Codex, piloto de 2 antes), em `src/assets/monsters/<hollow>/clips/hurt_*.png`. Processei só o `hurt` e somei a entrada aos manifestos: os PNGs de ataque e morte não mudaram (o Git só mostra os 12 arquivos novos e +6 linhas por manifesto).
+- **Regra:** `tickHollowAttack` em `src/hollowTypes.js` toca o `hurt` quando `en.flashTimer > 0` (só `damageEnemy` grava o campo), com espera de 1,5 s por hollow, sem interromper o golpe e sem parar o hollow; o Acidwire só fica parado durante o próprio cuspe. Nenhuma linha nova no `main.js`.
+- **Conferência:** cor média de cada tira `hurt` contra o walk8 da mesma vista com desvio de 1,8 a 13,4, na faixa dos ataques já publicados (3,4 a 16,4); folhas conferidas nas 3 vistas.
+- **Evidência:** `scripts/test_hollow_hurt.py` (7 testes; os 7 falhavam antes), `validate_hollow_clips.py` ok. No navegador, com até 81 hollows ativos, no máximo 7 ficaram em `hurt` ao mesmo tempo; das 198 amostras em `hurt`, 192 se moveram, e as paradas estavam a menos de 0,6 m do jogador (onde o hollow já não anda). Texturas vistas: `fishbone|shrieker|acidwire/clips/hurt_{front,side_l,back}`, `menos_grande/clips/hurt_back` no chefe e `fishbone/clips/hurt_side_l` no elite, todas carregadas, console sem erros.
+
 ## 2026-11-12 — Alvo de teste do loop de jogo (câmera orbital, billboard/sprite e FX) sem browser
 
 - **Pendência 3 sanada:** criado `scripts/test_game_loop_invariants.py`, suite de testes versionada e rápida que valida as invariantes centrais do loop 2.5D do Soul Survivor sem depender de Playwright, navegador ou `npm ci` (utiliza stub `scripts/three_loader.mjs` / `scripts/mock_three.js` e funções puras dos módulos do jogo).

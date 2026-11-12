@@ -14,6 +14,8 @@ Atributos, peso no sorteio e tempos de ataque ficam em `HOLLOW_TYPES` (`src/holl
 
 O cuspe mira onde o jogador estava no disparo, então quem se move desvia, e o pulo passa por cima do arco. A configuração do projétil fica em `hollow_acid_spit` (`src/fx/fxConfig.js`), e o desenho em `src/fx/acidSpit.js`. O dano (14) está no ataque do Acidwire, junto com as outras regras.
 
+Golpe recebido toca o clipe `hurt` (0,5 s), sem parar o hollow: só a textura muda. O sinal é `en.flashTimer > 0`, que só `damageEnemy` grava, e a regra está em `tickHollowAttack` (`src/hollowTypes.js`, teste em `scripts/test_hollow_hurt.py`). O `hurt` nunca interrompe o golpe, o golpe começa por cima dele, e cada hollow espera 1,5 s entre um `hurt` e outro, senão um golpe em área prenderia a horda inteira no primeiro quadro. O Acidwire não cospe por causa do `hurt`.
+
 A morte toca o clipe inteiro e depois some em 0,5 s. Enquanto morre, o hollow não recebe golpe e o pool não reaproveita a malha (`en.dying`).
 
 ## Regenerar
