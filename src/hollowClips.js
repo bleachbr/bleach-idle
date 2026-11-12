@@ -1,14 +1,21 @@
 // =======================================================================
-// CLIPES DE ATAQUE E MORTE DOS HOLLOWS (Shrieker e Acidwire)
+// CLIPES DE ATAQUE E MORTE DOS HOLLOWS (Fishbone, Shrieker, Acidwire e Menos Grande)
 // Cada clipe é uma tira de 12 quadros por vista; `side` espelha `side_l`.
 // Cada quadro vira uma textura própria (clone com a mesma imagem), porque
 // centenas de hollows dividem a tira e cada um está num quadro diferente.
 // =======================================================================
 import * as THREE from 'three';
-import shriekerClips from './assets/monsters/shrieker/clips/manifest.json';
-import acidwireClips from './assets/monsters/acidwire/clips/manifest.json';
 
-const MANIFESTS = { shrieker: shriekerClips, acidwire: acidwireClips };
+// Clipes por pasta de src/assets/monsters. Hollow sem pasta clips/ só anda.
+const FOLDER_MANIFESTS = Object.fromEntries(
+  Object.entries(import.meta.glob('./assets/monsters/*/clips/manifest.json', { eager: true, import: 'default' }))
+    .map(([path, manifest]) => [path.split('/')[3], manifest])
+);
+// en.type -> pasta. O elite é um Fishbone reforçado e o chefe 'menos' mora em menos_grande.
+const CLIP_FOLDER = { fishbone: 'fishbone', elite: 'fishbone', shrieker: 'shrieker', acidwire: 'acidwire', menos: 'menos_grande' };
+const MANIFESTS = Object.fromEntries(
+  Object.entries(CLIP_FOLDER).filter(([, folder]) => FOLDER_MANIFESTS[folder]).map(([type, folder]) => [type, FOLDER_MANIFESTS[folder]])
+);
 const WALK_PLANE = 2.2; // Plano do walk8 (quadro de 128 px) em initEnemyPool
 const DEATH_FADE = 0.5;
 
@@ -25,15 +32,15 @@ function sliceFrames(tex, count, mirrored) {
 }
 
 // Os clones só são criados quando a imagem chega: um clone feito antes nunca sobe para a GPU.
-function loadStrip(loader, store, hollow, clipId, view) {
-  const count = MANIFESTS[hollow].anims[clipId].frames;
-  loader.load(`/src/assets/monsters/${hollow}/clips/${clipId}_${view}.png`, (tex) => {
+function loadStrip(loader, store, folder, clipId, view) {
+  const count = FOLDER_MANIFESTS[folder].anims[clipId].frames;
+  loader.load(`/src/assets/monsters/${folder}/clips/${clipId}_${view}.png`, (tex) => {
     tex.magFilter = THREE.NearestFilter;
     tex.minFilter = THREE.NearestFilter;
     tex.generateMipmaps = false;
     tex.colorSpace = THREE.SRGBColorSpace;
-    store.frames[`${hollow}_${clipId}_${view}`] = sliceFrames(tex, count, false);
-    if (view === 'side_l') store.frames[`${hollow}_${clipId}_side`] = sliceFrames(tex, count, true);
+    store.frames[`${folder}_${clipId}_${view}`] = sliceFrames(tex, count, false);
+    if (view === 'side_l') store.frames[`${folder}_${clipId}_side`] = sliceFrames(tex, count, true);
   });
 }
 
@@ -47,9 +54,9 @@ function planeFor(store, frameSize) {
 
 export function loadHollowClips(loader) {
   const store = { frames: {}, planes: {} };
-  for (const [hollow, manifest] of Object.entries(MANIFESTS)) {
+  for (const [folder, manifest] of Object.entries(FOLDER_MANIFESTS)) {
     for (const clipId of Object.keys(manifest.anims)) {
-      for (const view of ['front', 'side_l', 'back']) loadStrip(loader, store, hollow, clipId, view);
+      for (const view of ['front', 'side_l', 'back']) loadStrip(loader, store, folder, clipId, view);
     }
   }
   return store;
@@ -68,7 +75,7 @@ function setMap(mesh, tex) {
 // Mostra o quadro do clipe em curso. Devolve false quando o hollow está só andando.
 export function applyHollowClip(en, view, store) {
   const spec = en.clip && MANIFESTS[en.type]?.anims[en.clip.id];
-  const frames = spec && store.frames[`${en.type}_${en.clip.id}_${view}`];
+  const frames = spec && store.frames[`${CLIP_FOLDER[en.type]}_${en.clip.id}_${view}`];
   if (!frames) {
     restoreWalkPlane(en);
     return false;
@@ -88,10 +95,10 @@ export function hideHollow(en) {
   en.mesh.position.set(0, -999, 0);
 }
 
-// O elite e o Fishbone não têm clipe de morte e somem na hora, como antes.
+// Hollow sem clipe de morte some na hora, como antes.
 export function startHollowDeath(en) {
   en.active = false;
-  if (en.type === 'elite' || !MANIFESTS[en.type]?.anims.death) {
+  if (!MANIFESTS[en.type]?.anims.death) {
     hideHollow(en);
     return;
   }

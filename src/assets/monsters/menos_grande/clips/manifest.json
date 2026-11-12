@@ -1,0 +1,19 @@
+{
+  "id": "menos_grande",
+  "baselineRatio": 0.9140625,
+  "baseFrameSize": 128,
+  "anims": {
+    "attack": {
+      "fps": 12,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 192
+    },
+    "death": {
+      "fps": 10,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 192
+    }
+  }
+}

@@ -6,7 +6,11 @@
 // unlockAt em segundos de partida: cada tipo novo aparece depois do anterior,
 // para o jogador aprender um comportamento por vez.
 export const HOLLOW_TYPES = {
-  fishbone: { hp: 45, speed: 6.4, scale: 1.4, contactDamage: 12, unlockAt: 0, weight: 6 },
+  // O golpe do Fishbone (e do elite, que é um Fishbone reforçado) é só a animação: o dano segue por contato.
+  fishbone: {
+    hp: 45, speed: 6.4, scale: 1.4, contactDamage: 12, unlockAt: 0, weight: 6,
+    attack: { range: 1.3, cooldown: 1.3, duration: 0.75 }
+  },
   shrieker: {
     hp: 30, speed: 8.6, scale: 1.4, contactDamage: 10, unlockAt: 25, weight: 3,
     zigzag: { amplitude: 0.9, frequency: 3.0 },
@@ -19,7 +23,12 @@ export const HOLLOW_TYPES = {
   }
 };
 
+// O Menos Grande nasce só como chefe (spawnBossMenosGrande), então fica fora de HOLLOW_TYPES e do sorteio.
+// O corpo dele é enorme: o golpe começa de mais longe. Também é só animação.
+const MENOS_BOSS = { attack: { range: 3.2, cooldown: 2.4, duration: 1.0 } };
+
 export function hollowTypeOf(en) {
+  if (en.type === 'menos') return MENOS_BOSS;
   return HOLLOW_TYPES[en.type === 'elite' ? 'fishbone' : en.type] || HOLLOW_TYPES.fishbone;
 }
 
@@ -78,7 +87,7 @@ function advanceAttack(en, attack, dt) {
 // Avança o golpe do hollow. Devolve 'spit' no quadro em que o Acidwire cospe.
 export function tickHollowAttack(en, dist, dt) {
   const attack = hollowTypeOf(en).attack;
-  if (!attack || en.type === 'elite') return null;
+  if (!attack) return null;
   en.attackCooldown = Math.max(0, (en.attackCooldown || 0) - dt);
   if (en.clip) return advanceAttack(en, attack, dt);
   if (dist <= attack.range && en.attackCooldown === 0) {
