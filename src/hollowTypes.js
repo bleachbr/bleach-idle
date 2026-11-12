@@ -27,6 +27,10 @@ export const HOLLOW_TYPES = {
 // O corpo dele é enorme: o golpe começa de mais longe. Também é só animação.
 const MENOS_BOSS = { attack: { range: 3.2, cooldown: 2.4, duration: 1.0 } };
 
+// Reação a dano (clipe `hurt`, 12 quadros a 24 fps). Só troca a textura: o hollow continua andando.
+// A espera entre uma e outra impede que um golpe em área prenda a horda inteira no primeiro quadro.
+export const HURT = { duration: 0.5, cooldown: 1.5 };
+
 export function hollowTypeOf(en) {
   if (en.type === 'menos') return MENOS_BOSS;
   return HOLLOW_TYPES[en.type === 'elite' ? 'fishbone' : en.type] || HOLLOW_TYPES.fishbone;
@@ -54,6 +58,7 @@ export function configureHollow(en, typeId, isElite, mult) {
   en.contactDamage = isElite ? 22 : t.contactDamage;
   en.scale = isElite ? 2.2 : t.scale;
   en.attackCooldown = 0;
+  en.hurtCooldown = 0;
   en.clip = null;
 }
 
@@ -67,7 +72,7 @@ export function steerHollow(en, dx, dz, dist, time) {
   const t = hollowTypeOf(en);
   const fx = dx / dist;
   const fz = dz / dist;
-  if (en.clip && t.attack?.rooted) return { x: fx, z: fz, pace: 0 };
+  if (en.clip?.id === 'attack' && t.attack?.rooted) return { x: fx, z: fz, pace: 0 };
   if (t.keepAway) return { x: fx, z: fz, pace: keepAwayPace(t.keepAway, dist) };
   if (!t.zigzag) return { x: fx, z: fz, pace: 1 };
   // Desvio lateral senoidal; a fase por id evita que o bando inteiro vire junto.
@@ -84,15 +89,32 @@ function advanceAttack(en, attack, dt) {
   return fires ? 'spit' : null;
 }
 
+// `flashTimer > 0` quer dizer que o hollow levou golpe nos últimos 0,12 s: só damageEnemy (main.js) grava o campo.
+function tickHurt(en, dt) {
+  if (en.clip?.id === 'hurt') {
+    en.clip.t += dt;
+    if (en.clip.t >= HURT.duration) en.clip = null;
+    return;
+  }
+  if (!en.clip && en.flashTimer > 0 && en.hurtCooldown === 0) {
+    en.clip = { id: 'hurt', t: 0 };
+    en.hurtCooldown = HURT.cooldown;
+  }
+}
+
 // Avança o golpe do hollow. Devolve 'spit' no quadro em que o Acidwire cospe.
+// O golpe tem prioridade: começa por cima do hurt, e o hurt nunca o interrompe.
 export function tickHollowAttack(en, dist, dt) {
   const attack = hollowTypeOf(en).attack;
   if (!attack) return null;
   en.attackCooldown = Math.max(0, (en.attackCooldown || 0) - dt);
-  if (en.clip) return advanceAttack(en, attack, dt);
+  en.hurtCooldown = Math.max(0, (en.hurtCooldown || 0) - dt);
+  if (en.clip?.id === 'attack') return advanceAttack(en, attack, dt);
   if (dist <= attack.range && en.attackCooldown === 0) {
     en.clip = { id: 'attack', t: 0, fired: false };
     en.attackCooldown = attack.cooldown;
+    return null;
   }
+  tickHurt(en, dt);
   return null;
 }
