@@ -1,4 +1,4 @@
-.PHONY: help install dev build preview clean docker-build docker-run test
+.PHONY: help install dev build preview clean docker-build docker-run game-test test
 
 help: ## Exibe a lista de comandos disponíveis
 	@echo "=================================================="
@@ -55,6 +55,9 @@ size-check: ## Falha se função ou arquivo JS passar do teto ou se a dívida cr
 size-test: ## Testes da catraca de tamanho do JS
 	python3 scripts/lint/test_js_size.py
 
+game-test: ## Testes das invariantes do loop de jogo (câmera orbital, billboard/sprite e FX)
+	python3 scripts/test_game_loop_invariants.py
+
 movement-test: ## Testes unitários de movimentação, walk cycle e direções da câmera
 	python3 scripts/test_player_movement.py
 
@@ -89,4 +92,4 @@ multiplayer-test: ## Testes da API e da presença multiplayer (join/sync/room + 
 frente1-smoke: ## Smoke test da fiação da Frente 1 (prólogo, hollow elite, ciclo boss e HUD)
 	python3 scripts/test_frente1_smoke.py
 
-test: movement-test player-anim-test evolution-test safety-test frente1-smoke rpg-stats-test arsenal-test sfx-test asset-version-test docs-test size-test multiplayer-test ## Roda os testes unitários do protótipo (movimento, ciclo, proteções, rpg, arsenal, sfx, multiplayer, governança, catraca de tamanho)
+test: game-test movement-test player-anim-test evolution-test safety-test frente1-smoke rpg-stats-test arsenal-test sfx-test asset-version-test docs-test size-test multiplayer-test ## Roda os testes unitários do protótipo (jogo, movimento, ciclo, proteções, rpg, arsenal, sfx, multiplayer, governança, catraca de tamanho)

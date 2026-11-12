@@ -2,19 +2,9 @@
 
 Dívida aberta. Item resolvido sai daqui e vira entrada em [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md). O número não se reusa.
 
-**Última atualização:** 2026-11-11
+**Última atualização:** 2026-11-12
 
 Registrar aqui é a saída, não o default. Antes, tente resolver na branch aberta. O motivo precisa conter uma destas frases: `fora do escopo`, `depende de terceiro`, `decisão de outra pessoa`, `falta evidência medida`.
-
-## 3. Teste de jogo não é alvo completo
-
-O smoke `scripts/test_frente1_smoke.py` (CI quality) cobre fiação do prólogo, elite, barra do boss e trava de pulo, sem browser. Ainda falta um alvo versionado que exercite câmera orbital, billboard/sprite e FX no loop real (os scripts em `scratch/` continuam fora do git).
-
-**Impacto:** médio (regressão visual de câmera/sprite/FX ainda não tem gate)
-
-**Por que não resolvido aqui:** falta evidência medida — não há suite Playwright/versionada do loop Three.js do Soul Survivor; promover `scratch/` exige mapear browser e assets locais.
-
-Não abrir um segundo checklist para isto no roadmap: é a caixa correspondente da frente 3.
 
 ## 13. Horda e dano multiplayer ainda são locais por cliente
 

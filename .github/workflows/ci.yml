@@ -41,6 +41,7 @@ jobs:
           python3 scripts/docs/docs_check.py
           python3 scripts/lint/test_js_size.py
           python3 scripts/lint/js_size.py
+          python3 scripts/test_game_loop_invariants.py
           python3 scripts/test_player_movement.py
           python3 scripts/test_hollow_types.py
           python3 scripts/test_frente1_smoke.py
