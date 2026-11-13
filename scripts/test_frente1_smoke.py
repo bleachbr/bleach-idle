@@ -333,8 +333,9 @@ class TestEliteHollowWiring(unittest.TestCase):
         # 2. Chamada de configureHollow repassando isElite e multiplicadores
         self.assertIn("configureHollow(en, pickHollowType(state.time), isElite, mult);", main_content)
 
-        # 3. Setup visual: escala e tint carmesim (0xff3355) para elite
-        self.assertIn("en.mesh.material.color.setHex(en.isElite ? 0xff3355 : 0xffffff);", main_content)
+        # 3. Setup visual: o elite usa o próprio sprite (src/assets/monsters/elite), sem tinta por cima
+        #    (antes era o Fishbone tingido de 0xff3355; ver scripts/test_hollow_elite.py)
+        self.assertIn("en.mesh.material.map = spriteTextures[en.type + '_front'];", main_content)
 
         # 4. Drop de 6 Reishi na morte de elite (vs 1 de comum e 26 de boss)
         self.assertIn("spawnReishi(en.x, en.z, en.isBoss ? 26 : (en.isElite ? 6 : 1), topPlayerId);", main_content)

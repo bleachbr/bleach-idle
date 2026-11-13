@@ -1,0 +1,25 @@
+{
+  "id": "elite",
+  "baselineRatio": 0.9140625,
+  "baseFrameSize": 128,
+  "anims": {
+    "attack": {
+      "fps": 14,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    },
+    "death": {
+      "fps": 12,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 192
+    },
+    "hurt": {
+      "fps": 22,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    }
+  }
+}

@@ -9,12 +9,13 @@ Dois tipos novos na horda comum, cada um com um comportamento que obriga o jogad
 | Fishbone | 0 s | Anda reto até o jogador e dá uma investida com mordida a menos de 1,3 m (só animação) | walk8, `attack`, `hurt`, `death` |
 | Shrieker | 25 s | Rápido e frágil. Aproxima em zigue-zague e dá uma investida com as garras a menos de 1,8 m | walk8, `attack`, `hurt`, `death` |
 | Acidwire | 50 s | Lento e resistente. Fica entre 5 e 9 m, recua se o jogador chega perto e cospe ácido em arco a até 13 m | walk8, `attack`, `hurt`, `death` |
+| Elite | a cada 35 s | Fishbone reforçado (200 HP, escala 2,2), com desenho próprio | walk8, `attack`, `hurt`, `death` |
 
-Atributos, peso no sorteio e tempos de ataque ficam em `HOLLOW_TYPES` (`src/hollowTypes.js`). O módulo não usa Three.js e tem teste em `scripts/test_hollow_types.py`. O elite continua sendo um Fishbone reforçado.
+Atributos, peso no sorteio e tempos de ataque ficam em `HOLLOW_TYPES` (`src/hollowTypes.js`). O módulo não usa Three.js e tem teste em `scripts/test_hollow_types.py`. O elite continua sendo um Fishbone reforçado nos atributos, mas tem sprites próprios em `src/assets/monsters/elite` (`python geradores/gen_codex.py elite`, depois `--walk8 elite`, `sprite_processor.py -c monsters -t walk8 --approve` e `gen_hollow_clips.py elite`). Teste em `scripts/test_hollow_elite.py`.
 
 O cuspe mira onde o jogador estava no disparo, então quem se move desvia, e o pulo passa por cima do arco. A configuração do projétil fica em `hollow_acid_spit` (`src/fx/fxConfig.js`), e o desenho em `src/fx/acidSpit.js`. O dano (14) está no ataque do Acidwire, junto com as outras regras.
 
-O elite usa os clipes do Fishbone, e o Menos Grande (chefe) tem `attack`, `hurt` e `death` em `menos_grande/clips`.
+O Elite tem `attack`, `hurt` e `death` em `elite/clips`. O Menos Grande (chefe) tem os mesmos clipes em `menos_grande/clips`.
 
 ## Dano e impacto
 

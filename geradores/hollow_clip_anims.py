@@ -1,4 +1,4 @@
-"""Roteiro quadro a quadro dos clipes de ataque e morte dos hollows (Fishbone, Shrieker, Acidwire e Menos Grande).
+"""Roteiro quadro a quadro dos clipes de ataque e morte dos hollows (Fishbone, Shrieker, Acidwire, Elite e Menos Grande).
 
 O quadro 1 de cada clipe é a pose parada da caminhada: o processador mede a altura dele para
 achar a escala da vista, então ele precisa ser a mesma figura das referências.
@@ -46,6 +46,15 @@ MENOS = (
     "narrow cone wrapped in a floor-length tattered jet-black cloak, a ring of cream-white bone spikes around the collar, "
     "and a cream-white bone mask with a very long pointed beak-like nose and small dark eye holes at the top. It has NO "
     "arms; only two small black feet peek out under the cloak. Same proportions and mask size always."
+)
+
+ELITE = (
+    "THE CREATURE (identical in every frame, copied from the attached reference sprites): a hulking, heavily armored brute "
+    "monster, much broader than a man, standing upright on thick digitigrade legs with long heavy arms hanging to its "
+    "knees. Black body with dark charcoal shading, jagged crimson-red bone armor plates on the shoulders, forearms, shins "
+    "and along the spine, long crimson claws, a white bone mask shaped like a horned demon skull with two thick curved "
+    "horns, a jaw of fangs and glowing red eye holes, and a round hole through the chest rimmed in crimson. Same "
+    "proportions and mask size always."
 )
 
 HOLLOWS = {
@@ -142,6 +151,37 @@ HOLLOWS = {
             ], fps=12),
         },
     },
+    "elite": {
+        "creature": ELITE,
+        "clips": {
+            "attack": clip("A two-handed ground pound: it raises both heavy armored arms over its horned head and brings both fists down to the ground in front of it, then straightens up.", [
+                "shoulders hunch, armor plates bristling, claws flexing.",
+                "both arms start rising, chest puffing out.",
+                "both arms raised high over the horns, claws locked together, body leaning back: biggest anticipation.",
+                "holds the raised pose for a moment, jaw open.",
+                "starts swinging both arms down toward where it faces, torso bending forward.",
+                "pound pose: torso bent far forward, both arms down and forward, fists almost touching the floor in front, widest silhouette.",
+                "holds the pose, knees deeply bent.",
+                "starts lifting back up, arms coming back.",
+                "rising, arms swinging to its sides.",
+                "almost upright, shoulders rolling.",
+                "almost back to the pose of frame 1.",
+            ], fps=14),
+            "death": clip("Death: it is struck, staggers, its horned mask cracks and the armor plates break off as it drops to its knees and crashes face down, ending lying flat and still.", [
+                "violent recoil, head snapped back, arms flung wide.",
+                "staggers back a heavy step, a crack runs across the horned mask.",
+                "mask cracking more, one horn chipping, armor plates loosening.",
+                "knees buckle, its huge weight starts to drop.",
+                "on its knees, arms hanging to the floor, head bowed.",
+                "torso tipping forward, one claw reaching out.",
+                "crashing onto the floor face down, armor plates scattering.",
+                "lying face down on the floor, arms sprawled.",
+                "a last twitch of one claw.",
+                "lying still on the floor, mask broken.",
+                "lying completely still on the floor, the same pose as frame 11.",
+            ], fps=12),
+        },
+    },
     "menos_grande": {
         "creature": MENOS,
         "clips": {
@@ -203,3 +243,21 @@ HURT_LIMBS = {
 }
 for _hollow, _limbs in HURT_LIMBS.items():
     HOLLOWS[_hollow]["clips"]["hurt"] = hurt(_limbs)
+
+# O Elite tem roteiro próprio, com palavras neutras: com o texto comum, o image_gen bloqueou a vista de
+# costas dele (aprendizados 26). Vale só para ele; os outros seguem com hurt().
+HOLLOWS["elite"]["clips"]["hurt"] = clip(
+    "Hit reaction: it rocks back from a push to the front of its body and returns to its standing pose. "
+    "It stays on its feet the whole time; the feet stay planted in place.", [
+        "rocks back: the upper body tips backward, the horned mask tilts up, the heavy arms swing forward.",
+        "furthest lean: body tipped back, mask tilted up, arms out to the sides.",
+        "holds the lean for a moment.",
+        "starts to straighten, head coming forward again.",
+        "a small second sway, arms still swinging.",
+        "body almost upright, slightly hunched.",
+        "head and mask back to their place, arms settling.",
+        "a tiny overshoot forward.",
+        "settling back.",
+        "almost back to the pose of frame 1.",
+        "the same pose as frame 1.",
+    ], fps=22)

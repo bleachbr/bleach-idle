@@ -53,6 +53,7 @@ jobs:
           python3 scripts/test_sfx.py
           python3 scripts/test_asset_version.py
           python3 scripts/test_player_form.py
+          python3 scripts/test_hollow_elite.py
 
   build:
     runs-on: ubuntu-24.04

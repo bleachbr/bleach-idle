@@ -79,6 +79,9 @@ asset-version-test: ## Versão do build nas URLs de textura, para o cache não s
 form-test: ## Troca de forma do jogador por nível (Ichigo vira Bankai no 35)
 	python3 scripts/test_player_form.py
 
+elite-test: ## Hollow Elite com sprite próprio (walk8, ataque e morte), sem voltar ao Fishbone tingido
+	python3 scripts/test_hollow_elite.py
+
 sfx-test: ## Catraca: todo FX de disparo do arsenal tem SFX e o main liga os gatilhos
 	python3 scripts/test_sfx.py
 
@@ -98,4 +101,4 @@ multiplayer-test: ## Testes da API e da presença multiplayer (join/sync/room + 
 frente1-smoke: ## Smoke test da fiação da Frente 1 (prólogo, hollow elite, ciclo boss e HUD)
 	python3 scripts/test_frente1_smoke.py
 
-test: game-test movement-test player-anim-test evolution-test safety-test frente1-smoke rpg-stats-test arsenal-test sfx-test asset-version-test form-test docs-test size-test multiplayer-test ## Roda os testes unitários do protótipo (jogo, movimento, ciclo, proteções, rpg, arsenal, sfx, multiplayer, governança, catraca de tamanho)
+test: game-test movement-test player-anim-test evolution-test safety-test frente1-smoke rpg-stats-test arsenal-test sfx-test asset-version-test form-test elite-test docs-test size-test multiplayer-test ## Roda os testes unitários do protótipo (jogo, movimento, ciclo, proteções, rpg, arsenal, sfx, multiplayer, governança, catraca de tamanho)
