@@ -20,6 +20,18 @@ export const HOLLOW_TYPES = {
     hp: 60, speed: 5.0, scale: 1.5, contactDamage: 10, unlockAt: 50, weight: 2,
     keepAway: { min: 5.0, max: 9.0 },
     attack: { range: 13.0, cooldown: 3.2, duration: 0.86, spitAt: 0.43, spitDamage: 14, rooted: true }
+  },
+  // Lento e blindado: de média distância para, mira e investe em linha reta. Quem sai da frente desvia.
+  ironhide: {
+    hp: 160, speed: 4.0, scale: 1.7, contactDamage: 20, unlockAt: 80, weight: 2,
+    charge: { range: 9.0, minRange: 2.5, windup: 0.6, dash: 0.7, speedMult: 3.4, cooldown: 4.5 },
+    attack: { range: 1.6, cooldown: 1.8, duration: 0.86 }
+  },
+  // Espectro: chega em espiral, cada um girando para um lado, e só entra reto quando já está perto.
+  wraith: {
+    hp: 40, speed: 7.0, scale: 1.5, contactDamage: 11, unlockAt: 110, weight: 2,
+    flank: { radius: 3.5, swirl: 1.4 },
+    attack: { range: 1.8, cooldown: 1.5, duration: 0.75 }
   }
 };
 
@@ -56,6 +68,8 @@ export function configureHollow(en, typeId, isElite, mult) {
   en.attackCooldown = 0;
   en.hurtCooldown = 0;
   en.clip = null;
+  en.charge = null;
+  en.chargeCooldown = 0;
 }
 
 function keepAwayPace(keep, dist) {
@@ -63,11 +77,31 @@ function keepAwayPace(keep, dist) {
   return dist > keep.max ? 1 : 0;
 }
 
+// Na preparação, o Encouraçado fica parado e vai travando a mira; na corrida, segue a mira travada.
+function chargeSteer(en, charge, fx, fz) {
+  if (en.charge.t < charge.windup) {
+    en.charge.dirX = fx;
+    en.charge.dirZ = fz;
+    return { x: fx, z: fz, pace: 0 };
+  }
+  return { x: en.charge.dirX, z: en.charge.dirZ, pace: charge.speedMult };
+}
+
+// Espiral: soma ao rumo do jogador um desvio lateral, que some quando o espectro já está perto.
+function flankSteer(en, flank, fx, fz, dist) {
+  if (dist <= flank.radius) return { x: fx, z: fz, pace: 1 };
+  const side = (en.id % 2 ? 1 : -1) * flank.swirl;
+  const len = Math.hypot(fx - fz * side, fz + fx * side);
+  return { x: (fx - fz * side) / len, z: (fz + fx * side) / len, pace: 1 };
+}
+
 // Direção (unitária, para onde o sprite olha) e ritmo (fração da velocidade; negativo recua).
 export function steerHollow(en, dx, dz, dist, time) {
   const t = hollowTypeOf(en);
   const fx = dx / dist;
   const fz = dz / dist;
+  if (en.charge && t.charge) return chargeSteer(en, t.charge, fx, fz);
+  if (t.flank) return flankSteer(en, t.flank, fx, fz, dist);
   if (en.clip?.id === 'attack' && t.attack?.rooted) return { x: fx, z: fz, pace: 0 };
   if (t.keepAway) return { x: fx, z: fz, pace: keepAwayPace(t.keepAway, dist) };
   if (!t.zigzag) return { x: fx, z: fz, pace: 1 };
@@ -102,8 +136,24 @@ function advanceHurt(en, dt) {
   return null;
 }
 
+// Começa a investida a média distância e a encerra depois da preparação mais a corrida.
+function tickCharge(en, charge, dist, dt) {
+  en.chargeCooldown = Math.max(0, (en.chargeCooldown || 0) - dt);
+  if (!en.charge) {
+    const inRange = dist <= charge.range && dist > charge.minRange;
+    if (inRange && en.chargeCooldown === 0) en.charge = { t: 0, dirX: en.dirX, dirZ: en.dirZ };
+    return;
+  }
+  en.charge.t += dt;
+  if (en.charge.t < charge.windup + charge.dash) return;
+  en.charge = null;
+  en.chargeCooldown = charge.cooldown;
+}
+
 // Avança o golpe do hollow. Devolve 'spit' no quadro em que o Acidwire cospe.
 export function tickHollowAttack(en, dist, dt) {
+  const charge = hollowTypeOf(en).charge;
+  if (charge) tickCharge(en, charge, dist, dt);
   const attack = hollowTypeOf(en).attack;
   if (!attack) return null;
   en.attackCooldown = Math.max(0, (en.attackCooldown || 0) - dt);

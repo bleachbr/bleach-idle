@@ -58,7 +58,7 @@ export const state = {
   xpNext: 20,
   bossSpawned: false,
   bossDefeated: false,
-  census: { fishbone: 0, shrieker: 0, acidwire: 0, elite: 0, menos: 0 },
+  census: { fishbone: 0, shrieker: 0, acidwire: 0, ironhide: 0, wraith: 0, elite: 0, menos: 0 },
   localPlayerId: 'shinigami_' + Math.random().toString(36).substring(2, 6),
   activeBannerOptions: [],
   weapons: {
@@ -1153,7 +1153,7 @@ function resetMatchStats() {
   state.peakReiatsu = 0;
   resetCycleState(state.cycleState);
   state.levelUpOpen = false;
-  state.census = { fishbone: 0, shrieker: 0, acidwire: 0, elite: 0, menos: 0 };
+  state.census = { fishbone: 0, shrieker: 0, acidwire: 0, ironhide: 0, wraith: 0, elite: 0, menos: 0 };
 }
 
 function resetMatch() {

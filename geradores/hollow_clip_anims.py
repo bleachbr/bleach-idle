@@ -1,4 +1,4 @@
-"""Roteiro quadro a quadro dos clipes de ataque e morte dos hollows (Fishbone, Shrieker, Acidwire, Elite e Menos Grande).
+"""Roteiro quadro a quadro dos clipes de ataque e morte dos hollows (Fishbone, Shrieker, Acidwire, Elite, Encouraçado, Sombrio e Menos Grande).
 
 O quadro 1 de cada clipe é a pose parada da caminhada: o processador mede a altura dele para
 achar a escala da vista, então ele precisa ser a mesma figura das referências.
@@ -56,6 +56,20 @@ ELITE = (
     "horns, a jaw of fangs and glowing red eye holes, and a round hole through the chest rimmed in crimson. Same "
     "proportions and mask size always."
 )
+IRONHIDE = (
+    "THE CREATURE (identical in every frame, copied from the attached reference sprites): a huge hunched brute monster "
+    "covered in thick plates of dark blue armor, rows of white bone spikes along its arms, shoulders and back, enormous "
+    "forearms with bone-clawed fists that almost touch the floor, short thick legs, a small white bone mask set low between "
+    "the shoulders, and a round hole through its chest. Same proportions and mask size always."
+)
+
+WRAITH = (
+    "THE CREATURE (identical in every frame, copied from the attached reference sprites): a tall gaunt shadow spirit monster "
+    "made of dark purple-black tattered rags and wisps of smoke instead of a solid body, long thin arms ending in hooked "
+    "claws, a narrow white bone mask shaped like a bird skull, and a round hole through its chest. Its lower body frays into "
+    "drifting shadow strands. Same proportions and mask size always."
+)
+
 
 HOLLOWS = {
     "fishbone": {
@@ -182,6 +196,68 @@ HOLLOWS = {
             ], fps=12),
         },
     },
+    "ironhide": {
+        "creature": IRONHIDE,
+        "clips": {
+            "attack": clip("Double-fisted ground slam: it rears up, raises both armored fists high and smashes them down in front of it, then recovers.", [
+                "plants its feet wider, shoulders hunching.",
+                "both fists start rising, chest opening.",
+                "both fists raised high above its head, back arched: biggest anticipation.",
+                "holds at the top, bone spikes bristling.",
+                "explosive drop: both fists swing down toward where it faces.",
+                "impact pose: both fists smashed against the floor in front of it, body bent forward, widest silhouette.",
+                "holds the impact, shoulders shaking from the blow.",
+                "lifts the fists off the floor.",
+                "straightens its back, arms swinging back.",
+                "settles its weight, fists hanging low.",
+                "almost back to the pose of frame 1.",
+            ], fps=14),
+            "death": clip("Death: it is struck, staggers, its armor plates crack and the huge body topples forward, ending lying flat and still.", [
+                "violent recoil, mask snapped back, fists jerk open.",
+                "staggers back one heavy step, a crack appears across the chest armor.",
+                "cracks spread over the plates, arms sagging.",
+                "knees buckle under the weight.",
+                "drops to its knees, fists resting on the floor, mask bowed.",
+                "torso tipping forward, slowly.",
+                "falling forward, arms sliding out in front.",
+                "crashes face down on the floor, plates scattering a little.",
+                "a last twitch of one fist.",
+                "lying still on the floor, mask broken.",
+                "lying completely still on the floor, the same pose as frame 11.",
+            ], fps=12),
+        },
+    },
+    "wraith": {
+        "creature": WRAITH,
+        "clips": {
+            "attack": clip("Shadow rake: it glides forward, its rags flaring out like wings, and rakes with both long claws, then sinks back.", [
+                "rags start to stir, body leaning back.",
+                "arms spread wide, claws opening, shadow strands rising.",
+                "body drawn up tall, arms raised wide behind it, rags flared: biggest anticipation.",
+                "holds, the mask tilting forward.",
+                "glides forward toward where it faces, arms sweeping in.",
+                "impact pose: both claws crossing in front of it at full reach, rags streaming back, widest silhouette.",
+                "claws pass through, body leaning far forward.",
+                "follow-through: arms low on the far side, strands whipping.",
+                "sinks back, rags settling.",
+                "returns to its hunched floating stance.",
+                "almost back to the pose of frame 1.",
+            ], fps=16),
+            "death": clip("Death: it is struck, convulses, its bird-skull mask cracks and its shadow body collapses into a heap of limp rags on the floor.", [
+                "violent recoil, mask snapped back, claws jerk open.",
+                "convulses, strands flailing, a crack across the mask.",
+                "mask cracking more, arms going limp.",
+                "the body sags, rags drooping.",
+                "sinking down, the rags piling on the floor.",
+                "torso folding forward over the pile.",
+                "collapsing onto the floor in a heap of rags.",
+                "lying in a flat heap of rags, the mask on top.",
+                "a last flicker of one strand.",
+                "lying still, mask broken on the rags.",
+                "lying completely still on the floor, the same pose as frame 11.",
+            ], fps=12),
+        },
+    },
     "menos_grande": {
         "creature": MENOS,
         "clips": {
@@ -240,6 +316,8 @@ HURT_LIMBS = {
     "shrieker": "the bat wings and clawed arms",
     "acidwire": "the clawed arms and tendril hair",
     "menos_grande": "the tattered cloak hem and the long beak",
+    "ironhide": "the huge armored arms and bone spikes",
+    "wraith": "the tattered rags and long claws",
 }
 for _hollow, _limbs in HURT_LIMBS.items():
     HOLLOWS[_hollow]["clips"]["hurt"] = hurt(_limbs)
