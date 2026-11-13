@@ -6,6 +6,7 @@
 // =======================================================================
 import * as THREE from 'three';
 import { versionedAssetUrl } from './assetVersion.js';
+import { playerFormId, playerFormIds } from './playerForm.js';
 
 // Todo loader do Three que usa o gerenciador padrão passa por aqui: personagens, hollows, FX e mapas.
 // Este módulo é importado pelo main.js antes de qualquer textura ser pedida.
@@ -64,11 +65,17 @@ function buildKit(loader, charId) {
   return { manifest, strips, planes: buildPlanes(manifest) };
 }
 
-// Personagem sem kit cai no Ichigo, para a partida nunca começar sem sprite.
-export function loadPlayerKit(loader, charId = 'ichigo_shikai') {
-  const id = hasPlayerKit(charId) ? charId : 'ichigo_shikai';
+function cachedKit(loader, id) {
   if (!loadedKits[id]) loadedKits[id] = buildKit(loader, id);
   return loadedKits[id];
+}
+
+// Personagem sem kit cai no Ichigo, para a partida nunca começar sem sprite.
+// As formas (Bankai) carregam junto, senão a troca no nível 35 mostraria um quadro vazio.
+export function loadPlayerKit(loader, charId = 'ichigo_shikai', level = 1) {
+  const id = hasPlayerKit(charId) ? charId : 'ichigo_shikai';
+  for (const formId of playerFormIds(id, hasPlayerKit)) cachedKit(loader, formId);
+  return cachedKit(loader, playerFormId(id, level, hasPlayerKit));
 }
 
 function selectFrame(tex, frame, frames, mirrored) {

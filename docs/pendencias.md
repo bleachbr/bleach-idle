@@ -21,3 +21,11 @@ A presença (posição, nick, personagem) sincroniza pela sala `hueco-mundo-aren
 **Impacto:** médio (playtest automatizado do idle não cobre o survivor)
 
 **Por que não resolvido aqui:** fora do escopo — adaptar personas/Playwright ao Survivor (portas Vite, HUD, combate) é outro pedido; aqui só o aborto e o opt-in de produção.
+
+## 15. HUD continua dizendo "Shikai Ativa" depois do Bankai
+
+`showCharacterInHud` lê o `stage` fixo do elenco em `src/playableCast.js`. A troca do nível 35 muda só o sprite, então o cartão do HUD segue com "Ichigo Kurosaki (Shikai Ativa)".
+
+**Impacto:** baixo (texto do HUD; o sprite e o jogo estão certos)
+
+**Por que não resolvido aqui:** fora do escopo — o HUD não tem gancho para a forma, e criar um aumentaria o `main.js`, que está no teto do inventário.

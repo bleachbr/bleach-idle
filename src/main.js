@@ -37,7 +37,6 @@ const cameraState = {
   dist: 10.0,        // Distância inicial mais próxima do personagem
   target: new THREE.Vector3(0, 1.25, 0)
 };
-let requestGamePointerLock = () => {};
 // Estado do Jogo
 export const state = {
   inMenu: true,
@@ -907,6 +906,7 @@ function openLevelUpBanner() {
 
 function finishLevelUp() {
   closeLevelUpDialog();
+  playerKit = loadPlayerKit(new THREE.TextureLoader(), state.selectedCharacter, state.level);
   triggerPlayerAction(playerAnimator, 'level_up');
   state.levelUpOpen = false;
   if (state.pendingLevelUps && state.pendingLevelUps > 0) {

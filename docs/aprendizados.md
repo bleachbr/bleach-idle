@@ -206,3 +206,10 @@ O número é da família inteira. Item novo pega `max + 1` e não reusa número 
 
 **Evidência:** depois de `process_hollow_clips.py fishbone:hurt shrieker:hurt`, `git status` mostra só as três tiras `hurt_*` novas e a entrada nova em cada manifesto; `attack_*` e `death_*` não mudaram.
 
+## 27. Altura do sprite no jogo não se mede dividindo pelo quadro do clipe
+
+**Causa raiz:** os clipes têm quadros de 128 a 256 px, mas `createFramePlane` em `src/playerSprite.js` aumenta o plano na mesma proporção do quadro. A altura do corpo no mundo é a altura em pixels da tira, independente do quadro. Dividir pela razão do quadro faz um clipe de 160 parecer 20% menor que o `idle` de 128 sem estar.
+
+**O que fazer:** para comparar escala entre clipes, compare a altura em pixels do quadro neutro direto na tira, e confira também a folha bruta (o Codex mantém o tamanho dentro de poucos por cento).
+
+**Evidência:** no kit `ichigo_bankai`, a medida dividida pelo quadro deu `idle` 107 e `walk` 88; sem dividir, `idle` 107, `walk` 110, `hurt` 110, `victory` 115, e as folhas brutas mediram de 252 a 290 px no quadro neutro. Trocar a régua para `fixed` não mudou nada, porque a escala já estava certa.

@@ -12,10 +12,13 @@ O elenco jogável é Ichigo (shikai), Ishida, Sado e Grimmjow, e a escolha fica 
 | Ishida | arco na mão esquerda, lâmina curta na direita | combo de lâmina | disparo carregado do arco | flecha rápida | disparo ajoelhado | fixa |
 | Sado | dois braços blindados, sem arma | combo de socos | soco carregado | soco reto à distância | garra do braço esquerdo | fixa |
 | Grimmjow | katana na cintura | cortes de katana | rasgo de garras | soco rápido | disparo pela palma | fixa |
+| Ichigo Bankai (forma, nível 35) | katana preta na mão direita | combo de katana | corte carregado | dedo apontado | palma aberta | cabelo laranja |
 
 O projétil e o FX continuam os mesmos para todos; só a pose é do personagem. Quem é cada um e qual roteiro usa está em `geradores/kit_cast.py`. Os clipes de corpo (parado, andar, correr, pular, dano, morte, celebração e AFK) vêm do roteiro do Ichigo, com a espada trocada pela pose do personagem. Os golpes ficam em `geradores/cast_<id>.py`.
 
 O personagem só aparece na escolha depois que `src/assets/characters/<id>/anims/manifest.json` existe.
+
+O Bankai não é uma escolha do menu: é uma forma do Ichigo. `src/playerForm.js` diz qual forma vale para o nível, e `loadPlayerKit` carrega o kit dela (e as texturas de todas as formas já na escolha do personagem). Os golpes do Bankai são os do shikai com a espada trocada, em `geradores/cast_ichigo_bankai.py`.
 
 ## O que existe no jogo e qual clipe cobre
 
