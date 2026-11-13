@@ -1,5 +1,5 @@
 // =======================================================================
-// CLIPES DE ATAQUE, DANO E MORTE DOS HOLLOWS (Fishbone, Shrieker, Acidwire, Elite e Menos Grande)
+// CLIPES DE ATAQUE, DANO E MORTE DOS HOLLOWS (Fishbone, Shrieker, Acidwire, Elite, Encouraçado, Sombrio e Menos Grande)
 // Cada clipe é uma tira de 12 quadros por vista; `side` espelha `side_l`.
 // Cada quadro vira uma textura própria (clone com a mesma imagem), porque
 // centenas de hollows dividem a tira e cada um está num quadro diferente.
@@ -13,7 +13,10 @@ const FOLDER_MANIFESTS = Object.fromEntries(
     .map(([path, manifest]) => [path.split('/')[3], manifest])
 );
 // en.type -> pasta. O elite tem desenho próprio (atributos de Fishbone reforçado) e o chefe 'menos' mora em menos_grande.
-const CLIP_FOLDER = { fishbone: 'fishbone', elite: 'elite', shrieker: 'shrieker', acidwire: 'acidwire', menos: 'menos_grande' };
+const CLIP_FOLDER = {
+  fishbone: 'fishbone', elite: 'elite', shrieker: 'shrieker', acidwire: 'acidwire',
+  ironhide: 'ironhide', wraith: 'wraith', menos: 'menos_grande',
+};
 const MANIFESTS = Object.fromEntries(
   Object.entries(CLIP_FOLDER).filter(([, folder]) => FOLDER_MANIFESTS[folder]).map(([type, folder]) => [type, FOLDER_MANIFESTS[folder]])
 );

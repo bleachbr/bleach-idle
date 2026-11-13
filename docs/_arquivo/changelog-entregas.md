@@ -1,5 +1,12 @@
 # Changelog de entregas
 
+## 2026-11-13 — Hollows Encouraçado e Sombrio na horda (rebase sobre Bankai + Elite)
+
+- **Walk8:** das folhas antigas do LFS (`hollow_encouracado`, `hollow_sombrio`) pelo `sprite_processor`, com `validate_sprites` aprovado (variação de altura de 0,98% e 6,54%). O lobo (`hollow_uivante`) foi descartado: reprovou com 9,7%, porque o perfil de um quadrúpede sai mais baixo que a frente. Staging `geradores/staging/{ironhide,wraith}/` removido do PR (duplicava `src/assets/monsters/...`).
+- **Clipes:** ataque, dano e morte nas 3 vistas pelo Codex (18 folhas, com piloto de `ironhide_attack_front` e `wraith_attack_left` antes da leva), processados e aprovados em `validate_hollow_clips.py`. `CLIP_FOLDER.elite` permanece `'elite'` (PR #371); ironhide/wraith entram nas pastas próprias.
+- **Comportamento (`src/hollowTypes.js`):** Encouraçado a partir de 80 s, com 160 HP; investe só quando `2,5 < dist ≤ 9` (`minRange`/`range`): para, mira por 0,6 s e corre em linha reta a 3,4× a velocidade, sem corrigir a rota. Sombrio a partir de 110 s chega em espiral, metade para cada lado, e só vem reto a menos de 3,5 m. Censo da tela de fim com as duas linhas novas. Doc 18 alinhada ao `minRange`.
+- **Evidência:** `scripts/test_hollow_types.py` (unlock + `minRange`), `make size-check`, `make docs-check`. Ver checklist de partida no comentário do PR #374 se o host não tiver browser.
+
 ## 2026-11-12 — Bankai do Ichigo no nível 35
 
 - **Kit:** `ichigo_bankai` com 22 clipes em 3 vistas (66 folhas do Codex), casaco longo preto com forro vermelho e katana preta na mão direita, nunca nas costas. Roteiro em `geradores/cast_ichigo_bankai.py`, que reaproveita os golpes do shikai trocando a espada; referências em `src/assets/characters/ichigo_bankai/{front,side_l,side,back}.png` via `gen_cast_ref.py`. Régua laranja, como o shikai.

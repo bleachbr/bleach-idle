@@ -9,6 +9,8 @@ const MONSTERS = [
   { id: 'shrieker', alias: 'shrieker', dirCount: 8 },
   { id: 'acidwire', alias: 'acidwire', dirCount: 8 },
   { id: 'elite', alias: 'elite', dirCount: 8 },
+  { id: 'ironhide', alias: 'ironhide', dirCount: 8 },
+  { id: 'wraith', alias: 'wraith', dirCount: 8 },
   { id: 'menos_grande', alias: 'menos', dirCount: 8 }
 ];
 

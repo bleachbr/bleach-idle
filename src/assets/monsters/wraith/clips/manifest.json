@@ -1,0 +1,25 @@
+{
+  "id": "wraith",
+  "baselineRatio": 0.9140625,
+  "baseFrameSize": 128,
+  "anims": {
+    "attack": {
+      "fps": 16,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 256
+    },
+    "death": {
+      "fps": 12,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    },
+    "hurt": {
+      "fps": 22,
+      "loop": false,
+      "frames": 12,
+      "frameSize": 160
+    }
+  }
+}
