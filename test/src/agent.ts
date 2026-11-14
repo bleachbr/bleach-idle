@@ -8,37 +8,27 @@ import type { Action } from "./game.js";
 /** Cada persona joga com a própria conta e personagem (reaproveitados entre rodadas). */
 export const accountOf = (persona: string) => ({ login: `ia_${persona}`, pass: "senha-de-teste-ia", char: `IA${persona[0].toUpperCase()}${persona.slice(1, 9)}` });
 
-/** Áreas do jogo que um jogador normal deveria experimentar. O agente marca as que visitou. */
+/** Áreas do Soul Survivor que um jogador normal deveria experimentar. O agente marca as que visitou. */
 export const AREAS: Record<string, string> = {
-  login: "criar conta e entrar",
-  personagem: "escolher e criar personagem",
-  tutorial: "entender o começo / tutorial / primeiras dicas",
-  movimento: "andar pelo mapa",
-  combate: "atacar um monstro até matar",
-  tecnicas: "usar técnicas/habilidades",
-  pocoes: "usar poção de cura/reiatsu",
-  inventario: "abrir inventário e ver itens",
-  equipar: "equipar um item",
-  loja: "abrir loja de NPC e comprar/vender",
-  npc: "falar com NPC / missão",
-  viagem: "viajar entre mapas",
-  livro: "abrir o Livro (bestiário, conquistas, diário)",
-  ranking: "abrir o ranking",
-  temporada: "abrir o passe de temporada",
-  lojaCristais: "abrir a Loja de Cristais",
-  autoHunt: "ligar caçada/treino automático",
-  chat: "usar o chat e comandos (/ajuda)",
-  morte: "morrer e ver a tela de morte",
-  nivel: "subir de nível",
-  som_visual: "mudar HD/pixel e som",
-  celular: "layout em tela pequena/touch (se visível)",
+  menu: "abrir o menu inicial, preencher nickname e iniciar partida",
+  personagem: "escolher personagem jogável (Ichigo, Ishida, Sado, Grimmjow)",
+  prologo: "assistir ou avançar o prólogo no Dangai com a Rukia",
+  movimento: "andar pelo deserto do Hueco Mundo (WASD / Setas)",
+  pulo: "pular com Espaço para esquivar de hollows",
+  combate: "atacar hollows e observar projéteis/FX",
+  reishi: "coletar partículas de Reishi para ganhar XP",
+  levelup: "escolher carta de level-up (1, 2, 3 ou pular)",
+  pausa: "abrir pausa com ESC e ver ficha do Shinigami / sinergias",
+  ranking: "ver Hall da Fama / ranking no menu",
+  som: "testar botão de mute / áudio",
+  fim: "morrer ou concluir ciclo e ver tela de fim / reiniciar",
 };
 
 export const PERSONAS: Record<string, string> = {
-  novato: "Você é um jogador NOVATO que nunca viu o jogo. Não conhece os controles: descubra pela interface. Anote tudo que confunde.",
-  explorador: "Você é um EXPLORADOR: quer ver todos os painéis, botões, mapas e NPCs antes de lutar muito.",
-  grinder: "Você é um GRINDER/idle: quer progredir rápido, ligar automações, avaliar ritmo de XP, ouro e drops.",
-  caotico: "Você é um TESTER CAÓTICO: clica rápido, abre e fecha painéis, aperta teclas estranhas, tenta ações fora de ordem e usa entradas esquisitas (textos longos, vazios, símbolos) para quebrar o jogo.",
+  novato: "Você é um jogador NOVATO que nunca viu o Soul Survivor. Descubra os controles pela interface. Anote tudo que confunde.",
+  explorador: "Você é um EXPLORADOR: quer testar personagens, prólogo, estúdios, pausa, ranking e cantos do Hueco Mundo.",
+  grinder: "Você é um GRINDER: quer coletar Reishi rápido, subir de nível, montar build (armas/passivas) e avaliar ritmo de XP e dano.",
+  caotico: "Você é um TESTER CAÓTICO: clica rápido, pula durante combate, abre/fecha pausa e level-up, testa entradas esquisitas no nickname.",
 };
 
 export type Finding = { tipo: string; severidade: string; titulo: string; detalhe: string; passo: number; shot: string };
@@ -52,9 +42,9 @@ export class Memoria {
   save() { writeFileSync(this.file, JSON.stringify(this.data, null, 1)); }
 }
 
-const SYSTEM = `Você é um playtester de IA jogando "Bleach Idle" (MMORPG 2D top-down, idle/ativo, universo Bleach) pela TELA, como uma pessoa: só vê a captura 1280x720 e age com clique (x,y), texto ou tecla. Você começa na tela de login.
-Jogue DE VERDADE e com propósito: aprenda os controles pela interface, mova-se, lute, use itens, painéis, lojas, NPCs, viagens. Ao entrar no mundo, crie personagem com o nome exato indicado. Outros testers de IA jogam no mesmo mundo ao mesmo tempo (nomes IA...): ignore-os, não os convide nem ataque.
-REGRA CRÍTICA: você é um jogador COMUM em ambiente real. NUNCA clique em botões ou ferramentas de desenvolvimento ("DEV", painel dev, atalhos de admin). Progrida e teste estritamente pelas mecânicas naturais do jogo (combate, missões, NPCs, lojas, inventário, viagens, progressão orgânica).
+const SYSTEM = `Você é um playtester de IA jogando "Bleach: Soul Survivor" (survivor 2.5D Three.js no Hueco Mundo) pela TELA, como uma pessoa: só vê a captura 1280x720 e age com clique, texto ou tecla. Você começa no menu inicial.
+Jogue DE VERDADE e com propósito: escolha personagem, inicie a partida, avance o prólogo no Dangai, mova-se com WASD/Setas, pule com Space, colete Reishi, escolha cartas de level-up com 1/2/3 e inspecione a pausa com Escape.
+REGRA CRÍTICA: você é um jogador COMUM. NUNCA use ferramentas de dev. Progrida e teste estritamente pelas mecânicas naturais do jogo.
 Registre PROBLEMAS com precisão (só o que viu NESTE passo: captura, chat, estado ou erros):
 - bug: quebrado, travado, sobreposto/cortado, "undefined/NaN", inconsistência numérica, erro de console/servidor;
 - ux: confusão, falta de feedback, fluxo longo, alvo pequeno, falta de dica;

@@ -7,8 +7,7 @@ import { dirname, join } from "node:path";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 
 export const VIEW = { width: 1280, height: 720 };
-export const SERVER_PORT = 2578;
-export const CLIENT_PORT = 5183;
+export const CLIENT_PORT = 5173;
 
 export type Action =
   | { tipo: "click"; x?: number; y?: number; alvo?: number }
@@ -43,23 +42,13 @@ export class Game {
       this.browser = await chromium.launch();
       return;
     }
-    // não repassa a chave do Gemini aos processos do jogo
     const env = { ...process.env, GEMINI_API_KEY: "" };
-    const devFlag = this.enableDev ? "1" : "0";
-    const server = spawn(process.execPath, ["--import", "tsx", "src/index.ts"], {
-      cwd: join(this.srcDir, "server"),
-      env: { ...env, PORT: String(SERVER_PORT), DB_FILE: this.dbFile, LOGIN_MAX_FAILS_IP: "1000000", INVASION_FIRST_MS: "999999999", WORLDBOSS_FIRST_MS: "999999999", BI_DEBUG: devFlag, BI_DEV: devFlag },
-    });
-    this.procs.push(server);
-    server.stdout!.on("data", (d: Buffer) => this.logServer(d));
-    server.stderr!.on("data", (d: Buffer) => this.logServer(d));
-    await waitFor(server, "Servidor do mundo", 30_000);
-    const viteCfg = join(dirname(this.dbFile), "vite.config.mjs");
-    writeFileSync(viteCfg, `export default { root: ${JSON.stringify(join(this.srcDir, "client"))}, server: { fs: { strict: false } } };\n`);
-    const vite = spawn("npx", ["vite", "--config", viteCfg, "--port", String(CLIENT_PORT), "--strictPort"], {
-      cwd: join(this.srcDir, "client"), env: { ...env, VITE_SERVER: `ws://localhost:${SERVER_PORT}` },
+    const vite = spawn("npx", ["vite", "--port", String(CLIENT_PORT), "--strictPort"], {
+      cwd: this.srcDir,
+      env,
     });
     this.procs.push(vite);
+    vite.stderr!.on("data", (d: Buffer) => this.logServer(d));
     await waitFor(vite, "Local:", 30_000);
     this.browser = await chromium.launch();
   }
@@ -119,16 +108,16 @@ export class Player {
     const note = (t: string) => { this.consoleErrors.push(t); this.allErrors.push(t); };
     this.page.on("console", (m) => { if (m.type() === "error" || m.type() === "warning") note(`[${m.type()}] ${m.text().slice(0, 200)}`); });
     this.page.on("pageerror", (e) => note(`[pageerror] ${String(e.message).slice(0, 200)}`));
-    await this.page.goto(`${this.game.baseUrl}/?login`);
+    await this.page.goto(this.game.baseUrl);
     await this.page.waitForTimeout(1500);
   }
 
-  /** "sair": usa os botões do jogo (trocar de personagem e sair da conta); "abrupto": fecha a aba (queda de conexão). */
+  /** "sair": volta ao menu pelo botão de pausa/fim; "abrupto": fecha a aba. */
   async closeSession(mode: "sair" | "abrupto") {
     if (mode === "sair") {
-      await this.page?.evaluate(() => (document.querySelector("#exit-btn") as HTMLElement | null)?.click()).catch(() => {});
-      await this.page?.waitForTimeout(1500);
-      await this.page?.evaluate(() => (document.querySelector("#logout-btn") as HTMLElement | null)?.click()).catch(() => {});
+      await this.page?.keyboard.press("Escape").catch(() => {});
+      await this.page?.waitForTimeout(400);
+      await this.page?.evaluate(() => (document.querySelector("#btn-pause-menu, #btn-gameover-menu") as HTMLElement | null)?.click()).catch(() => {});
       await this.page?.waitForTimeout(800);
     }
     const video = this.page?.video();
@@ -160,17 +149,29 @@ export class Player {
     }
   }
 
-  /** Estado do personagem (via __bi), chat recente e erros novos desde a última chamada. */
-  async context(charName: string): Promise<string> {
-    const game = await this.page.evaluate((name) => {
-      const bi = (window as any).__bi;
-      if (!bi) return "jogo ainda não iniciou (login/lobby)";
-      const me = [...bi.room.state.players.values()].find((p: any) => p.name === name) as any;
-      if (!me) return "personagem não encontrado no estado";
-      const keys = ["level", "exp", "hp", "maxHp", "rei", "maxRei", "x", "y", "targetId", "autoHunt", "autoTarget"];
-      return JSON.stringify(Object.fromEntries(keys.map((k) => [k, me[k]]))) + ` | monstros: ${bi.room.state.monsters?.size ?? "?"}`;
-    }, charName).catch(() => "estado indisponível");
-    const chat = await this.page.evaluate(() => [...document.querySelectorAll("#chatlog > *")].slice(-6).map((e) => e.textContent).join(" / ")).catch(() => "");
+  /** Estado do jogo via HUD/overlays do Soul Survivor e erros novos desde a última chamada. */
+  async context(_charName: string): Promise<string> {
+    const game = await this.page.evaluate(() => {
+      const visible = (sel: string) => {
+        const el = document.querySelector<HTMLElement>(sel);
+        return Boolean(el && !el.classList.contains("hidden") && getComputedStyle(el).display !== "none");
+      };
+      const text = (sel: string) => document.querySelector(sel)?.textContent?.trim() || "";
+      return JSON.stringify({
+        menu: visible("#menu-overlay"),
+        prologue: visible("#prologue-overlay"),
+        hud: visible("#hud-overlay"),
+        levelUp: visible("#levelup-overlay, #levelup-banner"),
+        pause: visible("#pause-modal"),
+        gameOver: visible("#gameover-overlay"),
+        player: text("#player-title"),
+        hp: text("#player-hp-text"),
+        level: text("#hud-level"),
+        kills: text("#hud-kills"),
+        timer: text("#hud-timer"),
+      });
+    }).catch(() => "estado indisponível");
+    const chat = "";
     const els = await this.page.evaluate(() => {
       const out: { x: number; y: number; d: string }[] = [];
       for (const e of document.querySelectorAll<HTMLElement>("button, a, input, select, textarea, summary, [role=button], [onclick]")) {
