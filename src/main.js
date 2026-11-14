@@ -906,13 +906,12 @@ function openLevelUpBanner() {
 function finishLevelUp() {
   closeLevelUpDialog();
   playerKit = loadPlayerKit(new THREE.TextureLoader(), state.selectedCharacter, state.level);
+  showCharacterInHud(state.selectedCharacter, state.level);
   triggerPlayerAction(playerAnimator, 'level_up');
   state.levelUpOpen = false;
   if (state.pendingLevelUps && state.pendingLevelUps > 0) {
     state.pendingLevelUps--;
-    setTimeout(() => {
-      if (state.active && !state.gameOver) openLevelUpBanner();
-    }, 120);
+    setTimeout(() => { if (state.active && !state.gameOver) openLevelUpBanner(); }, 120);
   }
 }
 

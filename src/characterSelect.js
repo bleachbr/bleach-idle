@@ -3,7 +3,8 @@
 // A escolha fica guardada no navegador e volta na próxima visita.
 // =======================================================================
 import { versionedAssetUrl } from './assetVersion.js';
-import { DEFAULT_CHARACTER, getPlayableCharacter, listPlayableCharacters } from './playableCast.js';
+import { DEFAULT_CHARACTER, getPlayableCharacter, hasPlayableKit, listPlayableCharacters } from './playableCast.js';
+import { playerFormStage } from './playerForm.js';
 
 const STORAGE_KEY = 'soulSurvivor.character';
 let selectedId = readSavedCharacter();
@@ -76,10 +77,11 @@ export function initCharacterSelect() {
 }
 
 // HUD da partida: nome e ícone de quem está em campo.
-export function showCharacterInHud(id) {
+export function showCharacterInHud(id, level = 1) {
   const char = getPlayableCharacter(id);
+  const stage = playerFormStage(char.id, level, hasPlayableKit, char.stage);
   const title = document.getElementById('player-title');
-  if (title) title.innerText = `${char.name} (${char.stage})`;
+  if (title) title.innerText = `${char.name} (${stage})`;
   const avatar = document.getElementById('avatar-box');
   if (avatar) avatar.innerText = char.avatar;
 }
