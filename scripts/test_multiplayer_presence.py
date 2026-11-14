@@ -108,6 +108,65 @@ console.log([
     assert out == "idle,walk,run,true,false,5,3,4"
 
 
+def test_shared_horde_logic() -> None:
+    horde_logic = ROOT / "src" / "multiplayerHordeLogic.js"
+    script = f"""
+import {{
+  shouldUseSharedHorde,
+  getTopDamagePlayer,
+  queueSharedDamage,
+  queueSharedReishiClaim,
+  drainSharedHordeEvents,
+  reconcileSharedHollows,
+  reconcileSharedReishi,
+}} from '{horde_logic.as_posix()}';
+queueSharedDamage('sh_1', 25, 'asauchi');
+queueSharedReishiClaim('sr_1');
+const drained = drainSharedHordeEvents();
+const empty = drainSharedHordeEvents();
+const pool = [{{ active: true, serverId: 'sh_1', x: 0, z: 0 }}, {{ active: false, serverId: null }}];
+const spawned = [];
+const updated = [];
+reconcileSharedHollows(pool, [{{ id: 'sh_1', x: 5, z: 6 }}, {{ id: 'sh_2', x: 9, z: 10 }}], {{
+  onSpawn: (s) => spawned.push(s.id),
+  onUpdate: (en, s) => updated.push([en.serverId, s.x]),
+  onDespawn: () => {{}},
+}});
+const drops = [{{ serverId: 'sr_old' }}];
+const removed = [];
+const addedDrops = [];
+reconcileSharedReishi(drops, [{{ id: 'sr_new', ownerPlayerId: 'p2' }}], {{
+  onSpawn: (d) => addedDrops.push(d.id),
+  onRemove: (i) => removed.push(i),
+}});
+console.log(JSON.stringify({{
+  solo: shouldUseSharedHorde(0),
+  coop: shouldUseSharedHorde(1),
+  top: getTopDamagePlayer({{ p1: 15, p2: 40 }}, 'p1'),
+  drained,
+  empty,
+  spawned,
+  updated,
+  removed,
+  addedDrops,
+}}));
+"""
+    proc = subprocess.run(["node", "--input-type=module", "-e", script], cwd=str(ROOT), capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise AssertionError(proc.stderr or proc.stdout)
+    import json
+    res = json.loads(proc.stdout.strip())
+    assert res["solo"] is False and res["coop"] is True
+    assert res["top"] == "p2"
+    assert len(res["drained"]["damageEvents"]) == 1
+    assert res["drained"]["reishiClaims"] == ["sr_1"]
+    assert res["empty"]["damageEvents"] == []
+    assert res["spawned"] == ["sh_2"]
+    assert res["updated"] == [["sh_1", 5]]
+    assert res["removed"] == [0]
+    assert res["addedDrops"] == ["sr_new"]
+
+
 def main() -> int:
     if not LOGIC.exists():
         raise AssertionError(f"missing {LOGIC}")
@@ -115,6 +174,7 @@ def main() -> int:
     test_select_remote_peers()
     test_sync_throttle()
     test_remote_anim_helpers()
+    test_shared_horde_logic()
     print("OK test_multiplayer_presence")
     return 0
 

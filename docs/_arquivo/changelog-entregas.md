@@ -1,5 +1,11 @@
 # Changelog de entregas
 
+## 2026-11-14 — Horda e dano multiplayer compartilhados no orquestrador (pendência 13)
+
+- **Pendência 13 sanada:** `server/shared_horde.js` e `server/telemetry_orchestrator.js` agora simulam a horda compartilhada da sala `hueco-mundo-arena` quando há 2+ jogadores ativos, processam `damageEvents`, acumulam `damageContributions` por hollow e atribuem o drop de Reishi (`ownerPlayerId`) ao jogador com maior dano (validando `reishiClaims` no servidor).
+- **Cliente:** `src/multiplayerHordeLogic.js` (regras puras) e `src/multiplayerHorde.js` reconciliam hollows e drops de Reishi com o pool local via `src/multiplayerPresence.js`; em solo (`getRemotePlayerCount() === 0`), o loop local segue intacto. `src/main.js` caiu para 1223 linhas e `updateReishi` para 25.
+- **Evidência:** `make multiplayer-test` (API de 2 jogadores disputando o mesmo hollow + posse de Reishi + lógica pura), `make size-check`, `make docs-check`, `make test` e `make build` aprovados.
+
 ## 2026-11-13 — Hollows Encouraçado e Sombrio na horda (rebase sobre Bankai + Elite)
 
 - **Walk8:** das folhas antigas do LFS (`hollow_encouracado`, `hollow_sombrio`) pelo `sprite_processor`, com `validate_sprites` aprovado (variação de altura de 0,98% e 6,54%). O lobo (`hollow_uivante`) foi descartado: reprovou com 9,7%, porque o perfil de um quadrúpede sai mais baixo que a frente. Staging `geradores/staging/{ironhide,wraith}/` removido do PR (duplicava `src/assets/monsters/...`).

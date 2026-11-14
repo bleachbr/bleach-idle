@@ -5,6 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { createSharedHordeState, stepSharedHorde } from './shared_horde.js';
 
 const LOGS_DIR = path.resolve(process.env.LOGS_DIR || path.join(process.cwd(), 'logs'));
 const TELEMETRY_FILE = path.join(LOGS_DIR, 'telemetry.log');
@@ -28,13 +29,7 @@ const roomState = {
   id: 'hueco-mundo-arena',
   maxPlayers: 8,
   players: new Map(),
-  sharedHollows: {
-    activeCount: 0,
-    totalPurified: 0,
-    bossSpawned: false,
-    bossDefeated: false,
-    damageLeaderboard: {}
-  },
+  sharedHollows: createSharedHordeState(),
   serverStartTime: Date.now()
 };
 
@@ -195,6 +190,8 @@ function handleMultiplayerSync(req, res) {
         appendLog(MULTIPLAYER_FILE, logLine);
       }
     }
+
+    stepSharedHorde(roomState.sharedHollows, roomState.players, playerId, data, now);
 
     sendJson(res, 200, {
       success: true,

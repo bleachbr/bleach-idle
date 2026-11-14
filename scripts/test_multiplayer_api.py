@@ -122,6 +122,37 @@ def test_two_players_share_room() -> None:
             assert isinstance(room, dict)
             assert room["room"]["activeCount"] == 2
             assert not str(room).lstrip().startswith("<!doctype"), "API must not return SPA HTML"
+
+            hollows = sync1["room"]["sharedHollows"]["hollows"]
+            assert len(hollows) >= 1, sync1["room"]["sharedHollows"]
+            target_id = hollows[0]["id"]
+
+            # Player A deals 20 dmg, Player B deals 40 dmg and kills it -> Player B owns Reishi
+            http_json("POST", "/api/multiplayer/sync", {
+                "playerId": "shinigami_aaaa",
+                "damageEvents": [{"hollowId": target_id, "dmg": 20, "weaponKey": "asauchi"}],
+            })
+            code, sync2 = http_json("POST", "/api/multiplayer/sync", {
+                "playerId": "shinigami_bbbb",
+                "damageEvents": [{"hollowId": target_id, "dmg": 40, "weaponKey": "kido"}],
+            })
+            assert code == 200, sync2
+            drops = sync2["room"]["sharedHollows"]["reishiDrops"]
+            assert len(drops) == 1, drops
+            assert drops[0]["ownerPlayerId"] == "shinigami_bbbb", drops[0]
+            reishi_id = drops[0]["id"]
+
+            # Player A cannot claim Player B's Reishi; Player B can
+            _, sync_a = http_json("POST", "/api/multiplayer/sync", {
+                "playerId": "shinigami_aaaa",
+                "reishiClaims": [reishi_id],
+            })
+            assert len(sync_a["room"]["sharedHollows"]["reishiDrops"]) == 1
+            _, sync_b = http_json("POST", "/api/multiplayer/sync", {
+                "playerId": "shinigami_bbbb",
+                "reishiClaims": [reishi_id],
+            })
+            assert len(sync_b["room"]["sharedHollows"]["reishiDrops"]) == 0
         finally:
             proc.send_signal(signal.SIGTERM)
             try:

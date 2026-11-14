@@ -6,6 +6,10 @@ import {
   shouldSendSync
 } from './multiplayerPresenceLogic.js';
 import {
+  clearSharedHordeQueues,
+  drainSharedHordeEvents
+} from './multiplayerHordeLogic.js';
+import {
   bindRemotePlayersScene,
   applyRemoteSnapshots,
   tickRemotePlayers,
@@ -16,6 +20,11 @@ import {
 const SYNC_INTERVAL_MS = 100;
 let lastSyncAt = -1;
 let presenceEnabled = false;
+let sharedHordeHandler = null;
+
+export function registerSharedHordeHandler(fn) {
+  sharedHordeHandler = typeof fn === 'function' ? fn : null;
+}
 
 export function initMultiplayerPresence(scene, textureLoader) {
   bindRemotePlayersScene(scene, textureLoader);
@@ -24,16 +33,21 @@ export function initMultiplayerPresence(scene, textureLoader) {
 export function enableMultiplayerPresence() {
   presenceEnabled = true;
   lastSyncAt = -1;
+  clearSharedHordeQueues();
 }
 
 export function disableMultiplayerPresence() {
   presenceEnabled = false;
+  clearSharedHordeQueues();
   clearRemotePlayers();
 }
 
 function applyRoomSync(err, data, localPlayerId) {
   if (err || !data?.room?.activePlayers) return;
   applyRemoteSnapshots(selectRemotePeers(data.room.activePlayers, localPlayerId));
+  if (sharedHordeHandler && data.room.sharedHollows) {
+    sharedHordeHandler(data.room.sharedHollows);
+  }
 }
 
 export function tickMultiplayerPresence({ player, state, camera, cameraYaw, dt = 0, nowMs = Date.now() }) {
@@ -41,7 +55,7 @@ export function tickMultiplayerPresence({ player, state, camera, cameraYaw, dt =
   tickRemotePlayers(dt, camera, cameraYaw);
   if (!shouldSendSync(nowMs, lastSyncAt, SYNC_INTERVAL_MS)) return;
   lastSyncAt = nowMs;
-  const payload = buildSyncPayload(player, state);
+  const payload = buildSyncPayload(player, state, drainSharedHordeEvents());
   syncMultiplayerSession(payload, (err, data) => {
     applyRoomSync(err, data, state.localPlayerId);
   });

@@ -25,6 +25,8 @@ import { stopMusic, playHuecoMundoBGM } from './audio.js';
 import { onSlashFire, onSkillFire, onEnemyHit, onEnemyDeath, onPlayerHurtSfx } from './combatAudio.js';
 import { loadMonsterTextures } from './monsterTextures.js';
 import { initMultiplayerPresence, enableMultiplayerPresence, disableMultiplayerPresence, tickMultiplayerPresence, getRemotePlayerCount } from './multiplayerPresence.js';
+import { getTopDamagePlayer, shouldUseSharedHorde, queueSharedDamage, queueSharedReishiClaim } from './multiplayerHordeLogic.js';
+import { bindSharedHordeContext } from './multiplayerHorde.js';
 import { pickHollowType, configureHollow, steerHollow, tickHollowAttack, hollowTypeOf } from './hollowTypes.js';
 import { loadHollowClips, applyHollowClip, startHollowDeath, hideHollow, updateDyingHollows, flinchHollow } from './hollowClips.js';
 import { createAcidSpitPool, spawnAcidSpit, updateAcidSpit, clearAcidSpit } from './fx/acidSpit.js';
@@ -780,18 +782,11 @@ function damageEnemy(en, dmg, weaponKey, attackerId = state.localPlayerId) {
   onEnemyHit();
   if (!en.damageContributions) en.damageContributions = {};
   en.damageContributions[attackerId] = (en.damageContributions[attackerId] || 0) + dmg;
+  if (en.serverId && shouldUseSharedHorde(getRemotePlayerCount())) queueSharedDamage(en.serverId, dmg, weaponKey);
   state.damageDealt += dmg;
   const key = weaponKey === 'getsuga_tenshou' ? 'getsuga' : weaponKey;
   if (state.weapons[key]) state.weapons[key].totalDamage += dmg;
   if (en.hp <= 0) killEnemy(en);
-}
-
-function getTopDamagePlayer(contribs, fallbackId) {
-  let maxDmg = -1, topId = fallbackId;
-  for (const [pid, d] of Object.entries(contribs || {})) {
-    if (d > maxDmg) { maxDmg = d; topId = pid; }
-  }
-  return topId;
 }
 
 function killEnemy(en) {
@@ -809,7 +804,7 @@ function killEnemy(en) {
   }
 }
 
-function spawnReishi(x, z, amount, ownerPlayerId = state.localPlayerId) {
+function spawnReishi(x, z, amount, ownerPlayerId = state.localPlayerId, serverId = null) {
   const geo = new THREE.PlaneGeometry(0.8, 0.8);
   geo.translate(0, 0.4, 0);
   const mat = new THREE.MeshBasicMaterial({
@@ -821,7 +816,7 @@ function spawnReishi(x, z, amount, ownerPlayerId = state.localPlayerId) {
   mesh.position.set(x, 0, z);
   reishiGroup.add(mesh);
 
-  reishiDrops.push({ mesh, x, z, value: amount * 10, ownerPlayerId });
+  reishiDrops.push({ mesh, x, z, value: amount * 10, ownerPlayerId, serverId });
 }
 
 function updateReishi(dt) {
@@ -832,9 +827,7 @@ function updateReishi(dt) {
     r.mesh.quaternion.copy(camera.quaternion);
 
     // No multiplayer, a partícula só é atraída para o jogador que causou mais dano
-    if (r.ownerPlayerId && r.ownerPlayerId !== state.localPlayerId) {
-      continue;
-    }
+    if (r.ownerPlayerId && r.ownerPlayerId !== state.localPlayerId) continue;
 
     const dx = player.x - r.x;
     const dz = player.z - r.z;
@@ -846,6 +839,7 @@ function updateReishi(dt) {
       r.mesh.position.set(r.x, 0, r.z);
 
       if (dist < 0.8) {
+        if (r.serverId) queueSharedReishiClaim(r.serverId);
         state.xp += r.value;
         reishiGroup.remove(r.mesh);
         r.mesh.geometry.dispose();
@@ -920,6 +914,7 @@ let eliteSpawnTimer = 35.0;
 
 // Spawns
 function updateHollowTimers(dt) {
+  if (shouldUseSharedHorde(getRemotePlayerCount())) return;
   eliteSpawnTimer -= dt;
   if (eliteSpawnTimer <= 0) {
     eliteSpawnTimer = 35.0;
@@ -1180,6 +1175,7 @@ function onPrologueCompleted() {
   state.paused = false;
   document.getElementById('pause-modal')?.classList.add('hidden');
   initTelemetry(state.localPlayerId, state.playerName, state.selectedCharacter);
+  bindSharedHordeContext({ enemyMeshes, reishiDrops, reishiGroup, setupHollowMesh, spawnReishi, getTerrainHeight });
   enableMultiplayerPresence();
 }
 
