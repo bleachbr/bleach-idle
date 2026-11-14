@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import { Game, compressVideoToMp4 } from "../src/game.js";
+import { AREAS } from "../src/agent.js";
 import { prepareSource } from "../src/source.js";
 
 function hasFfmpeg(): boolean {
@@ -16,9 +17,10 @@ function hasFfmpeg(): boolean {
   }
 }
 
-test("Game configura baseUrl padrão para localhost e aceita targetUrl remoto", () => {
+test("Game configura baseUrl padrão para localhost:5173 (Soul Survivor) e aceita targetUrl remoto", () => {
   const localGame = new Game("/tmp/mock-src", "/tmp/mock.sqlite");
-  assert.equal(localGame.baseUrl, "http://localhost:5183");
+  assert.equal(localGame.baseUrl, "http://localhost:5173");
+  assert.ok("prologo" in AREAS && "levelup" in AREAS, "AREAS deve cobrir o loop do Soul Survivor");
   assert.equal(localGame.enableDev, false);
   assert.equal(localGame.compressVideo, true);
   assert.equal(localGame.targetUrl, "");

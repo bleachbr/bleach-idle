@@ -24,7 +24,7 @@ export function prepareSource(runsDir: string, local: boolean, targetUrl = ""): 
   else if (previous) {
     changelog = `Commits novos desde o último checkpoint (${previous.slice(0, 7)} → ${sha.slice(0, 7)}):\n`
       + git(REPO, "log", "--no-merges", "--format=- %h %s", `${previous}..${sha}`).slice(0, 3500)
-      + "\n\nArquivos alterados:\n" + git(REPO, "diff", "--stat", "--stat-width=90", previous, sha, "--", "client", "server", "shared").split("\n").slice(-30).join("\n");
+      + "\n\nArquivos alterados:\n" + git(REPO, "diff", "--stat", "--stat-width=90", previous, sha, "--", "src", "server").split("\n").slice(-30).join("\n");
   } else {
     changelog = "Primeira sessão (sem checkpoint). Últimos commits da main:\n" + git(REPO, "log", "--no-merges", "-n", "15", "--format=- %h %s", sha);
   }

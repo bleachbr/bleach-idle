@@ -1,5 +1,10 @@
 # Changelog de entregas
 
+## 2026-11-14 — Jogador-IA adaptado ao Soul Survivor (pendência 14)
+
+- **Pendência 14 sanada:** `test/src/game.ts`, `test/src/agent.ts`, `test/src/index.ts` e `test/src/source.ts` agora sobem o Vite do Soul Survivor (`http://localhost:5173`), removem o bloqueio do layout antigo do Bleach Idle, lêem o estado do HUD/overlays (`#menu-overlay`, `#prologue-overlay`, `#hud-overlay`, `#levelup-overlay`, `#pause-modal`, `#gameover-overlay`) e usam personas/áreas do Soul Survivor (menu, personagem, prólogo, WASD, pulo, Reishi, level-up, pausa).
+- **Evidência:** `npm ci` e `npm run typecheck` (`tsc --noEmit`) em `test/` aprovados; `make docs-sync`, `make docs-check` e `make size-check` aprovados. `npx tsx --test test/jogador-ia.test.ts` falhou porque `playwright@1.64.1` exige Node.js >= 20 (ambiente roda Node v18.20.4).
+
 ## 2026-11-13 — Hollows Encouraçado e Sombrio na horda (rebase sobre Bankai + Elite)
 
 - **Walk8:** das folhas antigas do LFS (`hollow_encouracado`, `hollow_sombrio`) pelo `sprite_processor`, com `validate_sprites` aprovado (variação de altura de 0,98% e 6,54%). O lobo (`hollow_uivante`) foi descartado: reprovou com 9,7%, porque o perfil de um quadrúpede sai mais baixo que a frente. Staging `geradores/staging/{ironhide,wraith}/` removido do PR (duplicava `src/assets/monsters/...`).

@@ -2,7 +2,7 @@
   "name": "bleach-idle-ia-player",
   "private": true,
   "type": "module",
-  "description": "IA que joga o Bleach Idle como um jogador de verdade e entrega feedback. Independente do resto do repo.",
+  "description": "IA que joga o Bleach: Soul Survivor como um jogador de verdade e entrega feedback.",
   "scripts": {
     "play": "tsx --env-file=../.env src/index.ts",
     "test": "tsx --test test/**/*.test.ts",
