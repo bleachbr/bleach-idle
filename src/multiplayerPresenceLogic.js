@@ -1,7 +1,7 @@
 // Pure multiplayer presence helpers (no Three.js, safe for Node unit tests).
 
-export function buildSyncPayload(player, state) {
-  return {
+export function buildSyncPayload(player, state, hordeEvents = null) {
+  const payload = {
     playerId: state.localPlayerId,
     nickname: state.playerName,
     character: state.selectedCharacter,
@@ -16,6 +16,9 @@ export function buildSyncPayload(player, state) {
     kills: state.kills,
     damageDealt: state.damageDealt
   };
+  if (hordeEvents?.damageEvents?.length) payload.damageEvents = hordeEvents.damageEvents;
+  if (hordeEvents?.reishiClaims?.length) payload.reishiClaims = hordeEvents.reishiClaims;
+  return payload;
 }
 
 export function selectRemotePeers(activePlayers, localPlayerId) {

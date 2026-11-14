@@ -2,17 +2,9 @@
 
 Dívida aberta. Item resolvido sai daqui e vira entrada em [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md). O número não se reusa.
 
-**Última atualização:** 2026-11-12
+**Última atualização:** 2026-11-14
 
 Registrar aqui é a saída, não o default. Antes, tente resolver na branch aberta. O motivo precisa conter uma destas frases: `fora do escopo`, `depende de terceiro`, `decisão de outra pessoa`, `falta evidência medida`.
-
-## 13. Horda e dano multiplayer ainda são locais por cliente
-
-A presença (posição, nick, personagem) sincroniza pela sala `hueco-mundo-arena`, mas cada navegador continua spawando e matando a própria horda. O ranking de dano compartilhado no orquestrador existe, porém o combate autoritativo e o drop de Reishi por maior dano ainda não atravessam a rede.
-
-**Impacto:** médio (dois jogadores se veem, mas não disputam o mesmo hollow)
-
-**Por que não resolvido aqui:** fora do escopo — netcode de combate compartilhado é entrega própria (Frente 2 / multiplayer além da presença).
 
 ## 14. Jogador-IA ainda não joga o Soul Survivor
 
