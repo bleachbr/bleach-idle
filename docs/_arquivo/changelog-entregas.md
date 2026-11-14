@@ -1,5 +1,10 @@
 # Changelog de entregas
 
+## 2026-11-14 — Estágio do HUD acompanha forma Bankai (pendência 15)
+
+- **Pendência 15 sanada:** `playerFormStage` em `src/playerForm.js` mapeia `ichigo_bankai` para `'Bankai'` com fallback para o `stage` base do personagem. `src/playableCast.js` expõe `hasPlayableKit`, `showCharacterInHud(id, level = 1)` em `src/characterSelect.js` resolve o estágio pelo nível e `finishLevelUp` em `src/main.js` atualiza o HUD após a troca de kit (arquivo reduzido de 1227 para 1226 linhas).
+- **Evidência:** `make form-test` (10 testes, incluindo `playerFormStage` no nível 1, 34, 35, sem kit e em outros personagens), `make size-check`, `make test` e `make build` aprovados.
+
 ## 2026-11-13 — Hollows Encouraçado e Sombrio na horda (rebase sobre Bankai + Elite)
 
 - **Walk8:** das folhas antigas do LFS (`hollow_encouracado`, `hollow_sombrio`) pelo `sprite_processor`, com `validate_sprites` aprovado (variação de altura de 0,98% e 6,54%). O lobo (`hollow_uivante`) foi descartado: reprovou com 9,7%, porque o perfil de um quadrúpede sai mais baixo que a frente. Staging `geradores/staging/{ironhide,wraith}/` removido do PR (duplicava `src/assets/monsters/...`).

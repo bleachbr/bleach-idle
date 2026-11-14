@@ -11,6 +11,10 @@ const FORMS = {
   ichigo_shikai: [{ level: BANKAI_LEVEL, id: 'ichigo_bankai' }]
 };
 
+const FORM_STAGES = {
+  ichigo_bankai: 'Bankai'
+};
+
 // Maior forma já liberada e com kit no repositório; sem kit, o personagem fica como está.
 export function playerFormId(charId, level, hasKit) {
   const unlocked = (FORMS[charId] || []).filter((form) => level >= form.level && hasKit(form.id));
@@ -20,4 +24,9 @@ export function playerFormId(charId, level, hasKit) {
 // Todas as formas do personagem, para carregar as texturas antes de a troca acontecer.
 export function playerFormIds(charId, hasKit) {
   return [charId, ...(FORMS[charId] || []).map((form) => form.id).filter(hasKit)];
+}
+
+// Rótulo de estágio para o HUD conforme a forma ativa no nível atual.
+export function playerFormStage(charId, level, hasKit, fallbackStage = '') {
+  return FORM_STAGES[playerFormId(charId, level, hasKit)] || fallbackStage;
 }

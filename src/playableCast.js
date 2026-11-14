@@ -15,6 +15,10 @@ const CAST = [
   { id: 'grimmjow', name: 'Grimmjow Jaegerjaquez', stage: 'Sexta Espada', avatar: '🐆', style: 'Katana, garras e Cero' }
 ];
 
+export function hasPlayableKit(id) {
+  return WITH_KIT.has(id);
+}
+
 export function listPlayableCharacters() {
   return CAST.filter((c) => WITH_KIT.has(c.id));
 }

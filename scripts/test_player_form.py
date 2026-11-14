@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 BANKAI = ROOT / "src" / "assets" / "characters" / "ichigo_bankai"
 SHIKAI = ROOT / "src" / "assets" / "characters" / "ichigo_shikai"
-PRELUDE = "import { BANKAI_LEVEL, playerFormId } from './src/playerForm.js';"
+PRELUDE = "import { BANKAI_LEVEL, playerFormId, playerFormStage } from './src/playerForm.js';"
 
 
 def run(body: str):
@@ -43,6 +43,12 @@ class TestFormRule(unittest.TestCase):
     def test_missing_bankai_kit_keeps_shikai(self):
         self.assertEqual(run("return playerFormId('ichigo_shikai', 50, (id) => id !== 'ichigo_bankai');"), "ichigo_shikai")
 
+    def test_stage_label_updates_to_bankai_at_35(self):
+        stages = run("const has = () => true; return [1, 34, 35].map((lv) => playerFormStage('ichigo_shikai', lv, has, 'Shikai Ativa'));")
+        self.assertEqual(stages, ["Shikai Ativa", "Shikai Ativa", "Bankai"])
+        self.assertEqual(run("return playerFormStage('ichigo_shikai', 50, () => false, 'Shikai Ativa');"), "Shikai Ativa")
+        self.assertEqual(run("return playerFormStage('ishida', 50, () => true, 'Quincy');"), "Quincy")
+
 
 class TestBankaiKit(unittest.TestCase):
     def test_manifest_has_the_22_clips_of_the_shikai(self):
@@ -64,6 +70,11 @@ class TestGameHooks(unittest.TestCase):
     def test_level_up_reloads_the_kit_for_the_new_level(self):
         body = function_body((ROOT / "src" / "main.js").read_text(encoding="utf-8"), "finishLevelUp")
         self.assertRegex(body, r"playerKit = loadPlayerKit\(.*, state\.selectedCharacter, state\.level\);")
+        self.assertIn("showCharacterInHud(state.selectedCharacter, state.level);", body)
+
+    def test_hud_resolves_stage_from_form(self):
+        source = (ROOT / "src" / "characterSelect.js").read_text(encoding="utf-8")
+        self.assertIn("playerFormStage(", function_body(source, "showCharacterInHud"))
 
     def test_sprite_module_resolves_the_form(self):
         source = (ROOT / "src" / "playerSprite.js").read_text(encoding="utf-8")
