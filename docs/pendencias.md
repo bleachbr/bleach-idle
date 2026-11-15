@@ -2,7 +2,7 @@
 
 Dívida aberta. Item resolvido sai daqui e vira entrada em [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md). O número não se reusa.
 
-**Última atualização:** 2026-11-12
+**Última atualização:** 2026-11-15
 
 Registrar aqui é a saída, não o default. Antes, tente resolver na branch aberta. O motivo precisa conter uma destas frases: `fora do escopo`, `depende de terceiro`, `decisão de outra pessoa`, `falta evidência medida`.
 
@@ -29,3 +29,12 @@ A presença (posição, nick, personagem) sincroniza pela sala `hueco-mundo-aren
 **Impacto:** baixo (texto do HUD; o sprite e o jogo estão certos)
 
 **Por que não resolvido aqui:** fora do escopo — o HUD não tem gancho para a forma, e criar um aumentaria o `main.js`, que está no teto do inventário.
+
+## 16. Carta de level-up de arma ignora o `damageScale` do arsenal
+
+`buildWeaponOffering` em `src/levelup.js` descreve o dano por `baseDamage` e `dmgPerLevel` de `src/stats.js`. A Onda de Reiatsu sai com 45% disso, então a carta promete "+45 dano" e entrega cerca de 20. O mesmo já acontecia com as salvas do Ishida e do Grimmjow (`damageScale` por projétil).
+
+**Impacto:** baixo (texto da carta; o dano aplicado está certo)
+
+**Por que não resolvido aqui:** fora do escopo — a descrição precisa conhecer o personagem e o nível, o que muda a assinatura do level-up para todo o elenco.
+

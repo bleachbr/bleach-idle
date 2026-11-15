@@ -75,20 +75,39 @@ export const ARSENALS = {
   }
 };
 
+// Antes do nível 15 o Ichigo ainda não aprendeu o Getsuga Tenshō: a mesma vaga solta uma onda
+// de reiatsu fraca e curta. No 15 ela vira o Getsuga e mantém o nível já ganho no level-up.
+export const SHIKAI_LEVEL = 15;
+
+const EARLY_ARSENALS = {
+  ichigo_shikai: {
+    untilLevel: SHIKAI_LEVEL,
+    labels: { getsuga: { name: 'Onda de Reiatsu', icon: '💨' } },
+    shots: { getsuga: { tint: 0xe8f0ff, damageScale: 0.45, maxDistance: 18.0, hitRadius: 1.6, startScale: 1.2, endScale: 2.0 } }
+  }
+};
+
 function arsenalOf(charId) {
   return ARSENALS[charId] || ARSENALS.ichigo_shikai;
 }
 
-export function arsenalLabels(charId) {
-  return arsenalOf(charId).labels;
+// Sem nível, vale o arsenal completo.
+function earlyArsenalOf(charId, level = Infinity) {
+  const early = EARLY_ARSENALS[charId];
+  return early && level < early.untilLevel ? early : { labels: {}, shots: {} };
+}
+
+export function arsenalLabels(charId, level) {
+  return { ...arsenalOf(charId).labels, ...earlyArsenalOf(charId, level).labels };
 }
 
 export function arsenalSlashTint(charId) {
   return arsenalOf(charId).slashTint;
 }
 
-export function arsenalShot(charId, weaponKey) {
-  return { count: 1, damageScale: 1, ...ICHIGO_SHOTS[weaponKey], ...arsenalOf(charId).shots[weaponKey] };
+export function arsenalShot(charId, weaponKey, level) {
+  return { count: 1, damageScale: 1, ...ICHIGO_SHOTS[weaponKey], ...arsenalOf(charId).shots[weaponKey],
+    ...earlyArsenalOf(charId, level).shots[weaponKey] };
 }
 
 // Direção e deslocamento de cada projétil da salva: leque (spread, em radianos entre o primeiro

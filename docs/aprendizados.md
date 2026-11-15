@@ -223,3 +223,11 @@ Quando o texto é comum a vários hollows (como o `hurt()` de `hollow_clip_anims
 **O que fazer:** para comparar escala entre clipes, compare a altura em pixels do quadro neutro direto na tira, e confira também a folha bruta (o Codex mantém o tamanho dentro de poucos por cento).
 
 **Evidência:** no kit `ichigo_bankai`, a medida dividida pelo quadro deu `idle` 107 e `walk` 88; sem dividir, `idle` 107, `walk` 110, `hurt` 110, `victory` 115, e as folhas brutas mediram de 252 a 290 px no quadro neutro. Trocar a régua para `fixed` não mudou nada, porque a escala já estava certa.
+
+## 28. O nome de uma arma mora em dois lugares
+
+**Causa raiz:** `applyWeaponLabels` (`src/stats.js`) muda `WEAPON_DEFINITIONS`, que é o que o level-up, a build e a pausa leem. Já a tela de fim lista `state.weapons[k].name`, copiado de `WEAPON_DEFINITIONS` só em `resetWeaponsAndPassives`. Trocar o rótulo no meio da partida, como a Onda de Reiatsu virando Getsuga Tenshō no nível 15, deixava a tela de fim com o nome antigo.
+
+**O que fazer:** renomear pela `applyWeaponLabels(labels, state.weapons)`, que atualiza os dois.
+
+**Evidência:** `test_relabel_renames_the_weapon_in_the_match` em `scripts/test_arsenal.py`; no navegador, `state.weapons.getsuga.name` passou a "Getsuga Tenshō" depois do level-up do 15.

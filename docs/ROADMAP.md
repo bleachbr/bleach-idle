@@ -2,7 +2,7 @@
 
 Fonte única do que está aberto. Caixa entregue fica numa linha; o relato vai para [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md). Estado de hoje: [STATUS.md](STATUS.md).
 
-**Última atualização:** 2026-11-12
+**Última atualização:** 2026-11-15
 
 A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele arquivo só aponta para este.
 
@@ -35,7 +35,7 @@ A visão que estava em `ENTREGAS_ROADMAP.md` mora aqui desde 2026-11-07. Aquele 
 
 - [ ] Mapas Soul Society, Karakura Town e Dangai
 - [x] Bankai do Ichigo no nível 35, com troca de sprite e kit de 22 clipes (`src/playerForm.js`, [direcionamento/17](direcionamento/17-kit-animacoes-personagem.md), [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
-- [ ] Shikai no nível 15 (hoje o Ichigo já começa em shikai; falta a forma base antes dela)
+- [x] Shikai no nível 15: até o 14 a vaga do Getsuga solta a Onda de Reiatsu, mais fraca; no 15 ela vira o Getsuga Tenshō e mantém o nível (`src/arsenal.js`, [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [x] Elenco jogável: Ichigo, Ishida, Sado e Grimmjow, escolhidos no menu, cada um com kit de 22 clipes e arsenal próprio ([direcionamento/17](direcionamento/17-kit-animacoes-personagem.md), [_arquivo/changelog-entregas.md](_arquivo/changelog-entregas.md))
 - [ ] Metaprogressão na loja do Urahara
 - [ ] Boss rush competitivo
@@ -57,3 +57,4 @@ Pedido novo que passou pela skill `triagem-pedido` entra aqui numa linha: data, 
 - 2026-11-10: aceito — botão de mute da música (canto inferior esquerdo e tecla M). Em produção começa com som e guarda a escolha. No `npm run dev` sempre começa mutada, a pedido do dono.
 - 2026-11-10: aceito — elenco jogável fechado em Ichigo, Ishida, Sado e Grimmjow por decisão do dono, cada um com sprites completos e poderes próprios nas quatro posições de arma.
 - 2026-11-11: aceito — BGM mais baixo (0.08) e SFX de batalha no Hueco Mundo (híbrido: procedural agora, sample depois), com teste que obriga FX novo a declarar SFX.
+- 2026-11-15: aceito — shikai no nível 15 sem sprite novo, por decisão do dono: o Ichigo usa o cutelo desde o início e o que muda no 15 é o poder (Onda de Reiatsu até o 14, Getsuga Tenshō a partir do 15). A forma base desenhada (katana selada) foi descartada depois do piloto.

@@ -1,5 +1,12 @@
 # Changelog de entregas
 
+## 2026-11-15 — Shikai do Ichigo no nível 15
+
+- **Decisão:** sem forma visual nova. O piloto de uma forma base (katana reta nas costas, 3 referências e 2 folhas do Codex) foi descartado pelo dono; o Ichigo segue com o cutelo do shikai desde o nível 1 e o que acorda no 15 é o poder.
+- **Regra:** `EARLY_ARSENALS` em `src/arsenal.js` troca a vaga `getsuga` do Ichigo até o nível 14 pela **Onda de Reiatsu** (💨): mesmo FX `skill_getsuga`, tinta `0xe8f0ff`, `damageScale` 0,45, alcance 18 m, escala final 2,0. `arsenalLabels` e `arsenalShot` recebem o nível; sem nível, vale o arsenal completo. No 15 a vaga vira o Getsuga Tenshō e mantém o nível ganho no level-up. Os outros personagens não mudam.
+- **Jogo:** `fireSkill` passa `state.level`; `finishLevelUp` reaplica os rótulos do nível e redesenha a build; `applyWeaponLabels` (`src/stats.js`) também renomeia a arma equipada, que é o nome da tela de fim. O `main.js` desceu de 1227 para 1224 linhas.
+- **Evidência:** `scripts/test_arsenal.py` (12 testes; os 5 novos falhavam antes), as 16 suítes do `make test` e `scripts/lint/js_size.py` aprovados. No navegador com o dev server do worktree: no nível 1 o HUD mostra "Onda de Reiatsu (Nv. 1)" e o disparo sai com 81 de dano, 18 m e tinta branca; com a vaga no Nv. 3, ao fechar o level-up do 15 o HUD passa a "Getsuga Tenshō (Nv. 3)" e o disparo sai com 270 de dano, 32 m e escala 4,2; uma partida nova volta a "Onda de Reiatsu (Nv. 1)". Console sem erro de script.
+
 ## 2026-11-13 — Hollows Encouraçado e Sombrio na horda (rebase sobre Bankai + Elite)
 
 - **Walk8:** das folhas antigas do LFS (`hollow_encouracado`, `hollow_sombrio`) pelo `sprite_processor`, com `validate_sprites` aprovado (variação de altura de 0,98% e 6,54%). O lobo (`hollow_uivante`) foi descartado: reprovou com 9,7%, porque o perfil de um quadrúpede sai mais baixo que a frente. Staging `geradores/staging/{ironhide,wraith}/` removido do PR (duplicava `src/assets/monsters/...`).

@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PRELUDE = "import { ARSENALS, arsenalLabels, arsenalShot, volleyDirections } from './src/arsenal.js';"
+PRELUDE = ("import { ARSENALS, SHIKAI_LEVEL, arsenalLabels, arsenalShot, volleyDirections } from './src/arsenal.js';\n"
+           "import { WEAPON_DEFINITIONS, applyWeaponLabels } from './src/stats.js';")
 WEAPONS = ["asauchi", "getsuga", "byakurai", "shakkaho"]
 
 
@@ -66,6 +68,41 @@ class TestShots(unittest.TestCase):
         for total in totals:
             self.assertGreaterEqual(total, 1.0)
             self.assertLessEqual(total, 2.0)
+
+
+class TestShikaiAwakening(unittest.TestCase):
+    """Até o nível 15 o Ichigo não domina o Getsuga: a vaga solta a Onda de Reiatsu, mais fraca."""
+
+    def test_wave_until_14_then_getsuga(self):
+        names = run("return [1, 14, 15, 60].map((lv) => arsenalLabels('ichigo_shikai', lv).getsuga.name);")
+        self.assertEqual(names, ["Onda de Reiatsu", "Onda de Reiatsu", "Getsuga Tenshō", "Getsuga Tenshō"])
+        self.assertEqual(run("return SHIKAI_LEVEL;"), 15)
+
+    def test_wave_is_weaker_and_shorter(self):
+        wave, getsuga = run("return [1, 15].map((lv) => arsenalShot('ichigo_shikai', 'getsuga', lv));")
+        self.assertLess(wave["damageScale"], getsuga["damageScale"])
+        self.assertLess(wave["maxDistance"], getsuga["maxDistance"])
+        self.assertLess(wave["endScale"], getsuga["endScale"])
+        self.assertEqual(wave["fx"], "skill_getsuga")
+
+    def test_other_weapons_and_characters_do_not_change(self):
+        same = run("""return ['ishida', 'sado', 'grimmjow', 'ichigo_shikai'].flatMap((c) =>
+          ['asauchi', 'byakurai', 'shakkaho', ...(c === 'ichigo_shikai' ? [] : ['getsuga'])].map((k) =>
+            JSON.stringify(arsenalShot(c, k, 1)) === JSON.stringify(arsenalShot(c, k, 60))
+            && arsenalLabels(c, 1)[k].name === arsenalLabels(c, 60)[k].name));""")
+        self.assertTrue(all(same))
+
+    def test_relabel_renames_the_weapon_in_the_match(self):
+        name = run("""const weapons = { getsuga: { name: 'Onda de Reiatsu', level: 3 } };
+          applyWeaponLabels(arsenalLabels('ichigo_shikai', 15), weapons);
+          return [weapons.getsuga.name, weapons.getsuga.level, WEAPON_DEFINITIONS.getsuga.name];""")
+        self.assertEqual(name, ["Getsuga Tenshō", 3, "Getsuga Tenshō"])
+
+    def test_main_uses_the_level(self):
+        source = (ROOT / "src" / "main.js").read_text(encoding="utf-8")
+        self.assertIn("arsenalShot(state.selectedCharacter, key, state.level)", source)
+        finish = re.search(r"function finishLevelUp\(\) \{(.*?)\n\}", source, re.S).group(1)
+        self.assertIn("applyWeaponLabels(arsenalLabels(state.selectedCharacter, state.level), state.weapons);", finish)
 
 
 if __name__ == "__main__":
