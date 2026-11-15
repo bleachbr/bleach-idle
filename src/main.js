@@ -701,7 +701,7 @@ function executeGetsugaTensho(dmg) {
 
 // Uma salva do arsenal do personagem: um projétil ou vários (leque, fileira).
 function fireSkill(key, target, dmg) {
-  const shot = arsenalShot(state.selectedCharacter, key);
+  const shot = arsenalShot(state.selectedCharacter, key, state.level);
   onSkillFire(shot.fx);
   for (const v of volleyDirections(target.dirX, target.dirZ, shot)) {
     fxManager.spawnSkillProjectile(shot.fx, key, player.x + v.offX, player.z + v.offZ, v.x, v.z, dmg * shot.damageScale, shot);
@@ -889,7 +889,6 @@ function applyPassiveChoice(key) {
 function applyPowerSelection(opt) {
   if (opt.type === 'weapon') applyWeaponChoice(opt.key);
   if (opt.type === 'passive') applyPassiveChoice(opt.key);
-  updateBuildHUD(state.weapons, state.passives);
   finishLevelUp();
 }
 
@@ -906,6 +905,8 @@ function openLevelUpBanner() {
 function finishLevelUp() {
   closeLevelUpDialog();
   playerKit = loadPlayerKit(new THREE.TextureLoader(), state.selectedCharacter, state.level);
+  applyWeaponLabels(arsenalLabels(state.selectedCharacter, state.level), state.weapons);
+  updateBuildHUD(state.weapons, state.passives);
   triggerPlayerAction(playerAnimator, 'level_up');
   state.levelUpOpen = false;
   if (state.pendingLevelUps && state.pendingLevelUps > 0) {
@@ -1111,11 +1112,7 @@ function resetWeaponsAndPassives() {
   state.weapons.getsuga = { name: WEAPON_DEFINITIONS.getsuga.name, level: 1, cooldown: 2.8, timer: 0.8, damage: 180, totalDamage: 0 };
   state.weapons.byakurai = { name: WEAPON_DEFINITIONS.byakurai.name, level: 0, cooldown: 2.2, timer: 0, damage: 45, totalDamage: 0 };
   state.weapons.shakkaho = { name: WEAPON_DEFINITIONS.shakkaho.name, level: 0, cooldown: 3.5, timer: 0, damage: 70, totalDamage: 0 };
-  state.passives.reiatsu = 0;
-  state.passives.shunpo = 0;
-  state.passives.hierro = 0;
-  state.passives.kaido = 0;
-  state.passives.magnet = 0;
+  for (const key of Object.keys(state.passives)) state.passives[key] = 0;
   updateBuildHUD(state.weapons, state.passives);
 }
 
@@ -1187,7 +1184,7 @@ function selectCharacter(charId) {
   if (charId) state.selectedCharacter = charId;
   playerKit = loadPlayerKit(new THREE.TextureLoader(), state.selectedCharacter);
   showCharacterInHud(state.selectedCharacter);
-  applyWeaponLabels(arsenalLabels(state.selectedCharacter));
+  applyWeaponLabels(arsenalLabels(state.selectedCharacter, 1)); // toda partida começa no nível 1
   slashMesh.material.color.setHex(arsenalSlashTint(state.selectedCharacter));
 }
 

@@ -24,10 +24,12 @@ export const WEAPON_DEFINITIONS = {
   shakkaho: { id: 'shakkaho', name: 'Hadō #31 Shakkahō', icon: '🔥', type: 'aoe', baseDamage: 70, baseCd: 3.5, dmgPerLevel: 25, cdPerLevel: -0.18 }
 };
 
-// Cada personagem chama as quatro armas por outro nome e ícone (src/arsenal.js).
-export function applyWeaponLabels(labels) {
+// Cada personagem chama as quatro armas por outro nome e ícone (src/arsenal.js). Com a partida
+// em curso, o nome também muda na arma equipada, que é o que a tela de fim lista.
+export function applyWeaponLabels(labels, weaponsState = {}) {
   for (const [key, label] of Object.entries(labels)) {
     if (WEAPON_DEFINITIONS[key]) Object.assign(WEAPON_DEFINITIONS[key], label);
+    if (weaponsState[key]) weaponsState[key].name = label.name;
   }
 }
 
